@@ -1,8 +1,12 @@
 //! RustApi application builder
 
 use crate::error::Result;
-use crate::router::{MethodRouter, Router};
+use crate::router::{get, MethodRouter, Router};
 use crate::server::Server;
+use crate::response::{Html, Response};
+use crate::extract::Json;
+use rustapi_openapi::{OpenApiDoc, swagger_ui_html};
+use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 /// Main application builder for RustAPI
@@ -24,6 +28,8 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilte
 /// ```
 pub struct RustApi {
     router: Router,
+    openapi: Option<OpenApiDoc>,
+    docs_path: Option<String>,
 }
 
 impl RustApi {
@@ -39,6 +45,8 @@ impl RustApi {
 
         Self {
             router: Router::new(),
+            openapi: None,
+            docs_path: None,
         }
     }
 
@@ -100,16 +108,40 @@ impl RustApi {
         self
     }
 
+    /// Configure OpenAPI documentation
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use rustapi_openapi::OpenApiDoc;
+    ///
+    /// RustApi::new()
+    ///     .openapi(OpenApiDoc::new("My API", "1.0.0")
+    ///         .description("A sample API")
+    ///         .server("http://localhost:8080"))
+    /// ```
+    pub fn openapi(mut self, doc: OpenApiDoc) -> Self {
+        self.openapi = Some(doc);
+        self
+    }
+
     /// Enable Swagger UI at the specified path
+    ///
+    /// Also enables `/openapi.json` endpoint automatically.
     ///
     /// # Example
     ///
     /// ```rust,ignore
     /// RustApi::new()
-    ///     .docs("/docs")  // Swagger UI at /docs
+    ///     .openapi(OpenApiDoc::new("My API", "1.0.0"))
+    ///     .docs("/docs")  // Swagger UI at /docs, spec at /openapi.json
     /// ```
-    pub fn docs(self, _path: &str) -> Self {
-        // TODO: Implement OpenAPI + Swagger UI
+    pub fn docs(mut self, path: &str) -> Self {
+        self.docs_path = Some(path.to_string());
+        // Create default OpenAPI doc if not set
+        if self.openapi.is_none() {
+            self.openapi = Some(OpenApiDoc::new("RustAPI", "1.0.0"));
+        }
         self
     }
 
@@ -123,7 +155,42 @@ impl RustApi {
     ///     .run("127.0.0.1:8080")
     ///     .await
     /// ```
-    pub async fn run(self, addr: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn run(mut self, addr: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        // Add OpenAPI endpoints if configured
+        if let Some(doc) = self.openapi.take() {
+            let doc = Arc::new(doc);
+            let docs_path = self.docs_path.take();
+            
+            // Add /openapi.json endpoint
+            let doc_for_json = doc.clone();
+            self.router = self.router.route(
+                "/openapi.json",
+                get(move || {
+                    let doc = doc_for_json.clone();
+                    async move {
+                        OpenApiJsonResponse(doc.to_json())
+                    }
+                }),
+            );
+
+            // Add Swagger UI endpoint if docs path is set
+            if let Some(path) = docs_path {
+                let title = doc.title().to_string();
+                self.router = self.router.route(
+                    &path,
+                    get(move || {
+                        let title = title.clone();
+                        async move {
+                            Html(swagger_ui_html("/openapi.json", &title))
+                        }
+                    }),
+                );
+                tracing::info!("📚 Swagger UI available at http://{}{}", addr, path);
+            }
+            
+            tracing::info!("📄 OpenAPI spec at http://{}/openapi.json", addr);
+        }
+
         let server = Server::new(self.router);
         server.run(addr).await
     }
@@ -137,5 +204,22 @@ impl RustApi {
 impl Default for RustApi {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+/// Response type for OpenAPI JSON
+struct OpenApiJsonResponse(String);
+
+impl crate::response::IntoResponse for OpenApiJsonResponse {
+    fn into_response(self) -> Response {
+        use bytes::Bytes;
+        use http::{header, StatusCode};
+        use http_body_util::Full;
+
+        http::Response::builder()
+            .status(StatusCode::OK)
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Full::new(Bytes::from(self.0)))
+            .unwrap()
     }
 }

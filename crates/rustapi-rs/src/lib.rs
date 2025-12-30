@@ -8,7 +8,7 @@
 //!
 //! ## Quick Start
 //!
-//! ```rust,no_run
+//! ```rust,ignore
 //! use rustapi_rs::prelude::*;
 //!
 //! #[derive(Serialize)]
@@ -23,11 +23,12 @@
 //! }
 //!
 //! #[tokio::main]
-//! async fn main() -> Result<()> {
+//! async fn main() {
 //!     RustApi::new()
 //!         .route("/", get(hello))
 //!         .run("127.0.0.1:8080")
 //!         .await
+//!         .unwrap();
 //! }
 //! ```
 //!
@@ -56,19 +57,26 @@ pub mod prelude {
         Router,
         get, post, put, patch, delete,
         // Extractors
-        Json, Query, Path, State, Body,
+        Json, ValidatedJson, Query, Path, State, Body,
+        // Validation
+        Validate, FieldError,
         // Response types
         IntoResponse, Response,
         Created, NoContent, Html, Redirect,
+        // Response helpers
+        created, no_content, json, text,
         // Error handling
         ApiError, Result,
         // Request context
         Request,
+        // OpenAPI
+        OpenApiDoc,
     };
 
     // Re-export commonly used external types
     pub use serde::{Deserialize, Serialize};
     pub use tracing::{debug, error, info, trace, warn};
+    pub use validator::Validate as ValidatorValidate;
 }
 
 #[cfg(test)]

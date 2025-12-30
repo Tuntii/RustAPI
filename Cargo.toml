@@ -4,6 +4,8 @@ members = [
     "crates/rustapi-rs",
     "crates/rustapi-core",
     "crates/rustapi-macros",
+    "crates/rustapi-validate",
+    "crates/rustapi-openapi",
     "examples/hello-world",
 ]
 
@@ -48,9 +50,17 @@ pin-project-lite = "0.2"
 # Proc macros
 syn = { version = "2.0", features = ["full", "parsing", "extra-traits"] }
 quote = "1.0"
+
+# Validation
+validator = { version = "0.18", features = ["derive"] }
 proc-macro2 = "1.0"
 inventory = "0.3"
+
+# OpenAPI
+utoipa = { version = "5", features = ["preserve_order"] }
 
 # Internal crates
 rustapi-core = { path = "crates/rustapi-core" }
 rustapi-macros = { path = "crates/rustapi-macros" }
+rustapi-openapi = { path = "crates/rustapi-openapi" }
+rustapi-validate = { path = "crates/rustapi-validate" }

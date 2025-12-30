@@ -15,9 +15,15 @@ mod server;
 
 // Public API
 pub use app::RustApi;
-pub use error::{ApiError, Result};
-pub use extract::{Body, FromRequest, FromRequestParts, Json, Path, Query, State};
+pub use error::{ApiError, FieldError, Result};
+pub use extract::{Body, FromRequest, FromRequestParts, Json, Path, Query, State, ValidatedJson};
 pub use handler::{Handler, HandlerService};
 pub use request::Request;
-pub use response::{Created, Html, IntoResponse, NoContent, Redirect, Response};
+pub use response::{created, json, no_content, text, Created, Html, IntoResponse, NoContent, Redirect, Response};
 pub use router::{delete, get, patch, post, put, MethodRouter, Router};
+
+// Re-export validator traits for users
+pub use validator::Validate;
+
+// Re-export OpenAPI types
+pub use rustapi_openapi::OpenApiDoc;
