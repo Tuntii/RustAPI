@@ -55,8 +55,12 @@ pub mod prelude {
         // Router
         Router,
         get, post, put, patch, delete,
+        // Route type for macro-based routing
+        Route,
+        get_route, post_route, put_route, patch_route, delete_route,
         // Extractors
         Json, Query, Path, State, Body,
+        ValidatedJson,
         // Response types
         IntoResponse, Response,
         Created, NoContent, Html, Redirect,
@@ -65,6 +69,12 @@ pub mod prelude {
         // Request context
         Request,
     };
+
+    // Re-export the route! macro
+    pub use rustapi_core::route;
+
+    // Re-export validation - use validator derive macro directly
+    pub use validator::Validate;
 
     // Re-export commonly used external types
     pub use serde::{Deserialize, Serialize};

@@ -48,7 +48,7 @@ pub trait Validate: validator::Validate {
     where
         Self: Sized,
     {
-        self.validate()?;
+        Validate::validate(&self)?;
         Ok(self)
     }
 }

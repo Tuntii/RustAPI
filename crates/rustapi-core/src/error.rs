@@ -151,3 +151,23 @@ impl From<hyper::Error> for ApiError {
         ApiError::internal("HTTP error").with_internal(err.to_string())
     }
 }
+
+impl From<rustapi_validate::ValidationError> for ApiError {
+    fn from(err: rustapi_validate::ValidationError) -> Self {
+        let fields = err.fields.into_iter().map(|f| FieldError {
+            field: f.field,
+            code: f.code,
+            message: f.message,
+        }).collect();
+        
+        ApiError::validation(fields)
+    }
+}
+
+impl ApiError {
+    /// Create a validation error from a ValidationError
+    pub fn from_validation_error(err: rustapi_validate::ValidationError) -> Self {
+        err.into()
+    }
+}
+

@@ -4,6 +4,7 @@ members = [
     "crates/rustapi-rs",
     "crates/rustapi-core",
     "crates/rustapi-macros",
+    "crates/rustapi-validate",
     "examples/hello-world",
 ]
 
@@ -51,6 +52,10 @@ quote = "1.0"
 proc-macro2 = "1.0"
 inventory = "0.3"
 
+# Validation
+validator = { version = "0.18", features = ["derive"] }
+
 # Internal crates
 rustapi-core = { path = "crates/rustapi-core" }
 rustapi-macros = { path = "crates/rustapi-macros" }
+rustapi-validate = { path = "crates/rustapi-validate" }

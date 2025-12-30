@@ -38,5 +38,8 @@ tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 inventory = { workspace = true }
 
+# Validation
+rustapi-validate = { workspace = true }
+
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

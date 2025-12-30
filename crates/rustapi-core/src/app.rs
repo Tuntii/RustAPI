@@ -80,8 +80,48 @@ impl RustApi {
     /// Mount a handler (convenience method)
     ///
     /// Alias for `.route(path, method_router)` for a single handler.
+    #[deprecated(note = "Use route() directly or mount_route() for macro-based routing")]
     pub fn mount(self, path: &str, method_router: MethodRouter) -> Self {
         self.route(path, method_router)
+    }
+
+    /// Mount a route created with #[rustapi::get], #[rustapi::post], etc.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use rustapi_rs::prelude::*;
+    ///
+    /// #[rustapi::get("/users")]
+    /// async fn list_users() -> Json<Vec<User>> {
+    ///     Json(vec![])
+    /// }
+    ///
+    /// RustApi::new()
+    ///     .mount_route(route!(list_users))
+    ///     .run("127.0.0.1:8080")
+    ///     .await
+    /// ```
+    pub fn mount_route(self, route: crate::handler::Route) -> Self {
+        use http::Method;
+        
+        let method = match route.method {
+            "GET" => Method::GET,
+            "POST" => Method::POST,
+            "PUT" => Method::PUT,
+            "PATCH" => Method::PATCH,
+            "DELETE" => Method::DELETE,
+            "HEAD" => Method::HEAD,
+            "OPTIONS" => Method::OPTIONS,
+            _ => panic!("Unknown HTTP method: {}", route.method),
+        };
+        
+        // Convert the boxed handler into a MethodRouter
+        let mut handlers = std::collections::HashMap::new();
+        handlers.insert(method, route.handler);
+        
+        let method_router = MethodRouter::from_boxed(handlers);
+        self.route(route.path, method_router)
     }
 
     /// Nest a router under a prefix

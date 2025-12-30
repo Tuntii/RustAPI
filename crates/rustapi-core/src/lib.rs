@@ -16,8 +16,11 @@ mod server;
 // Public API
 pub use app::RustApi;
 pub use error::{ApiError, Result};
-pub use extract::{Body, FromRequest, FromRequestParts, Json, Path, Query, State};
-pub use handler::{Handler, HandlerService};
+pub use extract::{Body, FromRequest, FromRequestParts, Json, Path, Query, State, ValidatedJson};
+pub use handler::{
+    Handler, HandlerService, Route, RouteHandler,
+    get_route, post_route, put_route, patch_route, delete_route,
+};
 pub use request::Request;
 pub use response::{Created, Html, IntoResponse, NoContent, Redirect, Response};
 pub use router::{delete, get, patch, post, put, MethodRouter, Router};

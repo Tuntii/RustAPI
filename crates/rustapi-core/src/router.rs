@@ -34,6 +34,11 @@ impl MethodRouter {
     pub(crate) fn allowed_methods(&self) -> Vec<Method> {
         self.handlers.keys().cloned().collect()
     }
+
+    /// Create from pre-boxed handlers (internal use)
+    pub(crate) fn from_boxed(handlers: HashMap<Method, BoxedHandler>) -> Self {
+        Self { handlers }
+    }
 }
 
 impl Default for MethodRouter {

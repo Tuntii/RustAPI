@@ -104,6 +104,91 @@ impl<T: Serialize> IntoResponse for Json<T> {
     }
 }
 
+/// Validated JSON body extractor
+///
+/// Parses the request body as JSON, deserializes into type `T`, and validates
+/// using the `Validate` trait. Returns a 422 Unprocessable Entity error with
+/// detailed field-level validation errors if validation fails.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use rustapi_rs::prelude::*;
+/// use validator::Validate;
+///
+/// #[derive(Deserialize, Validate)]
+/// struct CreateUser {
+///     #[validate(email)]
+///     email: String,
+///     #[validate(length(min = 8))]
+///     password: String,
+/// }
+///
+/// async fn register(ValidatedJson(body): ValidatedJson<CreateUser>) -> impl IntoResponse {
+///     // body is already validated!
+///     // If email is invalid or password too short, a 422 error is returned automatically
+/// }
+/// ```
+#[derive(Debug, Clone, Copy, Default)]
+pub struct ValidatedJson<T>(pub T);
+
+impl<T> ValidatedJson<T> {
+    /// Create a new ValidatedJson wrapper
+    pub fn new(value: T) -> Self {
+        Self(value)
+    }
+
+    /// Get the inner value
+    pub fn into_inner(self) -> T {
+        self.0
+    }
+}
+
+impl<T: DeserializeOwned + rustapi_validate::Validate + Send> FromRequest for ValidatedJson<T> {
+    async fn from_request(req: &mut Request) -> Result<Self> {
+        // First, deserialize the JSON body
+        let body = req.take_body().ok_or_else(|| {
+            ApiError::internal("Body already consumed")
+        })?;
+
+        let value: T = serde_json::from_slice(&body)?;
+        
+        // Then, validate it
+        if let Err(validation_error) = rustapi_validate::Validate::validate(&value) {
+            // Convert validation error to API error with 422 status
+            return Err(validation_error.into());
+        }
+        
+        Ok(ValidatedJson(value))
+    }
+}
+
+impl<T> Deref for ValidatedJson<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<T> DerefMut for ValidatedJson<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl<T> From<T> for ValidatedJson<T> {
+    fn from(value: T) -> Self {
+        ValidatedJson(value)
+    }
+}
+
+impl<T: Serialize> IntoResponse for ValidatedJson<T> {
+    fn into_response(self) -> crate::response::Response {
+        Json(self.0).into_response()
+    }
+}
+
 /// Query string extractor
 ///
 /// Parses the query string into type `T`.
