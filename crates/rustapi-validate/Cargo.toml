@@ -1,0 +1,24 @@
+[package]
+name = "rustapi-validate"
+description = "Validation system for RustAPI framework"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+# Validation (internal - not exposed in public API)
+validator = { version = "0.18", features = ["derive"] }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+
+# HTTP types for response
+http = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
