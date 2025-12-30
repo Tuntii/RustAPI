@@ -3,6 +3,7 @@
 use crate::extract::FromRequest;
 use crate::request::Request;
 use crate::response::{IntoResponse, Response};
+use rustapi_openapi::{Operation, OperationModifier, ResponseModifier};
 use std::future::Future;
 use std::marker::PhantomData;
 use std::pin::Pin;
@@ -14,6 +15,9 @@ pub trait Handler<T>: Clone + Send + Sync + Sized + 'static {
 
     /// Call the handler with the request
     fn call(self, req: Request) -> Self::Future;
+    
+    /// Update the OpenAPI operation
+    fn update_operation(op: &mut Operation);
 }
 
 /// Wrapper to convert a Handler into a tower Service
@@ -47,7 +51,7 @@ impl<F, Fut, Res> Handler<()> for F
 where
     F: FnOnce() -> Fut + Clone + Send + Sync + 'static,
     Fut: Future<Output = Res> + Send + 'static,
-    Res: IntoResponse,
+    Res: IntoResponse + ResponseModifier,
 {
     type Future = Pin<Box<dyn Future<Output = Response> + Send>>;
 
@@ -56,6 +60,10 @@ where
             self().await.into_response()
         })
     }
+    
+    fn update_operation(op: &mut Operation) {
+        Res::update_response(op);
+    }
 }
 
 // 1 arg
@@ -63,8 +71,8 @@ impl<F, Fut, Res, T1> Handler<(T1,)> for F
 where
     F: FnOnce(T1) -> Fut + Clone + Send + Sync + 'static,
     Fut: Future<Output = Res> + Send + 'static,
-    Res: IntoResponse,
-    T1: FromRequest + Send + 'static,
+    Res: IntoResponse + ResponseModifier,
+    T1: FromRequest + OperationModifier + Send + 'static,
 {
     type Future = Pin<Box<dyn Future<Output = Response> + Send>>;
 
@@ -77,6 +85,11 @@ where
             self(t1).await.into_response()
         })
     }
+    
+    fn update_operation(op: &mut Operation) {
+        T1::update_operation(op);
+        Res::update_response(op);
+    }
 }
 
 // 2 args
@@ -84,9 +97,9 @@ impl<F, Fut, Res, T1, T2> Handler<(T1, T2)> for F
 where
     F: FnOnce(T1, T2) -> Fut + Clone + Send + Sync + 'static,
     Fut: Future<Output = Res> + Send + 'static,
-    Res: IntoResponse,
-    T1: FromRequest + Send + 'static,
-    T2: FromRequest + Send + 'static,
+    Res: IntoResponse + ResponseModifier,
+    T1: FromRequest + OperationModifier + Send + 'static,
+    T2: FromRequest + OperationModifier + Send + 'static,
 {
     type Future = Pin<Box<dyn Future<Output = Response> + Send>>;
 
@@ -103,6 +116,12 @@ where
             self(t1, t2).await.into_response()
         })
     }
+    
+    fn update_operation(op: &mut Operation) {
+        T1::update_operation(op);
+        T2::update_operation(op);
+        Res::update_response(op);
+    }
 }
 
 // 3 args
@@ -110,10 +129,10 @@ impl<F, Fut, Res, T1, T2, T3> Handler<(T1, T2, T3)> for F
 where
     F: FnOnce(T1, T2, T3) -> Fut + Clone + Send + Sync + 'static,
     Fut: Future<Output = Res> + Send + 'static,
-    Res: IntoResponse,
-    T1: FromRequest + Send + 'static,
-    T2: FromRequest + Send + 'static,
-    T3: FromRequest + Send + 'static,
+    Res: IntoResponse + ResponseModifier,
+    T1: FromRequest + OperationModifier + Send + 'static,
+    T2: FromRequest + OperationModifier + Send + 'static,
+    T3: FromRequest + OperationModifier + Send + 'static,
 {
     type Future = Pin<Box<dyn Future<Output = Response> + Send>>;
 
@@ -134,6 +153,13 @@ where
             self(t1, t2, t3).await.into_response()
         })
     }
+    
+    fn update_operation(op: &mut Operation) {
+        T1::update_operation(op);
+        T2::update_operation(op);
+        T3::update_operation(op);
+        Res::update_response(op);
+    }
 }
 
 // 4 args
@@ -141,11 +167,11 @@ impl<F, Fut, Res, T1, T2, T3, T4> Handler<(T1, T2, T3, T4)> for F
 where
     F: FnOnce(T1, T2, T3, T4) -> Fut + Clone + Send + Sync + 'static,
     Fut: Future<Output = Res> + Send + 'static,
-    Res: IntoResponse,
-    T1: FromRequest + Send + 'static,
-    T2: FromRequest + Send + 'static,
-    T3: FromRequest + Send + 'static,
-    T4: FromRequest + Send + 'static,
+    Res: IntoResponse + ResponseModifier,
+    T1: FromRequest + OperationModifier + Send + 'static,
+    T2: FromRequest + OperationModifier + Send + 'static,
+    T3: FromRequest + OperationModifier + Send + 'static,
+    T4: FromRequest + OperationModifier + Send + 'static,
 {
     type Future = Pin<Box<dyn Future<Output = Response> + Send>>;
 
@@ -170,6 +196,14 @@ where
             self(t1, t2, t3, t4).await.into_response()
         })
     }
+    
+    fn update_operation(op: &mut Operation) {
+        T1::update_operation(op);
+        T2::update_operation(op);
+        T3::update_operation(op);
+        T4::update_operation(op);
+        Res::update_response(op);
+    }
 }
 
 // 5 args
@@ -177,12 +211,12 @@ impl<F, Fut, Res, T1, T2, T3, T4, T5> Handler<(T1, T2, T3, T4, T5)> for F
 where
     F: FnOnce(T1, T2, T3, T4, T5) -> Fut + Clone + Send + Sync + 'static,
     Fut: Future<Output = Res> + Send + 'static,
-    Res: IntoResponse,
-    T1: FromRequest + Send + 'static,
-    T2: FromRequest + Send + 'static,
-    T3: FromRequest + Send + 'static,
-    T4: FromRequest + Send + 'static,
-    T5: FromRequest + Send + 'static,
+    Res: IntoResponse + ResponseModifier,
+    T1: FromRequest + OperationModifier + Send + 'static,
+    T2: FromRequest + OperationModifier + Send + 'static,
+    T3: FromRequest + OperationModifier + Send + 'static,
+    T4: FromRequest + OperationModifier + Send + 'static,
+    T5: FromRequest + OperationModifier + Send + 'static,
 {
     type Future = Pin<Box<dyn Future<Output = Response> + Send>>;
 
@@ -210,6 +244,15 @@ where
             };
             self(t1, t2, t3, t4, t5).await.into_response()
         })
+    }
+    
+    fn update_operation(op: &mut Operation) {
+        T1::update_operation(op);
+        T2::update_operation(op);
+        T3::update_operation(op);
+        T4::update_operation(op);
+        T5::update_operation(op);
+        Res::update_response(op);
     }
 }
 
@@ -248,6 +291,7 @@ pub struct Route {
     pub(crate) path: &'static str,
     pub(crate) method: &'static str,
     pub(crate) handler: BoxedHandler,
+    pub(crate) operation: Operation,
 }
 
 impl Route {
@@ -257,10 +301,14 @@ impl Route {
         H: Handler<T>,
         T: 'static,
     {
+        let mut operation = Operation::new();
+        H::update_operation(&mut operation);
+        
         Self {
             path,
             method,
             handler: into_boxed_handler(handler),
+            operation,
         }
     }
 }

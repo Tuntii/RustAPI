@@ -372,4 +372,108 @@ impl_from_request_parts_for_primitives!(
     String
 );
 
-// Re-export Json from response for extraction (they share the type)
+// OperationModifier implementations for extractors
+
+use rustapi_openapi::{Operation, OperationModifier, Schema, RequestBody, MediaType, SchemaRef, ResponseModifier, ResponseSpec};
+use std::collections::HashMap;
+
+// ValidatedJson - Adds request body
+impl<T: for<'a> Schema<'a>> OperationModifier for ValidatedJson<T> {
+    fn update_operation(op: &mut Operation) {
+        let (name, _) = T::schema();
+        
+        let schema_ref = SchemaRef::Ref {
+            reference: format!("#/components/schemas/{}", name),
+        };
+        
+        let mut content = HashMap::new();
+        content.insert("application/json".to_string(), MediaType {
+            schema: schema_ref,
+        });
+        
+        op.request_body = Some(RequestBody {
+            required: true,
+            content,
+        });
+    }
+}
+
+// Json - Adds request body (Same as ValidatedJson)
+impl<T: for<'a> Schema<'a>> OperationModifier for Json<T> {
+    fn update_operation(op: &mut Operation) {
+        let (name, _) = T::schema();
+        
+        let schema_ref = SchemaRef::Ref {
+            reference: format!("#/components/schemas/{}", name),
+        };
+        
+        let mut content = HashMap::new();
+        content.insert("application/json".to_string(), MediaType {
+            schema: schema_ref,
+        });
+        
+        op.request_body = Some(RequestBody {
+            required: true,
+            content,
+        });
+    }
+}
+
+// Path - Placeholder for path params
+impl<T> OperationModifier for Path<T> {
+    fn update_operation(_op: &mut Operation) {
+        // TODO: Implement path param extraction
+    }
+}
+
+// Query - Placeholder for query params
+impl<T> OperationModifier for Query<T> {
+    fn update_operation(_op: &mut Operation) {
+        // TODO: Implement query param extraction
+    }
+}
+
+// State - No op
+impl<T> OperationModifier for State<T> {
+    fn update_operation(_op: &mut Operation) {}
+}
+
+// Body - Generic binary body
+impl OperationModifier for Body {
+    fn update_operation(op: &mut Operation) {
+        let mut content = HashMap::new();
+        content.insert("application/octet-stream".to_string(), MediaType {
+            schema: SchemaRef::Inline(serde_json::json!({ "type": "string", "format": "binary" })),
+        });
+        
+        op.request_body = Some(RequestBody {
+            required: true,
+            content,
+        });
+    }
+}
+
+// ResponseModifier implementations for extractors
+
+// Json<T> - 200 OK with schema T
+impl<T: for<'a> Schema<'a>> ResponseModifier for Json<T> {
+    fn update_response(op: &mut Operation) {
+        let (name, _) = T::schema();
+        
+        let schema_ref = SchemaRef::Ref {
+            reference: format!("#/components/schemas/{}", name),
+        };
+        
+        op.responses.insert("200".to_string(), ResponseSpec {
+            description: "Successful response".to_string(),
+            content: {
+                let mut map = HashMap::new();
+                map.insert("application/json".to_string(), MediaType {
+                    schema: schema_ref,
+                });
+                map
+            },
+            ..Default::default()
+        });
+    }
+}

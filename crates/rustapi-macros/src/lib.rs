@@ -140,3 +140,105 @@ pub fn patch(attr: TokenStream, item: TokenStream) -> TokenStream {
 pub fn delete(attr: TokenStream, item: TokenStream) -> TokenStream {
     generate_route_handler("DELETE", attr, item)
 }
+
+// ============================================
+// Route Metadata Macros
+// ============================================
+
+/// Tag macro for grouping endpoints in OpenAPI documentation
+///
+/// # Example
+///
+/// ```rust,ignore
+/// #[rustapi::get("/users")]
+/// #[rustapi::tag("Users")]
+/// async fn list_users() -> Json<Vec<User>> {
+///     Json(vec![])
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn tag(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let tag = parse_macro_input!(attr as LitStr);
+    let input = parse_macro_input!(item as ItemFn);
+    
+    let attrs = &input.attrs;
+    let vis = &input.vis;
+    let sig = &input.sig;
+    let block = &input.block;
+    let tag_value = tag.value();
+    
+    // Add a doc comment with the tag info for documentation
+    let expanded = quote! {
+        #[doc = concat!("**Tag:** ", #tag_value)]
+        #(#attrs)*
+        #vis #sig #block
+    };
+    
+    TokenStream::from(expanded)
+}
+
+/// Summary macro for endpoint summary in OpenAPI documentation
+///
+/// # Example
+///
+/// ```rust,ignore
+/// #[rustapi::get("/users")]
+/// #[rustapi::summary("List all users")]
+/// async fn list_users() -> Json<Vec<User>> {
+///     Json(vec![])
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn summary(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let summary = parse_macro_input!(attr as LitStr);
+    let input = parse_macro_input!(item as ItemFn);
+    
+    let attrs = &input.attrs;
+    let vis = &input.vis;
+    let sig = &input.sig;
+    let block = &input.block;
+    let summary_value = summary.value();
+    
+    // Add a doc comment with the summary
+    let expanded = quote! {
+        #[doc = #summary_value]
+        #(#attrs)*
+        #vis #sig #block
+    };
+    
+    TokenStream::from(expanded)
+}
+
+/// Description macro for detailed endpoint description in OpenAPI documentation
+///
+/// # Example
+///
+/// ```rust,ignore
+/// #[rustapi::get("/users")]
+/// #[rustapi::description("Returns a list of all users in the system. Supports pagination.")]
+/// async fn list_users() -> Json<Vec<User>> {
+///     Json(vec![])
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn description(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let desc = parse_macro_input!(attr as LitStr);
+    let input = parse_macro_input!(item as ItemFn);
+    
+    let attrs = &input.attrs;
+    let vis = &input.vis;
+    let sig = &input.sig;
+    let block = &input.block;
+    let desc_value = desc.value();
+    
+    // Add a doc comment with the description
+    let expanded = quote! {
+        #[doc = ""]
+        #[doc = #desc_value]
+        #(#attrs)*
+        #vis #sig #block
+    };
+    
+    TokenStream::from(expanded)
+}
+

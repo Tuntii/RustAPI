@@ -75,6 +75,9 @@ pub mod prelude {
 
     // Re-export validation - use validator derive macro directly
     pub use validator::Validate;
+    
+    // Re-export OpenAPI schema derive
+    pub use rustapi_openapi::Schema;
 
     // Re-export commonly used external types
     pub use serde::{Deserialize, Serialize};

@@ -5,6 +5,7 @@ members = [
     "crates/rustapi-core",
     "crates/rustapi-macros",
     "crates/rustapi-validate",
+    "crates/rustapi-openapi",
     "examples/hello-world",
 ]
 
@@ -55,7 +56,11 @@ inventory = "0.3"
 # Validation
 validator = { version = "0.18", features = ["derive"] }
 
+# OpenAPI
+utoipa = { version = "4.2" }
+
 # Internal crates
 rustapi-core = { path = "crates/rustapi-core" }
 rustapi-macros = { path = "crates/rustapi-macros" }
 rustapi-validate = { path = "crates/rustapi-validate" }
+rustapi-openapi = { path = "crates/rustapi-openapi" }

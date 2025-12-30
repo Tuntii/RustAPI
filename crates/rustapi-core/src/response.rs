@@ -5,6 +5,8 @@ use bytes::Bytes;
 use http::{header, HeaderMap, HeaderValue, StatusCode};
 use http_body_util::Full;
 use serde::Serialize;
+use rustapi_openapi::{Operation, ResponseModifier, ResponseSpec, MediaType, SchemaRef, Schema};
+use std::collections::HashMap;
 
 /// HTTP Response type
 pub type Response = http::Response<Full<Bytes>>;
@@ -94,6 +96,7 @@ impl<T: IntoResponse, E: IntoResponse> IntoResponse for Result<T, E> {
 }
 
 // Implement for ApiError
+// Implement for ApiError
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let status = self.status;
@@ -107,6 +110,37 @@ impl IntoResponse for ApiError {
             .header(header::CONTENT_TYPE, "application/json")
             .body(Full::new(Bytes::from(body)))
             .unwrap()
+    }
+}
+
+impl ResponseModifier for ApiError {
+    fn update_response(op: &mut Operation) {
+        // We define common error responses here
+        // 400 Bad Request
+        op.responses.insert("400".to_string(), ResponseSpec {
+            description: "Bad Request".to_string(),
+            content: {
+                let mut map = HashMap::new();
+                map.insert("application/json".to_string(), MediaType {
+                    schema: SchemaRef::Ref { reference: "#/components/schemas/ErrorSchema".to_string() },
+                });
+                map
+            },
+            ..Default::default()
+        });
+        
+        // 500 Internal Server Error
+        op.responses.insert("500".to_string(), ResponseSpec {
+            description: "Internal Server Error".to_string(),
+            content: {
+                let mut map = HashMap::new();
+                map.insert("application/json".to_string(), MediaType {
+                    schema: SchemaRef::Ref { reference: "#/components/schemas/ErrorSchema".to_string() },
+                });
+                map
+            },
+            ..Default::default()
+        });
     }
 }
 
@@ -139,6 +173,28 @@ impl<T: Serialize> IntoResponse for Created<T> {
     }
 }
 
+impl<T: Schema> ResponseModifier for Created<T> {
+    fn update_response(op: &mut Operation) {
+        let (name, _) = T::schema();
+        
+        let schema_ref = SchemaRef::Ref {
+            reference: format!("#/components/schemas/{}", name),
+        };
+        
+        op.responses.insert("201".to_string(), ResponseSpec {
+            description: "Created".to_string(),
+            content: {
+                let mut map = HashMap::new();
+                map.insert("application/json".to_string(), MediaType {
+                    schema: schema_ref,
+                });
+                map
+            },
+            ..Default::default()
+        });
+    }
+}
+
 /// 204 No Content response
 ///
 /// Returns HTTP 204 with empty body.
@@ -163,6 +219,15 @@ impl IntoResponse for NoContent {
     }
 }
 
+impl ResponseModifier for NoContent {
+    fn update_response(op: &mut Operation) {
+        op.responses.insert("204".to_string(), ResponseSpec {
+            description: "No Content".to_string(),
+            ..Default::default()
+        });
+    }
+}
+
 /// HTML response wrapper
 #[derive(Debug, Clone)]
 pub struct Html<T>(pub T);
@@ -174,6 +239,22 @@ impl<T: Into<String>> IntoResponse for Html<T> {
             .header(header::CONTENT_TYPE, "text/html; charset=utf-8")
             .body(Full::new(Bytes::from(self.0.into())))
             .unwrap()
+    }
+}
+
+impl<T> ResponseModifier for Html<T> {
+    fn update_response(op: &mut Operation) {
+        op.responses.insert("200".to_string(), ResponseSpec {
+            description: "HTML Content".to_string(),
+            content: {
+                let mut map = HashMap::new();
+                map.insert("text/html".to_string(), MediaType {
+                    schema: SchemaRef::Inline(serde_json::json!({ "type": "string" })),
+                });
+                map
+            },
+            ..Default::default()
+        });
     }
 }
 
@@ -217,5 +298,16 @@ impl IntoResponse for Redirect {
             .header(header::LOCATION, self.location)
             .body(Full::new(Bytes::new()))
             .unwrap()
+    }
+}
+
+impl ResponseModifier for Redirect {
+    fn update_response(op: &mut Operation) {
+        // Can be 301, 302, 307. We'll verify what we can generically say.
+        // Or we document "3xx"
+        op.responses.insert("3xx".to_string(), ResponseSpec {
+            description: "Redirection".to_string(),
+            ..Default::default()
+        });
     }
 }

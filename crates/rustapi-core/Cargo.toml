@@ -41,5 +41,8 @@ inventory = { workspace = true }
 # Validation
 rustapi-validate = { workspace = true }
 
+# OpenAPI
+rustapi-openapi = { workspace = true }
+
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

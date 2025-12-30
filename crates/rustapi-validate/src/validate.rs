@@ -79,7 +79,7 @@ mod tests {
             age: 25,
         };
 
-        assert!(user.validate().is_ok());
+        assert!(Validate::validate(&user).is_ok());
     }
 
     #[test]
@@ -90,7 +90,7 @@ mod tests {
             age: 25,
         };
 
-        let result = user.validate();
+        let result = Validate::validate(&user);
         assert!(result.is_err());
         
         let error = result.unwrap_err();
@@ -105,7 +105,7 @@ mod tests {
             age: 25,
         };
 
-        let result = user.validate();
+        let result = Validate::validate(&user);
         assert!(result.is_err());
         
         let error = result.unwrap_err();
@@ -120,7 +120,7 @@ mod tests {
             age: 15, // Too young
         };
 
-        let result = user.validate();
+        let result = Validate::validate(&user);
         assert!(result.is_err());
         
         let error = result.unwrap_err();
@@ -135,7 +135,7 @@ mod tests {
             age: 150,
         };
 
-        let result = user.validate();
+        let result = Validate::validate(&user);
         assert!(result.is_err());
         
         let error = result.unwrap_err();

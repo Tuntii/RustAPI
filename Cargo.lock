@@ -393,6 +393,7 @@ dependencies = [
  "rustapi-rs",
  "serde",
  "tokio",
+ "utoipa",
  "validator",
 ]
 
@@ -633,6 +634,8 @@ checksum = "0ad4bb2b565bca0645f4d68c5c9af97fba094e9791da685bf83cb5f3ce74acf2"
 dependencies = [
  "equivalent",
  "hashbrown 0.16.1",
+ "serde",
+ "serde_core",
 ]
 
 [[package]]
@@ -1015,6 +1018,7 @@ dependencies = [
  "inventory",
  "matchit",
  "pin-project-lite",
+ "rustapi-openapi",
  "rustapi-validate",
  "serde",
  "serde_json",
@@ -1038,11 +1042,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "rustapi-openapi"
+version = "0.1.0"
+dependencies = [
+ "bytes",
+ "http",
+ "http-body-util",
+ "serde",
+ "serde_json",
+ "utoipa",
+]
+
+[[package]]
 name = "rustapi-rs"
 version = "0.1.0"
 dependencies = [
  "rustapi-core",
  "rustapi-macros",
+ "rustapi-openapi",
  "serde",
  "serde_json",
  "tokio",
@@ -1524,6 +1541,30 @@ name = "utf8_iter"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b6c140620e7ffbb22c2dee59cafe6084a59b5ffc27a8859a5f0d494b5d52b6be"
+
+[[package]]
+name = "utoipa"
+version = "4.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c5afb1a60e207dca502682537fefcfd9921e71d0b83e9576060f09abc6efab23"
+dependencies = [
+ "indexmap 2.12.1",
+ "serde",
+ "serde_json",
+ "utoipa-gen",
+]
+
+[[package]]
+name = "utoipa-gen"
+version = "4.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "20c24e8ab68ff9ee746aad22d39b5535601e6416d1b0feeabf78be986a5c4392"
+dependencies = [
+ "proc-macro-error",
+ "proc-macro2",
+ "quote",
+ "syn 2.0.111",
+]
 
 [[package]]
 name = "uuid"
