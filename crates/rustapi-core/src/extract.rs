@@ -13,7 +13,6 @@ use serde::Serialize;
 use std::future::Future;
 use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
-use validator::Validate;
 
 /// Trait for extracting data from request parts (headers, path, query)
 ///
@@ -287,81 +286,5 @@ impl_from_request_parts_for_primitives!(
     bool,
     String
 );
-
-/// Validated JSON body extractor
-///
-/// Parses the request body as JSON, deserializes into type `T`, 
-/// and validates using the `validator` crate.
-/// Returns 422 Unprocessable Entity on validation failure.
-///
-/// # Example
-///
-/// ```rust,ignore
-/// use validator::Validate;
-///
-/// #[derive(Deserialize, Validate)]
-/// struct CreateUser {
-///     #[validate(email)]
-///     email: String,
-///     #[validate(length(min = 3, max = 50))]
-///     name: String,
-/// }
-///
-/// async fn create_user(ValidatedJson(body): ValidatedJson<CreateUser>) -> impl IntoResponse {
-///     // body is already deserialized AND validated
-/// }
-/// ```
-#[derive(Debug, Clone, Copy, Default)]
-pub struct ValidatedJson<T>(pub T);
-
-impl<T: DeserializeOwned + Validate + Send> FromRequest for ValidatedJson<T> {
-    async fn from_request(req: &mut Request) -> Result<Self> {
-        let body = req.take_body().ok_or_else(|| {
-            ApiError::internal("Body already consumed")
-        })?;
-
-        let value: T = serde_json::from_slice(&body)?;
-        
-        // Validate the deserialized value
-        value.validate().map_err(|e| ApiError::from_validation_errors(e))?;
-        
-        Ok(ValidatedJson(value))
-    }
-}
-
-impl<T> Deref for ValidatedJson<T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl<T> DerefMut for ValidatedJson<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
-impl<T> From<T> for ValidatedJson<T> {
-    fn from(value: T) -> Self {
-        ValidatedJson(value)
-    }
-}
-
-// IntoResponse for ValidatedJson - same as Json
-impl<T: Serialize> IntoResponse for ValidatedJson<T> {
-    fn into_response(self) -> crate::response::Response {
-        match serde_json::to_vec(&self.0) {
-            Ok(body) => http::Response::builder()
-                .status(StatusCode::OK)
-                .header(header::CONTENT_TYPE, "application/json")
-                .body(Full::new(Bytes::from(body)))
-                .unwrap(),
-            Err(err) => ApiError::internal(format!("Failed to serialize response: {}", err))
-                .into_response(),
-        }
-    }
-}
 
 // Re-export Json from response for extraction (they share the type)

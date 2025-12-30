@@ -1,14 +1,14 @@
 //! # RustAPI Validation
 //!
 //! Validation system for RustAPI framework. Provides declarative validation
-//! on structs using the `#[derive(Validate)]` macro from the `validator` crate.
+//! on structs using the `#[derive(Validate)]` macro.
 //!
 //! ## Example
 //!
-//! ```rust,ignore
+//! ```rust
 //! use rustapi_validate::prelude::*;
 //!
-//! #[derive(ValidatorValidate)]
+//! #[derive(Validate)]
 //! struct CreateUser {
 //!     #[validate(email)]
 //!     email: String,
@@ -54,7 +54,8 @@ pub use error::{FieldError, ValidationError};
 pub use validate::Validate;
 
 // Re-export the derive macro from validator (wrapped)
-// Users should use `validator::Validate` derive macro with our trait
+// In a full implementation, we'd create our own proc-macro
+// For now, we use validator's derive with our own trait
 pub use validator::Validate as ValidatorValidate;
 
 /// Prelude module for validation

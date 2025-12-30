@@ -8,7 +8,7 @@ license.workspace = true
 
 [dependencies]
 # Validation (internal - not exposed in public API)
-validator = { workspace = true }
+validator = { version = "0.18", features = ["derive"] }
 
 # Serialization
 serde = { workspace = true }

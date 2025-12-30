@@ -30,7 +30,7 @@ use crate::error::ValidationError;
 ///         username: "ab".to_string(),
 ///     };
 ///
-///     match user.check() {
+///     match user.validate() {
 ///         Ok(()) => println!("Valid!"),
 ///         Err(e) => println!("Errors: {:?}", e.fields),
 ///     }
@@ -38,7 +38,7 @@ use crate::error::ValidationError;
 /// ```
 pub trait Validate: validator::Validate {
     /// Validate the struct and return a `ValidationError` on failure.
-    fn check(&self) -> Result<(), ValidationError> {
+    fn validate(&self) -> Result<(), ValidationError> {
         validator::Validate::validate(self)
             .map_err(ValidationError::from_validator_errors)
     }
@@ -48,7 +48,7 @@ pub trait Validate: validator::Validate {
     where
         Self: Sized,
     {
-        self.check()?;
+        self.validate()?;
         Ok(self)
     }
 }
@@ -79,7 +79,7 @@ mod tests {
             age: 25,
         };
 
-        assert!(user.check().is_ok());
+        assert!(user.validate().is_ok());
     }
 
     #[test]
@@ -90,7 +90,7 @@ mod tests {
             age: 25,
         };
 
-        let result = user.check();
+        let result = user.validate();
         assert!(result.is_err());
         
         let error = result.unwrap_err();
@@ -105,7 +105,7 @@ mod tests {
             age: 25,
         };
 
-        let result = user.check();
+        let result = user.validate();
         assert!(result.is_err());
         
         let error = result.unwrap_err();
@@ -120,7 +120,7 @@ mod tests {
             age: 15, // Too young
         };
 
-        let result = user.check();
+        let result = user.validate();
         assert!(result.is_err());
         
         let error = result.unwrap_err();
@@ -135,7 +135,7 @@ mod tests {
             age: 150,
         };
 
-        let result = user.check();
+        let result = user.validate();
         assert!(result.is_err());
         
         let error = result.unwrap_err();

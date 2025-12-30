@@ -8,4 +8,3 @@ publish = false
 rustapi-rs = { path = "../../crates/rustapi-rs" }
 tokio = { version = "1.35", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
-validator = { version = "0.18", features = ["derive"] }
