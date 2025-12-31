@@ -30,11 +30,21 @@ We believe that writing high-performance, type-safe web APIs in Rust shouldn't r
 - **📝 Automatic OpenAPI**: Your code *is* your documentation. Swagger UI is served at `/docs` out of the box.
 - **✅ Built-in Validation**: Add `#[validate(email)]` to your structs and get automatic 422 error handling.
 - **🧩 Intuitive Routing**: Radix-tree based routing with simple macros `#[rustapi::get]`, `#[rustapi::post]`.
-- **🔋 Batteries Included**: Tracing, graceful shutdown, state management, and error handling are pre-configured.
+- **🔋 Batteries Included**: Middleware, JWT auth, CORS, rate limiting, and configuration management.
+- **🔐 Security First**: JWT authentication, CORS middleware, and IP-based rate limiting out of the box.
+- **⚙️ Configuration**: Environment-based config with `.env` file support and typed config extraction.
 
 ## 📦 Quick Start
 
 Add `rustapi-rs` to your `Cargo.toml`.
+
+```toml
+[dependencies]
+rustapi-rs = "0.1"
+
+# Optional features
+# rustapi-rs = { version = "0.1", features = ["jwt", "cors", "rate-limit"] }
+```
 
 ```rust
 use rustapi_rs::prelude::*;
@@ -81,8 +91,21 @@ RustAPI follows a **Facade Architecture** to ensure long-term stability:
 
 - [x] **Phase 1: MVP**: Core routing, extractors, and server.
 - [x] **Phase 2: Validation & OpenAPI**: Auto-docs, strict validation, and metadata.
-- [ ] **Phase 3: Batteries Included**: Authentication (JWT), CORS, Rate Limiting, and Middleware.
+- [x] **Phase 3: Batteries Included**: Authentication (JWT), CORS, Rate Limiting, Middleware, and Configuration.
 - [ ] **Phase 4: v1.0 Polish**: Advanced ergonomics, CLI tool, and production hardening.
+
+## 🔐 Optional Features
+
+| Feature | Description |
+|---------|-------------|
+| `jwt` | JWT authentication middleware and `AuthUser<T>` extractor |
+| `cors` | CORS middleware with builder pattern configuration |
+| `rate-limit` | IP-based rate limiting middleware |
+| `config` | Configuration management with `.env` file support |
+| `cookies` | Cookie parsing extractor |
+| `sqlx` | SQLx database error conversion to ApiError |
+| `extras` | Meta feature enabling jwt, cors, and rate-limit |
+| `full` | All optional features enabled |
 
 
 ## 📄 License

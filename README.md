@@ -30,11 +30,21 @@ We believe that writing high-performance, type-safe web APIs in Rust shouldn't r
 - **📝 Automatic OpenAPI**: Your code *is* your documentation. Swagger UI is served at `/docs` out of the box.
 - **✅ Built-in Validation**: Add `#[validate(email)]` to your structs and get automatic 422 error handling.
 - **🧩 Intuitive Routing**: Radix-tree based routing with simple macros `#[rustapi::get]`, `#[rustapi::post]`.
-- **🔋 Batteries Included**: Tracing, graceful shutdown, state management, and error handling are pre-configured.
+- **🔋 Batteries Included**: Middleware, JWT auth, CORS, rate limiting, and configuration management.
+- **🔐 Security First**: JWT authentication, CORS middleware, and IP-based rate limiting out of the box.
+- **⚙️ Configuration**: Environment-based config with `.env` file support and typed config extraction.
 
 ## 📦 Quick Start
 
 Add `rustapi-rs` to your `Cargo.toml`.
+
+```toml
+[dependencies]
+rustapi-rs = "0.1"
+
+# Optional features
+# rustapi-rs = { version = "0.1", features = ["jwt", "cors", "rate-limit"] }
+```
 
 ```rust
 use rustapi_rs::prelude::*;
@@ -68,6 +78,84 @@ async fn main() -> Result<()> {
 
 Visit `http://127.0.0.1:8080/docs` to see your interactive API documentation!
 
+## 🔐 Optional Features
+
+RustAPI provides optional features to keep your binary size minimal:
+
+| Feature | Description |
+|---------|-------------|
+| `jwt` | JWT authentication middleware and `AuthUser<T>` extractor |
+| `cors` | CORS middleware with builder pattern configuration |
+| `rate-limit` | IP-based rate limiting middleware |
+| `config` | Configuration management with `.env` file support |
+| `cookies` | Cookie parsing extractor |
+| `sqlx` | SQLx database error conversion to ApiError |
+| `extras` | Meta feature enabling jwt, cors, and rate-limit |
+| `full` | All optional features enabled |
+
+### JWT Authentication Example
+
+```rust
+use rustapi_rs::prelude::*;
+
+#[derive(Debug, Deserialize, Serialize)]
+struct Claims {
+    sub: String,
+    exp: u64,
+}
+
+async fn protected(AuthUser(claims): AuthUser<Claims>) -> Json<String> {
+    Json(format!("Hello, {}!", claims.sub))
+}
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    RustApi::new()
+        .with_middleware(JwtLayer::<Claims>::new("your-secret-key"))
+        .route("/protected", get(protected))
+        .run("127.0.0.1:8080")
+        .await
+}
+```
+
+### CORS Configuration Example
+
+```rust
+use rustapi_rs::prelude::*;
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    let cors = CorsLayer::new()
+        .allow_origins(["https://example.com"])
+        .allow_methods([Method::GET, Method::POST])
+        .allow_credentials(true);
+
+    RustApi::new()
+        .with_middleware(cors)
+        .route("/api", get(handler))
+        .run("127.0.0.1:8080")
+        .await
+}
+```
+
+### Rate Limiting Example
+
+```rust
+use rustapi_rs::prelude::*;
+use std::time::Duration;
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    let rate_limit = RateLimitLayer::new(100, Duration::from_secs(60)); // 100 req/min
+
+    RustApi::new()
+        .with_middleware(rate_limit)
+        .route("/api", get(handler))
+        .run("127.0.0.1:8080")
+        .await
+}
+```
+
 ## 🏗️ Architecture
 
 RustAPI follows a **Facade Architecture** to ensure long-term stability:
@@ -81,7 +169,7 @@ RustAPI follows a **Facade Architecture** to ensure long-term stability:
 
 - [x] **Phase 1: MVP**: Core routing, extractors, and server.
 - [x] **Phase 2: Validation & OpenAPI**: Auto-docs, strict validation, and metadata.
-- [ ] **Phase 3: Batteries Included**: Authentication (JWT), CORS, Rate Limiting, and Middleware.
+- [x] **Phase 3: Batteries Included**: Authentication (JWT), CORS, Rate Limiting, Middleware, and Configuration.
 - [ ] **Phase 4: v1.0 Polish**: Advanced ergonomics, CLI tool, and production hardening.
 
 

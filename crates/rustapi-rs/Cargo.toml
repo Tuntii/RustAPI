@@ -31,13 +31,13 @@ tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 default = ["swagger-ui"]
 swagger-ui = ["rustapi-core/swagger-ui", "rustapi-openapi/swagger-ui"]
 
-# Security and utility features from rustapi-extras
-jwt = ["rustapi-extras", "rustapi-extras/jwt"]
-cors = ["rustapi-extras", "rustapi-extras/cors"]
-rate-limit = ["rustapi-extras", "rustapi-extras/rate-limit"]
-config = ["rustapi-extras", "rustapi-extras/config"]
-cookies = ["rustapi-extras", "rustapi-extras/cookies", "rustapi-core/cookies"]
-sqlx = ["rustapi-extras", "rustapi-extras/sqlx"]
+# Security and utility features (from rustapi-extras)
+jwt = ["dep:rustapi-extras", "rustapi-extras/jwt"]
+cors = ["dep:rustapi-extras", "rustapi-extras/cors"]
+rate-limit = ["dep:rustapi-extras", "rustapi-extras/rate-limit"]
+config = ["dep:rustapi-extras", "rustapi-extras/config"]
+cookies = ["dep:rustapi-extras", "rustapi-extras/cookies", "rustapi-core/cookies"]
+sqlx = ["dep:rustapi-extras", "rustapi-extras/sqlx"]
 
 # Meta features
 extras = ["jwt", "cors", "rate-limit"]

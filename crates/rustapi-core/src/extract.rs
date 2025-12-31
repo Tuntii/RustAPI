@@ -928,18 +928,26 @@ mod tests {
                     .map_err(|e| TestCaseError::fail(format!("Failed to extract headers: {}", e)))?;
 
                 // Verify all original headers are present
+                // HTTP allows duplicate headers - get_all() returns all values for a header name
                 for (name, value) in &headers {
-                    let header_value = extracted.get(name.as_str())
-                        .ok_or_else(|| TestCaseError::fail(format!("Header '{}' not found", name)))?;
-                    
-                    let extracted_value = header_value.to_str()
-                        .map_err(|e| TestCaseError::fail(format!("Invalid header value: {}", e)))?;
-                    
-                    prop_assert_eq!(
-                        extracted_value,
-                        value.as_str(),
-                        "Header '{}' value mismatch",
+                    // Check that the header name exists
+                    let all_values: Vec<_> = extracted.get_all(name.as_str()).iter().collect();
+                    prop_assert!(
+                        !all_values.is_empty(),
+                        "Header '{}' not found",
                         name
+                    );
+                    
+                    // Check that the value is among the extracted values
+                    let value_found = all_values.iter().any(|v| {
+                        v.to_str().map(|s| s == value.as_str()).unwrap_or(false)
+                    });
+                    
+                    prop_assert!(
+                        value_found,
+                        "Header '{}' value '{}' not found in extracted values",
+                        name,
+                        value
                     );
                 }
 

@@ -1703,6 +1703,7 @@ name = "rustapi-rs"
 version = "0.1.1"
 dependencies = [
  "rustapi-core",
+ "rustapi-extras",
  "rustapi-macros",
  "rustapi-openapi",
  "serde",
