@@ -12,6 +12,7 @@ documentation.workspace = true
 [dependencies]
 # Core dependency
 rustapi-core = { workspace = true }
+rustapi-openapi = { workspace = true }
 
 # Async
 tokio = { workspace = true }

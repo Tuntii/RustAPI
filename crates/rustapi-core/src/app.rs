@@ -1,7 +1,7 @@
 //! RustApi application builder
 
 use crate::error::Result;
-use crate::middleware::{LayerStack, MiddlewareLayer};
+use crate::middleware::{BodyLimitLayer, LayerStack, MiddlewareLayer, DEFAULT_BODY_LIMIT};
 use crate::router::{MethodRouter, Router};
 use crate::server::Server;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
@@ -27,6 +27,7 @@ pub struct RustApi {
     router: Router,
     openapi_spec: rustapi_openapi::OpenApiSpec,
     layers: LayerStack,
+    body_limit: Option<usize>,
 }
 
 impl RustApi {
@@ -48,7 +49,50 @@ impl RustApi {
                 .register::<rustapi_openapi::ValidationErrorSchema>()
                 .register::<rustapi_openapi::FieldErrorSchema>(),
             layers: LayerStack::new(),
+            body_limit: Some(DEFAULT_BODY_LIMIT), // Default 1MB limit
         }
+    }
+
+    /// Set the global body size limit for request bodies
+    ///
+    /// This protects against denial-of-service attacks via large payloads.
+    /// The default limit is 1MB (1024 * 1024 bytes).
+    ///
+    /// # Arguments
+    ///
+    /// * `limit` - Maximum body size in bytes
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use rustapi_rs::prelude::*;
+    ///
+    /// RustApi::new()
+    ///     .body_limit(5 * 1024 * 1024)  // 5MB limit
+    ///     .route("/upload", post(upload_handler))
+    ///     .run("127.0.0.1:8080")
+    ///     .await
+    /// ```
+    pub fn body_limit(mut self, limit: usize) -> Self {
+        self.body_limit = Some(limit);
+        self
+    }
+
+    /// Disable the body size limit
+    ///
+    /// Warning: This removes protection against large payload attacks.
+    /// Only use this if you have other mechanisms to limit request sizes.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// RustApi::new()
+    ///     .no_body_limit()  // Disable body size limit
+    ///     .route("/upload", post(upload_handler))
+    /// ```
+    pub fn no_body_limit(mut self) -> Self {
+        self.body_limit = None;
+        self
     }
 
     /// Add a middleware layer to the application
@@ -157,7 +201,7 @@ impl RustApi {
         self.route(path, method_router)
     }
 
-    /// Mount a route created with #[rustapi::get], #[rustapi::post], etc.
+    /// Mount a route created with `#[rustapi::get]`, `#[rustapi::post]`, etc.
     ///
     /// # Example
     ///
@@ -253,12 +297,12 @@ impl RustApi {
     ///
     /// # Example
     ///
-    /// ```rust,ignore
-    // / RustApi::new()
-    // /     .route("/users", get(list_users))
-    // /     .docs("/docs")  // Swagger UI at /docs, spec at /docs/openapi.json
-    // /     .run("127.0.0.1:8080")
-    // /     .await
+    /// ```text
+    /// RustApi::new()
+    ///     .route("/users", get(list_users))
+    ///     .docs("/docs")  // Swagger UI at /docs, spec at /docs/openapi.json
+    ///     .run("127.0.0.1:8080")
+    ///     .await
     /// ```
     #[cfg(feature = "swagger-ui")]
     pub fn docs(self, path: &str) -> Self {
@@ -326,6 +370,129 @@ impl RustApi {
             .route(path, get(docs_handler))
     }
 
+    /// Enable Swagger UI documentation with Basic Auth protection
+    ///
+    /// When username and password are provided, the docs endpoint will require
+    /// Basic Authentication. This is useful for protecting API documentation
+    /// in production environments.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// RustApi::new()
+    ///     .route("/users", get(list_users))
+    ///     .docs_with_auth("/docs", "admin", "secret123")
+    ///     .run("127.0.0.1:8080")
+    ///     .await
+    /// ```
+    #[cfg(feature = "swagger-ui")]
+    pub fn docs_with_auth(self, path: &str, username: &str, password: &str) -> Self {
+        let title = self.openapi_spec.info.title.clone();
+        let version = self.openapi_spec.info.version.clone();
+        let description = self.openapi_spec.info.description.clone();
+
+        self.docs_with_auth_and_info(
+            path,
+            username,
+            password,
+            &title,
+            &version,
+            description.as_deref(),
+        )
+    }
+
+    /// Enable Swagger UI documentation with Basic Auth and custom API info
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// RustApi::new()
+    ///     .docs_with_auth_and_info(
+    ///         "/docs",
+    ///         "admin",
+    ///         "secret",
+    ///         "My API",
+    ///         "2.0.0",
+    ///         Some("Protected API documentation")
+    ///     )
+    /// ```
+    #[cfg(feature = "swagger-ui")]
+    pub fn docs_with_auth_and_info(
+        mut self,
+        path: &str,
+        username: &str,
+        password: &str,
+        title: &str,
+        version: &str,
+        description: Option<&str>,
+    ) -> Self {
+        use crate::router::MethodRouter;
+        use base64::{engine::general_purpose::STANDARD, Engine};
+        use std::collections::HashMap;
+
+        // Update spec info
+        self.openapi_spec.info.title = title.to_string();
+        self.openapi_spec.info.version = version.to_string();
+        if let Some(desc) = description {
+            self.openapi_spec.info.description = Some(desc.to_string());
+        }
+
+        let path = path.trim_end_matches('/');
+        let openapi_path = format!("{}/openapi.json", path);
+
+        // Create expected auth header value
+        let credentials = format!("{}:{}", username, password);
+        let encoded = STANDARD.encode(credentials.as_bytes());
+        let expected_auth = format!("Basic {}", encoded);
+
+        // Clone values for closures
+        let spec_json =
+            serde_json::to_string_pretty(&self.openapi_spec.to_json()).unwrap_or_default();
+        let openapi_url = openapi_path.clone();
+        let expected_auth_spec = expected_auth.clone();
+        let expected_auth_docs = expected_auth;
+
+        // Create spec handler with auth check
+        let spec_handler: crate::handler::BoxedHandler = std::sync::Arc::new(move |req: crate::Request| {
+            let json = spec_json.clone();
+            let expected = expected_auth_spec.clone();
+            Box::pin(async move {
+                if !check_basic_auth(&req, &expected) {
+                    return unauthorized_response();
+                }
+                http::Response::builder()
+                    .status(http::StatusCode::OK)
+                    .header(http::header::CONTENT_TYPE, "application/json")
+                    .body(http_body_util::Full::new(bytes::Bytes::from(json)))
+                    .unwrap()
+            }) as std::pin::Pin<Box<dyn std::future::Future<Output = crate::Response> + Send>>
+        });
+
+        // Create docs handler with auth check
+        let docs_handler: crate::handler::BoxedHandler = std::sync::Arc::new(move |req: crate::Request| {
+            let url = openapi_url.clone();
+            let expected = expected_auth_docs.clone();
+            Box::pin(async move {
+                if !check_basic_auth(&req, &expected) {
+                    return unauthorized_response();
+                }
+                rustapi_openapi::swagger_ui_html(&url)
+            }) as std::pin::Pin<Box<dyn std::future::Future<Output = crate::Response> + Send>>
+        });
+
+        // Create method routers with boxed handlers
+        let mut spec_handlers = HashMap::new();
+        spec_handlers.insert(http::Method::GET, spec_handler);
+        let spec_router = MethodRouter::from_boxed(spec_handlers);
+
+        let mut docs_handlers = HashMap::new();
+        docs_handlers.insert(http::Method::GET, docs_handler);
+        let docs_router = MethodRouter::from_boxed(docs_handlers);
+
+        self.route(&openapi_path, spec_router)
+            .route(path, docs_router)
+    }
+
     /// Run the server
     ///
     /// # Example
@@ -336,7 +503,13 @@ impl RustApi {
     ///     .run("127.0.0.1:8080")
     ///     .await
     /// ```
-    pub async fn run(self, addr: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    pub async fn run(mut self, addr: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        // Apply body limit layer if configured (should be first in the chain)
+        if let Some(limit) = self.body_limit {
+            // Prepend body limit layer so it's the first to process requests
+            self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
+        }
+        
         let server = Server::new(self.router, self.layers);
         server.run(addr).await
     }
@@ -356,4 +529,25 @@ impl Default for RustApi {
     fn default() -> Self {
         Self::new()
     }
+}
+
+/// Check Basic Auth header against expected credentials
+#[cfg(feature = "swagger-ui")]
+fn check_basic_auth(req: &crate::Request, expected: &str) -> bool {
+    req.headers()
+        .get(http::header::AUTHORIZATION)
+        .and_then(|v| v.to_str().ok())
+        .map(|auth| auth == expected)
+        .unwrap_or(false)
+}
+
+/// Create 401 Unauthorized response with WWW-Authenticate header
+#[cfg(feature = "swagger-ui")]
+fn unauthorized_response() -> crate::Response {
+    http::Response::builder()
+        .status(http::StatusCode::UNAUTHORIZED)
+        .header(http::header::WWW_AUTHENTICATE, "Basic realm=\"API Documentation\"")
+        .header(http::header::CONTENT_TYPE, "text/plain")
+        .body(http_body_util::Full::new(bytes::Bytes::from("Unauthorized")))
+        .unwrap()
 }

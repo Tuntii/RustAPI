@@ -40,12 +40,17 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 inventory = { workspace = true }
+uuid = { workspace = true }
+base64 = "0.22"
 
 # Cookies (optional)
 cookie = { version = "0.18", optional = true }
 
 # Validation
 rustapi-validate = { workspace = true }
+
+# Metrics (optional)
+prometheus = { workspace = true, optional = true }
 
 # SQLx (optional)
 sqlx = { version = "0.8", optional = true, default-features = false }
@@ -62,3 +67,4 @@ swagger-ui = ["rustapi-openapi/swagger-ui"]
 test-utils = []
 cookies = ["dep:cookie"]
 sqlx = ["dep:sqlx"]
+metrics = ["dep:prometheus"]

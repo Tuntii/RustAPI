@@ -66,6 +66,13 @@ impl LayerStack {
         self.layers.push(layer);
     }
 
+    /// Add a middleware layer to the beginning of the stack
+    ///
+    /// This layer will be executed first (outermost).
+    pub fn prepend(&mut self, layer: Box<dyn MiddlewareLayer>) {
+        self.layers.insert(0, layer);
+    }
+
     /// Check if the stack is empty
     pub fn is_empty(&self) -> bool {
         self.layers.is_empty()

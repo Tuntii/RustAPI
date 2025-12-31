@@ -1,6 +1,58 @@
 //! Extractors for RustAPI
 //!
-//! Extractors automatically parse and validate data from incoming requests.
+//! Extractors automatically parse and validate data from incoming HTTP requests.
+//! They implement the [`FromRequest`] or [`FromRequestParts`] traits and can be
+//! used as handler function parameters.
+//!
+//! # Available Extractors
+//!
+//! | Extractor | Description | Consumes Body |
+//! |-----------|-------------|---------------|
+//! | [`Json<T>`] | Parse JSON request body | Yes |
+//! | [`ValidatedJson<T>`] | Parse and validate JSON body | Yes |
+//! | [`Query<T>`] | Parse query string parameters | No |
+//! | [`Path<T>`] | Extract path parameters | No |
+//! | [`State<T>`] | Access shared application state | No |
+//! | [`Body`] | Raw request body bytes | Yes |
+//! | [`Headers`] | Access all request headers | No |
+//! | [`HeaderValue`] | Extract a specific header | No |
+//! | [`Extension<T>`] | Access middleware-injected data | No |
+//! | [`ClientIp`] | Extract client IP address | No |
+//! | [`Cookies`] | Parse request cookies (requires `cookies` feature) | No |
+//!
+//! # Example
+//!
+//! ```rust,ignore
+//! use rustapi_core::{Json, Query, Path, State};
+//! use serde::{Deserialize, Serialize};
+//!
+//! #[derive(Deserialize)]
+//! struct CreateUser {
+//!     name: String,
+//!     email: String,
+//! }
+//!
+//! #[derive(Deserialize)]
+//! struct Pagination {
+//!     page: Option<u32>,
+//!     limit: Option<u32>,
+//! }
+//!
+//! // Multiple extractors can be combined
+//! async fn create_user(
+//!     State(db): State<DbPool>,
+//!     Query(pagination): Query<Pagination>,
+//!     Json(body): Json<CreateUser>,
+//! ) -> impl IntoResponse {
+//!     // Use db, pagination, and body...
+//! }
+//! ```
+//!
+//! # Extractor Order
+//!
+//! When using multiple extractors, body-consuming extractors (like `Json` or `Body`)
+//! must come last since they consume the request body. Non-body extractors can be
+//! in any order.
 
 use crate::error::{ApiError, Result};
 use crate::request::Request;

@@ -26,6 +26,7 @@ use http_body_util::Full;
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use rustapi_core::middleware::{BoxedNext, MiddlewareLayer};
 use rustapi_core::{ApiError, FromRequestParts, Request, Response, Result};
+use rustapi_openapi::{Operation, OperationModifier};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::future::Future;
@@ -85,13 +86,15 @@ impl JwtValidation {
 /// }
 ///
 /// let app = RustApi::new()
-///     .layer(JwtLayer::<Claims>::new("my-secret-key"))
+///     .layer(JwtLayer::<Claims>::new("my-secret-key")
+///         .skip_paths(vec!["/health", "/docs", "/auth/login"]))
 ///     .route("/protected", get(protected_handler));
 /// ```
 #[derive(Clone)]
 pub struct JwtLayer<T> {
     secret: Arc<String>,
     validation: JwtValidation,
+    skip_paths: Arc<Vec<String>>,
     _claims: PhantomData<T>,
 }
 
@@ -101,6 +104,7 @@ impl<T: DeserializeOwned + Clone + Send + Sync + 'static> JwtLayer<T> {
         Self {
             secret: Arc::new(secret.into()),
             validation: JwtValidation::default(),
+            skip_paths: Arc::new(Vec::new()),
             _claims: PhantomData,
         }
     }
@@ -108,6 +112,22 @@ impl<T: DeserializeOwned + Clone + Send + Sync + 'static> JwtLayer<T> {
     /// Configure custom validation options.
     pub fn with_validation(mut self, validation: JwtValidation) -> Self {
         self.validation = validation;
+        self
+    }
+
+    /// Skip JWT validation for specific paths.
+    /// 
+    /// Paths that start with any of the provided prefixes will bypass JWT validation.
+    /// This is useful for public endpoints like health checks, documentation, and login.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let layer = JwtLayer::<Claims>::new("secret")
+    ///     .skip_paths(vec!["/health", "/docs", "/auth/login"]);
+    /// ```
+    pub fn skip_paths(mut self, paths: Vec<&str>) -> Self {
+        self.skip_paths = Arc::new(paths.into_iter().map(String::from).collect());
         self
     }
 
@@ -141,8 +161,15 @@ impl<T: DeserializeOwned + Clone + Send + Sync + 'static> MiddlewareLayer for Jw
     ) -> Pin<Box<dyn Future<Output = Response> + Send + 'static>> {
         let secret = self.secret.clone();
         let validation = self.validation.clone();
+        let skip_paths = self.skip_paths.clone();
 
         Box::pin(async move {
+            // Check if this path should skip JWT validation
+            let path = req.uri().path();
+            if skip_paths.iter().any(|skip| path.starts_with(skip)) {
+                return next(req).await;
+            }
+
             // Extract the Authorization header
             let auth_header = req.headers().get(http::header::AUTHORIZATION);
 
@@ -296,6 +323,35 @@ impl<T: Clone + Send + Sync + 'static> FromRequestParts for AuthUser<T> {
                     "No authenticated user. Did you forget to add JwtLayer middleware?",
                 )
             })
+    }
+}
+
+// Implement OperationModifier for AuthUser to enable use in handlers
+impl<T> OperationModifier for AuthUser<T> {
+    fn update_operation(op: &mut Operation) {
+        // Add 401 Unauthorized response to OpenAPI spec
+        use rustapi_openapi::{MediaType, ResponseSpec, SchemaRef};
+        use std::collections::HashMap;
+        
+        op.responses.insert(
+            "401".to_string(),
+            ResponseSpec {
+                description: "Unauthorized - Invalid or missing JWT token".to_string(),
+                content: {
+                    let mut map = HashMap::new();
+                    map.insert(
+                        "application/json".to_string(),
+                        MediaType {
+                            schema: SchemaRef::Ref {
+                                reference: "#/components/schemas/ErrorSchema".to_string(),
+                            },
+                        },
+                    );
+                    Some(map)
+                },
+                ..Default::default()
+            },
+        );
     }
 }
 

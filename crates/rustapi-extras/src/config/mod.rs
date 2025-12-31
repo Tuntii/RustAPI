@@ -515,13 +515,19 @@ mod tests {
         std::env::remove_var("UNIT_TEST_NUMBER");
     }
 
+    #[derive(Debug, Deserialize, PartialEq)]
+    struct MissingVarTestConfig {
+        missing_var_test_string: String,
+        missing_var_test_number: u32,
+    }
+
     #[test]
     fn test_config_from_env_missing_var() {
-        // Ensure the variable doesn't exist
-        std::env::remove_var("UNIT_TEST_STRING");
-        std::env::remove_var("UNIT_TEST_NUMBER");
+        // Ensure the variables don't exist (use unique names to avoid race conditions)
+        std::env::remove_var("MISSING_VAR_TEST_STRING");
+        std::env::remove_var("MISSING_VAR_TEST_NUMBER");
 
-        let result = Config::<TestConfig>::from_env();
+        let result = Config::<MissingVarTestConfig>::from_env();
         assert!(result.is_err());
     }
 

@@ -8,10 +8,148 @@
 //! - `#[rustapi::put("/path")]` - PUT route handler
 //! - `#[rustapi::patch("/path")]` - PATCH route handler
 //! - `#[rustapi::delete("/path")]` - DELETE route handler
+//!
+//! ## Debugging
+//!
+//! Set `RUSTAPI_DEBUG=1` environment variable during compilation to see
+//! expanded macro output for debugging purposes.
 
 use proc_macro::TokenStream;
 use quote::quote;
 use syn::{parse_macro_input, ItemFn, LitStr};
+
+/// Check if RUSTAPI_DEBUG is enabled at compile time
+fn is_debug_enabled() -> bool {
+    std::env::var("RUSTAPI_DEBUG")
+        .map(|v| v == "1" || v.eq_ignore_ascii_case("true"))
+        .unwrap_or(false)
+}
+
+/// Print debug output if RUSTAPI_DEBUG=1 is set
+fn debug_output(name: &str, tokens: &proc_macro2::TokenStream) {
+    if is_debug_enabled() {
+        eprintln!("\n=== RUSTAPI_DEBUG: {} ===", name);
+        eprintln!("{}", tokens);
+        eprintln!("=== END {} ===\n", name);
+    }
+}
+
+/// Validate route path syntax at compile time
+/// 
+/// Returns Ok(()) if the path is valid, or Err with a descriptive error message.
+fn validate_path_syntax(path: &str, span: proc_macro2::Span) -> Result<(), syn::Error> {
+    // Path must start with /
+    if !path.starts_with('/') {
+        return Err(syn::Error::new(
+            span,
+            format!("route path must start with '/', got: \"{}\"", path),
+        ));
+    }
+
+    // Check for empty path segments (double slashes)
+    if path.contains("//") {
+        return Err(syn::Error::new(
+            span,
+            format!("route path contains empty segment (double slash): \"{}\"", path),
+        ));
+    }
+
+    // Validate path parameter syntax
+    let mut brace_depth = 0;
+    let mut param_start = None;
+
+    for (i, ch) in path.char_indices() {
+        match ch {
+            '{' => {
+                if brace_depth > 0 {
+                    return Err(syn::Error::new(
+                        span,
+                        format!(
+                            "nested braces are not allowed in route path at position {}: \"{}\"",
+                            i, path
+                        ),
+                    ));
+                }
+                brace_depth += 1;
+                param_start = Some(i);
+            }
+            '}' => {
+                if brace_depth == 0 {
+                    return Err(syn::Error::new(
+                        span,
+                        format!(
+                            "unmatched closing brace '}}' at position {} in route path: \"{}\"",
+                            i, path
+                        ),
+                    ));
+                }
+                brace_depth -= 1;
+
+                // Check that parameter name is not empty
+                if let Some(start) = param_start {
+                    let param_name = &path[start + 1..i];
+                    if param_name.is_empty() {
+                        return Err(syn::Error::new(
+                            span,
+                            format!(
+                                "empty parameter name '{{}}' at position {} in route path: \"{}\"",
+                                start, path
+                            ),
+                        ));
+                    }
+                    // Validate parameter name contains only valid identifier characters
+                    if !param_name.chars().all(|c| c.is_alphanumeric() || c == '_') {
+                        return Err(syn::Error::new(
+                            span,
+                            format!(
+                                "invalid parameter name '{{{}}}' at position {} - parameter names must contain only alphanumeric characters and underscores: \"{}\"",
+                                param_name, start, path
+                            ),
+                        ));
+                    }
+                    // Parameter name must not start with a digit
+                    if param_name.chars().next().map(|c| c.is_ascii_digit()).unwrap_or(false) {
+                        return Err(syn::Error::new(
+                            span,
+                            format!(
+                                "parameter name '{{{}}}' cannot start with a digit at position {}: \"{}\"",
+                                param_name, start, path
+                            ),
+                        ));
+                    }
+                }
+                param_start = None;
+            }
+            // Check for invalid characters in path (outside of parameters)
+            _ if brace_depth == 0 => {
+                // Allow alphanumeric, -, _, ., /, and common URL characters
+                if !ch.is_alphanumeric() && !"-_./*".contains(ch) {
+                    return Err(syn::Error::new(
+                        span,
+                        format!(
+                            "invalid character '{}' at position {} in route path: \"{}\"",
+                            ch, i, path
+                        ),
+                    ));
+                }
+            }
+            _ => {}
+        }
+    }
+
+    // Check for unclosed braces
+    if brace_depth > 0 {
+        return Err(syn::Error::new(
+            span,
+            format!(
+                "unclosed brace '{{' in route path (missing closing '}}'): \"{}\"",
+                path
+            ),
+        ));
+    }
+
+    Ok(())
+}
 
 /// Main entry point macro for RustAPI applications
 ///
@@ -47,6 +185,8 @@ pub fn main(_attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     };
 
+    debug_output("main", &expanded);
+
     TokenStream::from(expanded)
 }
 
@@ -65,6 +205,11 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
     let fn_generics = &input.sig.generics;
     
     let path_value = path.value();
+    
+    // Validate path syntax at compile time
+    if let Err(err) = validate_path_syntax(&path_value, path.span()) {
+        return err.to_compile_error().into();
+    }
     
     // Generate a companion module with route info
     let route_fn_name = syn::Ident::new(
@@ -121,6 +266,8 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
                 #chained_calls
         }
     };
+
+    debug_output(&format!("{} {}", method, path_value), &expanded);
 
     TokenStream::from(expanded)
 }

@@ -1,4 +1,43 @@
 //! Request types for RustAPI
+//!
+//! This module provides the [`Request`] type which wraps an incoming HTTP request
+//! and provides access to all its components.
+//!
+//! # Accessing Request Data
+//!
+//! While extractors are the preferred way to access request data in handlers,
+//! the `Request` type provides direct access when needed:
+//!
+//! ```rust,ignore
+//! // In middleware or custom extractors
+//! fn process_request(req: &Request) {
+//!     let method = req.method();
+//!     let path = req.path();
+//!     let headers = req.headers();
+//!     let query = req.query_string();
+//! }
+//! ```
+//!
+//! # Path Parameters
+//!
+//! Path parameters extracted from the URL pattern are available via:
+//!
+//! ```rust,ignore
+//! // For route "/users/{id}"
+//! let id = req.path_param("id");
+//! let all_params = req.path_params();
+//! ```
+//!
+//! # Request Body
+//!
+//! The body can only be consumed once:
+//!
+//! ```rust,ignore
+//! if let Some(body) = req.take_body() {
+//!     // Process body bytes
+//! }
+//! // Subsequent calls return None
+//! ```
 
 use bytes::Bytes;
 use http::{request::Parts, Extensions, HeaderMap, Method, Uri, Version};

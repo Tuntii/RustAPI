@@ -16,10 +16,16 @@
 //!     .await
 //! ```
 
+mod body_limit;
 mod layer;
+#[cfg(feature = "metrics")]
+mod metrics;
 mod request_id;
 mod tracing_layer;
 
+pub use body_limit::{BodyLimitLayer, DEFAULT_BODY_LIMIT};
 pub use layer::{BoxedNext, LayerStack, MiddlewareLayer};
+#[cfg(feature = "metrics")]
+pub use metrics::{MetricsLayer, MetricsResponse};
 pub use request_id::{RequestId, RequestIdLayer};
 pub use tracing_layer::TracingLayer;

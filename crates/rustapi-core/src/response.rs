@@ -1,4 +1,74 @@
 //! Response types for RustAPI
+//!
+//! This module provides types for building HTTP responses. The core trait is
+//! [`IntoResponse`], which allows any type to be converted into an HTTP response.
+//!
+//! # Built-in Response Types
+//!
+//! | Type | Status | Content-Type | Description |
+//! |------|--------|--------------|-------------|
+//! | `String` / `&str` | 200 | text/plain | Plain text response |
+//! | `()` | 200 | - | Empty response |
+//! | [`Json<T>`] | 200 | application/json | JSON response |
+//! | [`Created<T>`] | 201 | application/json | Created resource |
+//! | [`NoContent`] | 204 | - | No content response |
+//! | [`Html<T>`] | 200 | text/html | HTML response |
+//! | [`Redirect`] | 3xx | - | HTTP redirect |
+//! | [`WithStatus<T, N>`] | N | varies | Custom status code |
+//! | [`ApiError`] | varies | application/json | Error response |
+//!
+//! # Example
+//!
+//! ```rust,ignore
+//! use rustapi_core::{Json, Created, NoContent, IntoResponse};
+//! use serde::Serialize;
+//!
+//! #[derive(Serialize)]
+//! struct User {
+//!     id: i64,
+//!     name: String,
+//! }
+//!
+//! // Return JSON with 200 OK
+//! async fn get_user() -> Json<User> {
+//!     Json(User { id: 1, name: "Alice".to_string() })
+//! }
+//!
+//! // Return JSON with 201 Created
+//! async fn create_user() -> Created<User> {
+//!     Created(User { id: 2, name: "Bob".to_string() })
+//! }
+//!
+//! // Return 204 No Content
+//! async fn delete_user() -> NoContent {
+//!     NoContent
+//! }
+//!
+//! // Return custom status code
+//! async fn accepted() -> WithStatus<String, 202> {
+//!     WithStatus("Request accepted".to_string())
+//! }
+//! ```
+//!
+//! # Tuple Responses
+//!
+//! You can also return tuples to customize the response:
+//!
+//! ```rust,ignore
+//! use http::StatusCode;
+//!
+//! // (StatusCode, body)
+//! async fn custom_status() -> (StatusCode, String) {
+//!     (StatusCode::ACCEPTED, "Accepted".to_string())
+//! }
+//!
+//! // (StatusCode, headers, body)
+//! async fn with_headers() -> (StatusCode, HeaderMap, String) {
+//!     let mut headers = HeaderMap::new();
+//!     headers.insert("X-Custom", "value".parse().unwrap());
+//!     (StatusCode::OK, headers, "Hello".to_string())
+//! }
+//! ```
 
 use crate::error::{ApiError, ErrorResponse};
 use bytes::Bytes;
@@ -96,10 +166,11 @@ impl<T: IntoResponse, E: IntoResponse> IntoResponse for Result<T, E> {
 }
 
 // Implement for ApiError
-// Implement for ApiError
+// Implement for ApiError with environment-aware error masking
 impl IntoResponse for ApiError {
     fn into_response(self) -> Response {
         let status = self.status;
+        // ErrorResponse::from now handles environment-aware masking
         let error_response = ErrorResponse::from(self);
         let body = serde_json::to_vec(&error_response).unwrap_or_else(|_| {
             br#"{"error":{"type":"internal_error","message":"Failed to serialize error"}}"#.to_vec()

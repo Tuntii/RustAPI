@@ -1,0 +1,13 @@
+[package]
+name = "auth-api"
+version = "0.1.0"
+edition = "2021"
+publish = false
+description = "Authentication example demonstrating JWT middleware"
+
+[dependencies]
+rustapi-rs = { path = "../../crates/rustapi-rs", features = ["jwt", "rate-limit"] }
+tokio = { version = "1.35", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+validator = { workspace = true }
+utoipa = { workspace = true }
