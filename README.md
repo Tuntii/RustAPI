@@ -6,9 +6,25 @@
     Built for Developers, Optimised for Production.
   </p>
 
+  <!-- CI/CD Badges -->
+  [![CI](https://github.com/Tuntii/RustAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/Tuntii/RustAPI/actions/workflows/ci.yml)
+  [![Build Status](https://img.shields.io/github/actions/workflow/status/Tuntii/RustAPI/ci.yml?branch=main&label=build)](https://github.com/Tuntii/RustAPI/actions)
+  
+  <!-- Crates.io Badges -->
+  [![Crates.io](https://img.shields.io/crates/v/rustapi-rs.svg)](https://crates.io/crates/rustapi-rs)
+  [![Downloads](https://img.shields.io/crates/d/rustapi-rs.svg)](https://crates.io/crates/rustapi-rs)
+  [![Docs.rs](https://img.shields.io/docsrs/rustapi-rs)](https://docs.rs/rustapi-rs)
+  
+  <!-- Project Info Badges -->
   [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](LICENSE)
   [![Rust](https://img.shields.io/badge/rust-1.75%2B-orange.svg)](https://www.rust-lang.org/)
-  [![Status](https://img.shields.io/badge/status-active-green.svg)](https://github.com/RustAPI/RustAPI)
+  [![MSRV](https://img.shields.io/badge/MSRV-1.75-blue.svg)](https://blog.rust-lang.org/2023/12/28/Rust-1.75.0.html)
+  
+  <!-- Community & Quality Badges -->
+  [![GitHub Stars](https://img.shields.io/github/stars/Tuntii/RustAPI?style=social)](https://github.com/Tuntii/RustAPI)
+  [![GitHub Issues](https://img.shields.io/github/issues/Tuntii/RustAPI)](https://github.com/Tuntii/RustAPI/issues)
+  [![GitHub Pull Requests](https://img.shields.io/github/issues-pr/Tuntii/RustAPI)](https://github.com/Tuntii/RustAPI/pulls)
+  [![Contributors](https://img.shields.io/github/contributors/Tuntii/RustAPI)](https://github.com/Tuntii/RustAPI/graphs/contributors)
 </div>
 
 <br />
