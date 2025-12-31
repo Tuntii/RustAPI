@@ -104,7 +104,6 @@ async fn login(
     }))
 }
 
-
 // Route functions
 pub fn register_route() -> Route {
     post_route("/auth/register", register)

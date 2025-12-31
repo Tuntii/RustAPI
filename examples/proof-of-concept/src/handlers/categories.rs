@@ -22,7 +22,9 @@ async fn list_categories(
         .map(crate::models::CategoryResponse::from)
         .collect();
 
-    Json(crate::models::CategoryListResponse { categories: responses })
+    Json(crate::models::CategoryListResponse {
+        categories: responses,
+    })
 }
 
 /// Create a new category
@@ -34,7 +36,12 @@ async fn create_category(
     let user_id: u64 = claims.sub.parse().unwrap_or(0);
 
     // Check if category name already exists for this user
-    if state.categories.find_by_name(user_id, &body.name).await.is_some() {
+    if state
+        .categories
+        .find_by_name(user_id, &body.name)
+        .await
+        .is_some()
+    {
         return Err(ApiError::bad_request("Category name already exists"));
     }
 
@@ -121,7 +128,6 @@ async fn delete_category(
 
     Ok(NoContent)
 }
-
 
 // Route functions
 pub fn list_categories_route() -> Route {

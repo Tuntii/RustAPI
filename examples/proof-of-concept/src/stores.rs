@@ -53,7 +53,7 @@ impl UserStore {
     /// Create a new user, returns None if email already exists
     pub async fn create(&self, user: User) -> Option<User> {
         let mut email_index = self.email_index.write().await;
-        
+
         // Check if email already exists
         if email_index.contains_key(&user.email) {
             return None;
@@ -64,7 +64,7 @@ impl UserStore {
         new_user.id = id;
 
         email_index.insert(new_user.email.clone(), id);
-        
+
         let mut users = self.users.write().await;
         users.insert(id, new_user.clone());
 
@@ -75,7 +75,7 @@ impl UserStore {
     pub async fn find_by_email(&self, email: &str) -> Option<User> {
         let email_index = self.email_index.read().await;
         let user_id = email_index.get(email)?;
-        
+
         let users = self.users.read().await;
         users.get(user_id).cloned()
     }
@@ -92,7 +92,6 @@ impl Default for UserStore {
         Self::new()
     }
 }
-
 
 /// Thread-safe bookmark store with user index
 pub struct BookmarkStore {

@@ -5,8 +5,8 @@ use rustapi_rs::prelude::*;
 use std::sync::Arc;
 
 use crate::models::{
-    Bookmark, BookmarkEvent, BookmarkListParams, BookmarkResponse, Claims,
-    CreateBookmarkRequest, PaginatedResponse, UpdateBookmarkRequest,
+    Bookmark, BookmarkEvent, BookmarkListParams, BookmarkResponse, Claims, CreateBookmarkRequest,
+    PaginatedResponse, UpdateBookmarkRequest,
 };
 use crate::stores::AppState;
 
@@ -96,7 +96,6 @@ async fn create_bookmark(
 
     Created(response)
 }
-
 
 /// Get a single bookmark by ID
 async fn get_bookmark(
@@ -196,7 +195,9 @@ async fn delete_bookmark(
     state.bookmarks.delete(id).await;
 
     // Broadcast SSE event
-    state.sse_broadcaster.broadcast(BookmarkEvent::Deleted { id });
+    state
+        .sse_broadcaster
+        .broadcast(BookmarkEvent::Deleted { id });
 
     Ok(NoContent)
 }
@@ -214,7 +215,10 @@ async fn export_bookmarks(
         .into_iter()
         .map(|b| {
             let category_name = b.category_id.and_then(|cid| {
-                categories.iter().find(|c| c.id == cid).map(|c| c.name.clone())
+                categories
+                    .iter()
+                    .find(|c| c.id == cid)
+                    .map(|c| c.name.clone())
             });
 
             crate::models::BookmarkExport {
@@ -258,7 +262,11 @@ async fn import_bookmarks(
 
         // Find or create category
         let category_id = if let Some(ref name) = export.category_name {
-            state.categories.find_by_name(user_id, name).await.map(|c| c.id)
+            state
+                .categories
+                .find_by_name(user_id, name)
+                .await
+                .map(|c| c.id)
         } else {
             None
         };
@@ -286,7 +294,6 @@ async fn import_bookmarks(
         errors,
     })
 }
-
 
 // Route functions
 pub fn list_bookmarks_route() -> Route {

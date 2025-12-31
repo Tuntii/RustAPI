@@ -69,16 +69,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .layer(RequestIdLayer::new())
         .layer(TracingLayer::new())
         .layer(RateLimitLayer::new(100, Duration::from_secs(60)))
-        .layer(
-            JwtLayer::<models::Claims>::new(JWT_SECRET).skip_paths(vec![
-                "/",
-                "/health",
-                "/docs",
-                "/auth/register",
-                "/auth/login",
-                "/static",
-            ]),
-        )
+        .layer(JwtLayer::<models::Claims>::new(JWT_SECRET).skip_paths(vec![
+            "/",
+            "/health",
+            "/docs",
+            "/auth/register",
+            "/auth/login",
+            "/static",
+        ]))
         // Register schemas
         .register_schema::<models::RegisterRequest>()
         .register_schema::<models::LoginRequest>()
