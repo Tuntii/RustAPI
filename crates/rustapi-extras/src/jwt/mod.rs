@@ -86,13 +86,15 @@ impl JwtValidation {
 /// }
 ///
 /// let app = RustApi::new()
-///     .layer(JwtLayer::<Claims>::new("my-secret-key"))
+///     .layer(JwtLayer::<Claims>::new("my-secret-key")
+///         .skip_paths(vec!["/health", "/docs", "/auth/login"]))
 ///     .route("/protected", get(protected_handler));
 /// ```
 #[derive(Clone)]
 pub struct JwtLayer<T> {
     secret: Arc<String>,
     validation: JwtValidation,
+    skip_paths: Arc<Vec<String>>,
     _claims: PhantomData<T>,
 }
 
@@ -102,6 +104,7 @@ impl<T: DeserializeOwned + Clone + Send + Sync + 'static> JwtLayer<T> {
         Self {
             secret: Arc::new(secret.into()),
             validation: JwtValidation::default(),
+            skip_paths: Arc::new(Vec::new()),
             _claims: PhantomData,
         }
     }
@@ -109,6 +112,22 @@ impl<T: DeserializeOwned + Clone + Send + Sync + 'static> JwtLayer<T> {
     /// Configure custom validation options.
     pub fn with_validation(mut self, validation: JwtValidation) -> Self {
         self.validation = validation;
+        self
+    }
+
+    /// Skip JWT validation for specific paths.
+    /// 
+    /// Paths that start with any of the provided prefixes will bypass JWT validation.
+    /// This is useful for public endpoints like health checks, documentation, and login.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let layer = JwtLayer::<Claims>::new("secret")
+    ///     .skip_paths(vec!["/health", "/docs", "/auth/login"]);
+    /// ```
+    pub fn skip_paths(mut self, paths: Vec<&str>) -> Self {
+        self.skip_paths = Arc::new(paths.into_iter().map(String::from).collect());
         self
     }
 
@@ -142,8 +161,15 @@ impl<T: DeserializeOwned + Clone + Send + Sync + 'static> MiddlewareLayer for Jw
     ) -> Pin<Box<dyn Future<Output = Response> + Send + 'static>> {
         let secret = self.secret.clone();
         let validation = self.validation.clone();
+        let skip_paths = self.skip_paths.clone();
 
         Box::pin(async move {
+            // Check if this path should skip JWT validation
+            let path = req.uri().path();
+            if skip_paths.iter().any(|skip| path.starts_with(skip)) {
+                return next(req).await;
+            }
+
             // Extract the Authorization header
             let auth_header = req.headers().get(http::header::AUTHORIZATION);
 

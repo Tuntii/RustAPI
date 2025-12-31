@@ -7,11 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2024-12-31
+
 ### Added
-- CONTRIBUTING.md with contribution guidelines
-- CHANGELOG.md following Keep a Changelog format
-- GitHub Actions CI/CD workflows
-- Dual MIT/Apache-2.0 license files
+- `skip_paths` method for JwtLayer to exclude paths from JWT validation
+- `docs_with_auth` method for Basic Auth protected Swagger UI
+- `docs_with_auth_and_info` method for customized protected docs
+
+### Changed
+- auth-api example now demonstrates protected docs with Basic Auth
+- JWT middleware can now skip validation for public endpoints
 
 ## [0.1.1] - 2024-12-31
 
@@ -78,6 +83,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `extras` meta-feature for common optional features
 - `full` feature for all optional features
 
-[Unreleased]: https://github.com/Tuntii/RustAPI/compare/v0.1.1...HEAD
+[Unreleased]: https://github.com/Tuntii/RustAPI/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/Tuntii/RustAPI/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/Tuntii/RustAPI/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/Tuntii/RustAPI/releases/tag/v0.1.0

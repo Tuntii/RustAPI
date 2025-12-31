@@ -41,6 +41,7 @@ tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 inventory = { workspace = true }
 uuid = { workspace = true }
+base64 = "0.22"
 
 # Cookies (optional)
 cookie = { version = "0.18", optional = true }

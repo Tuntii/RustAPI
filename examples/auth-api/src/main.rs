@@ -195,33 +195,36 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     println!("  GET /protected/data    - Protected data");
     println!();
     println!("Documentation:");
-    println!("  GET /docs - Swagger UI");
+    println!("  GET /docs - Swagger UI (Basic Auth: docs / docs123)");
     println!();
     println!("Server running at http://127.0.0.1:8080");
 
     // Create the app with JWT middleware for protected routes
+    // Public routes (/health, /auth/login, /) are excluded from JWT validation
+    // Docs has its own Basic Auth protection
     let app = RustApi::new()
         .body_limit(1024 * 1024) // 1MB limit
         .layer(RequestIdLayer::new())
         .layer(TracingLayer::new())
         // Rate limiting: 100 requests per minute
         .layer(RateLimitLayer::new(100, Duration::from_secs(60)))
-        // JWT middleware - validates tokens on all routes
-        // Public routes will fail without token, so we need to handle that
-        .layer(JwtLayer::<Claims>::new(JWT_SECRET))
+        // JWT middleware - skip public paths (docs has its own auth)
+        .layer(JwtLayer::<Claims>::new(JWT_SECRET)
+            .skip_paths(vec!["/health", "/docs", "/auth/login", "/"]))
         .register_schema::<LoginRequest>()
         .register_schema::<LoginResponse>()
         .register_schema::<UserProfile>()
         .register_schema::<Message>()
-        // Public routes (these will require token due to global JWT layer)
+        // Public routes
         .mount_route(welcome_route())
         .mount_route(health_route())
         .mount_route(login_route())
-        // Protected routes using standard routing
+        // Protected routes
         .route("/protected/profile", get(get_profile))
         .route("/protected/admin", get(admin_only))
         .route("/protected/data", get(get_protected_data))
-        .docs("/docs");
+        // Docs with Basic Auth protection
+        .docs_with_auth("/docs", "docs", "docs123");
 
     app.run("127.0.0.1:8080").await
 }
