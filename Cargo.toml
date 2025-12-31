@@ -11,6 +11,7 @@ members = [
     "examples/sqlx-crud",
     "examples/crud-api",
     "examples/auth-api",
+    "examples/proof-of-concept",
 ]
 
 [workspace.package]
