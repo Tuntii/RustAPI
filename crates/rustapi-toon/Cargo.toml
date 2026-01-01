@@ -1,0 +1,42 @@
+[package]
+name = "rustapi-toon"
+description = "TOON (Token-Oriented Object Notation) support for RustAPI - LLM-optimized data format"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords = ["web", "framework", "api", "toon", "llm"]
+categories = ["web-programming::http-server"]
+rust-version.workspace = true
+readme = "README.md"
+
+[dependencies]
+# Core dependencies
+rustapi-core = { workspace = true }
+rustapi-openapi = { workspace = true }
+
+# TOON format
+toon-format = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# HTTP types
+bytes = { workspace = true }
+http = { workspace = true }
+http-body-util = { workspace = true }
+
+# Async
+futures-util = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+
+# Error handling
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+serde_json = { workspace = true }
