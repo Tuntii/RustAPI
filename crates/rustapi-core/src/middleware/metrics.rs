@@ -296,7 +296,7 @@ mod tests {
     #[test]
     fn test_metrics_layer_creation() {
         let metrics = MetricsLayer::new();
-        assert!(metrics.registry().gather().len() > 0);
+        assert!(!metrics.registry().gather().is_empty());
     }
 
     #[test]

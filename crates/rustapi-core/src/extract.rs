@@ -1028,7 +1028,7 @@ mod tests {
                     vec![]
                 };
 
-                let request = create_test_request_with_headers(Method::GET, "/test", headers);
+                let _request = create_test_request_with_headers(Method::GET, "/test", headers);
 
                 // We need to use a static string for the header name in the extractor
                 // So we'll test with a known header name
@@ -1357,7 +1357,7 @@ mod tests {
 
                     // Verify all expected cookies are present with correct values
                     for (name, expected_value) in &expected_cookies {
-                        let cookie = extracted.get(*name)
+                        let cookie = extracted.get(name)
                             .ok_or_else(|| TestCaseError::fail(format!("Cookie '{}' not found", name)))?;
 
                         prop_assert_eq!(

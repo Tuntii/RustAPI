@@ -619,6 +619,7 @@ mod tests {
 
             // Define a config struct that matches our env vars
             #[derive(Debug, Deserialize, PartialEq)]
+            #[allow(dead_code)]
             struct PropTestConfig {
                 prop_test_str: String,
                 prop_test_num: u32,

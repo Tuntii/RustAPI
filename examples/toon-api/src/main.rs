@@ -241,14 +241,12 @@ async fn get_users_llm_toon() -> LlmResponse<UsersResponse> {
 /// Compare JSON vs TOON for the same data
 async fn compare_formats() -> Json<ComparisonResult> {
     let users = get_sample_users();
-    let response = UsersResponse {
-        users,
-        total: 3,
-    };
+    let response = UsersResponse { users, total: 3 };
 
     // Serialize to both formats
     let json_str = serde_json::to_string_pretty(&response).unwrap();
-    let toon_str = rustapi_rs::toon::encode_default(&response).unwrap_or_else(|_| "Error".to_string());
+    let toon_str =
+        rustapi_rs::toon::encode_default(&response).unwrap_or_else(|_| "Error".to_string());
 
     let json_bytes = json_str.len();
     let toon_bytes = toon_str.len();
@@ -266,7 +264,8 @@ async fn compare_formats() -> Json<ComparisonResult> {
 /// API info
 async fn index() -> Json<Message> {
     Json(Message {
-        content: "TOON Format API Example - Use /compare to see JSON vs TOON comparison".to_string(),
+        content: "TOON Format API Example - Use /compare to see JSON vs TOON comparison"
+            .to_string(),
         format: "json".to_string(),
     })
 }
@@ -293,7 +292,9 @@ async fn toon_docs() -> Html<String> {
     <p><a href="/docs">Back to API Documentation</a></p>
 </body>
 </html>"#,
-        TOON_FORMAT_DESCRIPTION.replace('<', "&lt;").replace('>', "&gt;")
+        TOON_FORMAT_DESCRIPTION
+            .replace('<', "&lt;")
+            .replace('>', "&gt;")
     );
     Html(html)
 }
@@ -303,9 +304,7 @@ async fn toon_docs() -> Html<String> {
 #[tokio::main]
 async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // Initialize tracing
-    tracing_subscriber::fmt()
-        .with_env_filter("info")
-        .init();
+    tracing_subscriber::fmt().with_env_filter("info").init();
 
     info!("Starting TOON API example...");
     info!("Server running at http://127.0.0.1:8080");
@@ -331,8 +330,8 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
     info!("  curl -H 'Accept: application/toon' http://localhost:8080/users  # TOON");
 
     // Build API description with TOON support notice
-    let description = api_description_with_toon(
-        "TOON Format API Example demonstrating LLM-optimized data serialization."
+    let _description = api_description_with_toon(
+        "TOON Format API Example demonstrating LLM-optimized data serialization.",
     );
 
     RustApi::new()
