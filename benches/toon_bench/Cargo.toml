@@ -1,0 +1,17 @@
+[package]
+name = "toon-bench"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[[bench]]
+name = "toon_bench"
+harness = false
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+toon-format.workspace = true
+
+[dev-dependencies]
+criterion.workspace = true

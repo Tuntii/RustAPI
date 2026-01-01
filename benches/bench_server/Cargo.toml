@@ -1,0 +1,17 @@
+[package]
+name = "bench-server"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[[bin]]
+name = "bench-server"
+path = "src/main.rs"
+
+[dependencies]
+rustapi-rs.workspace = true
+tokio.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+validator.workspace = true
+utoipa.workspace = true
