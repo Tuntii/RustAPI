@@ -157,6 +157,7 @@ pub fn get_environment() -> Environment {
 /// Note: This only works if the environment hasn't been accessed yet.
 /// Returns `Ok(())` if successful, `Err(env)` if already set.
 #[cfg(test)]
+#[allow(dead_code)]
 pub fn set_environment_for_test(env: Environment) -> Result<(), Environment> {
     ENVIRONMENT.set(env)
 }

@@ -93,6 +93,32 @@ pub use rustapi_extras::sqlx;
 #[cfg(feature = "sqlx")]
 pub use rustapi_extras::{convert_sqlx_error, SqlxErrorExt};
 
+// Re-export TOON (feature-gated)
+#[cfg(feature = "toon")]
+pub mod toon {
+    //! TOON (Token-Oriented Object Notation) support
+    //!
+    //! TOON is a compact format for LLM communication that reduces token usage by 20-40%.
+    //!
+    //! # Example
+    //!
+    //! ```rust,ignore
+    //! use rustapi_rs::toon::{Toon, Negotiate, AcceptHeader};
+    //!
+    //! // As extractor
+    //! async fn handler(Toon(data): Toon<MyType>) -> impl IntoResponse { ... }
+    //!
+    //! // As response
+    //! async fn handler() -> Toon<MyType> { Toon(my_data) }
+    //!
+    //! // Content negotiation (returns JSON or TOON based on Accept header)
+    //! async fn handler(accept: AcceptHeader) -> Negotiate<MyType> {
+    //!     Negotiate::new(my_data, accept.preferred)
+    //! }
+    //! ```
+    pub use rustapi_toon::*;
+}
+
 /// Prelude module - import everything you need with `use rustapi_rs::prelude::*`
 pub mod prelude {
     // Core types
@@ -188,6 +214,10 @@ pub mod prelude {
     // SQLx types (feature-gated)
     #[cfg(feature = "sqlx")]
     pub use rustapi_extras::{convert_sqlx_error, SqlxErrorExt};
+
+    // TOON types (feature-gated)
+    #[cfg(feature = "toon")]
+    pub use rustapi_toon::{AcceptHeader, LlmResponse, Negotiate, OutputFormat, Toon};
 }
 
 #[cfg(test)]

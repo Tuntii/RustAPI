@@ -5,3 +5,4 @@
 # It is recommended to check this file in to source control so that
 # everyone who runs the test benefits from these saved cases.
 cc 28acea2d2738acc977578332f43b7f886201ab391122e595bcff972bd2b25f47 # shrinks to headers = [("l", "A"), ("l", "B")]
+cc a05713c204e632ed11eb9b71cb28ccb1ecaf1436d4c7861ff8d8f4e07f124613 # shrinks to cookies = [("a", "0"), ("a", "A")]

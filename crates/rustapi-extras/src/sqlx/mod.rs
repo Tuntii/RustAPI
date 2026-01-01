@@ -156,7 +156,6 @@ pub fn convert_sqlx_error(err: sqlx::Error) -> ApiError {
 /// Note: This implementation is provided in rustapi-core with the `sqlx` feature flag.
 /// The extension trait `SqlxErrorExt` is provided here for convenience when you need
 /// explicit conversion control.
-
 #[cfg(test)]
 mod tests {
     use super::*;

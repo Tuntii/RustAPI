@@ -629,7 +629,7 @@ mod tests {
                 1 => format!("/{}//test", content), // Double slash
                 2 => format!("/{}/{{", content), // Unclosed brace
                 3 => format!("/{}/{{}}", content), // Empty parameter
-                4 => format!("/{}/{{1{content}}}", content = content), // Parameter starts with digit
+                4 => format!("/{content}/{{1{content}}}", content = content), // Parameter starts with digit
                 _ => content.clone(),
             };
 

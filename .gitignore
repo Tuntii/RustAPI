@@ -1,5 +1,7 @@
 /target
 /memories
 /scripts
-/benches
+# /benches
 /.kiro
+
+assets/myadam.jpg

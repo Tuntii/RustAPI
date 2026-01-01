@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-01-01
+
+### Added
+- **New `rustapi-toon` crate**: TOON (Token-Oriented Object Notation) format support
+  - LLM-optimized data serialization format
+  - Content negotiation via `Accept` header (`application/toon`, `application/json`)
+  - `Toon<T>` extractor and responder
+  - `ToonNegotiate<T>` for automatic format selection
+  - `LlmResponse<T>` for AI-friendly structured responses
+  - OpenAPI integration with TOON schema support
+- `toon` feature flag in `rustapi-rs` for opt-in TOON support
+- `toon-api` example demonstrating TOON format usage
+- Improved cookie extraction test for duplicate cookie names
+
+### Changed
+- Updated `rustapi-rs` to re-export toon module when feature enabled
+
 ## [0.1.2] - 2024-12-31
 
 ### Added

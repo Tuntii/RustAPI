@@ -15,6 +15,7 @@ readme = "README.md"
 rustapi-core = { workspace = true, default-features = false }
 rustapi-macros = { workspace = true }
 rustapi-extras = { workspace = true, optional = true }
+rustapi-toon = { workspace = true, optional = true }
 
 # Re-exports for user convenience
 tokio = { workspace = true }
@@ -39,6 +40,9 @@ config = ["dep:rustapi-extras", "rustapi-extras/config"]
 cookies = ["dep:rustapi-extras", "rustapi-extras/cookies", "rustapi-core/cookies"]
 sqlx = ["dep:rustapi-extras", "rustapi-extras/sqlx"]
 
+# TOON format support
+toon = ["dep:rustapi-toon"]
+
 # Meta features
 extras = ["jwt", "cors", "rate-limit"]
-full = ["extras", "config", "cookies", "sqlx"]
+full = ["extras", "config", "cookies", "sqlx", "toon"]

@@ -296,7 +296,7 @@ mod tests {
     #[test]
     fn test_metrics_layer_creation() {
         let metrics = MetricsLayer::new();
-        assert!(metrics.registry().gather().len() > 0);
+        assert!(!metrics.registry().gather().is_empty());
     }
 
     #[test]
@@ -363,7 +363,7 @@ mod tests {
         let response = handler();
 
         let http_response = crate::response::IntoResponse::into_response(response);
-        let body = http_response.into_body();
+        let _body = http_response.into_body();
 
         // The body should contain rustapi_info metric
         // We can't easily read the body here, but we verified the metric is registered

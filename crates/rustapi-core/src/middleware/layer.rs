@@ -244,10 +244,12 @@ mod tests {
 
     /// A middleware that modifies the response status
     #[derive(Clone)]
+    #[allow(dead_code)]
     struct StatusModifyingMiddleware {
         status: StatusCode,
     }
 
+    #[allow(dead_code)]
     impl StatusModifyingMiddleware {
         fn new(status: StatusCode) -> Self {
             Self { status }

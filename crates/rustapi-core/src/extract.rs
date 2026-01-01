@@ -1028,7 +1028,7 @@ mod tests {
                     vec![]
                 };
 
-                let request = create_test_request_with_headers(Method::GET, "/test", headers);
+                let _request = create_test_request_with_headers(Method::GET, "/test", headers);
 
                 // We need to use a static string for the header name in the extractor
                 // So we'll test with a known header name
@@ -1294,6 +1294,7 @@ mod tests {
     #[test]
     fn test_extension_extractor_missing() {
         #[derive(Clone, Debug)]
+        #[allow(dead_code)]
         struct MyData(String);
 
         let request = create_test_request_with_headers(Method::GET, "/test", vec![]);
@@ -1311,6 +1312,7 @@ mod tests {
         //
         // For any request with Cookie header containing cookies C, the `Cookies` extractor
         // SHALL return a CookieJar containing exactly the cookies in C.
+        // Note: Duplicate cookie names result in only the last value being kept.
         //
         // **Validates: Requirements 5.3**
         proptest! {
@@ -1348,29 +1350,32 @@ mod tests {
                     let extracted = Cookies::from_request_parts(&request)
                         .map_err(|e| TestCaseError::fail(format!("Failed to extract cookies: {}", e)))?;
 
-                    // Verify all original cookies are present
+                    // Build expected cookies map - last value wins for duplicate names
+                    let mut expected_cookies: std::collections::HashMap<&str, &str> = std::collections::HashMap::new();
                     for (name, value) in &cookies {
-                        let cookie = extracted.get(name.as_str())
+                        expected_cookies.insert(name.as_str(), value.as_str());
+                    }
+
+                    // Verify all expected cookies are present with correct values
+                    for (name, expected_value) in &expected_cookies {
+                        let cookie = extracted.get(name)
                             .ok_or_else(|| TestCaseError::fail(format!("Cookie '{}' not found", name)))?;
 
                         prop_assert_eq!(
                             cookie.value(),
-                            value.as_str(),
+                            *expected_value,
                             "Cookie '{}' value mismatch",
                             name
                         );
                     }
 
-                    // Count cookies in jar
+                    // Count cookies in jar should match unique cookie names
                     let extracted_count = extracted.iter().count();
-
-                    // Note: Due to potential duplicate cookie names, we check that we have
-                    // at least as many unique cookies as we put in
-                    let unique_names: std::collections::HashSet<_> = cookies.iter().map(|(n, _)| n).collect();
-                    prop_assert!(
-                        extracted_count >= unique_names.len(),
-                        "Expected at least {} cookies, got {}",
-                        unique_names.len(),
+                    prop_assert_eq!(
+                        extracted_count,
+                        expected_cookies.len(),
+                        "Expected {} unique cookies, got {}",
+                        expected_cookies.len(),
                         extracted_count
                     );
 

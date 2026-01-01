@@ -1,199 +1,304 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/Tuntii/RustAPI/refs/heads/main/assets/logo.jpg" alt="RustAPI Logo" width="200" height="200" />
-  <h1>RustAPI</h1>
-  <p>
-    <strong>The Ergonomic Web Framework for Rust.</strong><br>
-    Built for Developers, Optimised for Production.
-  </p>
+  <img src="https://raw.githubusercontent.com/Tuntii/RustAPI/refs/heads/main/assets/logo.jpg" alt="RustAPI" width="180" />
+  
+  # RustAPI
+  
+  **The power of Rust. Modern DX. LLM-ready.**
 
-  <!-- CI/CD Badges -->
-  [![CI](https://github.com/Tuntii/RustAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/Tuntii/RustAPI/actions/workflows/ci.yml)
-  [![Build Status](https://img.shields.io/github/actions/workflow/status/Tuntii/RustAPI/ci.yml?branch=main&label=build)](https://github.com/Tuntii/RustAPI/actions)
-  
-  <!-- Crates.io Badges -->
   [![Crates.io](https://img.shields.io/crates/v/rustapi-rs.svg)](https://crates.io/crates/rustapi-rs)
-  [![Downloads](https://img.shields.io/crates/d/rustapi-rs.svg)](https://crates.io/crates/rustapi-rs)
   [![Docs.rs](https://img.shields.io/docsrs/rustapi-rs)](https://docs.rs/rustapi-rs)
-  
-  <!-- Project Info Badges -->
   [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](LICENSE)
-  [![Rust](https://img.shields.io/badge/rust-1.75%2B-orange.svg)](https://www.rust-lang.org/)
-  [![MSRV](https://img.shields.io/badge/MSRV-1.75-blue.svg)](https://blog.rust-lang.org/2023/12/28/Rust-1.75.0.html)
-  
-  <!-- Community & Quality Badges -->
-  [![GitHub Stars](https://img.shields.io/github/stars/Tuntii/RustAPI?style=social)](https://github.com/Tuntii/RustAPI)
-  [![GitHub Issues](https://img.shields.io/github/issues/Tuntii/RustAPI)](https://github.com/Tuntii/RustAPI/issues)
-  [![GitHub Pull Requests](https://img.shields.io/github/issues-pr/Tuntii/RustAPI)](https://github.com/Tuntii/RustAPI/pulls)
-  [![Contributors](https://img.shields.io/github/contributors/Tuntii/RustAPI)](https://github.com/Tuntii/RustAPI/graphs/contributors)
 </div>
 
-<br />
+---
 
-## 🚀 Vision
+## Vision
 
-**RustAPI** brings the developer experience (DX) of modern frameworks like **FastAPI** to the **Rust** ecosystem.
+RustAPI redefines **API development for the AI era**.
 
-We believe that writing high-performance, type-safe web APIs in Rust shouldn't require fighting with complex trait bounds or massive boilerplate. RustAPI provides a polished, battery-included experience where:
+We combine Rust's performance and safety with FastAPI's ergonomics. Write type-safe, production-ready APIs without fighting trait bounds. **MCP servers**, **LLM integrations**, or classic REST APIs — one framework for all.
 
-*   **API Design is First-Class**: Define your schema, and let the framework handle Validation and OpenAPI documentation automatically.
-*   **The Engine is Abstracted**: We rely on industry standards like `tokio`, `hyper`, and `matchit` internally, but we expose a stable, user-centric API. This means we can upgrade the engine without breaking your code.
-*   **Zero Boilerplate**: Extractors and macros do the heavy lifting.
+```rust
+use rustapi_rs::prelude::*;
 
-## ✨ Features
+#[rustapi::get("/hello/:name")]
+async fn hello(Path(name): Path<String>) -> Json<Message> {
+    Json(Message { greeting: format!("Hello, {name}!") })
+}
 
-- **⚡ Fast & Async**: Built on top of `tokio` and `hyper` 1.0.
-- **🛡️ Type-Safe**: Request/Response bodies are strictly typed using generic extractors (`Json`, `Query`, `Path`).
-- **📝 Automatic OpenAPI**: Your code *is* your documentation. Swagger UI is served at `/docs` out of the box.
-- **✅ Built-in Validation**: Add `#[validate(email)]` to your structs and get automatic 422 error handling.
-- **🧩 Intuitive Routing**: Radix-tree based routing with simple macros `#[rustapi::get]`, `#[rustapi::post]`.
-- **🔋 Batteries Included**: Middleware, JWT auth, CORS, rate limiting, and configuration management.
-- **🔐 Security First**: JWT authentication, CORS middleware, and IP-based rate limiting out of the box.
-- **⚙️ Configuration**: Environment-based config with `.env` file support and typed config extraction.
+#[rustapi::main]
+async fn main() -> Result<()> {
+    RustApi::new().mount_route(hello_route()).docs("/docs").run("0.0.0.0:8080").await
+}
+```
 
-## 📦 Quick Start
+5 lines of code. Auto-generated OpenAPI docs. Production-ready.
 
-Add `rustapi-rs` to your `Cargo.toml`.
+---
+
+## Quick Start
 
 ```toml
 [dependencies]
-rustapi-rs = "0.1"
-
-# Optional features
-# rustapi-rs = { version = "0.1", features = ["jwt", "cors", "rate-limit"] }
+rustapi-rs = "0.0.5"
 ```
 
 ```rust
 use rustapi_rs::prelude::*;
 
-/// Define your response schema
 #[derive(Serialize, Schema)]
-struct HelloResponse {
-    message: String,
+struct User { id: u64, name: String }
+
+#[rustapi::get("/users/:id")]
+async fn get_user(Path(id): Path<u64>) -> Json<User> {
+    Json(User { id, name: "Tunahan".into() })
 }
 
-/// Define an endpoint
-#[rustapi::get("/")]
-#[rustapi::tag("General")]
-#[rustapi::summary("Hello World Endpoint")]
-async fn hello() -> Json<HelloResponse> {
-    Json(HelloResponse {
-        message: "Hello from RustAPI!".to_string(),
-    })
-}
-
-/// Run the server
 #[rustapi::main]
 async fn main() -> Result<()> {
     RustApi::new()
-        .mount_route(hello_route()) // Auto-generated route handler
-        .docs("/docs")              // Enable Swagger UI
+        .mount_route(get_user_route())
+        .docs("/docs")
         .run("127.0.0.1:8080")
         .await
 }
 ```
 
-Visit `http://127.0.0.1:8080/docs` to see your interactive API documentation!
+`http://localhost:8080/docs` → Swagger UI ready.
 
-## 🔐 Optional Features
+---
 
-RustAPI provides optional features to keep your binary size minimal:
+## Features
 
 | Feature | Description |
 |---------|-------------|
-| `jwt` | JWT authentication middleware and `AuthUser<T>` extractor |
-| `cors` | CORS middleware with builder pattern configuration |
-| `rate-limit` | IP-based rate limiting middleware |
-| `config` | Configuration management with `.env` file support |
-| `cookies` | Cookie parsing extractor |
-| `sqlx` | SQLx database error conversion to ApiError |
-| `extras` | Meta feature enabling jwt, cors, and rate-limit |
-| `full` | All optional features enabled |
+| **Type-Safe Extractors** | `Json<T>`, `Query<T>`, `Path<T>` — compile-time guarantees |
+| **Auto OpenAPI** | Your code = your docs. `/docs` endpoint out of the box |
+| **Validation** | `#[validate(email)]` → automatic 422 responses |
+| **JWT Auth** | One-line auth with `AuthUser<T>` extractor |
+| **CORS & Rate Limit** | Production-ready middleware |
+| **TOON Format** | **50-58% token savings** for LLMs |
 
-### JWT Authentication Example
+### Optional Features
 
-```rust
-use rustapi_rs::prelude::*;
-
-#[derive(Debug, Deserialize, Serialize)]
-struct Claims {
-    sub: String,
-    exp: u64,
-}
-
-async fn protected(AuthUser(claims): AuthUser<Claims>) -> Json<String> {
-    Json(format!("Hello, {}!", claims.sub))
-}
-
-#[tokio::main]
-async fn main() -> Result<()> {
-    RustApi::new()
-        .with_middleware(JwtLayer::<Claims>::new("your-secret-key"))
-        .route("/protected", get(protected))
-        .run("127.0.0.1:8080")
-        .await
-}
+```toml
+rustapi-rs = { version = "0.0.5", features = ["jwt", "cors", "toon"] }
 ```
 
-### CORS Configuration Example
+- `jwt` — JWT authentication
+- `cors` — CORS middleware  
+- `rate-limit` — IP-based rate limiting
+- `toon` — LLM-optimized responses
+- `full` — Everything included
+
+---
+
+## 🤖 LLM-Optimized: TOON Format
+
+RustAPI is built for **AI-powered APIs**.
+
+**TOON** (Token-Oriented Object Notation) uses **50-58% fewer tokens** than JSON. Ideal for MCP servers, AI agents, and LLM integrations.
 
 ```rust
-use rustapi_rs::prelude::*;
+use rustapi_rs::toon::{Toon, LlmResponse, AcceptHeader};
 
-#[tokio::main]
-async fn main() -> Result<()> {
-    let cors = CorsLayer::new()
-        .allow_origins(["https://example.com"])
-        .allow_methods([Method::GET, Method::POST])
-        .allow_credentials(true);
-
-    RustApi::new()
-        .with_middleware(cors)
-        .route("/api", get(handler))
-        .run("127.0.0.1:8080")
-        .await
+// Direct TOON response
+#[rustapi::get("/ai/users")]
+async fn ai_users() -> Toon<UsersResponse> {
+    Toon(get_users())
 }
+
+// Content negotiation: JSON or TOON based on Accept header
+#[rustapi::get("/users")]
+async fn users(accept: AcceptHeader) -> LlmResponse<UsersResponse> {
+    LlmResponse::new(get_users(), accept.preferred)
+}
+// Headers: X-Token-Count-JSON, X-Token-Count-TOON, X-Token-Savings
 ```
 
-### Rate Limiting Example
+**Why TOON?**
+- Compatible with Claude, GPT-4, Gemini — all major LLMs
+- Cut your token costs in half
+- Optimized for MCP (Model Context Protocol) servers
 
-```rust
-use rustapi_rs::prelude::*;
-use std::time::Duration;
+---
 
-#[tokio::main]
-async fn main() -> Result<()> {
-    let rate_limit = RateLimitLayer::new(100, Duration::from_secs(60)); // 100 req/min
+## Architecture
 
-    RustApi::new()
-        .with_middleware(rate_limit)
-        .route("/api", get(handler))
-        .run("127.0.0.1:8080")
-        .await
-}
+RustAPI follows a **Facade Architecture** — a stable public API that shields you from internal changes.
+
+### System Overview
+
+```mermaid
+graph TB
+    subgraph Client["🌐 Client Layer"]
+        HTTP[HTTP Request]
+        LLM[LLM/AI Agent]
+        MCP[MCP Client]
+    end
+
+    subgraph Public["📦 rustapi-rs (Public Facade)"]
+        direction TB
+        Prelude[prelude::*]
+        Macros["#[rustapi::get/post]<br>#[rustapi::main]"]
+        Types[Json, Query, Path, Form]
+    end
+
+    subgraph Core["⚙️ rustapi-core (Engine)"]
+        direction TB
+        Router[Radix Router<br>matchit]
+        Extract[Extractors<br>FromRequest trait]
+        MW[Middleware Stack<br>Tower-like layers]
+        Resp[Response Builder<br>IntoResponse trait]
+    end
+
+    subgraph Extensions["🔌 Extension Crates"]
+        direction LR
+        OpenAPI["rustapi-openapi<br>Swagger/Docs"]
+        Validate["rustapi-validate<br>Request Validation"]
+        Toon["rustapi-toon<br>LLM Optimization"]
+        Extras["rustapi-extras<br>JWT/CORS/RateLimit"]
+    end
+
+    subgraph Foundation["🏗️ Foundation Layer"]
+        direction LR
+        Tokio[tokio<br>Async Runtime]
+        Hyper[hyper 1.0<br>HTTP Protocol]
+        Serde[serde<br>Serialization]
+    end
+
+    HTTP --> Public
+    LLM --> Public
+    MCP --> Public
+    Public --> Core
+    Core --> Extensions
+    Extensions --> Foundation
+    Core --> Foundation
 ```
 
-## 🏗️ Architecture
+### Request Flow
 
-RustAPI follows a **Facade Architecture** to ensure long-term stability:
+```mermaid
+sequenceDiagram
+    participant C as Client
+    participant R as Router
+    participant M as Middleware
+    participant E as Extractors
+    participant H as Handler
+    participant S as Serializer
 
-*   **`rustapi-rs`**: The public-facing crate. It re-exports carefully selected types and traits to provide a clean surface.
-*   **`rustapi-core`**: The internal engine. Handles the HTTP protocol, routing logic, and glue code.
-*   **`rustapi-macros`**: Powers the ergonomic attributes like `#[rustapi::main]` and `#[rustapi::get]`.
-*   **`rustapi-openapi` / `rustapi-validate`**: Specialized crates that wrap external ecosystems (`utoipa`, `validator`) into our consistent API.
+    C->>R: HTTP Request
+    R->>R: Match route (radix tree)
+    R->>M: Pass to middleware stack
+    
+    loop Each Middleware
+        M->>M: Process (JWT, CORS, RateLimit)
+    end
+    
+    M->>E: Extract parameters
+    E->>E: Json<T>, Path<T>, Query<T>
+    E->>E: Validate with #[validate]
+    
+    alt Validation Failed
+        E-->>C: 422 Unprocessable Entity
+    else Validation OK
+        E->>H: Call async handler
+        H->>S: Return response type
+        
+        alt TOON Enabled
+            S->>S: Check Accept header
+            S->>S: Serialize as TOON/JSON
+            S->>S: Add token count headers
+        else Standard
+            S->>S: Serialize as JSON
+        end
+        
+        S-->>C: HTTP Response
+    end
+```
 
-## 🗺️ Roadmap
+### Crate Dependency Graph
 
-- [x] **Phase 1: MVP**: Core routing, extractors, and server.
-- [x] **Phase 2: Validation & OpenAPI**: Auto-docs, strict validation, and metadata.
-- [x] **Phase 3: Batteries Included**: Authentication (JWT), CORS, Rate Limiting, Middleware, and Configuration.
-- [ ] **Phase 4: v1.0 Polish**: Advanced ergonomics, CLI tool, and production hardening.
+```mermaid
+graph BT
+    subgraph User["Your Application"]
+        App[main.rs]
+    end
 
+    subgraph Facade["Single Import"]
+        RS[rustapi-rs]
+    end
 
-## 📄 License
+    subgraph Internal["Internal Crates"]
+        Core[rustapi-core]
+        Macros[rustapi-macros]
+        OpenAPI[rustapi-openapi]
+        Validate[rustapi-validate]
+        Toon[rustapi-toon]
+        Extras[rustapi-extras]
+    end
 
-This project is licensed under either of
+    subgraph External["External Dependencies"]
+        Tokio[tokio]
+        Hyper[hyper]
+        Serde[serde]
+        Utoipa[utoipa]
+        Validator[validator]
+    end
 
-*   Apache License, Version 2.0
-*   MIT license
+    App --> RS
+    RS --> Core
+    RS --> Macros
+    RS --> OpenAPI
+    RS --> Validate
+    RS -.->|optional| Toon
+    RS -.->|optional| Extras
+    
+    Core --> Tokio
+    Core --> Hyper
+    Core --> Serde
+    OpenAPI --> Utoipa
+    Validate --> Validator
+    Toon --> Serde
 
-at your option.
+    style RS fill:#e1f5fe
+    style App fill:#c8e6c9
+```
+
+### Design Principles
+
+| Principle | Implementation |
+|-----------|----------------|
+| **Single Entry Point** | `use rustapi_rs::prelude::*` imports everything you need |
+| **Zero Boilerplate** | Macros generate routing, OpenAPI specs, and validation |
+| **Compile-Time Safety** | Generic extractors catch type errors at compile time |
+| **Opt-in Complexity** | Features like JWT, TOON are behind feature flags |
+| **Engine Abstraction** | Internal hyper/tokio upgrades don't break your code |
+
+### Crate Responsibilities
+
+| Crate | Role |
+|-------|------|
+| `rustapi-rs` | Public facade — single `use` for everything |
+| `rustapi-core` | HTTP engine, routing, extractors, response handling |
+| `rustapi-macros` | Procedural macros: `#[rustapi::get]`, `#[rustapi::main]` |
+| `rustapi-openapi` | Swagger UI generation, OpenAPI 3.0 spec |
+| `rustapi-validate` | Request body/query validation via `#[validate]` |
+| `rustapi-toon` | TOON format serializer, content negotiation, LLM headers |
+| `rustapi-extras` | JWT auth, CORS, rate limiting middleware |
+
+---
+
+## Roadmap
+
+- [x] Core framework (routing, extractors, server)
+- [x] OpenAPI & Validation
+- [x] JWT, CORS, Rate Limiting
+- [x] TOON format & LLM optimization
+- [ ] *Coming soon...*
+
+---
+
+## License
+
+MIT or Apache-2.0, at your option.
