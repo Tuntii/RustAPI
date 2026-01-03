@@ -8,6 +8,8 @@
   [![Crates.io](https://img.shields.io/crates/v/rustapi-rs.svg)](https://crates.io/crates/rustapi-rs)
   [![Docs.rs](https://img.shields.io/docsrs/rustapi-rs)](https://docs.rs/rustapi-rs)
   [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](LICENSE)
+  
+  <a href="https://www.producthunt.com/products/rustapi?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-rustapi" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1057797&theme=dark&t=1767462180457" alt="RustAPI - A Rust API framework designed for AI-first development | Product Hunt" width="250" height="54" /></a>
 </div>
 
 ---
