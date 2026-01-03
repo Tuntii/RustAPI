@@ -4,6 +4,7 @@ use crate::error::Result;
 use crate::middleware::{BodyLimitLayer, LayerStack, MiddlewareLayer, DEFAULT_BODY_LIMIT};
 use crate::router::{MethodRouter, Router};
 use crate::server::Server;
+use std::collections::HashMap;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 /// Main application builder for RustAPI
@@ -51,6 +52,65 @@ impl RustApi {
             layers: LayerStack::new(),
             body_limit: Some(DEFAULT_BODY_LIMIT), // Default 1MB limit
         }
+    }
+
+    /// Create a zero-config RustAPI application.
+    ///
+    /// All routes decorated with `#[rustapi::get]`, `#[rustapi::post]`, etc.
+    /// are automatically registered. Swagger UI is enabled at `/docs` by default.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use rustapi_rs::prelude::*;
+    ///
+    /// #[rustapi::get("/users")]
+    /// async fn list_users() -> Json<Vec<User>> {
+    ///     Json(vec![])
+    /// }
+    ///
+    /// #[rustapi::main]
+    /// async fn main() -> Result<()> {
+    ///     // Zero config - routes are auto-registered!
+    ///     RustApi::auto()
+    ///         .run("0.0.0.0:8080")
+    ///         .await
+    /// }
+    /// ```
+    #[cfg(feature = "swagger-ui")]
+    pub fn auto() -> Self {
+        // Build app with grouped auto-routes and auto-schemas, then enable docs.
+        Self::new().mount_auto_routes_grouped().docs("/docs")
+    }
+
+    /// Create a zero-config RustAPI application (without swagger-ui feature).
+    ///
+    /// All routes decorated with `#[rustapi::get]`, `#[rustapi::post]`, etc.
+    /// are automatically registered.
+    #[cfg(not(feature = "swagger-ui"))]
+    pub fn auto() -> Self {
+        Self::new().mount_auto_routes_grouped()
+    }
+
+    /// Create a configurable RustAPI application with auto-routes.
+    ///
+    /// Provides builder methods for customization while still
+    /// auto-registering all decorated routes.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use rustapi_rs::prelude::*;
+    ///
+    /// RustApi::config()
+    ///     .docs_path("/api-docs")
+    ///     .body_limit(5 * 1024 * 1024)  // 5MB
+    ///     .openapi_info("My API", "2.0.0", Some("API Description"))
+    ///     .run("0.0.0.0:8080")
+    ///     .await?;
+    /// ```
+    pub fn config() -> RustApiConfig {
+        RustApiConfig::new()
     }
 
     /// Set the global body size limit for request bodies
@@ -166,10 +226,58 @@ impl RustApi {
 
     /// Configure OpenAPI info (title, version, description)
     pub fn openapi_info(mut self, title: &str, version: &str, description: Option<&str>) -> Self {
-        self.openapi_spec = rustapi_openapi::OpenApiSpec::new(title, version);
-        if let Some(desc) = description {
-            self.openapi_spec = self.openapi_spec.description(desc);
+        // NOTE: Do not reset the spec here; doing so would drop collected paths/schemas.
+        // This is especially important for `RustApi::auto()` and `RustApi::config()`.
+        self.openapi_spec.info.title = title.to_string();
+        self.openapi_spec.info.version = version.to_string();
+        self.openapi_spec.info.description = description.map(|d| d.to_string());
+        self
+    }
+
+    /// Get the current OpenAPI spec (for advanced usage/testing).
+    pub fn openapi_spec(&self) -> &rustapi_openapi::OpenApiSpec {
+        &self.openapi_spec
+    }
+
+    fn mount_auto_routes_grouped(mut self) -> Self {
+        let routes = crate::auto_route::collect_auto_routes();
+        let mut by_path: HashMap<String, MethodRouter> = HashMap::new();
+
+        for route in routes {
+            let method_enum = match route.method {
+                "GET" => http::Method::GET,
+                "POST" => http::Method::POST,
+                "PUT" => http::Method::PUT,
+                "DELETE" => http::Method::DELETE,
+                "PATCH" => http::Method::PATCH,
+                _ => http::Method::GET,
+            };
+
+            let path = if route.path.starts_with('/') {
+                route.path.to_string()
+            } else {
+                format!("/{}", route.path)
+            };
+
+            let entry = by_path.entry(path).or_insert_with(MethodRouter::new);
+            entry.insert_boxed_with_operation(method_enum, route.handler, route.operation);
         }
+
+        let route_count = by_path
+            .values()
+            .map(|mr| mr.allowed_methods().len())
+            .sum::<usize>();
+        let path_count = by_path.len();
+
+        for (path, method_router) in by_path {
+            self = self.route(&path, method_router);
+        }
+
+        tracing::info!(paths = path_count, routes = route_count, "Auto-registered routes");
+
+        // Apply any auto-registered schemas.
+        crate::auto_schema::apply_auto_schemas(&mut self.openapi_spec);
+
         self
     }
 
@@ -186,7 +294,9 @@ impl RustApi {
     pub fn route(mut self, path: &str, method_router: MethodRouter) -> Self {
         // Register operations in OpenAPI spec
         for (method, op) in &method_router.operations {
-            self.openapi_spec = self.openapi_spec.path(path, method.as_str(), op.clone());
+            let mut op = op.clone();
+            add_path_params_to_operation(path, &mut op);
+            self.openapi_spec = self.openapi_spec.path(path, method.as_str(), op);
         }
 
         self.router = self.router.route(path, method_router);
@@ -229,9 +339,9 @@ impl RustApi {
         };
 
         // Register operation in OpenAPI spec
-        self.openapi_spec = self
-            .openapi_spec
-            .path(route.path, route.method, route.operation);
+        let mut op = route.operation;
+        add_path_params_to_operation(route.path, &mut op);
+        self.openapi_spec = self.openapi_spec.path(route.path, route.method, op);
 
         self.route_with_method(route.path, method_enum, route.handler)
     }
@@ -526,6 +636,57 @@ impl RustApi {
     }
 }
 
+fn add_path_params_to_operation(path: &str, op: &mut rustapi_openapi::Operation) {
+    let mut params: Vec<String> = Vec::new();
+    let mut in_brace = false;
+    let mut current = String::new();
+
+    for ch in path.chars() {
+        match ch {
+            '{' => {
+                in_brace = true;
+                current.clear();
+            }
+            '}' => {
+                if in_brace {
+                    in_brace = false;
+                    if !current.is_empty() {
+                        params.push(current.clone());
+                    }
+                }
+            }
+            _ => {
+                if in_brace {
+                    current.push(ch);
+                }
+            }
+        }
+    }
+
+    if params.is_empty() {
+        return;
+    }
+
+    let op_params = op.parameters.get_or_insert_with(Vec::new);
+
+    for name in params {
+        let already = op_params
+            .iter()
+            .any(|p| p.location == "path" && p.name == name);
+        if already {
+            continue;
+        }
+
+        op_params.push(rustapi_openapi::Parameter {
+            name,
+            location: "path".to_string(),
+            required: true,
+            description: None,
+            schema: rustapi_openapi::SchemaRef::Inline(serde_json::json!({ "type": "string" })),
+        });
+    }
+}
+
 impl Default for RustApi {
     fn default() -> Self {
         Self::new()
@@ -556,4 +717,106 @@ fn unauthorized_response() -> crate::Response {
             "Unauthorized",
         )))
         .unwrap()
+}
+
+/// Configuration builder for RustAPI with auto-routes
+pub struct RustApiConfig {
+    docs_path: Option<String>,
+    docs_enabled: bool,
+    api_title: String,
+    api_version: String,
+    api_description: Option<String>,
+    body_limit: Option<usize>,
+    layers: LayerStack,
+}
+
+impl RustApiConfig {
+    pub fn new() -> Self {
+        Self {
+            docs_path: Some("/docs".to_string()),
+            docs_enabled: true,
+            api_title: "RustAPI".to_string(),
+            api_version: "1.0.0".to_string(),
+            api_description: None,
+            body_limit: None,
+            layers: LayerStack::new(),
+        }
+    }
+
+    /// Set the docs path (default: "/docs")
+    pub fn docs_path(mut self, path: impl Into<String>) -> Self {
+        self.docs_path = Some(path.into());
+        self
+    }
+
+    /// Enable or disable docs (default: true)
+    pub fn docs_enabled(mut self, enabled: bool) -> Self {
+        self.docs_enabled = enabled;
+        self
+    }
+
+    /// Set OpenAPI info
+    pub fn openapi_info(
+        mut self,
+        title: impl Into<String>,
+        version: impl Into<String>,
+        description: Option<impl Into<String>>,
+    ) -> Self {
+        self.api_title = title.into();
+        self.api_version = version.into();
+        self.api_description = description.map(|d| d.into());
+        self
+    }
+
+    /// Set body size limit
+    pub fn body_limit(mut self, limit: usize) -> Self {
+        self.body_limit = Some(limit);
+        self
+    }
+
+    /// Add a middleware layer
+    pub fn layer<L>(mut self, layer: L) -> Self
+    where
+        L: MiddlewareLayer,
+    {
+        self.layers.push(Box::new(layer));
+        self
+    }
+
+    /// Build the RustApi instance
+    pub fn build(self) -> RustApi {
+        let mut app = RustApi::new().mount_auto_routes_grouped();
+
+        // Apply configuration
+        if let Some(limit) = self.body_limit {
+            app = app.body_limit(limit);
+        }
+
+        app = app.openapi_info(
+            &self.api_title,
+            &self.api_version,
+            self.api_description.as_deref(),
+        );
+
+        #[cfg(feature = "swagger-ui")]
+        if self.docs_enabled {
+            if let Some(path) = self.docs_path {
+                app = app.docs(&path);
+            }
+        }
+
+        // Apply layers
+        // Note: layers are applied in reverse order in RustApi::layer logic (pushing to vec)
+        app.layers.extend(self.layers.into_iter());
+
+        app
+    }
+
+    /// Build and run the server
+    pub async fn run(
+        self,
+        addr: impl AsRef<str>,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.build().run(addr.as_ref()).await
+    }
 }

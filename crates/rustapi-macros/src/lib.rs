@@ -16,7 +16,81 @@
 
 use proc_macro::TokenStream;
 use quote::quote;
-use syn::{parse_macro_input, ItemFn, LitStr};
+use std::collections::HashSet;
+use syn::{
+    parse_macro_input, FnArg, GenericArgument, ItemFn, LitStr, PathArguments, ReturnType, Type,
+};
+
+fn extract_schema_types(ty: &Type, out: &mut Vec<Type>, allow_leaf: bool) {
+    match ty {
+        Type::Reference(r) => extract_schema_types(&r.elem, out, allow_leaf),
+        Type::Path(tp) => {
+            let Some(seg) = tp.path.segments.last() else {
+                return;
+            };
+
+            let ident = seg.ident.to_string();
+
+            let unwrap_first_generic = |out: &mut Vec<Type>| {
+                if let PathArguments::AngleBracketed(args) = &seg.arguments {
+                    if let Some(GenericArgument::Type(inner)) = args.args.first() {
+                        extract_schema_types(inner, out, true);
+                    }
+                }
+            };
+
+            match ident.as_str() {
+                // Request/response wrappers
+                "Json" | "ValidatedJson" | "Created" => {
+                    unwrap_first_generic(out);
+                }
+                // WithStatus<T, CODE>
+                "WithStatus" => {
+                    if let PathArguments::AngleBracketed(args) = &seg.arguments {
+                        if let Some(GenericArgument::Type(inner)) = args.args.first() {
+                            extract_schema_types(inner, out, true);
+                        }
+                    }
+                }
+                // Common combinators
+                "Option" | "Result" => {
+                    if let PathArguments::AngleBracketed(args) = &seg.arguments {
+                        if let Some(GenericArgument::Type(inner)) = args.args.first() {
+                            extract_schema_types(inner, out, allow_leaf);
+                        }
+                    }
+                }
+                _ => {
+                    if allow_leaf {
+                        out.push(ty.clone());
+                    }
+                }
+            }
+        }
+        _ => {}
+    }
+}
+
+fn collect_handler_schema_types(input: &ItemFn) -> Vec<Type> {
+    let mut found: Vec<Type> = Vec::new();
+
+    for arg in &input.sig.inputs {
+        if let FnArg::Typed(pat_ty) = arg {
+            extract_schema_types(&pat_ty.ty, &mut found, false);
+        }
+    }
+
+    if let ReturnType::Type(_, ty) = &input.sig.output {
+        extract_schema_types(ty, &mut found, false);
+    }
+
+    // Dedup by token string.
+    let mut seen = HashSet::<String>::new();
+    found
+        .into_iter()
+        .filter(|t| seen.insert(quote!(#t).to_string()))
+        .collect()
+}
 
 /// Check if RUSTAPI_DEBUG is enabled at compile time
 fn is_debug_enabled() -> bool {
@@ -212,6 +286,8 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
     let fn_block = &input.block;
     let fn_generics = &input.sig.generics;
 
+    let schema_types = collect_handler_schema_types(&input);
+
     let path_value = path.value();
 
     // Validate path syntax at compile time
@@ -221,6 +297,13 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
 
     // Generate a companion module with route info
     let route_fn_name = syn::Ident::new(&format!("{}_route", fn_name), fn_name.span());
+    // Generate unique name for auto-registration static
+    let auto_route_name = syn::Ident::new(&format!("__AUTO_ROUTE_{}", fn_name), fn_name.span());
+
+    // Generate unique names for schema registration
+    let schema_reg_fn_name =
+        syn::Ident::new(&format!("__{}_register_schemas", fn_name), fn_name.span());
+    let auto_schema_name = syn::Ident::new(&format!("__AUTO_SCHEMA_{}", fn_name), fn_name.span());
 
     // Pick the right route helper function based on method
     let route_helper = match method {
@@ -270,6 +353,26 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
             #route_helper(#path_value, #fn_name)
                 #chained_calls
         }
+
+        // Auto-register route with linkme
+        #[doc(hidden)]
+        #[allow(non_upper_case_globals)]
+        #[::rustapi_rs::__private::linkme::distributed_slice(::rustapi_rs::__private::AUTO_ROUTES)]
+        #[linkme(crate = ::rustapi_rs::__private::linkme)]
+        static #auto_route_name: fn() -> ::rustapi_rs::Route = #route_fn_name;
+
+        // Auto-register referenced schemas with linkme (best-effort)
+        #[doc(hidden)]
+        #[allow(non_snake_case)]
+        fn #schema_reg_fn_name(spec: &mut ::rustapi_rs::__private::rustapi_openapi::OpenApiSpec) {
+            #( spec.register_in_place::<#schema_types>(); )*
+        }
+
+        #[doc(hidden)]
+        #[allow(non_upper_case_globals)]
+        #[::rustapi_rs::__private::linkme::distributed_slice(::rustapi_rs::__private::AUTO_SCHEMAS)]
+        #[linkme(crate = ::rustapi_rs::__private::linkme)]
+        static #auto_schema_name: fn(&mut ::rustapi_rs::__private::rustapi_openapi::OpenApiSpec) = #schema_reg_fn_name;
     };
 
     debug_output(&format!("{} {}", method, path_value), &expanded);

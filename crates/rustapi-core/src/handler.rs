@@ -380,6 +380,16 @@ impl Route {
         self.operation.tags = Some(tags);
         self
     }
+
+    /// Get the route path
+    pub fn path(&self) -> &str {
+        self.path
+    }
+
+    /// Get the route method
+    pub fn method(&self) -> &str {
+        self.method
+    }
 }
 
 /// Helper macro to create a Route from a handler with RouteHandler trait

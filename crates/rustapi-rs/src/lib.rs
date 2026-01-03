@@ -163,6 +163,7 @@ pub mod prelude {
         Router,
         // App builder
         RustApi,
+        RustApiConfig,
         // Streaming responses
         Sse,
         SseEvent,

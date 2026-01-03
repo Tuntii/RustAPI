@@ -159,6 +159,26 @@ impl MethodRouter {
             operations: HashMap::new(), // Operations lost when using raw boxed handlers for now
         }
     }
+
+    /// Insert a pre-boxed handler and its OpenAPI operation (internal use).
+    ///
+    /// Panics if the same method is inserted twice for the same path.
+    pub(crate) fn insert_boxed_with_operation(
+        &mut self,
+        method: Method,
+        handler: BoxedHandler,
+        operation: Operation,
+    ) {
+        if self.handlers.contains_key(&method) {
+            panic!(
+                "Duplicate handler for method {} on the same path",
+                method.as_str()
+            );
+        }
+
+        self.handlers.insert(method.clone(), handler);
+        self.operations.insert(method, operation);
+    }
 }
 
 impl Default for MethodRouter {

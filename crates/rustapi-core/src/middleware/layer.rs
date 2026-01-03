@@ -110,6 +110,21 @@ impl LayerStack {
     }
 }
 
+impl IntoIterator for LayerStack {
+    type Item = Box<dyn MiddlewareLayer>;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.layers.into_iter()
+    }
+}
+
+impl Extend<Box<dyn MiddlewareLayer>> for LayerStack {
+    fn extend<T: IntoIterator<Item = Box<dyn MiddlewareLayer>>>(&mut self, iter: T) {
+        self.layers.extend(iter);
+    }
+}
+
 /// Wrapper to adapt a Tower Layer to RustAPI's middleware system
 #[allow(dead_code)]
 pub struct TowerLayerAdapter<L> {

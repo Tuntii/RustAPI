@@ -146,6 +146,17 @@ impl OpenApiSpec {
         self
     }
 
+    /// Register a type into this spec in-place.
+    ///
+    /// This is useful for zero-config registration paths where the spec is stored
+    /// by value in another struct (e.g., the application builder).
+    pub fn register_in_place<T: for<'a> utoipa::ToSchema<'a>>(&mut self) {
+        let (name, schema) = T::schema();
+        if let Ok(json_schema) = serde_json::to_value(schema) {
+            self.schemas.insert(name.to_string(), json_schema);
+        }
+    }
+
     /// Convert to JSON value
     pub fn to_json(&self) -> serde_json::Value {
         let mut spec = serde_json::json!({

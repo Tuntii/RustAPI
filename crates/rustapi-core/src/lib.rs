@@ -49,6 +49,10 @@
 //! full framework experience with all features and re-exports.
 
 mod app;
+pub mod auto_route;
+pub use auto_route::collect_auto_routes;
+pub mod auto_schema;
+pub use auto_schema::apply_auto_schemas;
 mod error;
 mod extract;
 mod handler;
@@ -63,8 +67,20 @@ pub mod stream;
 #[cfg(any(test, feature = "test-utils"))]
 mod test_client;
 
+/// Private module for macro internals - DO NOT USE DIRECTLY
+///
+/// This module is used by procedural macros to register routes.
+/// It is not part of the public API and may change at any time.
+#[doc(hidden)]
+pub mod __private {
+    pub use crate::auto_route::AUTO_ROUTES;
+    pub use crate::auto_schema::AUTO_SCHEMAS;
+    pub use linkme;
+    pub use rustapi_openapi;
+}
+
 // Public API
-pub use app::RustApi;
+pub use app::{RustApi, RustApiConfig};
 pub use error::{get_environment, ApiError, Environment, Result};
 #[cfg(feature = "cookies")]
 pub use extract::Cookies;
