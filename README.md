@@ -21,14 +21,14 @@ We combine Rust's performance and safety with FastAPI's ergonomics. Write type-s
 ```rust
 use rustapi_rs::prelude::*;
 
-#[rustapi::get("/hello/:name")]
+#[rustapi_rs::get("/hello/{name}")]
 async fn hello(Path(name): Path<String>) -> Json<Message> {
     Json(Message { greeting: format!("Hello, {name}!") })
 }
 
-#[rustapi::main]
-async fn main() -> Result<()> {
-    RustApi::new().mount_route(hello_route()).docs("/docs").run("0.0.0.0:8080").await
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    RustApi::auto().run("0.0.0.0:8080").await
 }
 ```
 
@@ -40,7 +40,7 @@ async fn main() -> Result<()> {
 
 ```toml
 [dependencies]
-rustapi-rs = "0.0.5"
+rustapi-rs = "0.1.3"
 ```
 
 ```rust
@@ -49,18 +49,16 @@ use rustapi_rs::prelude::*;
 #[derive(Serialize, Schema)]
 struct User { id: u64, name: String }
 
-#[rustapi::get("/users/:id")]
+#[rustapi_rs::get("/users/{id}")]
 async fn get_user(Path(id): Path<u64>) -> Json<User> {
     Json(User { id, name: "Tunahan".into() })
 }
 
-#[rustapi::main]
-async fn main() -> Result<()> {
-    RustApi::new()
-        .mount_route(get_user_route())
-        .docs("/docs")
-        .run("127.0.0.1:8080")
-        .await
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    // Zero config: all `#[rustapi_rs::get/post/..]` routes are auto-registered.
+    // Swagger UI is enabled at /docs by default (when built with the `swagger-ui` feature).
+    RustApi::auto().run("127.0.0.1:8080").await
 }
 ```
 
@@ -73,6 +71,7 @@ async fn main() -> Result<()> {
 | Feature | Description |
 |---------|-------------|
 | **Type-Safe Extractors** | `Json<T>`, `Query<T>`, `Path<T>` — compile-time guarantees |
+| **Zero-Config Routing** | Macro-decorated routes auto-register at startup (`RustApi::auto()`) |
 | **Auto OpenAPI** | Your code = your docs. `/docs` endpoint out of the box |
 | **Validation** | `#[validate(email)]` → automatic 422 responses |
 | **JWT Auth** | One-line auth with `AuthUser<T>` extractor |
@@ -82,7 +81,7 @@ async fn main() -> Result<()> {
 ### Optional Features
 
 ```toml
-rustapi-rs = { version = "0.0.5", features = ["jwt", "cors", "toon"] }
+rustapi-rs = { version = "0.1.3", features = ["jwt", "cors", "toon"] }
 ```
 
 - `jwt` — JWT authentication
@@ -90,6 +89,21 @@ rustapi-rs = { version = "0.0.5", features = ["jwt", "cors", "toon"] }
 - `rate-limit` — IP-based rate limiting
 - `toon` — LLM-optimized responses
 - `full` — Everything included
+
+---
+
+## Examples
+
+All examples in this repository are written in the Phase 6 “zero-config” style.
+
+```bash
+cargo run -p hello-world
+cargo run -p crud-api
+cargo run -p auth-api
+cargo run -p sqlx-crud
+cargo run -p toon-api
+cargo run -p proof-of-concept
+```
 
 ---
 
