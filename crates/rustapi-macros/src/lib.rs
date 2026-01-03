@@ -21,6 +21,66 @@ use syn::{
     parse_macro_input, FnArg, GenericArgument, ItemFn, LitStr, PathArguments, ReturnType, Type,
 };
 
+/// Auto-register a schema type for zero-config OpenAPI.
+///
+/// Attach this to a `struct` or `enum` that also derives `Schema` (utoipa::ToSchema).
+/// This ensures the type is registered into RustAPI's OpenAPI components even if it is
+/// only referenced indirectly (e.g. as a nested field type).
+///
+/// ```rust,ignore
+/// use rustapi_rs::prelude::*;
+///
+/// #[rustapi_rs::schema]
+/// #[derive(Serialize, Schema)]
+/// struct UserInfo { /* ... */ }
+/// ```
+#[proc_macro_attribute]
+pub fn schema(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(item as syn::Item);
+
+    let (ident, generics) = match &input {
+        syn::Item::Struct(s) => (&s.ident, &s.generics),
+        syn::Item::Enum(e) => (&e.ident, &e.generics),
+        _ => {
+            return syn::Error::new_spanned(
+                &input,
+                "#[rustapi_rs::schema] can only be used on structs or enums",
+            )
+            .to_compile_error()
+            .into();
+        }
+    };
+
+    if !generics.params.is_empty() {
+        return syn::Error::new_spanned(
+            generics,
+            "#[rustapi_rs::schema] does not support generic types",
+        )
+        .to_compile_error()
+        .into();
+    }
+
+    let registrar_ident = syn::Ident::new(
+        &format!("__RUSTAPI_AUTO_SCHEMA_{}", ident),
+        proc_macro2::Span::call_site(),
+    );
+
+    let expanded = quote! {
+        #input
+
+        #[allow(non_upper_case_globals)]
+        #[::rustapi_rs::__private::linkme::distributed_slice(::rustapi_rs::__private::AUTO_SCHEMAS)]
+        #[linkme(crate = ::rustapi_rs::__private::linkme)]
+        static #registrar_ident: fn(&mut ::rustapi_rs::__private::rustapi_openapi::OpenApiSpec) =
+            |spec: &mut ::rustapi_rs::__private::rustapi_openapi::OpenApiSpec| {
+                spec.register_in_place::<#ident>();
+            };
+    };
+
+    debug_output("schema", &expanded);
+    expanded.into()
+}
+
 fn extract_schema_types(ty: &Type, out: &mut Vec<Type>, allow_leaf: bool) {
     match ty {
         Type::Reference(r) => extract_schema_types(&r.elem, out, allow_leaf),

@@ -36,7 +36,10 @@ mod spec;
 mod swagger;
 
 pub use config::OpenApiConfig;
-pub use schemas::{ErrorSchema, FieldErrorSchema, ValidationErrorSchema};
+pub use schemas::{
+    ErrorBodySchema, ErrorSchema, FieldErrorSchema, ValidationErrorBodySchema,
+    ValidationErrorSchema,
+};
 pub use spec::{
     ApiInfo, MediaType, OpenApiSpec, Operation, OperationModifier, Parameter, PathItem,
     RequestBody, ResponseModifier, ResponseSpec, SchemaRef,

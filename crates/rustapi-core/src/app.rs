@@ -47,7 +47,9 @@ impl RustApi {
             router: Router::new(),
             openapi_spec: rustapi_openapi::OpenApiSpec::new("RustAPI Application", "1.0.0")
                 .register::<rustapi_openapi::ErrorSchema>()
+                .register::<rustapi_openapi::ErrorBodySchema>()
                 .register::<rustapi_openapi::ValidationErrorSchema>()
+                .register::<rustapi_openapi::ValidationErrorBodySchema>()
                 .register::<rustapi_openapi::FieldErrorSchema>(),
             layers: LayerStack::new(),
             body_limit: Some(DEFAULT_BODY_LIMIT), // Default 1MB limit
@@ -201,11 +203,11 @@ impl RustApi {
     where
         S: Clone + Send + Sync + 'static,
     {
-        // For now, state is handled by the router/handlers directly capturing it
-        // or through a middleware. The current router (matchit) implementation
-        // doesn't support state injection directly in the same way axum does.
-        // This is a placeholder for future state management.
-        self
+        // Store state in the router's shared Extensions so `State<T>` extractor can retrieve it.
+        let state = _state;
+        let mut app = self;
+        app.router = app.router.state(state);
+        app
     }
 
     /// Register an OpenAPI schema
@@ -690,6 +692,33 @@ fn add_path_params_to_operation(path: &str, op: &mut rustapi_openapi::Operation)
 impl Default for RustApi {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::RustApi;
+    use crate::extract::{FromRequestParts, State};
+    use crate::request::Request;
+    use bytes::Bytes;
+    use http::Method;
+    use std::collections::HashMap;
+
+    #[test]
+    fn state_is_available_via_extractor() {
+        let app = RustApi::new().state(123u32);
+        let router = app.into_router();
+
+        let req = http::Request::builder()
+            .method(Method::GET)
+            .uri("/test")
+            .body(())
+            .unwrap();
+        let (parts, _) = req.into_parts();
+
+        let request = Request::new(parts, Bytes::new(), router.state_ref(), HashMap::new());
+        let State(value) = State::<u32>::from_request_parts(&request).unwrap();
+        assert_eq!(value, 123u32);
     }
 }
 

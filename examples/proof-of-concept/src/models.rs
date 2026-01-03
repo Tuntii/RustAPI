@@ -95,6 +95,7 @@ pub struct AuthResponse {
 }
 
 /// User information returned in auth responses
+#[rustapi_rs::schema]
 #[derive(Debug, Serialize, Schema)]
 pub struct UserInfo {
     pub id: u64,

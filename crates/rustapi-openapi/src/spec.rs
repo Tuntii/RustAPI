@@ -138,8 +138,7 @@ impl OpenApiSpec {
 
     /// Register a type that implements Schema (utoipa::ToSchema)
     pub fn register<T: for<'a> utoipa::ToSchema<'a>>(mut self) -> Self {
-        let (name, schema) = T::schema(); // returns (Cow<str>, RefOr<Schema>)
-                                          // Convert to JSON value
+        let (name, schema) = T::schema();
         if let Ok(json_schema) = serde_json::to_value(schema) {
             self.schemas.insert(name.to_string(), json_schema);
         }
