@@ -18,6 +18,46 @@ RustAPI redefines **API development for the AI era**.
 
 We combine Rust's performance and safety with FastAPI's ergonomics. Write type-safe, production-ready APIs without fighting trait bounds. **MCP servers**, **LLM integrations**, or classic REST APIs — one framework for all.
 
+---
+
+## Philosophy
+
+> *"API surface is ours, engines can change."*
+
+RustAPI follows a **Facade Architecture** — a stable, ergonomic public API that shields you from internal complexity and breaking changes.
+
+### Core Principles
+
+| Principle | What It Means |
+|-----------|---------------|
+| **🎯 5-Line APIs** | A working REST endpoint in 5 lines. No ceremony. |
+| **🛡️ Stable Surface** | Your code depends on `rustapi-rs`. Internal crates (`hyper`, `tokio`, `validator`) are implementation details. |
+| **🔄 Engines Change** | We can swap `hyper` for `h3`, upgrade `tokio`, or replace `validator` — your code stays the same. |
+| **🎁 Batteries Included** | JWT, CORS, Rate Limiting, OpenAPI — all built-in, all optional via feature flags. |
+| **🤖 LLM-First** | TOON format, token counting headers, MCP-ready. Built for the AI era. |
+
+### Why This Matters
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    Your Application                          │
+│                   use rustapi_rs::prelude::*                 │
+├─────────────────────────────────────────────────────────────┤
+│                     rustapi-rs (Facade)                      │
+│              Stable API ── Never Breaks                      │
+├───────────────┬───────────────┬───────────────┬─────────────┤
+│ rustapi-core  │ rustapi-toon  │ rustapi-extras│ ...         │
+│   (hyper)     │   (serde)     │    (jwt)      │             │
+├───────────────┴───────────────┴───────────────┴─────────────┤
+│              Foundation: tokio, serde, hyper                 │
+│              ↑ Can be upgraded/swapped internally            │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Internal upgrades don't break your code.** When `hyper 2.0` releases, we update `rustapi-core`. Your `RustApi::new()` keeps working.
+
+📚 Read more: [docs/PHILOSOPHY.md](docs/PHILOSOPHY.md) | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+
 ```rust
 use rustapi_rs::prelude::*;
 
