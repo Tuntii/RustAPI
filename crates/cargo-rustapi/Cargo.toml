@@ -1,0 +1,45 @@
+[package]
+name = "cargo-rustapi"
+description = "CLI tool for RustAPI - Project scaffolding and development utilities"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords = ["web", "framework", "api", "cli", "scaffold"]
+categories = ["command-line-utilities", "development-tools"]
+rust-version.workspace = true
+readme = "README.md"
+
+[[bin]]
+name = "cargo-rustapi"
+path = "src/main.rs"
+
+[dependencies]
+# CLI
+clap = { workspace = true }
+dialoguer = { workspace = true }
+indicatif = { workspace = true }
+console = { workspace = true }
+
+# File system
+walkdir = "2.5"
+toml_edit = "0.22"
+
+# Async
+tokio = { workspace = true, features = ["process", "fs"] }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = "0.8"
+
+# Utilities
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = "1.0"
+
+[dev-dependencies]
+tempfile = "3.10"
+assert_cmd = "2.0"

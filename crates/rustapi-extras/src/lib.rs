@@ -13,6 +13,7 @@
 //! - `config` - Configuration management with `.env` file support
 //! - `cookies` - Cookie parsing extractor
 //! - `sqlx` - SQLx database error conversion to ApiError
+//! - `insight` - Traffic insight middleware for analytics and debugging
 //! - `extras` - Meta feature enabling jwt, cors, and rate-limit
 //! - `full` - All features enabled
 //!
@@ -20,7 +21,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! rustapi-extras = { version = "0.1", features = ["jwt", "cors"] }
+//! rustapi-extras = { version = "0.1", features = ["jwt", "cors", "insight"] }
 //! ```
 
 #![warn(missing_docs)]
@@ -46,6 +47,10 @@ pub mod config;
 #[cfg(feature = "sqlx")]
 pub mod sqlx;
 
+// Traffic insight module
+#[cfg(feature = "insight")]
+pub mod insight;
+
 // Re-exports for convenience
 #[cfg(feature = "jwt")]
 pub use jwt::{create_token, AuthUser, JwtError, JwtLayer, JwtValidation, ValidatedClaims};
@@ -63,3 +68,6 @@ pub use config::{
 
 #[cfg(feature = "sqlx")]
 pub use sqlx::{convert_sqlx_error, SqlxErrorExt};
+
+#[cfg(feature = "insight")]
+pub use insight::{InsightConfig, InsightData, InsightLayer, InsightStats, InsightStore, InMemoryInsightStore};

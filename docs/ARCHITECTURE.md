@@ -29,19 +29,26 @@ RustAPI uses a **layered facade architecture** where complexity is hidden behind
 │  HTTP Engine    │ │ Proc Macros     │ │ Swagger/OpenAPI │
 └─────────────────┘ └─────────────────┘ └─────────────────┘
           │
-          ├─────────────────┬─────────────────┐
-          ▼                 ▼                 ▼
-┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-│rustapi-validate │ │  rustapi-toon   │ │ rustapi-extras  │
-│  Validation     │ │  LLM Format     │ │ JWT/CORS/Rate   │
-└─────────────────┘ └─────────────────┘ └─────────────────┘
-          │                 │                 │
-          └─────────────────┴─────────────────┘
+          ├─────────────────┬─────────────────┬─────────────────┐
+          ▼                 ▼                 ▼                 ▼
+┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+│rustapi-validate │ │  rustapi-toon   │ │ rustapi-extras  │ │   rustapi-ws    │
+│  Validation     │ │  LLM Format     │ │ JWT/CORS/Rate   │ │   WebSocket     │
+└─────────────────┘ └─────────────────┘ └─────────────────┘ └─────────────────┘
+          │                 │                 │                 │
+          └─────────────────┴─────────────────┴─────────────────┤
+                              │                                 ▼
+                              │                       ┌─────────────────┐
+                              │                       │  rustapi-view   │
+                              │                       │ Template Engine │
+                              │                       └─────────────────┘
+                              │                                 │
+                              └─────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Foundation Layer                             │
-│       tokio │ hyper │ serde │ matchit │ tower                  │
+│  tokio │ hyper │ serde │ matchit │ tower │ tungstenite │ tera  │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
@@ -81,6 +88,12 @@ pub mod prelude {
     
     #[cfg(feature = "jwt")]
     pub use rustapi_extras::jwt::*;
+    
+    #[cfg(feature = "ws")]
+    pub use rustapi_ws::{WebSocket, WebSocketUpgrade, WebSocketStream, Message, Broadcast};
+    
+    #[cfg(feature = "view")]
+    pub use rustapi_view::{Templates, View, ContextBuilder};
 }
 ```
 
@@ -204,6 +217,29 @@ Headers provided by `LlmResponse`:
 | Rate Limit | `rate-limit` | IP-based throttling |
 | Body Limit | default | Max request body size |
 | Request ID | default | Unique request tracking |
+
+### `rustapi-ws` — WebSocket Support
+
+**Real-time bidirectional communication.**
+
+| Type | Purpose |
+|------|---------|
+| `WebSocket` | Extractor for WebSocket upgrades |
+| `WebSocketUpgrade` | Response type for upgrade handshake |
+| `WebSocketStream` | Async stream for send/recv |
+| `Message` | Text, Binary, Ping, Pong, Close |
+| `Broadcast` | Pub/sub channel for broadcasting |
+
+### `rustapi-view` — Template Engine
+
+**Server-side HTML rendering with Tera.**
+
+| Type | Purpose |
+|------|---------|
+| `Templates` | Template engine instance |
+| `View<T>` | Response type with template rendering |
+| `ContextBuilder` | Build template context |
+| `TemplatesConfig` | Configuration (directory, extension) |
 
 ---
 

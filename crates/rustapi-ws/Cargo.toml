@@ -1,0 +1,48 @@
+[package]
+name = "rustapi-ws"
+description = "WebSocket support for RustAPI - Real-time bidirectional communication"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords = ["web", "framework", "api", "websocket", "real-time"]
+categories = ["web-programming::http-server", "web-programming::websocket"]
+rust-version.workspace = true
+readme = "README.md"
+
+[dependencies]
+# Core dependencies
+rustapi-core = { workspace = true }
+rustapi-openapi = { workspace = true }
+
+# WebSocket implementation
+tokio-tungstenite = "0.24"
+tungstenite = "0.24"
+
+# Async runtime
+tokio = { workspace = true, features = ["sync", "macros"] }
+futures-util = { workspace = true }
+
+# HTTP types
+http = { workspace = true }
+http-body-util = { workspace = true }
+bytes = { workspace = true }
+hyper = { workspace = true }
+hyper-util = { workspace = true }
+
+# Serialization (optional, for JSON messages)
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Utilities
+thiserror = { workspace = true }
+tracing = { workspace = true }
+pin-project-lite = { workspace = true }
+
+# SHA-1 for WebSocket handshake
+sha1 = "0.10"
+base64 = "0.22"
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }

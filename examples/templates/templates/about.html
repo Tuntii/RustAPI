@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>About RustAPI</h1>
+
+<p>RustAPI is a modern web framework for Rust, inspired by Python's FastAPI.</p>
+
+<h2>Version Information</h2>
+<ul>
+    <li><strong>Version:</strong> {{ version }}</li>
+    <li><strong>Rust:</strong> {{ rust_version }}</li>
+</ul>
+
+<h2>Philosophy</h2>
+<p>RustAPI believes that web development should be:</p>
+<ul>
+    <li><strong>Fast</strong> - Both in development and runtime</li>
+    <li><strong>Type-safe</strong> - Catch errors at compile time</li>
+    <li><strong>Ergonomic</strong> - Write business logic, not boilerplate</li>
+    <li><strong>Well-documented</strong> - Auto-generated API docs</li>
+</ul>
+{% endblock %}
