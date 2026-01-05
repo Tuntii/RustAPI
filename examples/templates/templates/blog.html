@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Blog</h1>
+
+<div class="blog-list">
+    {% for post in posts %}
+    <article class="blog-post">
+        <h2>{{ post.title }}</h2>
+        <div class="post-meta">
+            <span class="author">By {{ post.author }}</span>
+            <span class="date">{{ post.date }}</span>
+        </div>
+        <p>{{ post.excerpt }}</p>
+        <a href="/blog/{{ post.id }}" class="read-more">Read more →</a>
+    </article>
+    {% endfor %}
+</div>
+
+{% if posts | length == 0 %}
+<p>No blog posts yet.</p>
+{% endif %}
+{% endblock %}

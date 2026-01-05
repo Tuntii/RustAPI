@@ -17,6 +17,8 @@
 //! ```
 
 mod body_limit;
+#[cfg(feature = "compression")]
+mod compression;
 mod layer;
 #[cfg(feature = "metrics")]
 mod metrics;
@@ -24,6 +26,8 @@ mod request_id;
 mod tracing_layer;
 
 pub use body_limit::{BodyLimitLayer, DEFAULT_BODY_LIMIT};
+#[cfg(feature = "compression")]
+pub use compression::{CompressionAlgorithm, CompressionConfig, CompressionLayer};
 pub use layer::{BoxedNext, LayerStack, MiddlewareLayer};
 #[cfg(feature = "metrics")]
 pub use metrics::{MetricsLayer, MetricsResponse};

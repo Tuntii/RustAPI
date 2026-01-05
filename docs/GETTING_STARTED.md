@@ -29,7 +29,7 @@ Or with specific features:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.4", features = ["jwt", "cors", "toon"] }
+rustapi-rs = { version = "0.1.4", features = ["jwt", "cors", "toon", "ws", "view"] }
 ```
 
 ### Available Features
@@ -41,6 +41,8 @@ rustapi-rs = { version = "0.1.4", features = ["jwt", "cors", "toon"] }
 | `cors` | CORS middleware |
 | `rate-limit` | IP-based rate limiting |
 | `toon` | LLM-optimized TOON format |
+| `ws` | WebSocket support |
+| `view` | Template engine (Tera) |
 | `full` | All features |
 
 ---
@@ -446,6 +448,120 @@ Response includes token counting headers:
 - `X-Token-Count-JSON`: Token count for JSON format
 - `X-Token-Count-TOON`: Token count for TOON format
 - `X-Token-Savings`: Percentage saved (e.g., "57.8%")
+
+---
+
+## WebSocket Support
+
+Real-time bidirectional communication:
+
+```toml
+rustapi-rs = { version = "0.1.4", features = ["ws"] }
+```
+
+```rust
+use rustapi_rs::ws::{WebSocket, WebSocketUpgrade, WebSocketStream, Message};
+
+#[rustapi_rs::get("/ws")]
+async fn websocket(ws: WebSocket) -> WebSocketUpgrade {
+    ws.on_upgrade(handle_connection)
+}
+
+async fn handle_connection(mut stream: WebSocketStream) {
+    while let Some(msg) = stream.recv().await {
+        match msg {
+            Message::Text(text) => {
+                // Echo the message back
+                stream.send(Message::Text(format!("Echo: {}", text))).await.ok();
+            }
+            Message::Close(_) => break,
+            _ => {}
+        }
+    }
+}
+```
+
+Test with `websocat`:
+```bash
+websocat ws://localhost:8080/ws
+```
+
+---
+
+## Template Engine
+
+Server-side HTML rendering with Tera:
+
+```toml
+rustapi-rs = { version = "0.1.4", features = ["view"] }
+```
+
+Create a template file `templates/index.html`:
+```html
+<!DOCTYPE html>
+<html>
+<head><title>{{ title }}</title></head>
+<body>
+    <h1>Hello, {{ name }}!</h1>
+</body>
+</html>
+```
+
+Use in your handler:
+```rust
+use rustapi_rs::view::{Templates, View, TemplatesConfig};
+
+#[tokio::main]
+async fn main() {
+    let templates = Templates::new(TemplatesConfig {
+        directory: "templates".into(),
+        extension: "html".into(),
+    }).unwrap();
+    
+    RustApi::new()
+        .state(templates)
+        .route("/", get(home))
+        .run("0.0.0.0:8080")
+        .await
+}
+
+#[derive(Serialize)]
+struct HomeData {
+    title: String,
+    name: String,
+}
+
+#[rustapi_rs::get("/")]
+async fn home(templates: Templates) -> View<HomeData> {
+    View::new(&templates, "index.html", HomeData {
+        title: "Welcome".into(),
+        name: "World".into(),
+    })
+}
+```
+
+---
+
+## CLI Tool
+
+Scaffold new RustAPI projects quickly:
+
+```bash
+# Install the CLI
+cargo install cargo-rustapi
+
+# Create a new project
+cargo rustapi new my-api
+
+# Interactive mode with template selection
+cargo rustapi new my-api --interactive
+```
+
+Available templates:
+- `minimal` — Basic RustAPI setup
+- `api` — REST API with CRUD operations
+- `web` — Full web app with templates and WebSocket
+- `full` — Everything included
 
 ---
 

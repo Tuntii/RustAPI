@@ -207,7 +207,10 @@ async fn list_tools(accept: AcceptHeader) -> LlmResponse<ToolsListResponse> {
                         PropertySchema {
                             prop_type: "string".to_string(),
                             description: "Temperature units".to_string(),
-                            enum_values: Some(vec!["celsius".to_string(), "fahrenheit".to_string()]),
+                            enum_values: Some(vec![
+                                "celsius".to_string(),
+                                "fahrenheit".to_string(),
+                            ]),
                         },
                     ),
                 ]),
@@ -226,13 +229,19 @@ async fn list_tools(accept: AcceptHeader) -> LlmResponse<ToolsListResponse> {
 async fn execute_tool(Json(request): Json<ToolExecuteRequest>) -> Toon<ToolExecuteResponse> {
     match request.tool.as_str() {
         "calculate" => {
-            let operation = request.arguments.get("operation")
+            let operation = request
+                .arguments
+                .get("operation")
                 .map(|v| v.as_str())
                 .unwrap_or("add");
-            let a = request.arguments.get("a")
+            let a = request
+                .arguments
+                .get("a")
                 .and_then(|v| v.parse::<f64>().ok())
                 .unwrap_or(0.0);
-            let b = request.arguments.get("b")
+            let b = request
+                .arguments
+                .get("b")
                 .and_then(|v| v.parse::<f64>().ok())
                 .unwrap_or(0.0);
 
@@ -266,10 +275,14 @@ async fn execute_tool(Json(request): Json<ToolExecuteRequest>) -> Toon<ToolExecu
             })
         }
         "get_weather" => {
-            let location = request.arguments.get("location")
+            let location = request
+                .arguments
+                .get("location")
                 .map(|v| v.as_str())
                 .unwrap_or("Unknown");
-            let units = request.arguments.get("units")
+            let units = request
+                .arguments
+                .get("units")
                 .map(|v| v.as_str())
                 .unwrap_or("celsius");
 
@@ -333,5 +346,5 @@ async fn main() {
     println!("📦 Resources: http://localhost:8080/mcp/resources");
     println!("\n💡 Tip: Use 'Accept: application/toon' header for LLM-optimized responses\n");
 
-    RustApi::auto().run("127.0.0.1:8080").await;
+    let _ = RustApi::auto().run("127.0.0.1:8080").await;
 }

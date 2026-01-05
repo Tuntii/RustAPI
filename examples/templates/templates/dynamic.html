@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Dynamic Content Example</h1>
+
+<p>This page demonstrates dynamic context building with ContextBuilder.</p>
+
+{% if show_banner %}
+<div class="banner">
+    This banner is conditionally shown!
+</div>
+{% endif %}
+
+<h2>Items ({{ count }} total)</h2>
+<ul>
+    {% for item in items %}
+    <li>{{ item }}</li>
+    {% endfor %}
+</ul>
+{% endblock %}

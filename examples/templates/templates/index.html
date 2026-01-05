@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+    <h1>Welcome to RustAPI</h1>
+    <p>A FastAPI-like web framework for Rust</p>
+</section>
+
+<section class="features">
+    <h2>Features</h2>
+    <div class="feature-grid">
+        {% for feature in features %}
+        <div class="feature-card">
+            <h3>{{ feature.name }}</h3>
+            <p>{{ feature.description }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="cta">
+    <h2>Get Started</h2>
+    <pre><code>cargo add rustapi-rs</code></pre>
+</section>
+{% endblock %}

@@ -57,12 +57,14 @@ mod error;
 mod extract;
 mod handler;
 pub mod middleware;
+pub mod multipart;
 pub mod path_validation;
 mod request;
 mod response;
 mod router;
 mod server;
 pub mod sse;
+pub mod static_files;
 pub mod stream;
 #[cfg(any(test, feature = "test-utils"))]
 mod test_client;
@@ -92,13 +94,17 @@ pub use handler::{
     delete_route, get_route, patch_route, post_route, put_route, Handler, HandlerService, Route,
     RouteHandler,
 };
+#[cfg(feature = "compression")]
+pub use middleware::CompressionLayer;
 pub use middleware::{BodyLimitLayer, RequestId, RequestIdLayer, TracingLayer, DEFAULT_BODY_LIMIT};
 #[cfg(feature = "metrics")]
 pub use middleware::{MetricsLayer, MetricsResponse};
+pub use multipart::{Multipart, MultipartConfig, MultipartField, UploadedFile};
 pub use request::Request;
 pub use response::{Created, Html, IntoResponse, NoContent, Redirect, Response, WithStatus};
 pub use router::{delete, get, patch, post, put, MethodRouter, Router};
-pub use sse::{Sse, SseEvent};
+pub use sse::{sse_response, KeepAlive, Sse, SseEvent};
+pub use static_files::{serve_dir, StaticFile, StaticFileConfig};
 pub use stream::StreamBody;
 #[cfg(any(test, feature = "test-utils"))]
 pub use test_client::{TestClient, TestRequest, TestResponse};

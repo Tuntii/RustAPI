@@ -1,0 +1,13 @@
+[package]
+name = "templates-example"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+rustapi-rs = { path = "../../crates/rustapi-rs", features = ["view"] }
+utoipa = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }

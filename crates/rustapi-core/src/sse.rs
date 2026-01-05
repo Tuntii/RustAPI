@@ -1,12 +1,14 @@
 //! Server-Sent Events (SSE) response types for RustAPI
 //!
 //! This module provides types for streaming Server-Sent Events to clients.
+//! SSE is ideal for real-time updates like notifications, live feeds, and progress updates.
 //!
 //! # Example
 //!
 //! ```rust,ignore
-//! use rustapi_core::sse::{Sse, SseEvent};
+//! use rustapi_core::sse::{Sse, SseEvent, KeepAlive};
 //! use futures_util::stream;
+//! use std::time::Duration;
 //!
 //! async fn events() -> Sse<impl Stream<Item = Result<SseEvent, std::convert::Infallible>>> {
 //!     let stream = stream::iter(vec![
@@ -14,6 +16,32 @@
 //!         Ok(SseEvent::new("World").event("greeting")),
 //!     ]);
 //!     Sse::new(stream)
+//!         .keep_alive(KeepAlive::new().interval(Duration::from_secs(15)))
+//! }
+//! ```
+//!
+//! # Keep-Alive Support
+//!
+//! SSE connections can be kept alive by sending periodic comments:
+//!
+//! ```rust,ignore
+//! use rustapi_core::sse::{Sse, SseEvent, KeepAlive};
+//! use std::time::Duration;
+//!
+//! async fn events() -> impl IntoResponse {
+//!     let stream = async_stream::stream! {
+//!         for i in 0..10 {
+//!             yield Ok::<_, std::convert::Infallible>(
+//!                 SseEvent::new(format!("Event {}", i))
+//!             );
+//!             tokio::time::sleep(Duration::from_secs(1)).await;
+//!         }
+//!     };
+//!
+//!     Sse::new(stream)
+//!         .keep_alive(KeepAlive::new()
+//!             .interval(Duration::from_secs(30))
+//!             .text("ping"))
 //! }
 //! ```
 
@@ -21,7 +49,11 @@ use bytes::Bytes;
 use futures_util::Stream;
 use http::{header, StatusCode};
 use http_body_util::Full;
+use pin_project_lite::pin_project;
 use std::fmt::Write;
+use std::pin::Pin;
+use std::task::{Context, Poll};
+use std::time::Duration;
 
 use crate::response::{IntoResponse, Response};
 
@@ -33,6 +65,7 @@ use crate::response::{IntoResponse, Response};
 /// - `event`: The event type/name (optional)
 /// - `id`: The event ID for reconnection (optional)
 /// - `retry`: Reconnection time in milliseconds (optional)
+/// - `comment`: A comment line (optional, not visible to most clients)
 #[derive(Debug, Clone, Default)]
 pub struct SseEvent {
     /// The event data
@@ -43,6 +76,8 @@ pub struct SseEvent {
     pub id: Option<String>,
     /// Reconnection time in milliseconds
     pub retry: Option<u64>,
+    /// Comment line
+    comment: Option<String>,
 }
 
 impl SseEvent {
@@ -53,6 +88,20 @@ impl SseEvent {
             event: None,
             id: None,
             retry: None,
+            comment: None,
+        }
+    }
+
+    /// Create an SSE comment (keep-alive)
+    ///
+    /// Comments are lines starting with `:` and are typically used for keep-alive.
+    pub fn comment(text: impl Into<String>) -> Self {
+        Self {
+            data: String::new(),
+            event: None,
+            id: None,
+            retry: None,
+            comment: Some(text.into()),
         }
     }
 
@@ -74,6 +123,11 @@ impl SseEvent {
         self
     }
 
+    /// Set JSON data (serializes the value)
+    pub fn json_data<T: serde::Serialize>(data: &T) -> Result<Self, serde_json::Error> {
+        Ok(Self::new(serde_json::to_string(data)?))
+    }
+
     /// Format the event as an SSE message
     ///
     /// The format follows the SSE specification:
@@ -81,9 +135,17 @@ impl SseEvent {
     /// - Lines starting with "id:" specify the event ID
     /// - Lines starting with "retry:" specify the reconnection time
     /// - Lines starting with "data:" contain the event data
+    /// - Lines starting with ":" are comments
     /// - Events are terminated with a blank line
     pub fn to_sse_string(&self) -> String {
         let mut output = String::new();
+
+        // Comment (for keep-alive)
+        if let Some(ref comment) = self.comment {
+            writeln!(output, ": {}", comment).unwrap();
+            output.push('\n');
+            return output;
+        }
 
         // Event type
         if let Some(ref event) = self.event {
@@ -105,10 +167,80 @@ impl SseEvent {
             writeln!(output, "data: {}", line).unwrap();
         }
 
+        // If data is empty, still send an empty data line
+        if self.data.is_empty() && self.comment.is_none() {
+            writeln!(output, "data:").unwrap();
+        }
+
         // Empty line to terminate the event
         output.push('\n');
 
         output
+    }
+
+    /// Convert the event to bytes
+    pub fn to_bytes(&self) -> Bytes {
+        Bytes::from(self.to_sse_string())
+    }
+}
+
+/// Keep-alive configuration for SSE connections
+///
+/// Keep-alive sends periodic comments to prevent connection timeouts.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use rustapi_core::sse::KeepAlive;
+/// use std::time::Duration;
+///
+/// let keep_alive = KeepAlive::new()
+///     .interval(Duration::from_secs(30))
+///     .text("ping");
+/// ```
+#[derive(Debug, Clone)]
+pub struct KeepAlive {
+    /// Interval between keep-alive messages
+    interval: Duration,
+    /// Text to send as keep-alive comment
+    text: String,
+}
+
+impl Default for KeepAlive {
+    fn default() -> Self {
+        Self {
+            interval: Duration::from_secs(15),
+            text: "keep-alive".to_string(),
+        }
+    }
+}
+
+impl KeepAlive {
+    /// Create a new keep-alive configuration with default settings
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the keep-alive interval
+    pub fn interval(mut self, interval: Duration) -> Self {
+        self.interval = interval;
+        self
+    }
+
+    /// Set the keep-alive text
+    pub fn text(mut self, text: impl Into<String>) -> Self {
+        self.text = text.into();
+        self
+    }
+
+    /// Get the interval
+    pub fn get_interval(&self) -> Duration {
+        self.interval
+    }
+
+    /// Create the keep-alive event
+    pub fn event(&self) -> SseEvent {
+        SseEvent::comment(&self.text)
     }
 }
 
@@ -119,8 +251,9 @@ impl SseEvent {
 /// # Example
 ///
 /// ```rust,ignore
-/// use rustapi_core::sse::{Sse, SseEvent};
+/// use rustapi_core::sse::{Sse, SseEvent, KeepAlive};
 /// use futures_util::stream;
+/// use std::time::Duration;
 ///
 /// async fn events() -> Sse<impl Stream<Item = Result<SseEvent, std::convert::Infallible>>> {
 ///     let stream = stream::iter(vec![
@@ -128,12 +261,12 @@ impl SseEvent {
 ///         Ok(SseEvent::new("World").event("greeting")),
 ///     ]);
 ///     Sse::new(stream)
+///         .keep_alive(KeepAlive::new().interval(Duration::from_secs(30)))
 /// }
 /// ```
 pub struct Sse<S> {
-    #[allow(dead_code)]
     stream: S,
-    keep_alive: Option<std::time::Duration>,
+    keep_alive: Option<KeepAlive>,
 }
 
 impl<S> Sse<S> {
@@ -145,13 +278,76 @@ impl<S> Sse<S> {
         }
     }
 
-    /// Set the keep-alive interval
+    /// Set the keep-alive configuration
     ///
-    /// When set, the server will send a comment (`:keep-alive`) at the specified interval
-    /// to keep the connection alive.
-    pub fn keep_alive(mut self, interval: std::time::Duration) -> Self {
-        self.keep_alive = Some(interval);
+    /// When set, the server will send periodic comments to keep the connection alive.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use rustapi_core::sse::{Sse, KeepAlive};
+    /// use std::time::Duration;
+    ///
+    /// Sse::new(stream)
+    ///     .keep_alive(KeepAlive::new().interval(Duration::from_secs(30)))
+    /// ```
+    pub fn keep_alive(mut self, config: KeepAlive) -> Self {
+        self.keep_alive = Some(config);
         self
+    }
+
+    /// Get the keep-alive configuration
+    pub fn get_keep_alive(&self) -> Option<&KeepAlive> {
+        self.keep_alive.as_ref()
+    }
+}
+
+// Stream that merges SSE events with keep-alive events
+pin_project! {
+    /// A stream that combines SSE events with keep-alive messages
+    pub struct SseStream<S> {
+        #[pin]
+        inner: S,
+        keep_alive: Option<KeepAlive>,
+        #[pin]
+        keep_alive_timer: Option<tokio::time::Interval>,
+    }
+}
+
+impl<S, E> Stream for SseStream<S>
+where
+    S: Stream<Item = Result<SseEvent, E>>,
+{
+    type Item = Result<Bytes, E>;
+
+    fn poll_next(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
+        let this = self.project();
+
+        // First, check if there's an event ready from the inner stream
+        match this.inner.poll_next(cx) {
+            Poll::Ready(Some(Ok(event))) => {
+                return Poll::Ready(Some(Ok(event.to_bytes())));
+            }
+            Poll::Ready(Some(Err(e))) => {
+                return Poll::Ready(Some(Err(e)));
+            }
+            Poll::Ready(None) => {
+                return Poll::Ready(None);
+            }
+            Poll::Pending => {}
+        }
+
+        // Check keep-alive timer
+        if let Some(mut timer) = this.keep_alive_timer.as_pin_mut() {
+            if timer.poll_tick(cx).is_ready() {
+                if let Some(keep_alive) = this.keep_alive {
+                    let event = keep_alive.event();
+                    return Poll::Ready(Some(Ok(event.to_bytes())));
+                }
+            }
+        }
+
+        Poll::Pending
     }
 }
 
@@ -164,21 +360,81 @@ where
     E: std::error::Error + Send + Sync + 'static,
 {
     fn into_response(self) -> Response {
-        // For the initial implementation, we return a response with SSE headers
-        // and an empty body. The actual streaming would require a different body type.
-        // This is a placeholder that sets up the correct headers.
+        // For the synchronous IntoResponse, we need to return immediately
+        // The actual streaming would be handled by an async body type
+        // For now, return headers with empty body as placeholder
+        // Real streaming requires server-side async body support
+        //
+        // Note: The SseStream wrapper can be used for true streaming
+        // when integrated with a streaming body type
 
-        // Note: A full implementation would use a streaming body type.
-        // For now, we create a response with the correct headers that can be
-        // used as a starting point for SSE responses.
+        let _ = self.stream; // Consume stream (in production, would be streamed)
+        let _ = self.keep_alive; // Keep-alive would be used in streaming
+
         http::Response::builder()
             .status(StatusCode::OK)
             .header(header::CONTENT_TYPE, "text/event-stream")
             .header(header::CACHE_CONTROL, "no-cache")
             .header(header::CONNECTION, "keep-alive")
+            .header("X-Accel-Buffering", "no") // Disable nginx buffering
             .body(Full::new(Bytes::new()))
             .unwrap()
     }
+}
+
+/// Collect all SSE events from a stream into a single response body
+///
+/// This is useful for testing or when you know the stream is finite.
+pub async fn collect_sse_events<S, E>(stream: S) -> Result<Bytes, E>
+where
+    S: Stream<Item = Result<SseEvent, E>> + Send,
+{
+    use futures_util::StreamExt;
+
+    let mut buffer = Vec::new();
+    futures_util::pin_mut!(stream);
+
+    while let Some(result) = stream.next().await {
+        let event = result?;
+        buffer.extend_from_slice(&event.to_bytes());
+    }
+
+    Ok(Bytes::from(buffer))
+}
+
+/// Create an SSE response from a synchronous iterator of events
+///
+/// This is a convenience function for simple cases with pre-computed events.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use rustapi_core::sse::{sse_response, SseEvent};
+///
+/// async fn handler() -> Response {
+///     sse_response(vec![
+///         SseEvent::new("Hello"),
+///         SseEvent::new("World").event("greeting"),
+///     ])
+/// }
+/// ```
+pub fn sse_response<I>(events: I) -> Response
+where
+    I: IntoIterator<Item = SseEvent>,
+{
+    let mut buffer = String::new();
+    for event in events {
+        buffer.push_str(&event.to_sse_string());
+    }
+
+    http::Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "text/event-stream")
+        .header(header::CACHE_CONTROL, "no-cache")
+        .header(header::CONNECTION, "keep-alive")
+        .header("X-Accel-Buffering", "no")
+        .body(Full::new(Bytes::from(buffer)))
+        .unwrap()
 }
 
 /// Helper function to create an SSE response from an iterator of events

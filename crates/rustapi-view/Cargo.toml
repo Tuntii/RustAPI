@@ -1,0 +1,39 @@
+[package]
+name = "rustapi-view"
+description = "Template rendering support for RustAPI - Server-side HTML with Tera templates"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords = ["web", "framework", "api", "templates", "html"]
+categories = ["web-programming::http-server", "template-engine"]
+rust-version.workspace = true
+readme = "README.md"
+
+[dependencies]
+# Core dependencies
+rustapi-core = { workspace = true }
+rustapi-openapi = { workspace = true }
+
+# Template engine
+tera = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# HTTP types
+http = { workspace = true }
+http-body-util = { workspace = true }
+bytes = { workspace = true }
+
+# Async
+tokio = { workspace = true }
+
+# Utilities
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

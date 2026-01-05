@@ -12,9 +12,11 @@
 4. [OpenAPI & Swagger](#openapi--swagger)
 5. [Middleware](#middleware)
 6. [TOON Format](#toon-format)
-7. [Testing](#testing)
-8. [Error Handling](#error-handling)
-9. [Configuration](#configuration)
+7. [WebSocket](#websocket)
+8. [Template Engine](#template-engine)
+9. [Testing](#testing)
+10. [Error Handling](#error-handling)
+11. [Configuration](#configuration)
 
 ---
 
@@ -681,6 +683,283 @@ users[(id:1,name:Alice,email:alice@example.com)(id:2,name:Bob,email:bob@example.
 
 ---
 
+## WebSocket
+
+Real-time bidirectional communication support (requires `ws` feature).
+
+### Basic WebSocket Handler
+
+```rust
+use rustapi_rs::ws::{WebSocket, WebSocketUpgrade, WebSocketStream, Message};
+
+#[rustapi_rs::get("/ws")]
+async fn websocket(ws: WebSocket) -> WebSocketUpgrade {
+    ws.on_upgrade(handle_connection)
+}
+
+async fn handle_connection(mut stream: WebSocketStream) {
+    while let Some(msg) = stream.recv().await {
+        match msg {
+            Message::Text(text) => {
+                // Echo the message back
+                stream.send(Message::Text(format!("Echo: {}", text))).await.ok();
+            }
+            Message::Binary(data) => {
+                // Handle binary data
+                stream.send(Message::Binary(data)).await.ok();
+            }
+            Message::Ping(data) => {
+                stream.send(Message::Pong(data)).await.ok();
+            }
+            Message::Close(_) => break,
+            _ => {}
+        }
+    }
+}
+```
+
+### Message Types
+
+| Type | Description |
+|------|-------------|
+| `Message::Text(String)` | UTF-8 text message |
+| `Message::Binary(Vec<u8>)` | Binary data |
+| `Message::Ping(Vec<u8>)` | Ping frame (keepalive) |
+| `Message::Pong(Vec<u8>)` | Pong response |
+| `Message::Close(Option<CloseFrame>)` | Connection close |
+
+### Broadcast Channel
+
+For pub/sub patterns (chat rooms, live updates):
+
+```rust
+use rustapi_rs::ws::{Broadcast, Message};
+use std::sync::Arc;
+
+#[tokio::main]
+async fn main() {
+    let broadcast = Arc::new(Broadcast::new());
+    
+    RustApi::new()
+        .state(broadcast)
+        .route("/ws", get(websocket))
+        .route("/broadcast", post(send_broadcast))
+        .run("0.0.0.0:8080")
+        .await
+}
+
+#[rustapi_rs::get("/ws")]
+async fn websocket(
+    ws: WebSocket,
+    State(broadcast): State<Arc<Broadcast>>,
+) -> WebSocketUpgrade {
+    let mut rx = broadcast.subscribe();
+    ws.on_upgrade(move |mut stream| async move {
+        loop {
+            tokio::select! {
+                // Receive from client
+                msg = stream.recv() => {
+                    match msg {
+                        Some(Message::Close(_)) | None => break,
+                        _ => {}
+                    }
+                }
+                // Receive broadcasts
+                Ok(msg) = rx.recv() => {
+                    if stream.send(msg).await.is_err() {
+                        break;
+                    }
+                }
+            }
+        }
+    })
+}
+
+#[rustapi_rs::post("/broadcast")]
+async fn send_broadcast(
+    State(broadcast): State<Arc<Broadcast>>,
+    body: String,
+) -> &'static str {
+    broadcast.send(Message::Text(body));
+    "Sent"
+}
+```
+
+### WebSocket with State
+
+```rust
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::Arc;
+
+struct ConnectionCounter(AtomicUsize);
+
+#[rustapi_rs::get("/ws")]
+async fn websocket(
+    ws: WebSocket,
+    State(counter): State<Arc<ConnectionCounter>>,
+) -> WebSocketUpgrade {
+    ws.on_upgrade(move |stream| async move {
+        counter.0.fetch_add(1, Ordering::SeqCst);
+        handle_connection(stream).await;
+        counter.0.fetch_sub(1, Ordering::SeqCst);
+    })
+}
+```
+
+---
+
+## Template Engine
+
+Server-side HTML rendering with Tera templates (requires `view` feature).
+
+### Setup
+
+```rust
+use rustapi_rs::view::{Templates, TemplatesConfig};
+
+#[tokio::main]
+async fn main() {
+    let templates = Templates::new(TemplatesConfig {
+        directory: "templates".into(),
+        extension: "html".into(),
+    }).expect("Failed to load templates");
+    
+    RustApi::new()
+        .state(templates)
+        .route("/", get(home))
+        .run("0.0.0.0:8080")
+        .await
+}
+```
+
+### Basic Template Rendering
+
+```rust
+use rustapi_rs::view::{Templates, View};
+
+#[rustapi_rs::get("/")]
+async fn home(templates: Templates) -> View<()> {
+    View::new(&templates, "index.html", ())
+}
+
+#[derive(Serialize)]
+struct UserData {
+    name: String,
+    email: String,
+}
+
+#[rustapi_rs::get("/user/{id}")]
+async fn user_page(
+    templates: Templates,
+    Path(id): Path<u64>,
+) -> View<UserData> {
+    let user = UserData {
+        name: "Alice".into(),
+        email: "alice@example.com".into(),
+    };
+    View::new(&templates, "user.html", user)
+}
+```
+
+### Template with Extra Context
+
+```rust
+use rustapi_rs::view::{Templates, View, ContextBuilder};
+
+#[rustapi_rs::get("/dashboard")]
+async fn dashboard(templates: Templates) -> View<DashboardData> {
+    let data = get_dashboard_data();
+    
+    View::with_context(&templates, "dashboard.html", data, |ctx| {
+        ctx.insert("title", &"Dashboard");
+        ctx.insert("year", &2024);
+        ctx.insert("nav_items", &vec!["Home", "Users", "Settings"]);
+    })
+}
+```
+
+### Tera Template Syntax
+
+**templates/base.html:**
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{% block title %}My App{% endblock %}</title>
+</head>
+<body>
+    <nav>{% block nav %}{% endblock %}</nav>
+    <main>{% block content %}{% endblock %}</main>
+</body>
+</html>
+```
+
+**templates/user.html:**
+```html
+{% extends "base.html" %}
+
+{% block title %}{{ name }} - My App{% endblock %}
+
+{% block content %}
+<div class="user-profile">
+    <h1>{{ name }}</h1>
+    <p>Email: {{ email }}</p>
+    
+    {% if posts %}
+    <h2>Posts</h2>
+    <ul>
+        {% for post in posts %}
+        <li>{{ post.title }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</div>
+{% endblock %}
+```
+
+### Template Features
+
+| Feature | Syntax | Description |
+|---------|--------|-------------|
+| Variables | `{{ name }}` | Output variable |
+| Filters | `{{ name \| upper }}` | Transform values |
+| Conditionals | `{% if x %}...{% endif %}` | Conditional rendering |
+| Loops | `{% for x in items %}` | Iteration |
+| Inheritance | `{% extends "base.html" %}` | Template inheritance |
+| Blocks | `{% block name %}` | Overridable sections |
+| Includes | `{% include "partial.html" %}` | Include templates |
+| Macros | `{% macro name() %}` | Reusable snippets |
+
+### Built-in Filters
+
+| Filter | Example | Description |
+|--------|---------|-------------|
+| `upper` | `{{ name \| upper }}` | UPPERCASE |
+| `lower` | `{{ name \| lower }}` | lowercase |
+| `capitalize` | `{{ name \| capitalize }}` | Capitalize |
+| `trim` | `{{ text \| trim }}` | Remove whitespace |
+| `length` | `{{ items \| length }}` | Array/string length |
+| `default` | `{{ x \| default(value="N/A") }}` | Default value |
+| `date` | `{{ dt \| date(format="%Y-%m-%d") }}` | Date formatting |
+| `json_encode` | `{{ obj \| json_encode }}` | JSON string |
+
+### Error Handling
+
+```rust
+#[rustapi_rs::get("/user/{id}")]
+async fn user_page(
+    templates: Templates,
+    Path(id): Path<u64>,
+) -> Result<View<UserData>> {
+    let user = find_user(id)
+        .ok_or_else(|| ApiError::not_found("User not found"))?;
+    
+    Ok(View::new(&templates, "user.html", user))
+}
+```
+
+---
+
 ## Testing
 
 ### TestClient
@@ -854,6 +1133,8 @@ rustapi-rs = { version = "0.1.4", features = ["full"] }
 | `rate-limit` | Rate limiting |
 | `toon` | TOON format |
 | `cookies` | Cookie extraction |
+| `ws` | WebSocket support |
+| `view` | Template engine (Tera) |
 | `full` | All features |
 
 ---

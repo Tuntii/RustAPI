@@ -16,6 +16,8 @@ rustapi-core = { workspace = true, default-features = false }
 rustapi-macros = { workspace = true }
 rustapi-extras = { workspace = true, optional = true }
 rustapi-toon = { workspace = true, optional = true }
+rustapi-ws = { workspace = true, optional = true }
+rustapi-view = { workspace = true, optional = true }
 
 # Re-exports for user convenience
 tokio = { workspace = true }
@@ -33,6 +35,10 @@ utoipa = { workspace = true }
 default = ["swagger-ui"]
 swagger-ui = ["rustapi-core/swagger-ui", "rustapi-openapi/swagger-ui"]
 
+# Compression middleware
+compression = ["rustapi-core/compression"]
+compression-brotli = ["rustapi-core/compression-brotli"]
+
 # Security and utility features (from rustapi-extras)
 jwt = ["dep:rustapi-extras", "rustapi-extras/jwt"]
 cors = ["dep:rustapi-extras", "rustapi-extras/cors"]
@@ -40,10 +46,17 @@ rate-limit = ["dep:rustapi-extras", "rustapi-extras/rate-limit"]
 config = ["dep:rustapi-extras", "rustapi-extras/config"]
 cookies = ["dep:rustapi-extras", "rustapi-extras/cookies", "rustapi-core/cookies"]
 sqlx = ["dep:rustapi-extras", "rustapi-extras/sqlx"]
+insight = ["dep:rustapi-extras", "rustapi-extras/insight"]
 
 # TOON format support
 toon = ["dep:rustapi-toon"]
 
+# WebSocket support
+ws = ["dep:rustapi-ws"]
+
+# Template engine support
+view = ["dep:rustapi-view"]
+
 # Meta features
 extras = ["jwt", "cors", "rate-limit"]
-full = ["extras", "config", "cookies", "sqlx", "toon"]
+full = ["extras", "config", "cookies", "sqlx", "toon", "insight", "compression", "ws", "view"]

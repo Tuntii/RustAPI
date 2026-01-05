@@ -268,12 +268,14 @@ pub struct ImportResponse {
 // ============================================
 
 /// Standard error response format
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Schema)]
 pub struct ErrorResponse {
     pub error: ErrorDetail,
 }
 
 /// Error detail structure
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Schema)]
 pub struct ErrorDetail {
     #[serde(rename = "type")]
@@ -284,6 +286,7 @@ pub struct ErrorDetail {
 }
 
 /// Field-level validation error
+#[allow(dead_code)]
 #[derive(Debug, Serialize, Schema)]
 pub struct FieldError {
     pub field: String,

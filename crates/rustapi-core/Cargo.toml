@@ -44,6 +44,10 @@ linkme = { workspace = true }
 uuid = { workspace = true }
 base64 = "0.22"
 
+# Compression (optional)
+flate2 = { version = "1.0", optional = true }
+brotli = { version = "6.0", optional = true }
+
 # Cookies (optional)
 cookie = { version = "0.18", optional = true }
 
@@ -69,3 +73,5 @@ test-utils = []
 cookies = ["dep:cookie"]
 sqlx = ["dep:sqlx"]
 metrics = ["dep:prometheus"]
+compression = ["dep:flate2"]
+compression-brotli = ["compression", "dep:brotli"]

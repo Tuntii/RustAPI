@@ -2,6 +2,7 @@
 
 use crate::error::Result;
 use crate::middleware::{BodyLimitLayer, LayerStack, MiddlewareLayer, DEFAULT_BODY_LIMIT};
+use crate::response::IntoResponse;
 use crate::router::{MethodRouter, Router};
 use crate::server::Server;
 use std::collections::HashMap;
@@ -403,6 +404,126 @@ impl RustApi {
     pub fn nest(mut self, prefix: &str, router: Router) -> Self {
         self.router = self.router.nest(prefix, router);
         self
+    }
+
+    /// Serve static files from a directory
+    ///
+    /// Maps a URL path prefix to a filesystem directory. Requests to paths under
+    /// the prefix will serve files from the corresponding location in the directory.
+    ///
+    /// # Arguments
+    ///
+    /// * `prefix` - URL path prefix (e.g., "/static", "/assets")
+    /// * `root` - Filesystem directory path
+    ///
+    /// # Features
+    ///
+    /// - Automatic MIME type detection
+    /// - ETag and Last-Modified headers for caching
+    /// - Index file serving for directories
+    /// - Path traversal prevention
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use rustapi_rs::prelude::*;
+    ///
+    /// RustApi::new()
+    ///     .serve_static("/assets", "./public")
+    ///     .serve_static("/uploads", "./uploads")
+    ///     .run("127.0.0.1:8080")
+    ///     .await
+    /// ```
+    pub fn serve_static(self, prefix: &str, root: impl Into<std::path::PathBuf>) -> Self {
+        self.serve_static_with_config(crate::static_files::StaticFileConfig::new(root, prefix))
+    }
+
+    /// Serve static files with custom configuration
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use rustapi_core::static_files::StaticFileConfig;
+    ///
+    /// let config = StaticFileConfig::new("./public", "/assets")
+    ///     .max_age(86400)  // Cache for 1 day
+    ///     .fallback("index.html");  // SPA fallback
+    ///
+    /// RustApi::new()
+    ///     .serve_static_with_config(config)
+    ///     .run("127.0.0.1:8080")
+    ///     .await
+    /// ```
+    pub fn serve_static_with_config(self, config: crate::static_files::StaticFileConfig) -> Self {
+        use crate::router::MethodRouter;
+        use std::collections::HashMap;
+
+        let prefix = config.prefix.clone();
+        let catch_all_path = format!("{}/*path", prefix.trim_end_matches('/'));
+
+        // Create the static file handler
+        let handler: crate::handler::BoxedHandler =
+            std::sync::Arc::new(move |req: crate::Request| {
+                let config = config.clone();
+                let path = req.uri().path().to_string();
+
+                Box::pin(async move {
+                    let relative_path = path.strip_prefix(&config.prefix).unwrap_or(&path);
+
+                    match crate::static_files::StaticFile::serve(relative_path, &config).await {
+                        Ok(response) => response,
+                        Err(err) => err.into_response(),
+                    }
+                })
+                    as std::pin::Pin<Box<dyn std::future::Future<Output = crate::Response> + Send>>
+            });
+
+        let mut handlers = HashMap::new();
+        handlers.insert(http::Method::GET, handler);
+        let method_router = MethodRouter::from_boxed(handlers);
+
+        self.route(&catch_all_path, method_router)
+    }
+
+    /// Enable response compression
+    ///
+    /// Adds gzip/deflate compression for response bodies. The compression
+    /// is based on the client's Accept-Encoding header.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use rustapi_rs::prelude::*;
+    ///
+    /// RustApi::new()
+    ///     .compression()
+    ///     .route("/", get(handler))
+    ///     .run("127.0.0.1:8080")
+    ///     .await
+    /// ```
+    #[cfg(feature = "compression")]
+    pub fn compression(self) -> Self {
+        self.layer(crate::middleware::CompressionLayer::new())
+    }
+
+    /// Enable response compression with custom configuration
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use rustapi_core::middleware::CompressionConfig;
+    ///
+    /// RustApi::new()
+    ///     .compression_with_config(
+    ///         CompressionConfig::new()
+    ///             .min_size(512)
+    ///             .level(9)
+    ///     )
+    ///     .route("/", get(handler))
+    /// ```
+    #[cfg(feature = "compression")]
+    pub fn compression_with_config(self, config: crate::middleware::CompressionConfig) -> Self {
+        self.layer(crate::middleware::CompressionLayer::with_config(config))
     }
 
     /// Enable Swagger UI documentation

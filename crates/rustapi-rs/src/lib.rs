@@ -119,6 +119,59 @@ pub mod toon {
     pub use rustapi_toon::*;
 }
 
+// Re-export WebSocket support (feature-gated)
+#[cfg(feature = "ws")]
+pub mod ws {
+    //! WebSocket support for real-time bidirectional communication
+    //!
+    //! This module provides WebSocket functionality through the `WebSocket` extractor,
+    //! enabling real-time communication patterns like chat, live updates, and streaming.
+    //!
+    //! # Example
+    //!
+    //! ```rust,ignore
+    //! use rustapi_rs::ws::{WebSocket, Message};
+    //!
+    //! async fn websocket_handler(ws: WebSocket) -> impl IntoResponse {
+    //!     ws.on_upgrade(|mut socket| async move {
+    //!         while let Some(Ok(msg)) = socket.recv().await {
+    //!             if let Message::Text(text) = msg {
+    //!                 socket.send(Message::Text(format!("Echo: {}", text))).await.ok();
+    //!             }
+    //!         }
+    //!     })
+    //! }
+    //! ```
+    pub use rustapi_ws::*;
+}
+
+// Re-export View/Template support (feature-gated)
+#[cfg(feature = "view")]
+pub mod view {
+    //! Template engine support for server-side rendering
+    //!
+    //! This module provides Tera-based templating with the `View<T>` response type,
+    //! enabling server-side HTML rendering with template inheritance and context.
+    //!
+    //! # Example
+    //!
+    //! ```rust,ignore
+    //! use rustapi_rs::view::{Templates, View, ContextBuilder};
+    //!
+    //! #[derive(Clone)]
+    //! struct AppState {
+    //!     templates: Templates,
+    //! }
+    //!
+    //! async fn index(State(state): State<AppState>) -> View<()> {
+    //!     View::new(&state.templates, "index.html")
+    //!         .with("title", "Home")
+    //!         .with("message", "Welcome!")
+    //! }
+    //! ```
+    pub use rustapi_view::*;
+}
+
 /// Prelude module - import everything you need with `use rustapi_rs::prelude::*`
 pub mod prelude {
     // Core types
@@ -133,6 +186,8 @@ pub mod prelude {
         post_route,
         put,
         put_route,
+        serve_dir,
+        sse_response,
         // Error handling
         ApiError,
         Body,
@@ -146,6 +201,11 @@ pub mod prelude {
         IntoResponse,
         // Extractors
         Json,
+        KeepAlive,
+        // Multipart
+        Multipart,
+        MultipartConfig,
+        MultipartField,
         NoContent,
         Path,
         Query,
@@ -168,11 +228,21 @@ pub mod prelude {
         Sse,
         SseEvent,
         State,
+        // Static files
+        StaticFile,
+        StaticFileConfig,
         StreamBody,
         TracingLayer,
+        UploadedFile,
         ValidatedJson,
         WithStatus,
     };
+
+    // Compression middleware (feature-gated in core)
+    #[cfg(feature = "compression")]
+    pub use rustapi_core::middleware::{CompressionAlgorithm, CompressionConfig};
+    #[cfg(feature = "compression")]
+    pub use rustapi_core::CompressionLayer;
 
     // Cookies extractor (feature-gated in core)
     #[cfg(feature = "cookies")]
@@ -219,6 +289,14 @@ pub mod prelude {
     // TOON types (feature-gated)
     #[cfg(feature = "toon")]
     pub use rustapi_toon::{AcceptHeader, LlmResponse, Negotiate, OutputFormat, Toon};
+
+    // WebSocket types (feature-gated)
+    #[cfg(feature = "ws")]
+    pub use rustapi_ws::{Broadcast, Message, WebSocket, WebSocketStream};
+
+    // View/Template types (feature-gated)
+    #[cfg(feature = "view")]
+    pub use rustapi_view::{ContextBuilder, Templates, TemplatesConfig, View};
 }
 
 #[cfg(test)]

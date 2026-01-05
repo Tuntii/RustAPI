@@ -112,24 +112,29 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
 | Feature | Description |
 |---------|-------------|
-| **Type-Safe Extractors** | `Json<T>`, `Query<T>`, `Path<T>` — compile-time guarantees |
+| **Type-Safe Extractors** | `Json<T>`, `Query<T>`, `Path<T>`, `WebSocket` — compile-time guarantees |
 | **Zero-Config Routing** | Macro-decorated routes auto-register at startup (`RustApi::auto()`) |
 | **Auto OpenAPI** | Your code = your docs. `/docs` endpoint out of the box |
 | **Validation** | `#[validate(email)]` → automatic 422 responses |
 | **JWT Auth** | One-line auth with `AuthUser<T>` extractor |
 | **CORS & Rate Limit** | Production-ready middleware |
 | **TOON Format** | **50-58% token savings** for LLMs |
+| **WebSocket** | Real-time bidirectional communication with broadcast support |
+| **Template Engine** | Server-side HTML rendering with Tera templates |
+| **CLI Tool** | `cargo-rustapi` for project scaffolding |
 
 ### Optional Features
 
 ```toml
-rustapi-rs = { version = "0.1.4", features = ["jwt", "cors", "toon"] }
+rustapi-rs = { version = "0.1.4", features = ["jwt", "cors", "toon", "ws", "view"] }
 ```
 
 - `jwt` — JWT authentication
 - `cors` — CORS middleware  
 - `rate-limit` — IP-based rate limiting
 - `toon` — LLM-optimized responses
+- `ws` — WebSocket support
+- `view` — Template engine (Tera)
 - `full` — Everything included
 
 ---
@@ -145,7 +150,70 @@ cargo run -p auth-api
 cargo run -p sqlx-crud
 cargo run -p toon-api
 cargo run -p proof-of-concept
+cargo run -p websocket        # WebSocket example
+cargo run -p templates        # Template engine example
 ```
+
+---
+
+## 🔌 Real-time: WebSocket Support
+
+RustAPI provides first-class WebSocket support for real-time applications.
+
+```rust
+use rustapi_rs::ws::{WebSocket, Message, Broadcast};
+
+#[rustapi_rs::get("/ws")]
+async fn websocket(ws: WebSocket) -> WebSocketUpgrade {
+    ws.on_upgrade(handle_connection)
+}
+
+async fn handle_connection(mut stream: WebSocketStream) {
+    while let Some(msg) = stream.recv().await {
+        match msg {
+            Message::Text(text) => {
+                stream.send(Message::Text(format!("Echo: {}", text))).await.ok();
+            }
+            Message::Close(_) => break,
+            _ => {}
+        }
+    }
+}
+```
+
+**Features:**
+- Full WebSocket protocol support (text, binary, ping/pong)
+- `Broadcast` channel for pub/sub patterns
+- Seamless integration with RustAPI routing
+
+---
+
+## 🎨 Template Engine
+
+Server-side HTML rendering with Tera templates.
+
+```rust
+use rustapi_rs::view::{Templates, View, ContextBuilder};
+
+#[rustapi_rs::get("/")]
+async fn home(templates: Templates) -> View<()> {
+    View::new(&templates, "index.html", ())
+}
+
+#[rustapi_rs::get("/users/{id}")]
+async fn user_page(templates: Templates, Path(id): Path<u64>) -> View<User> {
+    let user = get_user(id);
+    View::with_context(&templates, "user.html", user, |ctx| {
+        ctx.insert("title", &format!("User: {}", user.name));
+    })
+}
+```
+
+**Features:**
+- Tera template engine (Jinja2-like syntax)
+- Type-safe context with `ContextBuilder`
+- Template inheritance support
+- Auto-escape HTML by default
 
 ---
 
@@ -176,6 +244,34 @@ async fn users(accept: AcceptHeader) -> LlmResponse<UsersResponse> {
 - Compatible with Claude, GPT-4, Gemini — all major LLMs
 - Cut your token costs in half
 - Optimized for MCP (Model Context Protocol) servers
+
+---
+
+## 🛠️ CLI Tool: cargo-rustapi
+
+Scaffold new RustAPI projects with ease.
+
+```bash
+# Install the CLI
+cargo install cargo-rustapi
+
+# Create a new project
+cargo rustapi new my-api
+
+# Interactive mode
+cargo rustapi new my-api --interactive
+```
+
+**Available Templates:**
+- `minimal` — Basic RustAPI setup
+- `api` — REST API with CRUD operations
+- `web` — Full web app with templates and WebSocket
+- `full` — Everything included
+
+**Commands:**
+- `cargo rustapi new <name>` — Create new project
+- `cargo rustapi generate <type>` — Generate handlers, models, middleware
+- `cargo rustapi docs` — Generate API documentation
 
 ---
 
@@ -214,6 +310,8 @@ graph TB
         Validate["rustapi-validate<br>Request Validation"]
         Toon["rustapi-toon<br>LLM Optimization"]
         Extras["rustapi-extras<br>JWT/CORS/RateLimit"]
+        WsCrate["rustapi-ws<br>WebSocket Support"]
+        ViewCrate["rustapi-view<br>Template Engine"]
     end
 
     subgraph Foundation["🏗️ Foundation Layer"]
@@ -292,6 +390,8 @@ graph BT
         Validate[rustapi-validate]
         Toon[rustapi-toon]
         Extras[rustapi-extras]
+        WS[rustapi-ws]
+        View[rustapi-view]
     end
 
     subgraph External["External Dependencies"]
@@ -300,6 +400,8 @@ graph BT
         Serde[serde]
         Utoipa[utoipa]
         Validator[validator]
+        Tungstenite[tungstenite]
+        Tera[tera]
     end
 
     App --> RS
@@ -309,6 +411,8 @@ graph BT
     RS --> Validate
     RS -.->|optional| Toon
     RS -.->|optional| Extras
+    RS -.->|optional| WS
+    RS -.->|optional| View
     
     Core --> Tokio
     Core --> Hyper
@@ -316,6 +420,8 @@ graph BT
     OpenAPI --> Utoipa
     Validate --> Validator
     Toon --> Serde
+    WS --> Tungstenite
+    View --> Tera
 
     style RS fill:#e1f5fe
     style App fill:#c8e6c9
@@ -342,6 +448,8 @@ graph BT
 | `rustapi-validate` | Request body/query validation via `#[validate]` |
 | `rustapi-toon` | TOON format serializer, content negotiation, LLM headers |
 | `rustapi-extras` | JWT auth, CORS, rate limiting middleware |
+| `rustapi-ws` | WebSocket support with broadcast channels |
+| `rustapi-view` | Template engine (Tera) for server-side rendering |
 
 ---
 
@@ -351,6 +459,9 @@ graph BT
 - [x] OpenAPI & Validation
 - [x] JWT, CORS, Rate Limiting
 - [x] TOON format & LLM optimization
+- [x] WebSocket support
+- [x] Template engine (Tera)
+- [x] CLI tool (cargo-rustapi)
 - [ ] *Coming soon...*
 
 ---
