@@ -8,3 +8,4 @@ rustapi-rs = { path = "../../crates/rustapi-rs", features = ["jwt", "cors"] }
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
 uuid = { version = "1", features = ["v4", "serde"] }
+utoipa = "4.2"

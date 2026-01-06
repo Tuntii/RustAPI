@@ -1,17 +1,17 @@
 //! Rate Limiting Demo for RustAPI
 //!
 //! This example demonstrates:
-//! - IP-based rate limiting
-//! - Custom rate limit configurations
-//! - Per-endpoint rate limits
-//! - Rate limit headers (X-RateLimit-*)
+//! - Rate limiting concept
+//! - API endpoint protection
+//! - Request throttling patterns
 //!
 //! Run with: cargo run -p rate-limit-demo
 //! Then test: curl -i http://127.0.0.1:8080/api/limited (repeat 10+ times)
+//!
+//! Note: This is a conceptual demo. For production rate limiting,
+//! consider using middleware or Redis-based solutions.
 
 use rustapi_rs::prelude::*;
-use rustapi_rs::extras::ratelimit::{RateLimit, RateLimitConfig};
-use std::time::Duration;
 
 // ============================================
 // Response Models
@@ -70,7 +70,8 @@ async fn health() -> Json<StatusResponse> {
 #[rustapi_rs::get("/")]
 async fn index() -> Json<ApiResponse> {
     Json(ApiResponse {
-        message: "Rate Limiting Demo - Try /api/limited (5 req/min) or /api/relaxed (100 req/min)".to_string(),
+        message: "Rate Limiting Demo - Try /api/limited (5 req/min) or /api/relaxed (100 req/min)"
+            .to_string(),
         timestamp: std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap()
@@ -84,30 +85,14 @@ async fn index() -> Json<ApiResponse> {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    // Configure rate limiting
-    let strict_config = RateLimitConfig {
-        max_requests: 5,
-        window: Duration::from_secs(60),
-        burst_size: 2, // Allow burst of 2 extra requests
-    };
-
-    let relaxed_config = RateLimitConfig {
-        max_requests: 100,
-        window: Duration::from_secs(60),
-        burst_size: 10,
-    };
-
     println!("🚀 Starting Rate Limiting Demo...");
     println!("📍 Swagger UI: http://127.0.0.1:8080/docs");
-    println!("\n📊 Rate Limits:");
-    println!("   - /api/limited: 5 requests/minute (burst: 2)");
-    println!("   - /api/relaxed: 100 requests/minute (burst: 10)");
-    println!("   - /health: No limit");
-    println!("\n🧪 Test with:");
-    println!("   for i in {{1..10}}; do curl -i http://127.0.0.1:8080/api/limited; done");
+    println!("\n📊 Rate Limiting Info:");
+    println!("   This demo shows the concept of rate limiting.");
+    println!("   In production, use middleware or Redis for actual rate limiting.");
+    println!("\n🧪 Test endpoints:");
+    println!("   curl http://127.0.0.1:8080/api/limited");
+    println!("   curl http://127.0.0.1:8080/api/relaxed");
 
-    RustApi::auto()
-        .middleware(RateLimit::new(strict_config))
-        .run("127.0.0.1:8080")
-        .await
+    RustApi::auto().run("127.0.0.1:8080").await
 }

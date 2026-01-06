@@ -13,7 +13,6 @@
 //!   - Order Service (port 8082) - Manages orders
 
 use rustapi_rs::prelude::*;
-use std::sync::Arc;
 
 // ============================================
 // Shared Models
@@ -58,20 +57,9 @@ mod user_service {
     }
 
     #[rustapi_rs::get("/users")]
-    async fn list_users() -> Json<Vec<User>> {
+    async fn list_users() -> &'static str {
         println!("👥 User Service: Listing all users");
-        Json(vec![
-            User {
-                id: 1,
-                name: "Alice".to_string(),
-                email: "alice@example.com".to_string(),
-            },
-            User {
-                id: 2,
-                name: "Bob".to_string(),
-                email: "bob@example.com".to_string(),
-            },
-        ])
+        r#"[{"id":1,"name":"Alice","email":"alice@example.com"},{"id":2,"name":"Bob","email":"bob@example.com"}]"#
     }
 
     pub async fn start() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -99,22 +87,9 @@ mod order_service {
     }
 
     #[rustapi_rs::get("/orders")]
-    async fn list_orders() -> Json<Vec<Order>> {
+    async fn list_orders() -> &'static str {
         println!("📦 Order Service: Listing all orders");
-        Json(vec![
-            Order {
-                id: 1,
-                user_id: 1,
-                product: "Laptop".to_string(),
-                amount: 999.99,
-            },
-            Order {
-                id: 2,
-                user_id: 2,
-                product: "Mouse".to_string(),
-                amount: 29.99,
-            },
-        ])
+        r#"[{"id":1,"user_id":1,"product":"Laptop","amount":999.99},{"id":2,"user_id":2,"product":"Mouse","amount":29.99}]"#
     }
 
     pub async fn start() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -167,14 +142,8 @@ mod gateway {
     }
 
     #[rustapi_rs::get("/")]
-    async fn index() -> Json<serde_json::Value> {
-        Json(serde_json::json!({
-            "message": "API Gateway",
-            "services": {
-                "users": "http://127.0.0.1:8080/api/users/{id}",
-                "orders": "http://127.0.0.1:8080/api/orders/{id}"
-            }
-        }))
+    async fn index() -> &'static str {
+        r#"{"message":"API Gateway","services":{"users":"http://127.0.0.1:8080/api/users/{id}","orders":"http://127.0.0.1:8080/api/orders/{id}"}}"#
     }
 
     pub async fn start() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {

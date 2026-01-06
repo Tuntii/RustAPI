@@ -193,10 +193,10 @@ cargo run -p toon-api            # TOON format for LLMs
 cargo run -p websocket           # Real-time WebSocket chat
 cargo run -p templates           # Server-side rendering with Tera
 cargo run -p mcp-server          # Model Context Protocol server
-cargo run -p rate-limit-demo     # Rate limiting middleware
-cargo run -p graphql-api         # GraphQL with async-graphql
+cargo run -p rate-limit-demo     # Rate limiting concepts
 cargo run -p microservices       # Service-to-service communication
-cargo run -p middleware-chain    # Custom middleware composition
+cargo run -p middleware-chain    # Middleware patterns
+# cargo run -p graphql-api       # GraphQL (coming soon)
 ```
 
 ### 📚 Example Categories

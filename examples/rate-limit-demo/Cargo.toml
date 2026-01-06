@@ -7,3 +7,4 @@ edition = "2021"
 rustapi-rs = { path = "../../crates/rustapi-rs", features = ["rate-limit"] }
 tokio = { version = "1", features = ["full"] }
 serde = { version = "1", features = ["derive"] }
+utoipa = "4.2"

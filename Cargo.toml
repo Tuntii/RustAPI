@@ -21,7 +21,7 @@ members = [
     "examples/websocket",
     "examples/templates",
     "examples/rate-limit-demo",
-    "examples/graphql-api",
+    # "examples/graphql-api",  # TODO: Needs API updates
     "examples/microservices",
     "examples/middleware-chain",
     "benches/toon_bench",
