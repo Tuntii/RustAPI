@@ -109,7 +109,7 @@ mod gateway {
     async fn proxy_get_user(Path(id): Path<u64>) -> Json<GatewayResponse> {
         let client = reqwest::Client::new();
         let user: User = client
-            .get(&format!("http://127.0.0.1:8081/users/{}", id))
+            .get(format!("http://127.0.0.1:8081/users/{}", id))
             .send()
             .await
             .unwrap()
@@ -127,7 +127,7 @@ mod gateway {
     async fn proxy_get_order(Path(id): Path<u64>) -> Json<GatewayResponse> {
         let client = reqwest::Client::new();
         let order: Order = client
-            .get(&format!("http://127.0.0.1:8082/orders/{}", id))
+            .get(format!("http://127.0.0.1:8082/orders/{}", id))
             .send()
             .await
             .unwrap()
