@@ -1285,9 +1285,15 @@ mod tests {
     /// Unit test: Verify OpenAPI operations are propagated during nesting
     #[test]
     fn test_openapi_operations_propagated_during_nesting() {
-        async fn list_users() -> &'static str { "list users" }
-        async fn get_user() -> &'static str { "get user" }
-        async fn create_user() -> &'static str { "create user" }
+        async fn list_users() -> &'static str {
+            "list users"
+        }
+        async fn get_user() -> &'static str {
+            "get user"
+        }
+        async fn create_user() -> &'static str {
+            "create user"
+        }
 
         // Create nested router with multiple routes
         // Note: We use separate routes since MethodRouter doesn't support chaining
@@ -1302,26 +1308,42 @@ mod tests {
         let spec = app.openapi_spec();
 
         // Verify /api/v1/users path exists with GET
-        assert!(spec.paths.contains_key("/api/v1/users"), "Should have /api/v1/users path");
+        assert!(
+            spec.paths.contains_key("/api/v1/users"),
+            "Should have /api/v1/users path"
+        );
         let users_path = spec.paths.get("/api/v1/users").unwrap();
         assert!(users_path.get.is_some(), "Should have GET operation");
 
         // Verify /api/v1/users/create path exists with POST
-        assert!(spec.paths.contains_key("/api/v1/users/create"), "Should have /api/v1/users/create path");
+        assert!(
+            spec.paths.contains_key("/api/v1/users/create"),
+            "Should have /api/v1/users/create path"
+        );
         let create_path = spec.paths.get("/api/v1/users/create").unwrap();
         assert!(create_path.post.is_some(), "Should have POST operation");
 
         // Verify /api/v1/users/{id} path exists with GET
-        assert!(spec.paths.contains_key("/api/v1/users/{id}"), "Should have /api/v1/users/{{id}} path");
+        assert!(
+            spec.paths.contains_key("/api/v1/users/{id}"),
+            "Should have /api/v1/users/{{id}} path"
+        );
         let user_path = spec.paths.get("/api/v1/users/{id}").unwrap();
-        assert!(user_path.get.is_some(), "Should have GET operation for user by id");
+        assert!(
+            user_path.get.is_some(),
+            "Should have GET operation for user by id"
+        );
 
         // Verify path parameter is added
         let get_user_op = user_path.get.as_ref().unwrap();
         assert!(get_user_op.parameters.is_some(), "Should have parameters");
         let params = get_user_op.parameters.as_ref().unwrap();
-        assert!(params.iter().any(|p| p.name == "id" && p.location == "path"),
-            "Should have 'id' path parameter");
+        assert!(
+            params
+                .iter()
+                .any(|p| p.name == "id" && p.location == "path"),
+            "Should have 'id' path parameter"
+        );
     }
 
     /// Unit test: Verify nested routes don't appear without nesting
@@ -1331,7 +1353,10 @@ mod tests {
         let spec = app.openapi_spec();
 
         // Should have no paths (except potentially default ones)
-        assert!(spec.paths.is_empty(), "OpenAPI spec should have no paths without routes");
+        assert!(
+            spec.paths.is_empty(),
+            "OpenAPI spec should have no paths without routes"
+        );
     }
 
     /// Unit test: Verify RustApi::nest delegates correctly to Router::nest
@@ -1342,9 +1367,15 @@ mod tests {
     fn test_rustapi_nest_delegates_to_router_nest() {
         use crate::router::RouteMatch;
 
-        async fn list_users() -> &'static str { "list users" }
-        async fn get_user() -> &'static str { "get user" }
-        async fn create_user() -> &'static str { "create user" }
+        async fn list_users() -> &'static str {
+            "list users"
+        }
+        async fn get_user() -> &'static str {
+            "get user"
+        }
+        async fn create_user() -> &'static str {
+            "create user"
+        }
 
         // Create nested router with multiple routes
         let users_router = Router::new()
@@ -1361,9 +1392,18 @@ mod tests {
         assert_eq!(routes.len(), 3, "Should have 3 routes registered");
 
         // Verify route paths
-        assert!(routes.contains_key("/api/v1/users"), "Should have /api/v1/users route");
-        assert!(routes.contains_key("/api/v1/users/create"), "Should have /api/v1/users/create route");
-        assert!(routes.contains_key("/api/v1/users/:id"), "Should have /api/v1/users/:id route");
+        assert!(
+            routes.contains_key("/api/v1/users"),
+            "Should have /api/v1/users route"
+        );
+        assert!(
+            routes.contains_key("/api/v1/users/create"),
+            "Should have /api/v1/users/create route"
+        );
+        assert!(
+            routes.contains_key("/api/v1/users/:id"),
+            "Should have /api/v1/users/:id route"
+        );
 
         // Verify route matching works
         match router.match_route("/api/v1/users", &Method::GET) {
@@ -1382,7 +1422,11 @@ mod tests {
 
         match router.match_route("/api/v1/users/123", &Method::GET) {
             RouteMatch::Found { params, .. } => {
-                assert_eq!(params.get("id"), Some(&"123".to_string()), "Should extract id param");
+                assert_eq!(
+                    params.get("id"),
+                    Some(&"123".to_string()),
+                    "Should extract id param"
+                );
             }
             _ => panic!("GET /api/v1/users/123 should be found"),
         }
@@ -1402,8 +1446,12 @@ mod tests {
     /// **Validates: Requirements 6.1, 6.2**
     #[test]
     fn test_rustapi_nest_includes_routes_in_openapi_spec() {
-        async fn list_items() -> &'static str { "list items" }
-        async fn get_item() -> &'static str { "get item" }
+        async fn list_items() -> &'static str {
+            "list items"
+        }
+        async fn get_item() -> &'static str {
+            "get item"
+        }
 
         // Create nested router
         let items_router = Router::new()
@@ -1417,22 +1465,38 @@ mod tests {
         let spec = app.openapi_spec();
 
         // Verify paths exist
-        assert!(spec.paths.contains_key("/api/items"), "Should have /api/items in OpenAPI");
-        assert!(spec.paths.contains_key("/api/items/{item_id}"), "Should have /api/items/{{item_id}} in OpenAPI");
+        assert!(
+            spec.paths.contains_key("/api/items"),
+            "Should have /api/items in OpenAPI"
+        );
+        assert!(
+            spec.paths.contains_key("/api/items/{item_id}"),
+            "Should have /api/items/{{item_id}} in OpenAPI"
+        );
 
         // Verify operations
         let list_path = spec.paths.get("/api/items").unwrap();
-        assert!(list_path.get.is_some(), "Should have GET operation for /api/items");
+        assert!(
+            list_path.get.is_some(),
+            "Should have GET operation for /api/items"
+        );
 
         let get_path = spec.paths.get("/api/items/{item_id}").unwrap();
-        assert!(get_path.get.is_some(), "Should have GET operation for /api/items/{{item_id}}");
+        assert!(
+            get_path.get.is_some(),
+            "Should have GET operation for /api/items/{{item_id}}"
+        );
 
         // Verify path parameter is added
         let get_op = get_path.get.as_ref().unwrap();
         assert!(get_op.parameters.is_some(), "Should have parameters");
         let params = get_op.parameters.as_ref().unwrap();
-        assert!(params.iter().any(|p| p.name == "item_id" && p.location == "path"),
-            "Should have 'item_id' path parameter");
+        assert!(
+            params
+                .iter()
+                .any(|p| p.name == "item_id" && p.location == "path"),
+            "Should have 'item_id' path parameter"
+        );
     }
 }
 

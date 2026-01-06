@@ -446,7 +446,10 @@ impl Router {
                 .insert(prefixed_matchit_path.clone(), method_router.clone());
 
             // Try to insert into the matchit router
-            match self.inner.insert(prefixed_matchit_path.clone(), method_router) {
+            match self
+                .inner
+                .insert(prefixed_matchit_path.clone(), method_router)
+            {
                 Ok(_) => {
                     // Track the registered route
                     self.registered_routes.insert(
@@ -1043,7 +1046,9 @@ mod tests {
         let parent = Router::new().nest("/api", nested);
 
         // Parent should track the nested state type ID
-        assert!(parent.state_type_ids().contains(&std::any::TypeId::of::<NestedState>()));
+        assert!(parent
+            .state_type_ids()
+            .contains(&std::any::TypeId::of::<NestedState>()));
     }
 
     #[test]
@@ -1152,11 +1157,21 @@ mod tests {
 
     #[test]
     fn test_multiple_router_composition_all_routes_registered() {
-        async fn users_list() -> &'static str { "users list" }
-        async fn users_get() -> &'static str { "users get" }
-        async fn posts_list() -> &'static str { "posts list" }
-        async fn posts_get() -> &'static str { "posts get" }
-        async fn comments_list() -> &'static str { "comments list" }
+        async fn users_list() -> &'static str {
+            "users list"
+        }
+        async fn users_get() -> &'static str {
+            "users get"
+        }
+        async fn posts_list() -> &'static str {
+            "posts list"
+        }
+        async fn posts_get() -> &'static str {
+            "posts get"
+        }
+        async fn comments_list() -> &'static str {
+            "comments list"
+        }
 
         // Create multiple sub-routers with different routes
         let users_router = Router::new()
@@ -1167,8 +1182,7 @@ mod tests {
             .route("/", get(posts_list))
             .route("/{id}", get(posts_get));
 
-        let comments_router = Router::new()
-            .route("/", get(comments_list));
+        let comments_router = Router::new().route("/", get(comments_list));
 
         // Nest all routers under different prefixes
         let app = Router::new()
@@ -1181,22 +1195,43 @@ mod tests {
         assert_eq!(routes.len(), 5, "Should have 5 routes registered");
 
         // Verify users routes
-        assert!(routes.contains_key("/api/users"), "Should have /api/users route");
-        assert!(routes.contains_key("/api/users/:id"), "Should have /api/users/:id route");
+        assert!(
+            routes.contains_key("/api/users"),
+            "Should have /api/users route"
+        );
+        assert!(
+            routes.contains_key("/api/users/:id"),
+            "Should have /api/users/:id route"
+        );
 
         // Verify posts routes
-        assert!(routes.contains_key("/api/posts"), "Should have /api/posts route");
-        assert!(routes.contains_key("/api/posts/:id"), "Should have /api/posts/:id route");
+        assert!(
+            routes.contains_key("/api/posts"),
+            "Should have /api/posts route"
+        );
+        assert!(
+            routes.contains_key("/api/posts/:id"),
+            "Should have /api/posts/:id route"
+        );
 
         // Verify comments routes
-        assert!(routes.contains_key("/api/comments"), "Should have /api/comments route");
+        assert!(
+            routes.contains_key("/api/comments"),
+            "Should have /api/comments route"
+        );
     }
 
     #[test]
     fn test_multiple_router_composition_no_interference() {
-        async fn users_handler() -> &'static str { "users" }
-        async fn posts_handler() -> &'static str { "posts" }
-        async fn admin_handler() -> &'static str { "admin" }
+        async fn users_handler() -> &'static str {
+            "users"
+        }
+        async fn posts_handler() -> &'static str {
+            "posts"
+        }
+        async fn admin_handler() -> &'static str {
+            "admin"
+        }
 
         // Create routers with same internal structure but different prefixes
         let users_router = Router::new()
@@ -1254,9 +1289,15 @@ mod tests {
 
     #[test]
     fn test_multiple_router_composition_with_multiple_methods() {
-        async fn get_handler() -> &'static str { "get" }
-        async fn post_handler() -> &'static str { "post" }
-        async fn put_handler() -> &'static str { "put" }
+        async fn get_handler() -> &'static str {
+            "get"
+        }
+        async fn post_handler() -> &'static str {
+            "post"
+        }
+        async fn put_handler() -> &'static str {
+            "put"
+        }
 
         // Create routers with multiple HTTP methods
         // Combine GET and POST for users root
@@ -1296,8 +1337,7 @@ mod tests {
             posts_root_combined.handlers.insert(method, handler);
         }
 
-        let posts_router = Router::new()
-            .route("/", posts_root_combined);
+        let posts_router = Router::new().route("/", posts_root_combined);
 
         // Nest routers
         let app = Router::new()
@@ -1339,17 +1379,16 @@ mod tests {
 
     #[test]
     fn test_multiple_router_composition_deep_nesting() {
-        async fn handler() -> &'static str { "handler" }
+        async fn handler() -> &'static str {
+            "handler"
+        }
 
         // Create nested routers at different depth levels
-        let deep_router = Router::new()
-            .route("/action", get(handler));
+        let deep_router = Router::new().route("/action", get(handler));
 
-        let mid_router = Router::new()
-            .route("/info", get(handler));
+        let mid_router = Router::new().route("/info", get(handler));
 
-        let shallow_router = Router::new()
-            .route("/status", get(handler));
+        let shallow_router = Router::new().route("/status", get(handler));
 
         // Nest at different depths
         let app = Router::new()
@@ -2252,7 +2291,7 @@ mod property_tests {
                     // Success
                 }
                 other => {
-                    prop_assert!(false, "Route should be found for registered method, got: {:?}", 
+                    prop_assert!(false, "Route should be found for registered method, got: {:?}",
                         match other {
                             RouteMatch::NotFound => "NotFound",
                             RouteMatch::MethodNotAllowed { .. } => "MethodNotAllowed",
@@ -3212,7 +3251,7 @@ mod property_tests {
                         msg
                     );
                     prop_assert!(
-                        msg.contains("Use different path patterns") || 
+                        msg.contains("Use different path patterns") ||
                         msg.contains("different path patterns"),
                         "Error should suggest using different path patterns, got: {}",
                         msg
