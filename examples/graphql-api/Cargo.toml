@@ -1,0 +1,11 @@
+[package]
+name = "graphql-api"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rustapi-rs = { path = "../../crates/rustapi-rs" }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+async-graphql = "7.0"
+async-graphql-axum = "7.0"
