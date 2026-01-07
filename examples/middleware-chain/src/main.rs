@@ -29,14 +29,18 @@ impl RequestIdMiddleware {
 
     async fn handle<B>(&self, req: Request<B>, next: Next<B>) -> Response {
         let request_id = Uuid::new_v4().to_string();
-        println!("📝 [{}] New request: {} {}", request_id, req.method(), req.uri());
+        println!(
+            "📝 [{}] New request: {} {}",
+            request_id,
+            req.method(),
+            req.uri()
+        );
 
         // Add request ID to headers
         let mut response = next.run(req).await;
-        response.headers_mut().insert(
-            "X-Request-ID",
-            request_id.parse().unwrap(),
-        );
+        response
+            .headers_mut()
+            .insert("X-Request-ID", request_id.parse().unwrap());
         response
     }
 }
