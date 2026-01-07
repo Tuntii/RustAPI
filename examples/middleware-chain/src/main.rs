@@ -124,8 +124,7 @@ impl MiddlewareLayer for CustomAuthMiddleware {
                 // Validate auth header
                 if let Some(auth_header) = req.headers().get("Authorization") {
                     if let Ok(auth_str) = auth_header.to_str() {
-                        if auth_str.starts_with("Bearer ") {
-                            let token = &auth_str[7..];
+                        if let Some(token) = auth_str.strip_prefix("Bearer ") {
                             if token == "token123" {
                                 println!("✅ Auth successful for {}", path);
                                 return next(req).await;
