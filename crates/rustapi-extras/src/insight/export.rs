@@ -221,35 +221,86 @@ impl WebhookConfig {
 pub struct WebhookExporter {
     config: WebhookConfig,
     buffer: Arc<Mutex<Vec<InsightData>>>,
+    #[cfg(feature = "webhook")]
+    client: reqwest::Client,
 }
 
 impl WebhookExporter {
     /// Create a new webhook exporter.
     pub fn new(config: WebhookConfig) -> Self {
+        #[cfg(feature = "webhook")]
+        let client = reqwest::Client::builder()
+            .timeout(std::time::Duration::from_secs(config.timeout_secs))
+            .build()
+            .expect("Failed to build HTTP client");
+
         Self {
             config,
             buffer: Arc::new(Mutex::new(Vec::new())),
+            #[cfg(feature = "webhook")]
+            client,
         }
     }
 
     /// Send insights to the webhook.
+    #[cfg(feature = "webhook")]
     fn send_insights(&self, insights: &[InsightData]) -> ExportResult<()> {
-        // Note: This is a simplified implementation.
-        // In production, you'd use an async HTTP client like reqwest.
-        // For now, we'll just log and return success since this crate
-        // doesn't want to add heavy HTTP client dependencies.
+        use std::sync::mpsc;
 
+        // Use a channel to get the result from the async context
+        let (tx, rx) = mpsc::channel();
+        let client = self.client.clone();
+        let url = self.config.url.clone();
+        let auth = self.config.auth_header.clone();
+        let insights = insights.to_vec();
+
+        // Spawn a blocking task to run the async request
+        std::thread::spawn(move || {
+            let rt = tokio::runtime::Builder::new_current_thread()
+                .enable_all()
+                .build()
+                .unwrap();
+
+            let result = rt.block_on(async {
+                let mut request = client.post(&url).json(&insights);
+
+                if let Some(auth_value) = auth {
+                    request = request.header("Authorization", auth_value);
+                }
+
+                match request.send().await {
+                    Ok(response) => {
+                        if response.status().is_success() {
+                            Ok(())
+                        } else {
+                            Err(ExportError::Unavailable(format!(
+                                "Webhook returned status {}",
+                                response.status()
+                            )))
+                        }
+                    }
+                    Err(e) => Err(ExportError::Unavailable(e.to_string())),
+                }
+            });
+
+            let _ = tx.send(result);
+        });
+
+        // Wait for the result with timeout
+        rx.recv_timeout(std::time::Duration::from_secs(self.config.timeout_secs + 1))
+            .map_err(|_| ExportError::Unavailable("Webhook request timed out".to_string()))?
+    }
+
+    /// Send insights to the webhook (stub when webhook feature is disabled).
+    #[cfg(not(feature = "webhook"))]
+    fn send_insights(&self, insights: &[InsightData]) -> ExportResult<()> {
         let json = serde_json::to_string(insights)?;
         tracing::debug!(
             url = %self.config.url,
             count = insights.len(),
             size = json.len(),
-            "Would send insights to webhook"
+            "Would send insights to webhook (enable 'webhook' feature for actual HTTP)"
         );
-
-        // TODO: Implement actual HTTP POST when reqwest is available
-        // For now, this is a placeholder that logs the intent
-
         Ok(())
     }
 }

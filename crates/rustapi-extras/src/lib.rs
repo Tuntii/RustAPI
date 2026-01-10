@@ -63,7 +63,8 @@ pub use rate_limit::RateLimitLayer;
 
 #[cfg(feature = "config")]
 pub use config::{
-    env_or, env_parse, load_dotenv, load_dotenv_from, require_env, Config, ConfigError, Environment,
+    env_or, env_parse, load_dotenv, load_dotenv_from, require_env, try_require_env, Config,
+    ConfigError, Environment,
 };
 
 #[cfg(feature = "sqlx")]

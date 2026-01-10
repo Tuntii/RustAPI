@@ -352,6 +352,21 @@ pub fn require_env(name: &str) -> String {
     })
 }
 
+/// Try to get a required environment variable, returning an error if not set.
+///
+/// This is the non-panicking version of `require_env`.
+///
+/// # Example
+///
+/// ```ignore
+/// use rustapi_extras::config::try_require_env;
+///
+/// let db_url = try_require_env("DATABASE_URL")?;
+/// ```
+pub fn try_require_env(name: &str) -> Result<String, ConfigError> {
+    std::env::var(name).map_err(|_| ConfigError::MissingVar(name.to_string()))
+}
+
 /// Get an environment variable with a default value.
 ///
 /// # Example

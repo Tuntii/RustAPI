@@ -50,6 +50,7 @@ use futures_util::Stream;
 use http::{header, StatusCode};
 use http_body_util::Full;
 use pin_project_lite::pin_project;
+use rustapi_openapi::{MediaType, Operation, ResponseModifier, ResponseSpec, SchemaRef};
 use std::fmt::Write;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -379,6 +380,29 @@ where
             .header("X-Accel-Buffering", "no") // Disable nginx buffering
             .body(Full::new(Bytes::new()))
             .unwrap()
+    }
+}
+
+// OpenAPI support: ResponseModifier for SSE streams
+impl<S> ResponseModifier for Sse<S> {
+    fn update_response(op: &mut Operation) {
+        let mut content = std::collections::HashMap::new();
+        content.insert(
+            "text/event-stream".to_string(),
+            MediaType {
+                schema: SchemaRef::Inline(serde_json::json!({
+                    "type": "string",
+                    "description": "Server-Sent Events stream. Events follow the SSE format: 'event: <type>\\ndata: <json>\\n\\n'",
+                    "example": "event: message\ndata: {\"id\": 1, \"text\": \"Hello\"}\n\n"
+                })),
+            },
+        );
+
+        let response = ResponseSpec {
+            description: "Server-Sent Events stream for real-time updates".to_string(),
+            content: Some(content),
+        };
+        op.responses.insert("200".to_string(), response);
     }
 }
 

@@ -50,6 +50,9 @@ cookie = { version = "0.18", optional = true }
 # Insight (feature-gated) - reuses dashmap from rate-limit
 urlencoding = { version = "2.1", optional = true }
 
+# HTTP client for webhook exporter (feature-gated)
+reqwest = { version = "0.12", optional = true, default-features = false, features = ["json", "rustls-tls"] }
+
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 proptest = "1.4"
@@ -68,9 +71,10 @@ config = ["dep:dotenvy", "dep:envy"]
 cookies = ["dep:cookie"]
 sqlx = ["dep:sqlx"]
 insight = ["dep:dashmap", "dep:urlencoding"]
+webhook = ["insight", "dep:reqwest"]
 
 # Meta feature that enables all security features
 extras = ["jwt", "cors", "rate-limit"]
 
 # Full feature set
-full = ["extras", "config", "cookies", "sqlx", "insight"]
+full = ["extras", "config", "cookies", "sqlx", "insight", "webhook"]
