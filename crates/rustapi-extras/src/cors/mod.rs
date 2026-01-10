@@ -14,7 +14,13 @@
 //!     .allow_credentials(true);
 //! ```
 
-use http::Method;
+use bytes::Bytes;
+use http::{header, Method, StatusCode};
+use http_body_util::Full;
+use rustapi_core::middleware::{BoxedNext, MiddlewareLayer};
+use rustapi_core::{Request, Response};
+use std::future::Future;
+use std::pin::Pin;
 use std::time::Duration;
 
 /// Specifies which origins are allowed for CORS requests.
@@ -160,5 +166,154 @@ impl CorsLayer {
     /// Get the max age configuration.
     pub fn max_age_duration(&self) -> Option<Duration> {
         self.max_age
+    }
+
+    /// Build the Access-Control-Allow-Methods header value.
+    fn methods_header_value(&self) -> String {
+        self.methods
+            .iter()
+            .map(|m| m.as_str())
+            .collect::<Vec<_>>()
+            .join(", ")
+    }
+
+    /// Build the Access-Control-Allow-Headers header value.
+    fn headers_header_value(&self) -> String {
+        if self.headers.is_empty() {
+            "Content-Type, Authorization".to_string()
+        } else {
+            self.headers.join(", ")
+        }
+    }
+}
+
+impl MiddlewareLayer for CorsLayer {
+    fn call(
+        &self,
+        req: Request,
+        next: BoxedNext,
+    ) -> Pin<Box<dyn Future<Output = Response> + Send + 'static>> {
+        let origins = self.origins.clone();
+        let methods = self.methods_header_value();
+        let headers = self.headers_header_value();
+        let credentials = self.credentials;
+        let max_age = self.max_age;
+        let is_any_origin = matches!(origins, AllowedOrigins::Any);
+
+        // Extract origin from request
+        let origin = req
+            .headers()
+            .get(header::ORIGIN)
+            .and_then(|v| v.to_str().ok())
+            .map(String::from);
+
+        // Check if this is a preflight request
+        let is_preflight = req.method() == Method::OPTIONS
+            && req
+                .headers()
+                .contains_key(header::ACCESS_CONTROL_REQUEST_METHOD);
+
+        // Clone self for origin check
+        let is_origin_allowed = origin
+            .as_ref()
+            .map(|o| match &origins {
+                AllowedOrigins::Any => true,
+                AllowedOrigins::List(list) => list.iter().any(|allowed| allowed == o),
+            })
+            .unwrap_or(false);
+
+        Box::pin(async move {
+            // Handle preflight request
+            if is_preflight {
+                let mut response = http::Response::builder()
+                    .status(StatusCode::NO_CONTENT)
+                    .body(Full::new(Bytes::new()))
+                    .unwrap();
+
+                let headers_mut = response.headers_mut();
+
+                // Set Allow-Origin
+                if let Some(ref origin) = origin {
+                    if is_origin_allowed {
+                        if is_any_origin && !credentials {
+                            headers_mut
+                                .insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*".parse().unwrap());
+                        } else {
+                            headers_mut.insert(
+                                header::ACCESS_CONTROL_ALLOW_ORIGIN,
+                                origin.parse().unwrap(),
+                            );
+                        }
+                    }
+                }
+
+                // Set Allow-Methods
+                headers_mut.insert(
+                    header::ACCESS_CONTROL_ALLOW_METHODS,
+                    methods.parse().unwrap(),
+                );
+
+                // Set Allow-Headers
+                headers_mut.insert(
+                    header::ACCESS_CONTROL_ALLOW_HEADERS,
+                    headers.parse().unwrap(),
+                );
+
+                // Set Allow-Credentials
+                if credentials {
+                    headers_mut.insert(
+                        header::ACCESS_CONTROL_ALLOW_CREDENTIALS,
+                        "true".parse().unwrap(),
+                    );
+                }
+
+                // Set Max-Age
+                if let Some(max_age) = max_age {
+                    headers_mut.insert(
+                        header::ACCESS_CONTROL_MAX_AGE,
+                        max_age.as_secs().to_string().parse().unwrap(),
+                    );
+                }
+
+                return response;
+            }
+
+            // Process the actual request
+            let mut response = next(req).await;
+
+            // Add CORS headers to the response
+            if let Some(ref origin) = origin {
+                if is_origin_allowed {
+                    let headers_mut = response.headers_mut();
+
+                    if is_any_origin && !credentials {
+                        headers_mut
+                            .insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*".parse().unwrap());
+                    } else {
+                        headers_mut
+                            .insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin.parse().unwrap());
+                    }
+
+                    if credentials {
+                        headers_mut.insert(
+                            header::ACCESS_CONTROL_ALLOW_CREDENTIALS,
+                            "true".parse().unwrap(),
+                        );
+                    }
+
+                    // Expose headers that the browser can access
+                    headers_mut.insert(
+                        header::ACCESS_CONTROL_EXPOSE_HEADERS,
+                        "Content-Length, Content-Type".parse().unwrap(),
+                    );
+                }
+            }
+
+            response
+        })
+    }
+
+    fn clone_box(&self) -> Box<dyn MiddlewareLayer> {
+        Box::new(self.clone())
     }
 }

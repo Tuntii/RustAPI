@@ -24,11 +24,12 @@ members = [
     # "examples/graphql-api",  # TODO: Needs API updates
     "examples/microservices",
     "examples/middleware-chain",
+    "examples/cors-test",
     "benches/toon_bench",
 ]
 
 [workspace.package]
-version = "0.1.7"
+version = "0.1.8"
 edition = "2021"
 authors = ["RustAPI Contributors"]
 license = "MIT OR Apache-2.0"

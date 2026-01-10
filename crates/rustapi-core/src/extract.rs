@@ -199,7 +199,6 @@ impl<T> ValidatedJson<T> {
 
 impl<T: DeserializeOwned + rustapi_validate::Validate + Send> FromRequest for ValidatedJson<T> {
     async fn from_request(req: &mut Request) -> Result<Self> {
-        // First, deserialize the JSON body
         let body = req
             .take_body()
             .ok_or_else(|| ApiError::internal("Body already consumed"))?;
@@ -778,10 +777,17 @@ impl<T: for<'a> Schema<'a>> OperationModifier for Json<T> {
     }
 }
 
-// Path - Placeholder for path params
+// Path - Path parameters are automatically extracted from route patterns
+// The add_path_params_to_operation function in app.rs handles OpenAPI documentation
+// based on the {param} syntax in route paths (e.g., "/users/{id}")
 impl<T> OperationModifier for Path<T> {
     fn update_operation(_op: &mut Operation) {
-        // TODO: Implement path param extraction
+        // Path parameters are automatically documented by add_path_params_to_operation
+        // in app.rs based on the route pattern. No additional implementation needed here.
+        //
+        // For typed path params, the schema type defaults to "string" but will be
+        // inferred from the actual type T when more sophisticated type introspection
+        // is implemented.
     }
 }
 

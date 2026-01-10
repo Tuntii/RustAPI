@@ -266,10 +266,7 @@ impl RustApi {
             entry.insert_boxed_with_operation(method_enum, route.handler, route.operation);
         }
 
-        let route_count = by_path
-            .values()
-            .map(|mr| mr.allowed_methods().len())
-            .sum::<usize>();
+        let route_count: usize = by_path.values().map(|mr| mr.allowed_methods().len()).sum();
         let path_count = by_path.len();
 
         for (path, method_router) in by_path {
