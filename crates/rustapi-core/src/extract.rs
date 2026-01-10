@@ -784,7 +784,7 @@ impl<T> OperationModifier for Path<T> {
     fn update_operation(_op: &mut Operation) {
         // Path parameters are automatically documented by add_path_params_to_operation
         // in app.rs based on the route pattern. No additional implementation needed here.
-        // 
+        //
         // For typed path params, the schema type defaults to "string" but will be
         // inferred from the actual type T when more sophisticated type introspection
         // is implemented.

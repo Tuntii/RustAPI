@@ -209,16 +209,16 @@ impl MiddlewareLayer for CorsLayer {
 
         // Check if this is a preflight request
         let is_preflight = req.method() == Method::OPTIONS
-            && req.headers().contains_key(header::ACCESS_CONTROL_REQUEST_METHOD);
+            && req
+                .headers()
+                .contains_key(header::ACCESS_CONTROL_REQUEST_METHOD);
 
         // Clone self for origin check
         let is_origin_allowed = origin
             .as_ref()
-            .map(|o| {
-                match &origins {
-                    AllowedOrigins::Any => true,
-                    AllowedOrigins::List(list) => list.iter().any(|allowed| allowed == o),
-                }
+            .map(|o| match &origins {
+                AllowedOrigins::Any => true,
+                AllowedOrigins::List(list) => list.iter().any(|allowed| allowed == o),
             })
             .unwrap_or(false);
 
@@ -236,27 +236,43 @@ impl MiddlewareLayer for CorsLayer {
                 if let Some(ref origin) = origin {
                     if is_origin_allowed {
                         if is_any_origin && !credentials {
-                            headers_mut.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*".parse().unwrap());
+                            headers_mut
+                                .insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*".parse().unwrap());
                         } else {
-                            headers_mut.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin.parse().unwrap());
+                            headers_mut.insert(
+                                header::ACCESS_CONTROL_ALLOW_ORIGIN,
+                                origin.parse().unwrap(),
+                            );
                         }
                     }
                 }
 
                 // Set Allow-Methods
-                headers_mut.insert(header::ACCESS_CONTROL_ALLOW_METHODS, methods.parse().unwrap());
+                headers_mut.insert(
+                    header::ACCESS_CONTROL_ALLOW_METHODS,
+                    methods.parse().unwrap(),
+                );
 
                 // Set Allow-Headers
-                headers_mut.insert(header::ACCESS_CONTROL_ALLOW_HEADERS, headers.parse().unwrap());
+                headers_mut.insert(
+                    header::ACCESS_CONTROL_ALLOW_HEADERS,
+                    headers.parse().unwrap(),
+                );
 
                 // Set Allow-Credentials
                 if credentials {
-                    headers_mut.insert(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, "true".parse().unwrap());
+                    headers_mut.insert(
+                        header::ACCESS_CONTROL_ALLOW_CREDENTIALS,
+                        "true".parse().unwrap(),
+                    );
                 }
 
                 // Set Max-Age
                 if let Some(max_age) = max_age {
-                    headers_mut.insert(header::ACCESS_CONTROL_MAX_AGE, max_age.as_secs().to_string().parse().unwrap());
+                    headers_mut.insert(
+                        header::ACCESS_CONTROL_MAX_AGE,
+                        max_age.as_secs().to_string().parse().unwrap(),
+                    );
                 }
 
                 return response;
@@ -271,13 +287,18 @@ impl MiddlewareLayer for CorsLayer {
                     let headers_mut = response.headers_mut();
 
                     if is_any_origin && !credentials {
-                        headers_mut.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*".parse().unwrap());
+                        headers_mut
+                            .insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, "*".parse().unwrap());
                     } else {
-                        headers_mut.insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin.parse().unwrap());
+                        headers_mut
+                            .insert(header::ACCESS_CONTROL_ALLOW_ORIGIN, origin.parse().unwrap());
                     }
 
                     if credentials {
-                        headers_mut.insert(header::ACCESS_CONTROL_ALLOW_CREDENTIALS, "true".parse().unwrap());
+                        headers_mut.insert(
+                            header::ACCESS_CONTROL_ALLOW_CREDENTIALS,
+                            "true".parse().unwrap(),
+                        );
                     }
 
                     // Expose headers that the browser can access
