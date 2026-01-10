@@ -121,11 +121,11 @@ impl MiddlewareLayer for BodyLimitLayer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::path_params::PathParams;
     use crate::request::Request;
     use bytes::Bytes;
     use http::{Extensions, Method};
     use proptest::prelude::*;
+    use std::collections::HashMap;
     use std::sync::Arc;
 
     /// Create a test request with the given body
@@ -139,7 +139,7 @@ mod tests {
         let req = builder.body(()).unwrap();
         let (parts, _) = req.into_parts();
 
-        Request::new(parts, body, Arc::new(Extensions::new()), PathParams::new())
+        Request::new(parts, body, Arc::new(Extensions::new()), HashMap::new())
     }
 
     /// Create a test request without Content-Length header
@@ -150,7 +150,7 @@ mod tests {
         let req = builder.body(()).unwrap();
         let (parts, _) = req.into_parts();
 
-        Request::new(parts, body, Arc::new(Extensions::new()), PathParams::new())
+        Request::new(parts, body, Arc::new(Extensions::new()), HashMap::new())
     }
 
     /// Create a simple handler that returns 200 OK

@@ -266,19 +266,17 @@ impl RustApi {
             entry.insert_boxed_with_operation(method_enum, route.handler, route.operation);
         }
 
-        #[cfg(feature = "tracing")]
         let route_count: usize = by_path
             .values()
             .map(|mr| mr.allowed_methods().len())
             .sum();
-        #[cfg(feature = "tracing")]
         let path_count = by_path.len();
 
         for (path, method_router) in by_path {
             self = self.route(&path, method_router);
         }
 
-        crate::trace_info!(
+        tracing::info!(
             paths = path_count,
             routes = route_count,
             "Auto-registered routes"
@@ -889,12 +887,12 @@ impl Default for RustApi {
 mod tests {
     use super::RustApi;
     use crate::extract::{FromRequestParts, State};
-    use crate::path_params::PathParams;
     use crate::request::Request;
     use crate::router::{get, post, Router};
     use bytes::Bytes;
     use http::Method;
     use proptest::prelude::*;
+    use std::collections::HashMap;
 
     #[test]
     fn state_is_available_via_extractor() {
@@ -908,7 +906,7 @@ mod tests {
             .unwrap();
         let (parts, _) = req.into_parts();
 
-        let request = Request::new(parts, Bytes::new(), router.state_ref(), PathParams::new());
+        let request = Request::new(parts, Bytes::new(), router.state_ref(), HashMap::new());
         let State(value) = State::<u32>::from_request_parts(&request).unwrap();
         assert_eq!(value, 123u32);
     }

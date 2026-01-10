@@ -204,7 +204,6 @@ mod tests {
     use super::*;
     use crate::middleware::layer::{BoxedNext, LayerStack};
     use crate::middleware::request_id::RequestIdLayer;
-    use crate::path_params::PathParams;
     use bytes::Bytes;
     use http::{Extensions, Method, StatusCode};
     use proptest::prelude::*;
@@ -225,7 +224,7 @@ mod tests {
             parts,
             Bytes::new(),
             Arc::new(Extensions::new()),
-            PathParams::new(),
+            HashMap::new(),
         )
     }
 

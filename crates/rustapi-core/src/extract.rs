@@ -55,7 +55,6 @@
 //! in any order.
 
 use crate::error::{ApiError, Result};
-use crate::json;
 use crate::request::Request;
 use crate::response::IntoResponse;
 use bytes::Bytes;
@@ -117,8 +116,7 @@ impl<T: DeserializeOwned + Send> FromRequest for Json<T> {
             .take_body()
             .ok_or_else(|| ApiError::internal("Body already consumed"))?;
 
-        // Use simd-json accelerated parsing when available (2-4x faster)
-        let value: T = json::from_slice(&body)?;
+        let value: T = serde_json::from_slice(&body)?;
         Ok(Json(value))
     }
 }
@@ -143,15 +141,10 @@ impl<T> From<T> for Json<T> {
     }
 }
 
-/// Default pre-allocation size for JSON response buffers (256 bytes)
-/// This covers most small to medium JSON responses without reallocation.
-const JSON_RESPONSE_INITIAL_CAPACITY: usize = 256;
-
 // IntoResponse for Json - allows using Json<T> as a return type
 impl<T: Serialize> IntoResponse for Json<T> {
     fn into_response(self) -> crate::response::Response {
-        // Use pre-allocated buffer to reduce allocations
-        match json::to_vec_with_capacity(&self.0, JSON_RESPONSE_INITIAL_CAPACITY) {
+        match serde_json::to_vec(&self.0) {
             Ok(body) => http::Response::builder()
                 .status(StatusCode::OK)
                 .header(header::CONTENT_TYPE, "application/json")
@@ -206,12 +199,11 @@ impl<T> ValidatedJson<T> {
 
 impl<T: DeserializeOwned + rustapi_validate::Validate + Send> FromRequest for ValidatedJson<T> {
     async fn from_request(req: &mut Request) -> Result<Self> {
-        // First, deserialize the JSON body using simd-json when available
         let body = req
             .take_body()
             .ok_or_else(|| ApiError::internal("Body already consumed"))?;
 
-        let value: T = json::from_slice(&body)?;
+        let value: T = serde_json::from_slice(&body)?;
 
         // Then, validate it
         if let Err(validation_error) = rustapi_validate::Validate::validate(&value) {
@@ -899,7 +891,6 @@ impl<T: for<'a> Schema<'a>> ResponseModifier for Json<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::path_params::PathParams;
     use bytes::Bytes;
     use http::{Extensions, Method};
     use proptest::prelude::*;
@@ -927,7 +918,7 @@ mod tests {
             parts,
             Bytes::new(),
             Arc::new(Extensions::new()),
-            PathParams::new(),
+            HashMap::new(),
         )
     }
 
@@ -948,7 +939,7 @@ mod tests {
             parts,
             Bytes::new(),
             Arc::new(Extensions::new()),
-            PathParams::new(),
+            HashMap::new(),
         )
     }
 
@@ -1124,7 +1115,7 @@ mod tests {
                     parts,
                     Bytes::new(),
                     Arc::new(Extensions::new()),
-                    PathParams::new(),
+                    HashMap::new(),
                 );
 
                 let extracted = ClientIp::extract_with_config(&request, trust_proxy)
@@ -1186,7 +1177,7 @@ mod tests {
                     parts,
                     Bytes::new(),
                     Arc::new(Extensions::new()),
-                    PathParams::new(),
+                    HashMap::new(),
                 );
 
                 let result = Extension::<TestExtension>::from_request_parts(&request);
@@ -1286,7 +1277,7 @@ mod tests {
             parts,
             Bytes::new(),
             Arc::new(Extensions::new()),
-            PathParams::new(),
+            HashMap::new(),
         );
 
         let ip = ClientIp::extract_with_config(&request, false).unwrap();

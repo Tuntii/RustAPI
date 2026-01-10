@@ -167,12 +167,11 @@ fn generate_uuid() -> String {
 mod tests {
     use super::*;
     use crate::middleware::layer::{BoxedNext, LayerStack};
-    use crate::path_params::PathParams;
     use bytes::Bytes;
     use http::{Extensions, Method, StatusCode};
     use proptest::prelude::*;
     use proptest::test_runner::TestCaseError;
-    use std::collections::HashSet;
+    use std::collections::{HashMap, HashSet};
     use std::sync::Arc;
 
     /// Create a test request with the given method and path
@@ -187,7 +186,7 @@ mod tests {
             parts,
             Bytes::new(),
             Arc::new(Extensions::new()),
-            PathParams::new(),
+            HashMap::new(),
         )
     }
 
