@@ -11,6 +11,7 @@ members = [
     "crates/rustapi-ws",
     "crates/rustapi-view",
     "crates/rustapi-testing",
+    "crates/rustapi-jobs",
     "crates/cargo-rustapi",
     "examples/hello-world",
     "examples/sqlx-crud",
@@ -27,7 +28,7 @@ members = [
     "examples/middleware-chain",
     # "examples/cors-test",  # TODO: Needs implementation
     "benches/toon_bench",
-    "benches/rustapi_bench", "crates/rustapi-testing",
+    "benches/rustapi_bench",
 ]
 
 [workspace.package]
@@ -119,4 +120,5 @@ rustapi-toon = { path = "crates/rustapi-toon", version = "0.1.7" }
 rustapi-ws = { path = "crates/rustapi-ws", version = "0.1.7" }
 rustapi-view = { path = "crates/rustapi-view", version = "0.1.7" }
 rustapi-testing = { path = "crates/rustapi-testing", version = "0.1.7" }
+rustapi-jobs = { path = "crates/rustapi-jobs", version = "0.1.7" }
 

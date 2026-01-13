@@ -26,11 +26,11 @@ struct ServerState {
 }
 
 #[derive(Debug, Clone)]
-struct RecordedRequest {
-    method: http::Method,
-    path: String,
-    headers: http::HeaderMap,
-    body: Bytes,
+pub struct RecordedRequest {
+    pub method: http::Method,
+    pub path: String,
+    pub headers: http::HeaderMap,
+    pub body: Bytes,
 }
 
 impl MockServer {
@@ -94,11 +94,17 @@ impl MockServer {
         self.kind_url()
     }
 
+    /// Get requests that didn't match any expectation
+    pub fn unmatched_requests(&self) -> Vec<RecordedRequest> {
+        let state = self.state.lock().unwrap();
+        state.unmatched_requests.clone()
+    }
+
     /// Add an expectation
     pub fn expect(&self, matcher: RequestMatcher) -> ExpectationBuilder {
         ExpectationBuilder {
             server: self.state.clone(),
-            matcher,
+            expectation: Some(Expectation::new(matcher)),
         }
     }
 
@@ -147,20 +153,53 @@ impl Drop for MockServer {
 
 pub struct ExpectationBuilder {
     server: Arc<Mutex<ServerState>>,
-    matcher: RequestMatcher,
+    expectation: Option<Expectation>,
 }
 
 impl ExpectationBuilder {
-    pub fn respond_with(self, response: MockResponse) {
-        self.with(Expectation::new(self.matcher).respond_with(response));
+    pub fn respond_with(mut self, response: MockResponse) -> Self {
+        if let Some(exp) = self.expectation.as_mut() {
+            exp.response = response;
+        }
+        self
     }
 
-    pub fn with(self, expectation: Expectation) {
-        let mut state = self.server.lock().unwrap();
-        state.expectations.push(expectation);
+    pub fn times(mut self, n: usize) -> Self {
+        if let Some(exp) = self.expectation.as_mut() {
+            exp.times = Times::Exactly(n);
+        }
+        self
     }
 
-    // Helper to chain verification logic if we wanted, but for now simple push
+    pub fn once(mut self) -> Self {
+        if let Some(exp) = self.expectation.as_mut() {
+            exp.times = Times::Once;
+        }
+        self
+    }
+
+    pub fn at_least_once(mut self) -> Self {
+        if let Some(exp) = self.expectation.as_mut() {
+            exp.times = Times::AtLeast(1);
+        }
+        self
+    }
+
+    pub fn never(mut self) -> Self {
+        if let Some(exp) = self.expectation.as_mut() {
+            exp.times = Times::Exactly(0);
+        }
+        self
+    }
+}
+
+impl Drop for ExpectationBuilder {
+    fn drop(&mut self) {
+        if let Some(exp) = self.expectation.take() {
+            let mut state = self.server.lock().unwrap();
+            state.expectations.push(exp);
+        }
+    }
 }
 
 async fn handle_request(

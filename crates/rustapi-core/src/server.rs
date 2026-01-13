@@ -55,7 +55,8 @@ impl Server {
                     let layers = layers.clone();
                     let interceptors = interceptors.clone();
                     async move {
-                        let response = handle_request(router, layers, interceptors, req, remote_addr).await;
+                        let response =
+                            handle_request(router, layers, interceptors, req, remote_addr).await;
                         Ok::<_, Infallible>(response)
                     }
                 });
@@ -83,14 +84,6 @@ async fn handle_request(
     // Convert hyper request to our Request type first
     let (parts, body) = req.into_parts();
 
-    // Collect body bytes
-    let body_bytes = match body.collect().await {
-        Ok(collected) => collected.to_bytes(),
-        Err(e) => {
-            return ApiError::bad_request(format!("Failed to read body: {}", e)).into_response();
-        }
-    };
-
     // Match the route to get path params
     let (handler, params) = match router.match_route(&path, &method) {
         RouteMatch::Found { handler, params } => (handler.clone(), params),
@@ -117,8 +110,13 @@ async fn handle_request(
         }
     };
 
-    // Build Request
-    let request = Request::new(parts, body_bytes, router.state_ref(), params);
+    // Build Request (initially streaming)
+    let request = Request::new(
+        parts,
+        crate::request::BodyVariant::Streaming(body),
+        router.state_ref(),
+        params,
+    );
 
     // Apply request interceptors (in registration order)
     let request = interceptors.intercept_request(request);

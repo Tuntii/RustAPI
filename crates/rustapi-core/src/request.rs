@@ -42,14 +42,23 @@
 use crate::path_params::PathParams;
 use bytes::Bytes;
 use http::{request::Parts, Extensions, HeaderMap, Method, Uri, Version};
+use http_body_util::BodyExt;
+use hyper::body::Incoming;
 use std::sync::Arc;
+
+/// Internal representation of the request body state
+pub(crate) enum BodyVariant {
+    Buffered(Bytes),
+    Streaming(Incoming),
+    Consumed,
+}
 
 /// HTTP Request wrapper
 ///
 /// Provides access to all parts of an incoming HTTP request.
 pub struct Request {
     pub(crate) parts: Parts,
-    pub(crate) body: Option<Bytes>,
+    pub(crate) body: BodyVariant,
     pub(crate) state: Arc<Extensions>,
     pub(crate) path_params: PathParams,
 }
@@ -58,13 +67,13 @@ impl Request {
     /// Create a new request from parts
     pub(crate) fn new(
         parts: Parts,
-        body: Bytes,
+        body: BodyVariant,
         state: Arc<Extensions>,
         path_params: PathParams,
     ) -> Self {
         Self {
             parts,
-            body: Some(body),
+            body,
             state,
             path_params,
         }
@@ -111,8 +120,46 @@ impl Request {
     }
 
     /// Take the body bytes (can only be called once)
+    ///
+    /// Returns None if the body is streaming or already consumed.
+    /// Use `load_body().await` first if you need to ensure the body is available as bytes.
     pub fn take_body(&mut self) -> Option<Bytes> {
-        self.body.take()
+        match std::mem::replace(&mut self.body, BodyVariant::Consumed) {
+            BodyVariant::Buffered(bytes) => Some(bytes),
+            BodyVariant::Streaming(_) => None,
+            BodyVariant::Consumed => None,
+        }
+    }
+
+    /// Take the body as a stream (can only be called once)
+    pub fn take_stream(&mut self) -> Option<Incoming> {
+        match std::mem::replace(&mut self.body, BodyVariant::Consumed) {
+            BodyVariant::Streaming(stream) => Some(stream),
+            BodyVariant::Buffered(_) => None, // Could convert Bytes to stream, but for now strict
+            BodyVariant::Consumed => None,
+        }
+    }
+
+    /// Ensure the body is loaded into memory.
+    ///
+    /// If the body is streaming, this collects it into Bytes.
+    /// If already buffered, does nothing.
+    /// Returns error if collection fails.
+    pub async fn load_body(&mut self) -> Result<(), crate::error::ApiError> {
+        // We moved the body out to check, put it back if buffered or new buffer
+        let new_body = match std::mem::replace(&mut self.body, BodyVariant::Consumed) {
+            BodyVariant::Streaming(incoming) => {
+                let collected = incoming
+                    .collect()
+                    .await
+                    .map_err(|e| crate::error::ApiError::bad_request(e.to_string()))?;
+                BodyVariant::Buffered(collected.to_bytes())
+            }
+            BodyVariant::Buffered(b) => BodyVariant::Buffered(b),
+            BodyVariant::Consumed => BodyVariant::Consumed,
+        };
+        self.body = new_body;
+        Ok(())
     }
 
     /// Get path parameters
@@ -138,7 +185,7 @@ impl Request {
         let (parts, _) = req.into_parts();
         Self {
             parts,
-            body: Some(body),
+            body: BodyVariant::Buffered(body),
             state: Arc::new(Extensions::new()),
             path_params: PathParams::new(),
         }
@@ -148,8 +195,7 @@ impl Request {
     /// This creates a deep copy of the request, including headers, body (if present),
     /// path params, and shared state.
     ///
-    /// Note: Request extensions stored in `parts` are NOT cloned because `http::Extensions`
-    /// does not support cloning. However, the shared state (`Arc<Extensions>`) IS preserved.
+    /// Returns None if the body is streaming (cannot be cloned) or already consumed.
     pub fn try_clone(&self) -> Option<Self> {
         let mut builder = http::Request::builder()
             .method(self.method().clone())
@@ -163,9 +209,15 @@ impl Request {
         let req = builder.body(()).ok()?;
         let (parts, _) = req.into_parts();
 
+        let new_body = match &self.body {
+            BodyVariant::Buffered(b) => BodyVariant::Buffered(b.clone()),
+            BodyVariant::Streaming(_) => return None, // Cannot clone stream
+            BodyVariant::Consumed => return None,
+        };
+
         Some(Self {
             parts,
-            body: self.body.clone(),
+            body: new_body,
             state: self.state.clone(),
             path_params: self.path_params.clone(),
         })

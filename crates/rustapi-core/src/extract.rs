@@ -58,6 +58,7 @@ use crate::error::{ApiError, Result};
 use crate::json;
 use crate::request::Request;
 use crate::response::IntoResponse;
+use crate::stream::{StreamingBody, StreamingConfig};
 use bytes::Bytes;
 use http::{header, StatusCode};
 use http_body_util::Full;
@@ -113,6 +114,7 @@ pub struct Json<T>(pub T);
 
 impl<T: DeserializeOwned + Send> FromRequest for Json<T> {
     async fn from_request(req: &mut Request) -> Result<Self> {
+        req.load_body().await?;
         let body = req
             .take_body()
             .ok_or_else(|| ApiError::internal("Body already consumed"))?;
@@ -206,6 +208,7 @@ impl<T> ValidatedJson<T> {
 
 impl<T: DeserializeOwned + rustapi_validate::Validate + Send> FromRequest for ValidatedJson<T> {
     async fn from_request(req: &mut Request) -> Result<Self> {
+        req.load_body().await?;
         // First, deserialize the JSON body using simd-json when available
         let body = req
             .take_body()
@@ -381,6 +384,7 @@ pub struct Body(pub Bytes);
 
 impl FromRequest for Body {
     async fn from_request(req: &mut Request) -> Result<Self> {
+        req.load_body().await?;
         let body = req
             .take_body()
             .ok_or_else(|| ApiError::internal("Body already consumed"))?;
@@ -393,6 +397,54 @@ impl Deref for Body {
 
     fn deref(&self) -> &Self::Target {
         &self.0
+    }
+}
+
+/// Streaming body extractor
+pub struct BodyStream(pub StreamingBody);
+
+impl FromRequest for BodyStream {
+    async fn from_request(req: &mut Request) -> Result<Self> {
+        let config = StreamingConfig::default();
+
+        if let Some(stream) = req.take_stream() {
+            Ok(BodyStream(StreamingBody::new(stream, config.max_body_size)))
+        } else if let Some(bytes) = req.take_body() {
+            // Handle buffered body as stream
+            let stream = futures_util::stream::once(async move { Ok(bytes) });
+            Ok(BodyStream(StreamingBody::from_stream(
+                stream,
+                config.max_body_size,
+            )))
+        } else {
+            Err(ApiError::internal("Body already consumed"))
+        }
+    }
+}
+
+impl Deref for BodyStream {
+    type Target = StreamingBody;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for BodyStream {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+// Forward stream implementation
+impl futures_util::Stream for BodyStream {
+    type Item = Result<Bytes, ApiError>;
+
+    fn poll_next(
+        mut self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Option<Self::Item>> {
+        std::pin::Pin::new(&mut self.0).poll_next(cx)
     }
 }
 

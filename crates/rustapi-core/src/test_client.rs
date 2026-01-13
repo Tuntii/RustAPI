@@ -160,7 +160,12 @@ impl TestClient {
 
         let body_bytes = req.body.unwrap_or_default();
 
-        let request = Request::new(parts, body_bytes, self.router.state_ref(), params);
+        let request = Request::new(
+            parts,
+            crate::request::BodyVariant::Buffered(body_bytes),
+            self.router.state_ref(),
+            params,
+        );
 
         // Create the final handler as a BoxedNext
         let final_handler: BoxedNext = Arc::new(move |req: Request| {

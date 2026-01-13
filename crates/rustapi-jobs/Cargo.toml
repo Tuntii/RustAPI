@@ -1,0 +1,37 @@
+[package]
+name = "rustapi-jobs"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation.workspace = true
+keywords.workspace = true
+categories.workspace = true
+rust-version.workspace = true
+
+[features]
+default = []
+redis = ["dep:redis"]
+postgres = ["dep:sqlx"]
+
+[dependencies]
+async-trait = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+futures-util = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
+uuid = { workspace = true, features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+
+# Redis backend
+redis = { version = "0.24", features = ["tokio-comp"], optional = true }
+
+# Postgres backend
+sqlx = { version = "0.8", features = ["postgres", "runtime-tokio", "tls-rustls", "chrono", "uuid"], optional = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util"] }

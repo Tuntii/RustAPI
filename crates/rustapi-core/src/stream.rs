@@ -179,3 +179,130 @@ mod tests {
         assert_eq!(response.status(), StatusCode::OK);
     }
 }
+
+/// Configuration for streaming request bodies
+#[derive(Debug, Clone, Copy)]
+pub struct StreamingConfig {
+    /// Maximum total body size in bytes
+    pub max_body_size: Option<usize>,
+}
+
+impl Default for StreamingConfig {
+    fn default() -> Self {
+        Self {
+            max_body_size: Some(10 * 1024 * 1024), // 10MB default
+        }
+    }
+}
+
+/// A streaming request body wrapper
+///
+/// Wraps the incoming hyper body stream or a generic stream and enforces limits.
+pub struct StreamingBody {
+    inner: StreamingInner,
+    bytes_read: usize,
+    limit: Option<usize>,
+}
+
+enum StreamingInner {
+    Hyper(hyper::body::Incoming),
+    Generic(
+        std::pin::Pin<
+            Box<dyn futures_util::Stream<Item = Result<Bytes, crate::error::ApiError>> + Send>,
+        >,
+    ),
+}
+
+impl StreamingBody {
+    /// Create a new StreamingBody from hyper Incoming
+    pub fn new(inner: hyper::body::Incoming, limit: Option<usize>) -> Self {
+        Self {
+            inner: StreamingInner::Hyper(inner),
+            bytes_read: 0,
+            limit,
+        }
+    }
+
+    /// Create from a generic stream
+    pub fn from_stream<S>(stream: S, limit: Option<usize>) -> Self
+    where
+        S: futures_util::Stream<Item = Result<Bytes, crate::error::ApiError>> + Send + 'static,
+    {
+        Self {
+            inner: StreamingInner::Generic(Box::pin(stream)),
+            bytes_read: 0,
+            limit,
+        }
+    }
+
+    /// Get the number of bytes read so far
+    pub fn bytes_read(&self) -> usize {
+        self.bytes_read
+    }
+}
+
+impl Stream for StreamingBody {
+    type Item = Result<Bytes, crate::error::ApiError>;
+
+    fn poll_next(
+        mut self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Option<Self::Item>> {
+        use hyper::body::Body;
+
+        match &mut self.inner {
+            StreamingInner::Hyper(incoming) => {
+                loop {
+                    match std::pin::Pin::new(&mut *incoming).poll_frame(cx) {
+                        std::task::Poll::Ready(Some(Ok(frame))) => {
+                            if let Ok(data) = frame.into_data() {
+                                let len = data.len();
+                                self.bytes_read += len;
+                                if let Some(limit) = self.limit {
+                                    if self.bytes_read > limit {
+                                        return std::task::Poll::Ready(Some(Err(
+                                            crate::error::ApiError::new(
+                                                StatusCode::PAYLOAD_TOO_LARGE,
+                                                "payload_too_large",
+                                                format!(
+                                                    "Body size exceeded limit of {} bytes",
+                                                    limit
+                                                ),
+                                            ),
+                                        )));
+                                    }
+                                }
+                                return std::task::Poll::Ready(Some(Ok(data)));
+                            }
+                            continue; // Trailer
+                        }
+                        std::task::Poll::Ready(Some(Err(e))) => {
+                            return std::task::Poll::Ready(Some(Err(
+                                crate::error::ApiError::bad_request(e.to_string()),
+                            )));
+                        }
+                        std::task::Poll::Ready(None) => return std::task::Poll::Ready(None),
+                        std::task::Poll::Pending => return std::task::Poll::Pending,
+                    }
+                }
+            }
+            StreamingInner::Generic(stream) => match stream.as_mut().poll_next(cx) {
+                std::task::Poll::Ready(Some(Ok(data))) => {
+                    let len = data.len();
+                    self.bytes_read += len;
+                    if let Some(limit) = self.limit {
+                        if self.bytes_read > limit {
+                            return std::task::Poll::Ready(Some(Err(crate::error::ApiError::new(
+                                StatusCode::PAYLOAD_TOO_LARGE,
+                                "payload_too_large",
+                                format!("Body size exceeded limit of {} bytes", limit),
+                            ))));
+                        }
+                    }
+                    std::task::Poll::Ready(Some(Ok(data)))
+                }
+                other => other,
+            },
+        }
+    }
+}

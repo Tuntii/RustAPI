@@ -10,4 +10,4 @@ pub mod server;
 
 pub use expectation::{Expectation, MockResponse, Times};
 pub use matcher::RequestMatcher;
-pub use server::MockServer;
+pub use server::{MockServer, RecordedRequest};
