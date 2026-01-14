@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.8] - 2026-01-10
+
+### Added
+- **CORS middleware**: `CorsLayer` with full `MiddlewareLayer` trait implementation
+  - Support for `CorsLayer::permissive()` and custom configuration
+  - Proper preflight request handling
+  - Origin validation and credential support
+
+### Fixed
+- Fixed missing `MiddlewareLayer` implementation for `CorsLayer`
+- Fixed CI build issues with GitHub Actions runner disk space
+
 ## [0.1.4] - 2026-01-03
 
 ### Added
