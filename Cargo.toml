@@ -75,7 +75,7 @@ validator = { version = "0.18", features = ["derive"] }
 uuid = { version = "1.6", features = ["v4"] }
 
 # Metrics
-prometheus = "0.13"
+prometheus = "0.14"
 
 # OpenAPI
 utoipa = { version = "4.2", features = ["uuid", "chrono"] }
