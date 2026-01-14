@@ -1,69 +1,141 @@
 /* Premium Responsive Theme - RustAPI Cookbook */
 
+/* 1. Define Variables & Defaults (Dark Mode) */
 :root {
-    /* Default to Dark Theme variables (matches implicit defaults or dark modes) */
-    --bg-color: #0f172a;
-    --sidebar-bg: #1e293b;
-    --text-color: #e2e8f0;
-    --heading-color: #f8fafc;
-    --accent-color: #06b6d4;
-    /* Cyan */
-    --accent-hover: #22d3ee;
-    --border-color: #334155;
-    --code-bg: #1e293b;
-    --link-color: #38bdf8;
+    /* Custom Palette */
+    --premium-bg: #0f172a;
+    --premium-sidebar: #1e293b;
+    --premium-text: #e2e8f0;
+    --premium-heading: #f8fafc;
+    --premium-accent: #06b6d4;
+    --premium-accent-hover: #22d3ee;
+    --premium-border: #334155;
+    --premium-code-bg: #1e293b;
+    --premium-link: #38bdf8;
 
-    /* Common Fonts */
+    /* Fonts */
     --font-primary: 'Inter', system-ui, -apple-system, sans-serif;
     --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+    /* Override MDBook Standard Variables (Dark Defaults) */
+    --bg: var(--premium-bg);
+    --fg: var(--premium-text);
+    --sidebar-bg: var(--premium-sidebar);
+    --sidebar-fg: var(--premium-text);
+    --sidebar-non-existant: var(--premium-text);
+    --quote-bg: rgba(59, 130, 246, 0.1);
+    --table-header-bg: var(--premium-sidebar);
+    --table-border-color: var(--premium-border);
 }
 
-/* Light Theme Overrides */
-.light {
-    --bg-color: #ffffff;
-    --sidebar-bg: #f1f5f9;
+/* 2. Light Theme Overrides */
+/* Class is usually applied to html tag by mdbook */
+.light,
+.rust {
+    /* Custom Palette - High Contrast */
+    --premium-bg: #ffffff;
+    --premium-sidebar: #f1f5f9;
     /* Slate 100 */
-    --text-color: #334155;
-    /* Slate 700 */
-    --heading-color: #0f172a;
-    /* Slate 900 */
-    --accent-color: #0891b2;
-    /* Cyan 600 - darker for contrast */
-    --accent-hover: #06b6d4;
-    --border-color: #e2e8f0;
-    /* Slate 200 */
-    --code-bg: #f8fafc;
+    --premium-text: #334155;
+    /* Slate 700 - Dark Grey */
+    --premium-heading: #0f172a;
+    /* Slate 900 - Black */
+    --premium-accent: #0891b2;
+    /* Cyan 600 */
+    --premium-accent-hover: #06b6d4;
+    --premium-border: #cbd5e1;
+    /* Slate 300 */
+    --premium-code-bg: #f8fafc;
     /* Slate 50 */
-    --link-color: #0284c7;
+    --premium-link: #0284c7;
     /* Sky 600 */
+
+    /* Override MDBook Variables for Light Mode */
+    --bg: var(--premium-bg);
+    --fg: var(--premium-text);
+    --sidebar-bg: var(--premium-sidebar);
+    --sidebar-fg: var(--premium-text);
+    --quote-bg: rgba(59, 130, 246, 0.05);
+    --table-header-bg: #f8fafc;
+    --table-border-color: var(--premium-border);
 }
 
+/* 3. Base Styles */
 body {
-    background-color: var(--bg-color);
-    color: var(--text-color);
+    background-color: var(--bg);
+    color: var(--fg);
     font-family: var(--font-primary);
 }
 
-/* Sidebar Styling */
+/* Force Markdown Section Colors */
+.markdown-section {
+    color: var(--fg);
+}
+
+.markdown-section p,
+.markdown-section li,
+.markdown-section table {
+    color: var(--fg);
+}
+
+/* Headings */
+h1,
+h2,
+h3,
+h4 {
+    color: var(--premium-heading);
+    font-weight: 700;
+    margin-top: 2em;
+}
+
+h1 {
+    font-size: 2.5em;
+    border-bottom: 2px solid var(--premium-border);
+    padding-bottom: 0.5em;
+    background: linear-gradient(to right, #22d3ee, #818cf8);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
+}
+
+/* Darker gradient for Light Mode */
+.light h1,
+.rust h1 {
+    background: linear-gradient(to right, #0891b2, #4f46e5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Links */
+a {
+    color: var(--premium-link);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+a:hover {
+    color: var(--premium-accent-hover);
+    text-decoration: underline;
+}
+
+/* Sidebar */
 .sidebar {
     background-color: var(--sidebar-bg);
-    border-right: 1px solid var(--border-color);
+    border-right: 1px solid var(--premium-border);
 }
 
 .sidebar-scrollbox {
     scrollbar-width: thin;
-    scrollbar-color: var(--border-color) transparent;
+    scrollbar-color: var(--premium-border) transparent;
 }
 
 .chapter li.active>a {
-    color: var(--accent-color);
-    border-left: 2px solid var(--accent-color);
+    color: var(--premium-accent);
+    border-left: 2px solid var(--premium-accent);
     background: rgba(6, 182, 212, 0.1);
     padding-left: 8px;
-    /* Offset for border */
 }
 
-/* Adjust active chapter bg for light mode */
 .light .chapter li.active>a {
     background: rgba(8, 145, 178, 0.1);
 }
@@ -73,63 +145,21 @@ body {
     transition: all 0.2s ease;
 }
 
-.light .chapter a {
+.light .chapter a,
+.rust .chapter a {
     color: #64748b;
-    /* Slate 500 */
 }
 
 .chapter a:hover {
-    color: var(--heading-color);
-}
-
-/* Main Content Styling */
-.content {
-    line-height: 1.8;
-}
-
-h1,
-h2,
-h3,
-h4 {
-    color: var(--heading-color);
-    font-weight: 700;
-    margin-top: 2em;
-}
-
-h1 {
-    font-size: 2.5em;
-    border-bottom: 2px solid var(--border-color);
-    padding-bottom: 0.5em;
-    background: linear-gradient(to right, #22d3ee, #818cf8);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    display: inline-block;
-}
-
-/* Darker gradient for Light Mode */
-.light h1 {
-    background: linear-gradient(to right, #0891b2, #4f46e5);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-a {
-    color: var(--link-color);
-    text-decoration: none;
-    transition: color 0.2s;
-}
-
-a:hover {
-    color: var(--accent-hover);
-    text-decoration: underline;
+    color: var(--premium-heading);
 }
 
 /* Code Blocks */
 pre,
 code {
-    background-color: var(--code-bg);
+    background-color: var(--premium-code-bg);
     border-radius: 8px;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--premium-border);
     font-family: var(--font-mono);
 }
 
@@ -138,44 +168,40 @@ pre {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 
-/* Blockquotes / Alerts */
+/* Blockquotes */
 blockquote {
-    background: rgba(59, 130, 246, 0.1);
+    background: var(--quote-bg);
     border-left: 4px solid #3b82f6;
     margin: 1.5em 0;
     padding: 1em;
     border-radius: 0 8px 8px 0;
-    color: #cbd5e1;
+    color: var(--fg);
+    /* Ensure this inherits correct text color */
 }
 
-.light blockquote {
-    background: rgba(59, 130, 246, 0.05);
-    color: #334155;
-    border-left-color: #2563eb;
-}
-
-/* Table Styling */
+/* Tables */
 table {
     border-collapse: separate;
     border-spacing: 0;
     width: 100%;
     margin: 1.5em 0;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--table-border-color);
     border-radius: 8px;
     overflow: hidden;
 }
 
 th {
-    background-color: var(--sidebar-bg);
-    color: var(--heading-color);
+    background-color: var(--table-header-bg);
+    color: var(--premium-heading);
     font-weight: 600;
     padding: 12px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--table-border-color);
 }
 
 td {
     padding: 12px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--table-border-color);
+    color: var(--fg);
 }
 
 tr:last-child td {
@@ -186,7 +212,8 @@ tr:hover td {
     background-color: rgba(255, 255, 255, 0.02);
 }
 
-.light tr:hover td {
+.light tr:hover td,
+.rust tr:hover td {
     background-color: rgba(0, 0, 0, 0.02);
 }
 
@@ -201,10 +228,10 @@ tr:hover td {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--border-color);
+    background: var(--premium-border);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
     background: #475569;
-}
+    ```
