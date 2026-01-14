@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>The Action Pattern - RustAPI Architecture Cookbook</title>
+        <title>JWT Authentication - RustAPI Architecture Cookbook</title>
 
 
         <!-- Custom HTML head -->
@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-8e0dcf21.js";
+            window.path_to_searchindex_js = "../searchindex-19cf8ce6.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-2cada9e7.js"></script>
+        <script src="../toc-163c7333.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -147,7 +147,7 @@
                         <a href="https://github.com/Tuntii/RustAPI" title="Git repository" aria-label="Git repository">
                             <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
                         </a>
-                        <a href="https://github.com/Tuntii/RustAPI/edit/master/docs/cookbook/src/architecture/action_pattern.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                        <a href="https://github.com/Tuntii/RustAPI/edit/master/docs/cookbook/src/recipes/jwt_auth.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
                             <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
                         </a>
 
@@ -181,55 +181,152 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="the-action-pattern"><a class="header" href="#the-action-pattern">The Action Pattern</a></h1>
-<p>The <strong>Action Pattern</strong> is the central design abstraction of RustAPI. It redefines how we structure business logic, moving away from monolithic controllers/services into distinct, atomic units of work.</p>
-<h2 id="what-is-an-action"><a class="header" href="#what-is-an-action">What is an Action?</a></h2>
-<p>An “Action” corresponds to exactly one business intent.</p>
-<ul>
-<li><strong>Good</strong>: <code>CreateUser</code>, <code>DebitAccount</code>, <code>SendWelcomeEmail</code></li>
-<li><strong>Bad</strong>: <code>UserService</code> (too broad), <code>ManageOrders</code> (vague)</li>
-</ul>
-<h2 id="why"><a class="header" href="#why">Why?</a></h2>
-<ol>
-<li><strong>Isolation</strong>: Since every action is its own struct, it has its own file, its own tests, and its own unique set of dependencies. Modifying <code>CreateUser</code> cannot accidentally break <code>DeleteUser</code>.</li>
-<li><strong>Testability</strong>: You can inject mocks for just the dependencies this specific action needs.</li>
-<li><strong>Readability</strong>: The codebase becomes a catalog of capabilities.</li>
-</ol>
-<h2 id="implementation-standard"><a class="header" href="#implementation-standard">Implementation Standard</a></h2>
-<p>Every action implements a trait (usually <code>Runnable</code> or similar) that defines its contract.</p>
+                        <h1 id="jwt-authentication"><a class="header" href="#jwt-authentication">JWT Authentication</a></h1>
+<p>Authentication is critical for almost every API. This recipe demonstrates how to implement JSON Web Token (JWT) authentication using the <code>jsonwebtoken</code> crate and RustAPI’s extractor pattern.</p>
+<h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
+<p>Add <code>jsonwebtoken</code> and <code>serde</code> to your <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[dependencies]
+jsonwebtoken = "9"
+serde = { version = "1", features = ["derive"] }
+</code></pre>
+<h2 id="1-define-claims"><a class="header" href="#1-define-claims">1. Define Claims</a></h2>
+<p>The standard JWT claims. You can add custom fields here (like <code>role</code>).</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// Example Structure
-pub struct CreateUser {
-    pub name: String,
-    pub email: String,
+</span>use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Claims {
+    pub sub: String,  // Subject (User ID)
+    pub exp: usize,   // Expiration time
+    pub role: String, // Custom claim: "admin", "user"
+}
+<span class="boring">}</span></code></pre>
+<h2 id="2-configuration-state"><a class="header" href="#2-configuration-state">2. Configuration State</a></h2>
+<p>Store your keys in the application state.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use std::sync::Arc;
+use jsonwebtoken::{EncodingKey, DecodingKey};
+
+#[derive(Clone)]
+pub struct AuthState {
+    pub encoder: EncodingKey,
+    pub decoder: DecodingKey,
 }
 
-impl Action for CreateUser {
-    type Output = User;
-    type Error = ApiError;
-
-    async fn run(&amp;self, ctx: &amp;Context) -&gt; Result&lt;Self::Output, Self::Error&gt; {
-        // 1. Validate
-        // 2. Persist
-        // 3. Notify
+impl AuthState {
+    pub fn new(secret: &amp;str) -&gt; Self {
+        Self {
+            encoder: EncodingKey::from_secret(secret.as_bytes()),
+            decoder: DecodingKey::from_secret(secret.as_bytes()),
+        }
     }
 }
 <span class="boring">}</span></code></pre>
-<blockquote class="blockquote-tag blockquote-tag-tip">
-<p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z"></path></svg>Tip</p>
-<p>Use the <code>rustapi-macros</code> crate to auto-implement boilerplate for standard Actions.</p>
-</blockquote>
+<h2 id="3-the-authuser-extractor"><a class="header" href="#3-the-authuser-extractor">3. The <code>AuthUser</code> Extractor</a></h2>
+<p>This is where the magic happens. We create a custom extractor that:</p>
+<ol>
+<li>Checks the <code>Authorization</code> header.</li>
+<li>Decodes the token.</li>
+<li>Validates expiration.</li>
+<li>Returns the claims or rejects the request.</li>
+</ol>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi::prelude::*;
+use jsonwebtoken::{decode, Validation, Algorithm};
+
+pub struct AuthUser(pub Claims);
+
+#[async_trait]
+impl FromRequestParts&lt;Arc&lt;AuthState&gt;&gt; for AuthUser {
+    type Rejection = (StatusCode, Json&lt;serde_json::Value&gt;);
+
+    async fn from_request_parts(
+        parts: &amp;mut Parts, 
+        state: &amp;Arc&lt;AuthState&gt;
+    ) -&gt; Result&lt;Self, Self::Rejection&gt; {
+        // 1. Get header
+        let auth_header = parts.headers.get("Authorization")
+            .ok_or((StatusCode::UNAUTHORIZED, Json(json!({"error": "Missing token"}))))?;
+            
+        let token = auth_header.to_str()
+            .map_err(|_| (StatusCode::UNAUTHORIZED, Json(json!({"error": "Invalid token format"}))))?
+            .strip_prefix("Bearer ")
+            .ok_or((StatusCode::UNAUTHORIZED, Json(json!({"error": "Invalid token type"}))))?;
+
+        // 2. Decode
+        let token_data = decode::&lt;Claims&gt;(
+            token, 
+            &amp;state.decoder, 
+            &amp;Validation::new(Algorithm::HS256)
+        ).map_err(|e| (StatusCode::UNAUTHORIZED, Json(json!({"error": e.to_string()}))))?;
+
+        Ok(AuthUser(token_data.claims))
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="4-usage-in-handlers"><a class="header" href="#4-usage-in-handlers">4. Usage in Handlers</a></h2>
+<p>Now, securing an endpoint is as simple as adding an argument.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>async fn protected_profile(
+    AuthUser(claims): AuthUser
+) -&gt; Json&lt;String&gt; {
+    Json(format!("Welcome back, {}! You are a {}.", claims.sub, claims.role))
+}
+
+async fn login(State(state): State&lt;Arc&lt;AuthState&gt;&gt;) -&gt; Json&lt;String&gt; {
+    // In a real app, validate credentials first!
+    let claims = Claims {
+        sub: "user_123".to_owned(),
+        role: "admin".to_owned(),
+        exp: 10000000000, // Future timestamp
+    };
+
+    let token = jsonwebtoken::encode(
+        &amp;jsonwebtoken::Header::default(), 
+        &amp;claims, 
+        &amp;state.encoder
+    ).unwrap();
+
+    Json(token)
+}
+<span class="boring">}</span></code></pre>
+<h2 id="5-wiring-it-up"><a class="header" href="#5-wiring-it-up">5. Wiring it Up</a></h2>
+<pre class="playground"><code class="language-rust">#[tokio::main]
+async fn main() {
+    let auth_state = Arc::new(AuthState::new("my_secret_key"));
+
+    let app = RustApi::new()
+        .route("/login", post(login))
+        .route("/profile", get(protected_profile))
+        .with_state(auth_state); // Inject state
+
+    RustApi::serve("127.0.0.1:3000", app).await.unwrap();
+}</code></pre>
+<h2 id="bonus-role-based-access-control-rbac"><a class="header" href="#bonus-role-based-access-control-rbac">Bonus: Role-Based Access Control (RBAC)</a></h2>
+<p>Since we have the <code>role</code> in our claims, we can enforce permissions easily.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>async fn admin_only(AuthUser(claims): AuthUser) -&gt; Result&lt;String, StatusCode&gt; {
+    if claims.role != "admin" {
+        return Err(StatusCode::FORBIDDEN);
+    }
+    Ok("Sensitive Admin Data".to_string())
+}
+<span class="boring">}</span></code></pre>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../architecture/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../recipes/crud_resource.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="../architecture/performance.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../recipes/db_integration.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -239,11 +336,11 @@ impl Action for CreateUser {
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../architecture/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../recipes/crud_resource.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="../architecture/performance.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../recipes/db_integration.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>

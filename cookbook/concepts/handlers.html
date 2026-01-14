@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Introduction - RustAPI Architecture Cookbook</title>
+        <title>Handlers &amp; Extractors - RustAPI Architecture Cookbook</title>
 
 
         <!-- Custom HTML head -->
@@ -12,34 +12,34 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
 
-        <link rel="icon" href="favicon-de23e50b.svg">
-        <link rel="shortcut icon" href="favicon-8114d1fc.png">
-        <link rel="stylesheet" href="css/variables-8adf115d.css">
-        <link rel="stylesheet" href="css/general-2459343d.css">
-        <link rel="stylesheet" href="css/chrome-ae938929.css">
-        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+        <link rel="icon" href="../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../css/general-2459343d.css">
+        <link rel="stylesheet" href="../css/chrome-ae938929.css">
+        <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+        <link rel="stylesheet" href="../fonts/fonts-9644e21d.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
-        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
-        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../ayu-highlight-3fdfc3ac.css">
 
         <!-- Custom theme stylesheets -->
-        <link rel="stylesheet" href="theme/custom-8dca307a.css">
+        <link rel="stylesheet" href="../theme/custom-8dca307a.css">
 
 
         <!-- Provide site root and default themes to javascript -->
         <script>
-            const path_to_root = "";
+            const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-19cf8ce6.js";
+            window.path_to_searchindex_js = "../searchindex-19cf8ce6.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-163c7333.js"></script>
+        <script src="../toc-163c7333.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -106,7 +106,7 @@
             <!-- populated by js -->
             <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
             <noscript>
-                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
             </noscript>
             <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -141,13 +141,13 @@
                     <h1 class="menu-title">RustAPI Architecture Cookbook</h1>
 
                     <div class="right-buttons">
-                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
                             <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
                         </a>
                         <a href="https://github.com/Tuntii/RustAPI" title="Git repository" aria-label="Git repository">
                             <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
                         </a>
-                        <a href="https://github.com/Tuntii/RustAPI/edit/master/docs/cookbook/src/introduction.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                        <a href="https://github.com/Tuntii/RustAPI/edit/master/docs/cookbook/src/concepts/handlers.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
                             <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
                         </a>
 
@@ -181,34 +181,146 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="rustapi-cookbook"><a class="header" href="#rustapi-cookbook">RustAPI Cookbook</a></h1>
-<p>Welcome to the <strong>RustAPI Architecture Cookbook</strong>. This documentation is designed to be the single source of truth for the project’s philosophy, patterns, and practical implementation details.</p>
-<blockquote class="blockquote-tag blockquote-tag-note">
-<p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>Note</p>
-<p>This is a living document. As our architecture evolves, so will this cookbook.</p>
-</blockquote>
-<h2 id="what-is-this"><a class="header" href="#what-is-this">What is this?</a></h2>
-<p>This is not just API documentation. This is a collection of:</p>
+                        <h1 id="handlers--extractors"><a class="header" href="#handlers--extractors">Handlers &amp; Extractors</a></h1>
+<p>The <strong>Handler</strong> is the fundamental unit of work in RustAPI. It transforms an incoming HTTP request into an outgoing HTTP response.</p>
+<p>Unlike many web frameworks that enforce a strict method signature (e.g., <code>fn(req: Request, res: Response)</code>), RustAPI embraces a flexible, type-safe approach powered by Rust’s trait system.</p>
+<h2 id="the-philosophy-ask-for-what-you-need"><a class="header" href="#the-philosophy-ask-for-what-you-need">The Philosophy: “Ask for what you need”</a></h2>
+<p>In RustAPI, you don’t manually parse the request object inside your business logic. Instead, you declare the data you need as function arguments, and the framework’s <strong>Extractors</strong> handle the plumbing for you.</p>
+<p>If the data cannot be extracted (e.g., missing header, invalid JSON), the request is rejected <em>before</em> your handler is ever called. This means your handler logic is guaranteed to operate on valid, type-safe data.</p>
+<h2 id="anatomy-of-a-handler"><a class="header" href="#anatomy-of-a-handler">Anatomy of a Handler</a></h2>
+<p>A handler is simply an asynchronous function that takes zero or more <strong>Extractors</strong> as arguments and returns something that implements <code>IntoResponse</code>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi::prelude::*;
+
+async fn create_user(
+    State(db): State&lt;DbPool&gt;,         // 1. Dependency Injection
+    Path(user_id): Path&lt;Uuid&gt;,        // 2. URL Path Parameter
+    Json(payload): Json&lt;CreateUser&gt;,  // 3. JSON Request Body
+) -&gt; Result&lt;impl IntoResponse, ApiError&gt; {
+    
+    let user = db.create_user(user_id, payload).await?;
+    
+    Ok((StatusCode::CREATED, Json(user)))
+}
+<span class="boring">}</span></code></pre>
+<h3 id="key-rules"><a class="header" href="#key-rules">Key Rules</a></h3>
+<ol>
+<li><strong>Order Matters (Slightly)</strong>: Extractors that consume the request body (like <code>Json&lt;T&gt;</code> or <code>Multipart</code>) must be the <em>last</em> argument. This is because the request body is a stream that can only be read once.</li>
+<li><strong>Async by Default</strong>: Handlers are <code>async fn</code>. This allows non-blocking I/O operations (DB calls, external API requests).</li>
+<li><strong>Debuggable</strong>: Handlers are just functions. You can unit test them easily.</li>
+</ol>
+<h2 id="extractors-the-fromrequest-trait"><a class="header" href="#extractors-the-fromrequest-trait">Extractors: The <code>FromRequest</code> Trait</a></h2>
+<p>Extractors are types that implement <code>FromRequest</code> (or <code>FromRequestParts</code> for headers/query params). They isolate the “HTTP parsing” logic from your “Business” logic.</p>
+<h3 id="common-build-in-extractors"><a class="header" href="#common-build-in-extractors">Common Build-in Extractors</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Extractor</th><th>Source</th><th>Example Usage</th></tr>
+</thead>
+<tbody>
+<tr><td><code>Path&lt;T&gt;</code></td><td>URL Path Segments</td><td><code>fn get_user(Path(id): Path&lt;u32&gt;)</code></td></tr>
+<tr><td><code>Query&lt;T&gt;</code></td><td>Query String</td><td><code>fn search(Query(params): Query&lt;SearchFn&gt;)</code></td></tr>
+<tr><td><code>Json&lt;T&gt;</code></td><td>Request Body</td><td><code>fn update(Json(data): Json&lt;UpdateDto&gt;)</code></td></tr>
+<tr><td><code>HeaderMap</code></td><td>HTTP Headers</td><td><code>fn headers(headers: HeaderMap)</code></td></tr>
+<tr><td><code>State&lt;T&gt;</code></td><td>Application State</td><td><code>fn db_op(State(pool): State&lt;PgPool&gt;)</code></td></tr>
+<tr><td><code>Extension&lt;T&gt;</code></td><td>Request-local extensions</td><td><code>fn logic(Extension(user): Extension&lt;User&gt;)</code></td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="custom-extractors"><a class="header" href="#custom-extractors">Custom Extractors</a></h3>
+<p>You can create your own extractors to encapsulate repetitive validation or parsing logic. For example, extracting a user ID from a verified JWT:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct AuthenticatedUser(pub Uuid);
+
+#[async_trait]
+impl&lt;S&gt; FromRequestParts&lt;S&gt; for AuthenticatedUser
+where
+    S: Send + Sync,
+{
+    type Rejection = ApiError;
+
+    async fn from_request_parts(parts: &amp;mut Parts, state: &amp;S) -&gt; Result&lt;Self, Self::Rejection&gt; {
+        let auth_header = parts.headers.get("Authorization")
+            .ok_or(ApiError::Unauthorized("Missing token"))?;
+        
+        let token = auth_header.to_str().map_err(|_| ApiError::Unauthorized("Invalid token"))?;
+        let user_id = verify_jwt(token)?; // Your verification logic
+        
+        Ok(AuthenticatedUser(user_id))
+    }
+}
+
+// Usage in handler: cleaner and reusable!
+async fn profile(AuthenticatedUser(uid): AuthenticatedUser) -&gt; impl IntoResponse {
+    format!("User ID: {}", uid)
+}
+<span class="boring">}</span></code></pre>
+<h2 id="responses-the-intoresponse-trait"><a class="header" href="#responses-the-intoresponse-trait">Responses: The <code>IntoResponse</code> Trait</a></h2>
+<p>A handler can return any type that implements <code>IntoResponse</code>. RustAPI provides implementations for many common types:</p>
 <ul>
-<li><strong>Keynotes</strong>: High-level architectural decisions and “why” we made them.</li>
-<li><strong>Patterns</strong>: The repeated structures (like <code>Action</code> and <code>Service</code>) that form the backbone of our code.</li>
-<li><strong>Recipes</strong>: Practical, step-by-step guides for adding features, testing, and maintaining cleanliness.</li>
+<li><code>StatusCode</code> (e.g., return <code>200 OK</code> or <code>404 Not Found</code>)</li>
+<li><code>Json&lt;T&gt;</code> (serializes struct to JSON)</li>
+<li><code>String</code> / <code>&amp;str</code> (plain text response)</li>
+<li><code>Vec&lt;u8&gt;</code> / <code>Bytes</code> (binary data)</li>
+<li><code>HeaderMap</code> (response headers)</li>
+<li><code>Html&lt;String&gt;</code> (HTML content)</li>
 </ul>
-<h2 id="visual-identity"><a class="header" href="#visual-identity">Visual Identity</a></h2>
-<p>This cookbook is styled with the <strong>RustAPI Premium Dark</strong> theme, focusing on readability, contrast, and modern “glassmorphism” aesthetics.</p>
-<h2 id="quick-start"><a class="header" href="#quick-start">Quick Start</a></h2>
-<ul>
-<li>Want to add a feature? Jump to <a href="recipes/new_feature.html">Adding a New Feature</a>.</li>
-<li>Want to understand performance? Read <a href="architecture/performance.html">Performance Philosophy</a>.</li>
-<li>Need to check code quality? See <a href="recipes/maintenance.html">Maintenance</a>.</li>
-</ul>
+<h3 id="tuple-responses"><a class="header" href="#tuple-responses">Tuple Responses</a></h3>
+<p>You can combine types using tuples to set status codes and headers along with the body:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Returns 201 Created + JSON Body
+async fn create() -&gt; (StatusCode, Json&lt;User&gt;) {
+    (StatusCode::CREATED, Json(user))
+}
+
+// Returns Custom Header + Plain Text
+async fn custom() -&gt; (HeaderMap, &amp;'static str) {
+    let mut headers = HeaderMap::new();
+    headers.insert("X-Custom", "Value".parse().unwrap());
+    (headers, "Response with headers")
+}
+<span class="boring">}</span></code></pre>
+<h3 id="error-handling"><a class="header" href="#error-handling">Error Handling</a></h3>
+<p>Handlers often return <code>Result&lt;T, E&gt;</code>. If the handler returns <code>Ok(T)</code>, the <code>T</code> is converted to a response. If it returns <code>Err(E)</code>, the <code>E</code> is converted to a response.</p>
+<p>This effectively means your <code>Error</code> type must implement <code>IntoResponse</code>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Recommended pattern: Centralized API Error enum
+pub enum ApiError {
+    NotFound(String),
+    InternalServerError,
+}
+
+impl IntoResponse for ApiError {
+    fn into_response(self) -&gt; Response {
+        let (status, message) = match self {
+            ApiError::NotFound(msg) =&gt; (StatusCode::NOT_FOUND, msg),
+            ApiError::InternalServerError =&gt; (StatusCode::INTERNAL_SERVER_ERROR, "Something went wrong".to_string()),
+        };
+        
+        (status, Json(json!({ "error": message }))).into_response()
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="best-practices"><a class="header" href="#best-practices">Best Practices</a></h2>
+<ol>
+<li><strong>Keep Handlers Thin</strong>: Move complex business logic to “Service” structs or domain modules. Handlers should focus on HTTP translation (decoding request -&gt; calling service -&gt; encoding response).</li>
+<li><strong>Use <code>State</code> for Dependencies</strong>: Avoid global variables. Pass DB pools and config via <code>State</code>.</li>
+<li><strong>Parse Early</strong>: Use specific types in <code>Json&lt;T&gt;</code> structs rather than <code>serde_json::Value</code> to leverage the type system for validation.</li>
+</ol>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../concepts/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
 
-                            <a rel="next prefetch" href="getting_started/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../concepts/performance.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -218,8 +330,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../concepts/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
 
-                    <a rel="next prefetch" href="getting_started/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../concepts/performance.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>
@@ -239,13 +354,13 @@
         </script>
 
 
-        <script src="elasticlunr-ef4e11c1.min.js"></script>
-        <script src="mark-09e88c2c.min.js"></script>
-        <script src="searcher-c2a407aa.js"></script>
+        <script src="../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../mark-09e88c2c.min.js"></script>
+        <script src="../searcher-c2a407aa.js"></script>
 
-        <script src="clipboard-1626706a.min.js"></script>
-        <script src="highlight-abc7f01d.js"></script>
-        <script src="book-a0b12cfe.js"></script>
+        <script src="../clipboard-1626706a.min.js"></script>
+        <script src="../highlight-abc7f01d.js"></script>
+        <script src="../book-a0b12cfe.js"></script>
 
         <!-- Custom JS scripts -->
 

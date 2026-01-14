@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-8e0dcf21.js";
+            window.path_to_searchindex_js = "searchindex-19cf8ce6.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-2cada9e7.js"></script>
+        <script src="toc-163c7333.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -196,286 +196,1353 @@
 <p>This cookbook is styled with the <strong>RustAPI Premium Dark</strong> theme, focusing on readability, contrast, and modern “glassmorphism” aesthetics.</p>
 <h2 id="quick-start"><a class="header" href="#quick-start">Quick Start</a></h2>
 <ul>
-<li>Want to add a feature? Jump to <a href="#recipe-adding-a-new-feature">Adding a New Feature</a>.</li>
-<li>Want to understand performance? Read <a href="#performance-philosophy">Performance Philosophy</a>.</li>
-<li>Need to check code quality? See <a href="#recipe-maintenance--quality">Maintenance</a>.</li>
+<li>Want to add a feature? Jump to <a href="recipes/new_feature.html">Adding a New Feature</a>.</li>
+<li>Want to understand performance? Read <a href="architecture/performance.html">Performance Philosophy</a>.</li>
+<li>Need to check code quality? See <a href="recipes/maintenance.html">Maintenance</a>.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="architecture-keynotes"><a class="header" href="#architecture-keynotes">Architecture Keynotes</a></h1>
-<p>This section details the architectural pillars of RustAPI.</p>
+<h1 id="getting-started"><a class="header" href="#getting-started">Getting Started</a></h1>
+<p>Welcome to RustAPI. This section will guide you from installation to your first running API.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
+<blockquote class="blockquote-tag blockquote-tag-note">
+<p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>Note</p>
+<p>RustAPI is designed for Rust 1.75 or later.</p>
+</blockquote>
+<h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
+<p>Before we begin, ensure you have the Rust toolchain installed. If you haven’t, the best way is via <a href="https://rustup.rs">rustup.rs</a>.</p>
+<pre><code class="language-bash">curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+</code></pre>
+<h2 id="installing-the-cli"><a class="header" href="#installing-the-cli">Installing the CLI</a></h2>
+<p>RustAPI comes with a powerful CLI to scaffold projects. Install it directly from crates.io:</p>
+<pre><code class="language-bash">cargo install cargo-rustapi
+</code></pre>
+<p>Verify your installation:</p>
+<pre><code class="language-bash">cargo rustapi --version
+</code></pre>
+<h2 id="editor-setup"><a class="header" href="#editor-setup">Editor Setup</a></h2>
+<p>For the best experience, we recommend <strong>VS Code</strong> with the <strong>rust-analyzer</strong> extension. This provides:</p>
 <ul>
-<li><a href="#the-action-pattern">The Action Pattern</a></li>
-<li><a href="#performance-philosophy">Performance Philosophy</a></li>
-<li><a href="#the-testing-pyramid">Testing Pyramid</a></li>
+<li>Real-time error checking</li>
+<li>Intelligent code completion</li>
+<li>In-editor documentation</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="the-action-pattern"><a class="header" href="#the-action-pattern">The Action Pattern</a></h1>
-<p>The <strong>Action Pattern</strong> is the central design abstraction of RustAPI. It redefines how we structure business logic, moving away from monolithic controllers/services into distinct, atomic units of work.</p>
-<h2 id="what-is-an-action"><a class="header" href="#what-is-an-action">What is an Action?</a></h2>
-<p>An “Action” corresponds to exactly one business intent.</p>
+<h1 id="quickstart"><a class="header" href="#quickstart">Quickstart</a></h1>
+<blockquote class="blockquote-tag blockquote-tag-tip">
+<p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z"></path></svg>Tip</p>
+<p>From zero to a production-ready API in 60 seconds.</p>
+</blockquote>
+<h2 id="create-a-new-project"><a class="header" href="#create-a-new-project">Create a New Project</a></h2>
+<p>Use the CLI to generate a new project. We’ll call it <code>my-api</code>.</p>
+<pre><code class="language-bash">cargo rustapi new my-api
+cd my-api
+</code></pre>
+<p>This commands sets up a complete project structure with handling, models, and tests ready to go.</p>
+<h2 id="run-the-server"><a class="header" href="#run-the-server">Run the Server</a></h2>
+<p>Start your API server:</p>
+<pre><code class="language-bash">cargo run
+</code></pre>
+<p>You should see output similar to:</p>
+<pre><code>INFO 🚀 Server running at http://127.0.0.1:8080
+INFO 📚 API docs at http://127.0.0.1:8080/docs
+</code></pre>
+<h2 id="test-it-out"><a class="header" href="#test-it-out">Test It Out</a></h2>
+<p>Open your browser to <a href="http://127.0.0.1:8080/docs">http://127.0.0.1:8080/docs</a>.</p>
+<p>You’ll see the <strong>Swagger UI</strong> automatically generated from your code. Try out the <code>/health</code> endpoint or create a new Item in the <code>Items</code> API.</p>
+<h2 id="what-just-happened"><a class="header" href="#what-just-happened">What Just Happened?</a></h2>
+<p>You just launched a high-performance, async Rust web server with:</p>
 <ul>
-<li><strong>Good</strong>: <code>CreateUser</code>, <code>DebitAccount</code>, <code>SendWelcomeEmail</code></li>
-<li><strong>Bad</strong>: <code>UserService</code> (too broad), <code>ManageOrders</code> (vague)</li>
+<li>✅ Automatic OpenAPI documentation</li>
+<li>✅ Type-safe request validation</li>
+<li>✅ Distributed tracing</li>
+<li>✅ Global error handling</li>
 </ul>
-<h2 id="why"><a class="header" href="#why">Why?</a></h2>
-<ol>
-<li><strong>Isolation</strong>: Since every action is its own struct, it has its own file, its own tests, and its own unique set of dependencies. Modifying <code>CreateUser</code> cannot accidentally break <code>DeleteUser</code>.</li>
-<li><strong>Testability</strong>: You can inject mocks for just the dependencies this specific action needs.</li>
-<li><strong>Readability</strong>: The codebase becomes a catalog of capabilities.</li>
-</ol>
-<h2 id="implementation-standard"><a class="header" href="#implementation-standard">Implementation Standard</a></h2>
-<p>Every action implements a trait (usually <code>Runnable</code> or similar) that defines its contract.</p>
+<p>Welcome to RustAPI.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="project-structure"><a class="header" href="#project-structure">Project Structure</a></h1>
+<p>RustAPI projects follow a standard, modular structure designed for scalability.</p>
+<pre><code>my-api/
+├── Cargo.toml          // Dependencies and workspace config
+├── src/
+│   ├── handlers/       // Request handlers (Controllers)
+│   │   ├── mod.rs      
+│   │   └── items.rs    // Example resource handler
+│   ├── models/         // Data structures and Schema
+│   │   ├── mod.rs      
+│   ├── error.rs        // Custom error types
+│   └── main.rs         // Application entry point &amp; Router
+└── .env.example        // Environment variables template
+</code></pre>
+<h2 id="key-files"><a class="header" href="#key-files">Key Files</a></h2>
+<h3 id="srcmainrs"><a class="header" href="#srcmainrs"><code>src/main.rs</code></a></h3>
+<p>The heart of your application. This is where you configure the <code>RustApi</code> builder, register routes, and set up state.</p>
+<h3 id="srchandlers"><a class="header" href="#srchandlers"><code>src/handlers/</code></a></h3>
+<p>Where your business logic lives. Handlers are async functions that take extractors (like <code>Json</code>, <code>Path</code>, <code>State</code>) and return responses.</p>
+<h3 id="srcmodels"><a class="header" href="#srcmodels"><code>src/models/</code></a></h3>
+<p>Your data types. By deriving <code>Schema</code>, they automatically appear in your OpenAPI documentation.</p>
+<h3 id="srcerrorrs"><a class="header" href="#srcerrorrs"><code>src/error.rs</code></a></h3>
+<p>Centralized error handling. Mapping your <code>AppError</code> to <code>ApiError</code> allows you to simply return <code>Result&lt;T, AppError&gt;</code> in your handlers.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="core-concepts"><a class="header" href="#core-concepts">Core Concepts</a></h1>
+<p>Documentation of the fundamental architectural decisions and patterns in RustAPI.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="handlers--extractors"><a class="header" href="#handlers--extractors">Handlers &amp; Extractors</a></h1>
+<p>The <strong>Handler</strong> is the fundamental unit of work in RustAPI. It transforms an incoming HTTP request into an outgoing HTTP response.</p>
+<p>Unlike many web frameworks that enforce a strict method signature (e.g., <code>fn(req: Request, res: Response)</code>), RustAPI embraces a flexible, type-safe approach powered by Rust’s trait system.</p>
+<h2 id="the-philosophy-ask-for-what-you-need"><a class="header" href="#the-philosophy-ask-for-what-you-need">The Philosophy: “Ask for what you need”</a></h2>
+<p>In RustAPI, you don’t manually parse the request object inside your business logic. Instead, you declare the data you need as function arguments, and the framework’s <strong>Extractors</strong> handle the plumbing for you.</p>
+<p>If the data cannot be extracted (e.g., missing header, invalid JSON), the request is rejected <em>before</em> your handler is ever called. This means your handler logic is guaranteed to operate on valid, type-safe data.</p>
+<h2 id="anatomy-of-a-handler"><a class="header" href="#anatomy-of-a-handler">Anatomy of a Handler</a></h2>
+<p>A handler is simply an asynchronous function that takes zero or more <strong>Extractors</strong> as arguments and returns something that implements <code>IntoResponse</code>.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// Example Structure
-pub struct CreateUser {
-    pub name: String,
-    pub email: String,
+</span>use rustapi::prelude::*;
+
+async fn create_user(
+    State(db): State&lt;DbPool&gt;,         // 1. Dependency Injection
+    Path(user_id): Path&lt;Uuid&gt;,        // 2. URL Path Parameter
+    Json(payload): Json&lt;CreateUser&gt;,  // 3. JSON Request Body
+) -&gt; Result&lt;impl IntoResponse, ApiError&gt; {
+    
+    let user = db.create_user(user_id, payload).await?;
+    
+    Ok((StatusCode::CREATED, Json(user)))
+}
+<span class="boring">}</span></code></pre>
+<h3 id="key-rules"><a class="header" href="#key-rules">Key Rules</a></h3>
+<ol>
+<li><strong>Order Matters (Slightly)</strong>: Extractors that consume the request body (like <code>Json&lt;T&gt;</code> or <code>Multipart</code>) must be the <em>last</em> argument. This is because the request body is a stream that can only be read once.</li>
+<li><strong>Async by Default</strong>: Handlers are <code>async fn</code>. This allows non-blocking I/O operations (DB calls, external API requests).</li>
+<li><strong>Debuggable</strong>: Handlers are just functions. You can unit test them easily.</li>
+</ol>
+<h2 id="extractors-the-fromrequest-trait"><a class="header" href="#extractors-the-fromrequest-trait">Extractors: The <code>FromRequest</code> Trait</a></h2>
+<p>Extractors are types that implement <code>FromRequest</code> (or <code>FromRequestParts</code> for headers/query params). They isolate the “HTTP parsing” logic from your “Business” logic.</p>
+<h3 id="common-build-in-extractors"><a class="header" href="#common-build-in-extractors">Common Build-in Extractors</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Extractor</th><th>Source</th><th>Example Usage</th></tr>
+</thead>
+<tbody>
+<tr><td><code>Path&lt;T&gt;</code></td><td>URL Path Segments</td><td><code>fn get_user(Path(id): Path&lt;u32&gt;)</code></td></tr>
+<tr><td><code>Query&lt;T&gt;</code></td><td>Query String</td><td><code>fn search(Query(params): Query&lt;SearchFn&gt;)</code></td></tr>
+<tr><td><code>Json&lt;T&gt;</code></td><td>Request Body</td><td><code>fn update(Json(data): Json&lt;UpdateDto&gt;)</code></td></tr>
+<tr><td><code>HeaderMap</code></td><td>HTTP Headers</td><td><code>fn headers(headers: HeaderMap)</code></td></tr>
+<tr><td><code>State&lt;T&gt;</code></td><td>Application State</td><td><code>fn db_op(State(pool): State&lt;PgPool&gt;)</code></td></tr>
+<tr><td><code>Extension&lt;T&gt;</code></td><td>Request-local extensions</td><td><code>fn logic(Extension(user): Extension&lt;User&gt;)</code></td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="custom-extractors"><a class="header" href="#custom-extractors">Custom Extractors</a></h3>
+<p>You can create your own extractors to encapsulate repetitive validation or parsing logic. For example, extracting a user ID from a verified JWT:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>pub struct AuthenticatedUser(pub Uuid);
+
+#[async_trait]
+impl&lt;S&gt; FromRequestParts&lt;S&gt; for AuthenticatedUser
+where
+    S: Send + Sync,
+{
+    type Rejection = ApiError;
+
+    async fn from_request_parts(parts: &amp;mut Parts, state: &amp;S) -&gt; Result&lt;Self, Self::Rejection&gt; {
+        let auth_header = parts.headers.get("Authorization")
+            .ok_or(ApiError::Unauthorized("Missing token"))?;
+        
+        let token = auth_header.to_str().map_err(|_| ApiError::Unauthorized("Invalid token"))?;
+        let user_id = verify_jwt(token)?; // Your verification logic
+        
+        Ok(AuthenticatedUser(user_id))
+    }
 }
 
-impl Action for CreateUser {
-    type Output = User;
-    type Error = ApiError;
+// Usage in handler: cleaner and reusable!
+async fn profile(AuthenticatedUser(uid): AuthenticatedUser) -&gt; impl IntoResponse {
+    format!("User ID: {}", uid)
+}
+<span class="boring">}</span></code></pre>
+<h2 id="responses-the-intoresponse-trait"><a class="header" href="#responses-the-intoresponse-trait">Responses: The <code>IntoResponse</code> Trait</a></h2>
+<p>A handler can return any type that implements <code>IntoResponse</code>. RustAPI provides implementations for many common types:</p>
+<ul>
+<li><code>StatusCode</code> (e.g., return <code>200 OK</code> or <code>404 Not Found</code>)</li>
+<li><code>Json&lt;T&gt;</code> (serializes struct to JSON)</li>
+<li><code>String</code> / <code>&amp;str</code> (plain text response)</li>
+<li><code>Vec&lt;u8&gt;</code> / <code>Bytes</code> (binary data)</li>
+<li><code>HeaderMap</code> (response headers)</li>
+<li><code>Html&lt;String&gt;</code> (HTML content)</li>
+</ul>
+<h3 id="tuple-responses"><a class="header" href="#tuple-responses">Tuple Responses</a></h3>
+<p>You can combine types using tuples to set status codes and headers along with the body:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Returns 201 Created + JSON Body
+async fn create() -&gt; (StatusCode, Json&lt;User&gt;) {
+    (StatusCode::CREATED, Json(user))
+}
 
-    async fn run(&amp;self, ctx: &amp;Context) -&gt; Result&lt;Self::Output, Self::Error&gt; {
-        // 1. Validate
-        // 2. Persist
-        // 3. Notify
+// Returns Custom Header + Plain Text
+async fn custom() -&gt; (HeaderMap, &amp;'static str) {
+    let mut headers = HeaderMap::new();
+    headers.insert("X-Custom", "Value".parse().unwrap());
+    (headers, "Response with headers")
+}
+<span class="boring">}</span></code></pre>
+<h3 id="error-handling"><a class="header" href="#error-handling">Error Handling</a></h3>
+<p>Handlers often return <code>Result&lt;T, E&gt;</code>. If the handler returns <code>Ok(T)</code>, the <code>T</code> is converted to a response. If it returns <code>Err(E)</code>, the <code>E</code> is converted to a response.</p>
+<p>This effectively means your <code>Error</code> type must implement <code>IntoResponse</code>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Recommended pattern: Centralized API Error enum
+pub enum ApiError {
+    NotFound(String),
+    InternalServerError,
+}
+
+impl IntoResponse for ApiError {
+    fn into_response(self) -&gt; Response {
+        let (status, message) = match self {
+            ApiError::NotFound(msg) =&gt; (StatusCode::NOT_FOUND, msg),
+            ApiError::InternalServerError =&gt; (StatusCode::INTERNAL_SERVER_ERROR, "Something went wrong".to_string()),
+        };
+        
+        (status, Json(json!({ "error": message }))).into_response()
     }
 }
 <span class="boring">}</span></code></pre>
-<blockquote class="blockquote-tag blockquote-tag-tip">
-<p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z"></path></svg>Tip</p>
-<p>Use the <code>rustapi-macros</code> crate to auto-implement boilerplate for standard Actions.</p>
-</blockquote>
+<h2 id="best-practices"><a class="header" href="#best-practices">Best Practices</a></h2>
+<ol>
+<li><strong>Keep Handlers Thin</strong>: Move complex business logic to “Service” structs or domain modules. Handlers should focus on HTTP translation (decoding request -&gt; calling service -&gt; encoding response).</li>
+<li><strong>Use <code>State</code> for Dependencies</strong>: Avoid global variables. Pass DB pools and config via <code>State</code>.</li>
+<li><strong>Parse Early</strong>: Use specific types in <code>Json&lt;T&gt;</code> structs rather than <code>serde_json::Value</code> to leverage the type system for validation.</li>
+</ol>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="performance-philosophy"><a class="header" href="#performance-philosophy">Performance Philosophy</a></h1>
-<p>RustAPI is built on the principle of <strong>Zero-Cost Abstractions</strong>. We do not compromise runtime performance for developer ergonomics; we strive to offer both.</p>
-<h2 id="core-tenets"><a class="header" href="#core-tenets">Core Tenets</a></h2>
-<h3 id="1-static-dispatch-over-dynamic"><a class="header" href="#1-static-dispatch-over-dynamic">1. Static Dispatch Over Dynamic</a></h3>
-<p>Where possible, we use generics and <code>impl Trait</code> rather than <code>Box&lt;dyn Trait&gt;</code>. This allows the compiler to monomorphize code, inlining function calls and enabling optimizations that vtables prevent.</p>
-<h3 id="2-asyncawait-and-tokio"><a class="header" href="#2-asyncawait-and-tokio">2. Async/Await and Tokio</a></h3>
-<p>We are fully committed to the <code>tokio</code> ecosystem.</p>
+<p>RustAPI is built on a simple premise: <strong>Abstractions shouldn’t cost you runtime performance.</strong></p>
+<p>We leverage Rust’s unique ownership system and modern async ecosystem (Tokio, Hyper) to deliver performance that rivals C++ servers, while maintaining developer safe-guards.</p>
+<h2 id="the-pillars-of-speed"><a class="header" href="#the-pillars-of-speed">The Pillars of Speed</a></h2>
+<h3 id="1-zero-copy-networking"><a class="header" href="#1-zero-copy-networking">1. Zero-Copy Networking</a></h3>
+<p>Where possible, RustAPI avoids copying memory. When you receive a large JSON payload or file upload, we aim to pass pointers to the underlying memory buffer rather than cloning the data.</p>
 <ul>
-<li><strong>IO-Bound</strong>: We use async IO for everything (database, cache, network).</li>
-<li><strong>CPU-Bound</strong>: Heavy computation is offloaded to <code>spawn_blocking</code> to avoid blocking the reactor.</li>
+<li><strong><code>Bytes</code> over <code>Vec&lt;u8&gt;</code></strong>: We use the <code>bytes</code> crate extensively. Passing a <code>Bytes</code> object around is <code>O(1)</code> (it’s just a reference-counted pointer and length), whereas cloning a <code>Vec&lt;u8&gt;</code> is <code>O(n)</code>.</li>
+<li><strong>String View</strong>: Extractors like <code>Path</code> and <code>Query</code> often leverage <code>Cow&lt;'str, str&gt;</code> (Clone on Write) to avoid allocations if the data doesn’t need to be modified.</li>
 </ul>
-<h3 id="3-allocation-minimization"><a class="header" href="#3-allocation-minimization">3. Allocation Minimization</a></h3>
-<p>We use <code>Bytes</code> and references where possible to avoid cloning <code>String</code>s unnecessarily. The deserialization layer is tuned to borrow from the input buffer when feasible.</p>
-<h2 id="measuring-success"><a class="header" href="#measuring-success">Measuring Success</a></h2>
-<p>We don’t guess; we measure.</p>
+<h3 id="2-multi-core-async-runtime"><a class="header" href="#2-multi-core-async-runtime">2. Multi-Core Async Runtime</a></h3>
+<p>RustAPI runs on <strong>Tokio</strong>, a work-stealing, multi-threaded runtime.</p>
 <ul>
-<li><strong>Micro-benchmarks</strong>: Use <code>criterion</code> for hot paths (serialization, routing).</li>
-<li><strong>Macro-benchmarks</strong>: Use <code>hey</code> or <code>wrk</code> for end-to-end HTTP throughput.</li>
+<li><strong>Non-blocking I/O</strong>: A single thread can handle thousands of concurrent idle connections (e.g., WebSockets waiting for messages) with minimal memory overhead.</li>
+<li><strong>Work Stealing</strong>: If one CPU core is overloaded with tasks, other idle cores will “steal” work from its queue, ensuring balanced utilization of your hardware.</li>
 </ul>
-<blockquote class="blockquote-tag blockquote-tag-important">
-<p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M0 1.75C0 .784.784 0 1.75 0h12.5C15.216 0 16 .784 16 1.75v9.5A1.75 1.75 0 0 1 14.25 13H8.06l-2.573 2.573A1.458 1.458 0 0 1 3 14.543V13H1.75A1.75 1.75 0 0 1 0 11.25Zm1.75-.25a.25.25 0 0 0-.25.25v9.5c0 .138.112.25.25.25h2a.75.75 0 0 1 .75.75v2.19l2.72-2.72a.749.749 0 0 1 .53-.22h6.5a.25.25 0 0 0 .25-.25v-9.5a.25.25 0 0 0-.25-.25Zm7 2.25v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 9a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"></path></svg>Important</p>
-<p>A regression in a micro-benchmark is a blocking issue. We treat performance as a feature.</p>
-</blockquote>
-<h2 id="the-action-overhead"><a class="header" href="#the-action-overhead">The “Action” Overhead</a></h2>
-<p>You might ask: <em>“Does creating a struct for every action add overhead?”</em>
-<strong>Answer</strong>: No. The compiler optimizes away the struct wrapper, leaving just the logic execution. It is zero-cost organization.</p>
-<div style="break-before: page; page-break-before: always;"></div>
-<h1 id="the-testing-pyramid"><a class="header" href="#the-testing-pyramid">The Testing Pyramid</a></h1>
-<p>A healthy project requires a balanced testing strategy. RustAPI relies on three layers of verification.</p>
-<h2 id="1-unit-tests-the-base"><a class="header" href="#1-unit-tests-the-base">1. Unit Tests (The Base)</a></h2>
-<p><strong>Where</strong>: Helper modules, core logic snippets, utility functions.
-<strong>Goal</strong>: Verify logic in isolation.
-<strong>Command</strong>: <code>cargo test</code></p>
+<h3 id="3-compile-time-router"><a class="header" href="#3-compile-time-router">3. Compile-Time Router</a></h3>
+<p>Our router (<code>matchit</code>) is based on a <strong>Radix Trie</strong> structure.</p>
+<ul>
+<li><strong>O(log n) Lookup</strong>: Route matching speed depends on the length of the URL, <em>not</em> the number of routes defined. Having 10 routes or 10,000 routes has negligible impact on routing latency.</li>
+<li><strong>Allocation-Free Matching</strong>: For standard paths, routing decisions happen without heap allocations.</li>
+</ul>
+<h2 id="memory-management"><a class="header" href="#memory-management">Memory Management</a></h2>
+<h3 id="stack-vs-heap"><a class="header" href="#stack-vs-heap">Stack vs. Heap</a></h3>
+<p>RustAPI encourages stack allocation for small, short-lived data.</p>
+<ul>
+<li><strong>Extractors</strong> are often allocated on the stack.</li>
+<li><strong>Response bodies</strong> are streamed, meaning a 1GB file download doesn’t require 1GB of RAM. It flows through a small, constant-sized buffer.</li>
+</ul>
+<h3 id="connection-pooling"><a class="header" href="#connection-pooling">Connection Pooling</a></h3>
+<p>For database performance, we strongly recommend using connection pooling (e.g., <code>sqlx::Pool</code>).</p>
+<ul>
+<li><strong>Reuse</strong>: Establishing a TCP connection and performing a simplified SSL handshake for every request is slow. Pooling keeps connections open and ready.</li>
+<li><strong>Multiplexing</strong>: Some drivers allow multiple queries to be in-flight on a single connection simultaneously.</li>
+</ul>
+<h2 id="optimizing-your-app"><a class="header" href="#optimizing-your-app">Optimizing Your App</a></h2>
+<p>To get the most out of RustAPI, follow these guidelines:</p>
+<ol>
+<li>
+<p><strong>Avoid Blocking the Async Executor</strong>: Never run CPU-intensive tasks (cryptography, image processing) or blocking I/O (std::fs::read) directly in an async handler.</p>
+<ul>
+<li><em>Solution</em>: Use <code>tokio::task::spawn_blocking</code> to offload these to a dedicated thread pool.</li>
+</ul>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>#[test]
-fn test_email_validation() {
-    assert!(validate_email("test@example.com").is_ok());
+</span>// BAD: Blocks the thread, potentially stalling other requests
+fn handler() {
+    let digest = tough_crypto_hash(data); 
+}
+
+// GOOD: Runs on a thread meant for blocking work
+async fn handler() {
+    let digest = tokio::task::spawn_blocking(move || {
+        tough_crypto_hash(data)
+    }).await.unwrap();
 }
 <span class="boring">}</span></code></pre>
-<h2 id="2-integration--flow-tests-the-middle"><a class="header" href="#2-integration--flow-tests-the-middle">2. Integration / Flow Tests (The Middle)</a></h2>
-<p><strong>Where</strong>: <code>tests/integration/</code> and specific “Action” tests.
-<strong>Goal</strong>: Verify that components work together. Does the Action talk to the database correctly?
-<strong>Mocking</strong>: We use mocking for external services (Stripe, AWS) but favor real database containers (Testcontainers) for data integrity.</p>
-<h2 id="3-end-to-end--benchmarks-the-top"><a class="header" href="#3-end-to-end--benchmarks-the-top">3. End-to-End &amp; Benchmarks (The Top)</a></h2>
-<p><strong>Where</strong>: <code>benches/</code> and CI simulation scripts.
-<strong>Goal</strong>: Performance verification and full system sanity.
-<strong>Tool</strong>: <code>check_quality.ps1</code> runs the full suite.</p>
-<h2 id="continuous-integration-strategy"><a class="header" href="#continuous-integration-strategy">Continuous Integration Strategy</a></h2>
-<p>We do not push code that fails locally.</p>
+</li>
+<li>
+<p><strong>JSON Serialization</strong>: While <code>serde</code> is fast, JSON text processing is CPU heavy.</p>
 <ul>
-<li>Run <code>scripts/simulate_ci.ps1</code> before every push.</li>
-<li>This script runs <code>fmt</code>, <code>clippy</code>, and <code>test</code> in a production-like environment.</li>
+<li>For extremely high-throughput endpoints, consider binary formats like <strong>Protobuf</strong> or <strong>MessagePack</strong> if the client supports it.</li>
 </ul>
+</li>
+<li>
+<p><strong>Keep <code>State</code> Light</strong>: Your <code>State</code> struct is cloned for every request. Wrap large shared data in <code>Arc&lt;T&gt;</code> so only the pointer is cloned, not the data itself.</p>
+</li>
+</ol>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Fast
+#[derive(Clone)]
+struct AppState {
+    db: PgPool,                // Internally uses Arc
+    config: Arc&lt;Config&gt;,       // Wrapped in Arc manually
+}
+<span class="boring">}</span></code></pre>
+<h2 id="benchmarking"><a class="header" href="#benchmarking">Benchmarking</a></h2>
+<p>Performance is not a guessing game. Use tools like <code>wrk</code>, <code>k6</code>, or <code>drill</code> to stress-test your specific endpoints.</p>
+<pre><code class="language-bash"># Example using drill
+drill --benchmark benchmark.yml --stats
+</code></pre>
+<p>Remember: RustAPI provides the <em>capability</em> for high performance, but your application logic ultimately dictates the speed. Use the tools wisely.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="testing-strategy"><a class="header" href="#testing-strategy">Testing Strategy</a></h1>
+<p>Reliable software requires a robust testing strategy. RustAPI is designed to be testable at every level, from individual functions to full end-to-end scenarios.</p>
+<h2 id="the-testing-pyramid"><a class="header" href="#the-testing-pyramid">The Testing Pyramid</a></h2>
+<p>We recommend a balanced approach:</p>
+<ol>
+<li><strong>Unit Tests (70%)</strong>: Fast, isolated tests for individual logic pieces.</li>
+<li><strong>Integration Tests (20%)</strong>: Testing handlers and extractors wired together.</li>
+<li><strong>End-to-End (E2E) Tests (10%)</strong>: Testing the running server from the outside.</li>
+</ol>
+<h2 id="1-unit-testing-handlers"><a class="header" href="#1-unit-testing-handlers">1. Unit Testing Handlers</a></h2>
+<p>Since handlers are just regular functions, you can unit test them by invoking them directly. However, dealing with Extractors directly in tests can sometimes be verbose.</p>
+<p>Often, it is better to extract your “Business Logic” into a separate function or trait, test that thoroughly, and keep the Handler layer thin.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Domain Logic (Easy to test)
+fn calculate_total(items: &amp;[Item]) -&gt; u32 {
+    items.iter().map(|i| i.price).sum()
+}
+
+// Handler (Just plumbing)
+async fn checkout(Json(cart): Json&lt;Cart&gt;) -&gt; Json&lt;Receipt&gt; {
+    let total = calculate_total(&amp;cart.items);
+    Json(Receipt { total })
+}
+<span class="boring">}</span></code></pre>
+<h2 id="2-integration-testing-with-tower"><a class="header" href="#2-integration-testing-with-tower">2. Integration Testing with <code>Tower</code></a></h2>
+<p>RustAPI routers implement <code>tower::Service</code>. This means you can send requests to your router directly in memory without spawning a TCP server or using <code>localhost</code>. This is <strong>extremely fast</strong>.</p>
+<p>We rely on <code>tower::util::ServiceExt</code> to call the router.</p>
+<h3 id="setup"><a class="header" href="#setup">Setup</a></h3>
+<p>Add <code>tower</code> and <code>http-body-util</code> for testing utilities:</p>
+<pre><code class="language-toml">[dev-dependencies]
+tower = { version = "0.4", features = ["util"] }
+http-body-util = "0.1"
+tokio = { version = "1", features = ["full"] }
+</code></pre>
+<h3 id="example-test"><a class="header" href="#example-test">Example Test</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[tokio::test]
+async fn test_create_user() {
+    // 1. Build the app (same as in main.rs)
+    let app = app(); 
+
+    // 2. Construct a Request
+    let response = app
+        .oneshot(
+            Request::builder()
+                .method(http::Method::POST)
+                .uri("/users")
+                .header(http::header::CONTENT_TYPE, "application/json")
+                .body(Body::from(r#"{"username": "alice"}"#))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+
+    // 3. Assert Status
+    assert_eq!(response.status(), StatusCode::CREATED);
+
+    // 4. Assert Body
+    let body_bytes = response.into_body().collect().await.unwrap().to_bytes();
+    let body: User = serde_json::from_slice(&amp;body_bytes).unwrap();
+    assert_eq!(body.username, "alice");
+}
+<span class="boring">}</span></code></pre>
+<h2 id="3-mocking-dependencies-with-state"><a class="header" href="#3-mocking-dependencies-with-state">3. Mocking Dependencies with <code>State</code></a></h2>
+<p>To test handlers that rely on databases or external APIs, you should mock those dependencies.</p>
+<p>Use Traits to define the capabilities, and use generics or dynamic dispatch in your State.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// 1. Define the interface
+#[async_trait]
+trait UserRepository: Send + Sync {
+    async fn get_user(&amp;self, id: u32) -&gt; Option&lt;User&gt;;
+}
+
+// 2. Real Implementation
+struct PostgresRepo { pool: PgPool }
+
+// 3. Mock Implementation
+struct MockRepo;
+#[async_trait]
+impl UserRepository for MockRepo {
+    async fn get_user(&amp;self, _id: u32) -&gt; Option&lt;User&gt; {
+        Some(User { username: "mock_user".into() })
+    }
+}
+
+// 4. Use in Handler
+async fn get_user(
+    State(repo): State&lt;Arc&lt;dyn UserRepository&gt;&gt;, // Accepts any impl
+    Path(id): Path&lt;u32&gt;
+) -&gt; Json&lt;User&gt; {
+    // ...
+}
+<span class="boring">}</span></code></pre>
+<p>In your tests, inject <code>Arc::new(MockRepo)</code> into the <code>State</code>.</p>
+<h2 id="4-end-to-end-testing"><a class="header" href="#4-end-to-end-testing">4. End-to-End Testing</a></h2>
+<p>For E2E tests, you can spawn the actual server on a random port and use a real HTTP client (like <code>reqwest</code>) to hit it.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[tokio::test]
+async fn e2e_test() {
+    // Binding to port 0 lets the OS choose a random available port
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let addr = listener.local_addr().unwrap();
+
+    // Spawn server in background
+    tokio::spawn(async move {
+        RustApi::serve(listener, app()).await.unwrap();
+    });
+
+    // Make real requests
+    let client = reqwest::Client::new();
+    let resp = client.get(format!("http://{}/health", addr))
+        .send()
+        .await
+        .unwrap();
+
+    assert!(resp.status().is_success());
+}
+<span class="boring">}</span></code></pre>
+<p>This approach is slower but validates strictly everything, including network serialization and actual TCP behavior.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="crate-deep-dives"><a class="header" href="#crate-deep-dives">Crate Deep Dives</a></h1>
 <blockquote class="blockquote-tag blockquote-tag-warning">
 <p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M6.457 1.047c.659-1.234 2.427-1.234 3.086 0l6.082 11.378A1.75 1.75 0 0 1 14.082 15H1.918a1.75 1.75 0 0 1-1.543-2.575Zm1.763.707a.25.25 0 0 0-.44 0L1.698 13.132a.25.25 0 0 0 .22.368h12.164a.25.25 0 0 0 .22-.368Zm.53 3.996v2.5a.75.75 0 0 1-1.5 0v-2.5a.75.75 0 0 1 1.5 0ZM9 11a1 1 0 1 1-2 0 1 1 0 0 1 2 0Z"></path></svg>Warning</p>
-<p>Dead code is technical debt. Use the quality check script to find and eliminate unused logic regularly.</p>
+<p>This section is for those who want to understand the framework’s internal organs. You don’t need to know this to <em>use</em> RustAPI, but it helps if you want to <em>master</em> it.</p>
 </blockquote>
+<p>RustAPI is a collection of focused, interoperable crates. Each crate has a specific philosophy and “Lens” through which it views the world.</p>
+<ul>
+<li><strong><a href="#rustapi-core-the-engine">rustapi-core</a></strong>: The Engine</li>
+<li><strong><a href="#rustapi-macros-the-magic">rustapi-macros</a></strong>: The Magic</li>
+<li><strong><a href="#rustapi-validate-the-gatekeeper">rustapi-validate</a></strong>: The Gatekeeper</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="rustapi-core-the-engine"><a class="header" href="#rustapi-core-the-engine">rustapi-core: The Engine</a></h1>
+<p><code>rustapi-core</code> is the foundational crate of the framework. It provides the essential types and traits that glue everything together, although application developers typically interact with the facade crate <code>rustapi</code>.</p>
+<h2 id="core-responsibilities"><a class="header" href="#core-responsibilities">Core Responsibilities</a></h2>
+<ol>
+<li><strong>Routing</strong>: Mapping HTTP requests to Handlers.</li>
+<li><strong>Extraction</strong>: The <code>FromRequest</code> trait definition.</li>
+<li><strong>Response</strong>: The <code>IntoResponse</code> trait definition.</li>
+<li><strong>Middleware</strong>: The <code>Layer</code> and <code>Service</code> integration with Tower.</li>
+</ol>
+<h2 id="the-router-internals"><a class="header" href="#the-router-internals">The <code>Router</code> Internals</a></h2>
+<p>We use <code>matchit</code>, a high-performance <strong>Radix Tree</strong> implementation for routing.</p>
+<h3 id="why-radix-trees"><a class="header" href="#why-radix-trees">Why Radix Trees?</a></h3>
+<ul>
+<li><strong>Speed</strong>: Lookup time is proportional to the length of the path, not the number of routes.</li>
+<li><strong>Priority</strong>: Specific paths (<code>/users/profile</code>) always take precedence over wildcards (<code>/users/:id</code>), regardless of definition order.</li>
+<li><strong>Parameters</strong>: Efficiently parses named parameters like <code>:id</code> or <code>*path</code> without regular expressions.</li>
+</ul>
+<h2 id="the-handler-trait-magic"><a class="header" href="#the-handler-trait-magic">The <code>Handler</code> Trait Magic</a></h2>
+<p>The <code>Handler</code> trait is what allows you to write functions with arbitrary arguments.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// This looks simple...
+async fn my_handler(state: State&lt;Db&gt;, json: Json&lt;Data&gt;) { ... }
+
+// ...but under the hood, it compiles to something like:
+impl Handler for my_handler {
+    fn call(req: Request) -&gt; Future&lt;Output=Response&gt; {
+        // 1. Extract State
+        // 2. Extract Json
+        // 3. Call original function
+        // 4. Convert return to Response
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>This is achieved through <strong>recursive trait implementations</strong> on tuples. RustAPI supports handlers with up to <strong>16 arguments</strong>.</p>
+<h2 id="middleware-architecture"><a class="header" href="#middleware-architecture">Middleware Architecture</a></h2>
+<p><code>rustapi-core</code> is built on top of <code>tower</code>. This means any standard Tower middleware works out of the box.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// The Service stack looks like an onion:
+// Outer Layer (Timeout)
+//  -&gt; Middle Layer (Trace)
+//      -&gt; Inner Layer (Router)
+//          -&gt; Handler
+<span class="boring">}</span></code></pre>
+<p>When you call <code>.layer()</code>, you are wrapping the inner service with a new outer layer.</p>
+<h3 id="the-boxroute"><a class="header" href="#the-boxroute">The <code>BoxRoute</code></a></h3>
+<p>To keep compilation times fast and types manageable, the Router eventually “erases” the specific types of your handlers into a <code>BoxRoute</code> (a boxed <code>tower::Service</code>). This is a dynamic dispatch boundary that trades a tiny amount of runtime performance (nanoseconds) for significantly faster compile times and usability.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="rustapi-macros-the-magic"><a class="header" href="#rustapi-macros-the-magic">rustapi-macros: The Magic</a></h1>
+<p><code>rustapi-macros</code> reduces boilerplate by generating code at compile time.</p>
+<h2 id="debug_handler"><a class="header" href="#debug_handler"><code>#[debug_handler]</code></a></h2>
+<p>The most important macro for beginners. Rust’s error messages for complex generic traits (like <code>Handler</code>) can be notoriously difficult to understand.</p>
+<p>If your handler doesn’t implement the <code>Handler</code> trait (e.g., because you used an argument that isn’t a valid Extractor), the compiler might give you an error spanning the entire <code>RustApi::new()</code> chain, miles away from the actual problem.</p>
+<p><strong><code>#[debug_handler]</code> fixes this.</strong></p>
+<p>It verifies the handler function <em>in isolation</em> and produces clear error messages pointing exactly to the invalid argument.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[debug_handler]
+async fn handler(
+    // Compile Error: "String" does not implement FromRequest. 
+    // Did you mean "Json&lt;String&gt;" or "Body"?
+    body: String 
+) { ... }
+<span class="boring">}</span></code></pre>
+<h2 id="derivefromrequest"><a class="header" href="#derivefromrequest"><code>#[derive(FromRequest)]</code></a></h2>
+<p>Automatically implement <code>FromRequest</code> for your structs.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(FromRequest)]
+struct MyExtractor {
+    // These fields must themselves be Extractors
+    header: HeaderMap,
+    body: Json&lt;MyData&gt;,
+}
+
+// Now you can use it in a handler
+async fn handler(input: MyExtractor) {
+    println!("{:?}", input.header);
+}
+<span class="boring">}</span></code></pre>
+<p>This is heavily used to group multiple extractors into a single struct (often called the “Parameter Object” pattern), keeping function signatures clean.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="rustapi-validate-the-gatekeeper"><a class="header" href="#rustapi-validate-the-gatekeeper">rustapi-validate: The Gatekeeper</a></h1>
+<p>Data validation should happen at the edges of your system, before invalid data ever reaches your business logic. <code>rustapi-validate</code> integrates the <code>validator</code> crate directly into RustAPI’s extraction flow.</p>
+<h2 id="the-validate-trait"><a class="header" href="#the-validate-trait">The <code>Validate</code> Trait</a></h2>
+<p>First, define your rules using attributes on your struct.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_validate::Validate;
+use serde::Deserialize;
+
+#[derive(Debug, Deserialize, Validate)]
+pub struct SignupRequest {
+    #[validate(length(min = 3, message = "Username too short"))]
+    pub username: String,
+
+    #[validate(email(message = "Invalid email format"))]
+    pub email: String,
+
+    #[validate(range(min = 18, max = 150))]
+    pub age: u8,
+}
+<span class="boring">}</span></code></pre>
+<h2 id="the-validatedjson-extractor"><a class="header" href="#the-validatedjson-extractor">The <code>ValidatedJson</code> Extractor</a></h2>
+<p>Instead of using the standard <code>Json&lt;T&gt;</code>, use <code>ValidatedJson&lt;T&gt;</code>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_validate::ValidatedJson;
+
+async fn signup(
+    ValidatedJson(payload): ValidatedJson&lt;SignupRequest&gt;
+) -&gt; impl IntoResponse {
+    // If we reach here, 'payload' is guaranteed to be valid!
+    // No need to check if email includes '@' or age &gt;= 18.
+    
+    process_signup(payload)
+}
+<span class="boring">}</span></code></pre>
+<h2 id="automatic-error-handling"><a class="header" href="#automatic-error-handling">Automatic Error Handling</a></h2>
+<p>If validation fails, <code>ValidatedJson</code> automatically returns a <code>400 Bad Request</code> response with a structured JSON error body detailing exactly which fields failed and why.</p>
+<pre><code class="language-json">{
+  "error": "Validation Failed",
+  "fields": {
+    "email": ["Invalid email format"],
+    "age": ["Must be at least 18"]
+  }
+}
+</code></pre>
+<h2 id="custom-validation-logic"><a class="header" href="#custom-validation-logic">Custom Validation logic</a></h2>
+<p>You can also write custom validation functions.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Validate)]
+struct Request {
+    #[validate(custom = "validate_premium_status")]
+    code: String,
+}
+
+fn validate_premium_status(code: &amp;str) -&gt; Result&lt;(), rustapi_validate::ValidationError&gt; {
+    if !code.starts_with("PREMIUM_") {
+        return Err(rustapi_validate::ValidationError::new("Invalid premium code"));
+    }
+    Ok(())
+}
+<span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="rustapi-openapi-the-cartographer"><a class="header" href="#rustapi-openapi-the-cartographer">rustapi-openapi: The Cartographer</a></h1>
+<p><strong>Lens</strong>: “The Cartographer”
+<strong>Philosophy</strong>: “Documentation as Code.”</p>
+<h2 id="automatic-spec-generation"><a class="header" href="#automatic-spec-generation">Automatic Spec Generation</a></h2>
+<p>We believe that if documentation is manual, it is wrong. RustAPI uses <code>utoipa</code> to generate an OpenAPI 3.0 specification directly from your code.</p>
+<h2 id="the-schema-trait"><a class="header" href="#the-schema-trait">The <code>Schema</code> Trait</a></h2>
+<p>Any type that is part of your API (request or response) must implement <code>Schema</code>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Schema)]
+struct Metric {
+    /// The name of the metric
+    name: String,
+    
+    /// Value (0-100)
+    #[schema(minimum = 0, maximum = 100)]
+    value: i32,
+}
+<span class="boring">}</span></code></pre>
+<h2 id="operation-metadata"><a class="header" href="#operation-metadata">Operation Metadata</a></h2>
+<p>Use macros to enrich endpoints:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi::get("/metrics")]
+#[rustapi::tag("Metrics")]
+#[rustapi::summary("List all metrics")]
+#[rustapi::response(200, Json&lt;Vec&lt;Metric&gt;&gt;)]
+async fn list_metrics() -&gt; Json&lt;Vec&lt;Metric&gt;&gt; { ... }
+<span class="boring">}</span></code></pre>
+<h2 id="swagger-ui"><a class="header" href="#swagger-ui">Swagger UI</a></h2>
+<p>The <code>RustApi</code> builder automatically mounts a Swagger UI at the path you specify:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>RustApi::new()
+    .docs("/docs") // Mounts Swagger UI at /docs
+    // ...
+<span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="rustapi-extras-the-toolbox"><a class="header" href="#rustapi-extras-the-toolbox">rustapi-extras: The Toolbox</a></h1>
+<p><strong>Lens</strong>: “The Toolbox”
+<strong>Philosophy</strong>: “Batteries included, but swappable.”</p>
+<h2 id="feature-flags"><a class="header" href="#feature-flags">Feature Flags</a></h2>
+<p>This crate is a collection of production-ready middleware. Everything is behind a feature flag so you don’t pay for what you don’t use.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Feature</th><th>Component</th></tr>
+</thead>
+<tbody>
+<tr><td><code>jwt</code></td><td><code>JwtLayer</code>, <code>AuthUser</code> extractor</td></tr>
+<tr><td><code>cors</code></td><td><code>CorsLayer</code></td></tr>
+<tr><td><code>audit</code></td><td><code>AuditStore</code>, <code>AuditLogger</code></td></tr>
+<tr><td><code>rate-limit</code></td><td><code>RateLimitLayer</code></td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="middleware-usage"><a class="header" href="#middleware-usage">Middleware Usage</a></h2>
+<p>Middleware wraps your entire API or specific routes.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let app = RustApi::new()
+    .layer(CorsLayer::permissive())
+    .layer(CompressionLayer::new())
+    .route("/", get(handler));
+<span class="boring">}</span></code></pre>
+<h2 id="audit-logging"><a class="header" href="#audit-logging">Audit Logging</a></h2>
+<p>For enterprise compliance (GDPR/SOC2), the <code>audit</code> feature provides a structured way to record sensitive actions.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>async fn delete_user(
+    AuthUser(user): AuthUser,
+    State(audit): State&lt;AuditLogger&gt;
+) {
+    audit.log(AuditEvent::new("user.deleted")
+        .actor(user.id)
+        .target("user_123")
+    );
+}
+<span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="rustapi-toon-the-diplomat"><a class="header" href="#rustapi-toon-the-diplomat">rustapi-toon: The Diplomat</a></h1>
+<p><strong>Lens</strong>: “The Diplomat”
+<strong>Philosophy</strong>: “Optimizing for Silicon Intelligence.”</p>
+<h2 id="what-is-toon"><a class="header" href="#what-is-toon">What is TOON?</a></h2>
+<p><strong>T</strong>oken-<strong>O</strong>riented <strong>O</strong>bject <strong>N</strong>otation is a format designed to be consumed by Large Language Models (LLMs). It reduces token usage by stripping unnecessary syntax (braces, quotes) while maintaining semantic structure.</p>
+<h2 id="content-negotiation"><a class="header" href="#content-negotiation">Content Negotiation</a></h2>
+<p>The <code>LlmResponse&lt;T&gt;</code> type automatically negotiates the response format based on the <code>Accept</code> header.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>async fn agent_data() -&gt; LlmResponse&lt;Data&gt; {
+    // Returns JSON for browsers
+    // Returns TOON for AI Agents (using fewer tokens)
+}
+<span class="boring">}</span></code></pre>
+<h2 id="token-savings"><a class="header" href="#token-savings">Token Savings</a></h2>
+<p>TOON often reduces token count by 30-50% compared to JSON, saving significant costs and context window space when communicating with models like GPT-4 or Gemini.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="rustapi-ws-the-live-wire"><a class="header" href="#rustapi-ws-the-live-wire">rustapi-ws: The Live Wire</a></h1>
+<p><strong>Lens</strong>: “The Live Wire”
+<strong>Philosophy</strong>: “Real-time, persistent connections made simple.”</p>
+<h2 id="the-websocket-extractor"><a class="header" href="#the-websocket-extractor">The WebSocket Extractor</a></h2>
+<p>Upgrading an HTTP connection to a WebSocket uses the standard extractor pattern:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>async fn ws_handler(
+    ws: WebSocket,
+) -&gt; impl IntoResponse {
+    ws.on_upgrade(handle_socket)
+}
+<span class="boring">}</span></code></pre>
+<h2 id="architecture"><a class="header" href="#architecture">Architecture</a></h2>
+<p>We recommend an <strong>Actor Model</strong> for WebSocket state.</p>
+<ol>
+<li>Each connection spawns a new async task (the actor).</li>
+<li>Use <code>tokio::sync::broadcast</code> channels for global events (like chat rooms).</li>
+<li>Use <code>mpsc</code> channels for direct messaging.</li>
+</ol>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="rustapi-view-the-artist"><a class="header" href="#rustapi-view-the-artist">rustapi-view: The Artist</a></h1>
+<p><strong>Lens</strong>: “The Artist”
+<strong>Philosophy</strong>: “Server-side rendering with modern tools.”</p>
+<h2 id="tera-integration"><a class="header" href="#tera-integration">Tera Integration</a></h2>
+<p>We use <strong>Tera</strong>, a Jinja2-like template engine, for rendering HTML on the server.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>async fn home(
+    State(templates): State&lt;Templates&gt;
+) -&gt; View {
+    let mut ctx = Context::new();
+    ctx.insert("user", "Alice");
+    
+    View::new("home.html", ctx)
+}
+<span class="boring">}</span></code></pre>
+<h2 id="layouts-and-inheritance"><a class="header" href="#layouts-and-inheritance">Layouts and Inheritance</a></h2>
+<p>Tera supports template inheritance, allowing you to define a base layout (<code>base.html</code>) and extend it in child templates (<code>index.html</code>), keeping your frontend DRY.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="rustapi-jobs-the-workhorse"><a class="header" href="#rustapi-jobs-the-workhorse">rustapi-jobs: The Workhorse</a></h1>
+<p><strong>Lens</strong>: “The Workhorse”
+<strong>Philosophy</strong>: “Fire and forget, with reliability guarantees.”</p>
+<h2 id="background-processing"><a class="header" href="#background-processing">Background Processing</a></h2>
+<p>Long-running tasks shouldn’t block HTTP requests. <code>rustapi-jobs</code> provides a robust queue system.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Define a job
+#[derive(Serialize, Deserialize)]
+struct EmailJob { to: String }
+
+// Enqueue it
+queue.push(EmailJob { to: "alice@example.com" }).await;
+<span class="boring">}</span></code></pre>
+<h2 id="backends"><a class="header" href="#backends">Backends</a></h2>
+<ul>
+<li><strong>Memory</strong>: Great for development and testing.</li>
+<li><strong>Redis</strong>: High throughput persistence.</li>
+<li><strong>Postgres</strong>: Transactional reliability (acid).</li>
+</ul>
+<h2 id="reliability"><a class="header" href="#reliability">Reliability</a></h2>
+<p>The worker system features:</p>
+<ul>
+<li><strong>Exponential Backoff</strong>: Automatic retries for failing jobs.</li>
+<li><strong>Dead Letter Queue</strong>: Poison jobs are isolated for manual inspection.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="rustapi-testing-the-auditor"><a class="header" href="#rustapi-testing-the-auditor">rustapi-testing: The Auditor</a></h1>
+<p><strong>Lens</strong>: “The Auditor”
+<strong>Philosophy</strong>: “Trust, but verify.”</p>
+<h2 id="the-testclient"><a class="header" href="#the-testclient">The <code>TestClient</code></a></h2>
+<p>Integration testing is often painful. We make it easy. <code>TestClient</code> spawns your <code>RustApi</code> application without binding to a real TCP port, communicating directly with the service layer.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let client = TestClient::new(app);
+<span class="boring">}</span></code></pre>
+<h2 id="fluent-assertions"><a class="header" href="#fluent-assertions">Fluent Assertions</a></h2>
+<p>The client provides a fluent API for making requests and asserting responses.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>client.post("/login")
+    .json(&amp;credentials)
+    .send()
+    .await
+    .assert_status(200)
+    .assert_header("Set-Cookie", "session=...");
+<span class="boring">}</span></code></pre>
+<h2 id="mocking-services"><a class="header" href="#mocking-services">Mocking Services</a></h2>
+<p>Because <code>rustapi-rs</code> relies heavily on Dependency Injection via <code>State&lt;T&gt;</code>, you can easily inject mock implementations of your database or downstream services when creating the <code>RustApi</code> instance for your test.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="cargo-rustapi-the-architect"><a class="header" href="#cargo-rustapi-the-architect">cargo-rustapi: The Architect</a></h1>
+<p><strong>Lens</strong>: “The Architect”
+<strong>Philosophy</strong>: “Scaffolding best practices from day one.”</p>
+<h2 id="the-cli"><a class="header" href="#the-cli">The CLI</a></h2>
+<p>The RustAPI CLI isn’t just a project generator; it’s a productivity multiplier.</p>
+<h3 id="commands"><a class="header" href="#commands">Commands</a></h3>
+<ul>
+<li><code>cargo rustapi new &lt;name&gt;</code>: Create a new project with the perfect directory structure.</li>
+<li><code>cargo rustapi generate resource &lt;name&gt;</code>: Scaffold a new API resource (Model + Handlers + Tests).</li>
+<li><code>cargo rustapi serve</code>: Run the development server with hot reload (future feature).</li>
+</ul>
+<h2 id="templates"><a class="header" href="#templates">Templates</a></h2>
+<p>The templates used by the CLI are opinionated but flexible. They enforce:</p>
+<ul>
+<li>Modular folder structure.</li>
+<li>Implementation of <code>State</code> pattern.</li>
+<li>Separation of <code>Error</code> types.</li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="recipes"><a class="header" href="#recipes">Recipes</a></h1>
-<p>Practical guides for daily development.</p>
+<p>Recipes are practical, focused guides to solving specific problems with RustAPI.</p>
+<h2 id="format"><a class="header" href="#format">Format</a></h2>
+<p>Each recipe follows a simple structure:</p>
+<ol>
+<li><strong>Problem</strong>: What are we trying to solve?</li>
+<li><strong>Solution</strong>: The code.</li>
+<li><strong>Discussion</strong>: Why it works and what to watch out for.</li>
+</ol>
+<h2 id="table-of-contents"><a class="header" href="#table-of-contents">Table of Contents</a></h2>
 <ul>
-<li><a href="#recipe-adding-a-new-feature">Adding a New Feature</a></li>
-<li><a href="#recipe-maintenance--quality">Quality &amp; Maintenance</a></li>
-<li><a href="#recipe-performance-tuning">Performance Tuning</a></li>
-<li><a href="#recipe-simulating-ci">Simulating CI</a></li>
+<li><a href="#creating-resources">Creating Resources</a></li>
+<li><a href="#jwt-authentication">JWT Authentication</a></li>
+<li><a href="#database-integration">Database Integration</a></li>
+<li><a href="#file-uploads">File Uploads</a></li>
+<li><a href="#custom-middleware">Custom Middleware</a></li>
+<li><a href="#real-time-chat-websockets">Real-time Chat</a></li>
+<li><a href="#production-tuning">Production Tuning</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="recipe-adding-a-new-feature"><a class="header" href="#recipe-adding-a-new-feature">Recipe: Adding a New Feature</a></h1>
-<p>This guide walks you through the standard process of adding a new feature to RustAPI using the Action pattern.</p>
-<h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
-<ul>
-<li><input disabled="" type="checkbox" checked=""> You have the repo cloned.</li>
-<li><input disabled="" type="checkbox" checked=""> You understand the <a href="#the-action-pattern">Action Pattern</a>.</li>
-</ul>
-<h2 id="step-1-define-the-action-struct"><a class="header" href="#step-1-define-the-action-struct">Step 1: Define the Action Struct</a></h2>
-<p>Create a new file in the appropriate crate (or <code>crates/rustapi-core/src/actions/</code> if it’s core).</p>
+<h1 id="creating-resources"><a class="header" href="#creating-resources">Creating Resources</a></h1>
+<p><strong>Problem</strong>: You need to add a new “Resource” (like Users, Products, or Posts) to your API with standard CRUD operations.</p>
+<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<p>Create a new module <code>src/handlers/users.rs</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+
+#[derive(Serialize, Deserialize, Schema, Clone)]
+pub struct User {
+    pub id: u64,
+    pub name: String,
+}
+
+#[derive(Deserialize, Schema)]
+pub struct CreateUser {
+    pub name: String,
+}
+
+#[rustapi::get("/users")]
+pub async fn list() -&gt; Json&lt;Vec&lt;User&gt;&gt; {
+    Json(vec![]) // Fetch from DB in real app
+}
+
+#[rustapi::post("/users")]
+pub async fn create(Json(payload): Json&lt;CreateUser&gt;) -&gt; impl IntoResponse {
+    let user = User { id: 1, name: payload.name };
+    (StatusCode::CREATED, Json(user))
+}
+<span class="boring">}</span></code></pre>
+<p>Then register it in <code>main.rs</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>RustApi::new()
+    .mount(handlers::users::list)
+    .mount(handlers::users::create)
+<span class="boring">}</span></code></pre>
+<h2 id="discussion"><a class="header" href="#discussion">Discussion</a></h2>
+<p>Using <code>#[rustapi::mount]</code> (if available) or manual routing keeps your <code>main.rs</code> clean. Organizing handlers by resource (domain-driven design) scales better than organizing by HTTP method.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="jwt-authentication"><a class="header" href="#jwt-authentication">JWT Authentication</a></h1>
+<p>Authentication is critical for almost every API. This recipe demonstrates how to implement JSON Web Token (JWT) authentication using the <code>jsonwebtoken</code> crate and RustAPI’s extractor pattern.</p>
+<h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
+<p>Add <code>jsonwebtoken</code> and <code>serde</code> to your <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[dependencies]
+jsonwebtoken = "9"
+serde = { version = "1", features = ["derive"] }
+</code></pre>
+<h2 id="1-define-claims"><a class="header" href="#1-define-claims">1. Define Claims</a></h2>
+<p>The standard JWT claims. You can add custom fields here (like <code>role</code>).</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize)]
-pub struct CreateWidget {
-    pub name: String,
-    pub quantity: i32,
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Claims {
+    pub sub: String,  // Subject (User ID)
+    pub exp: usize,   // Expiration time
+    pub role: String, // Custom claim: "admin", "user"
 }
 <span class="boring">}</span></code></pre>
-<h2 id="step-2-implement-the-logic"><a class="header" href="#step-2-implement-the-logic">Step 2: Implement the Logic</a></h2>
-<p>Implement the logic trait.</p>
+<h2 id="2-configuration-state"><a class="header" href="#2-configuration-state">2. Configuration State</a></h2>
+<p>Store your keys in the application state.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>impl Action for CreateWidget {
-    type Output = Widget;
-    type Error = ApiError;
+</span>use std::sync::Arc;
+use jsonwebtoken::{EncodingKey, DecodingKey};
 
-    async fn run(&amp;self, ctx: &amp;Context) -&gt; Result&lt;Self::Output, Self::Error&gt; {
-        // Validation
-        if self.quantity &lt; 0 {
-            return Err(ApiError::BadRequest("Quantity must be positive"));
+#[derive(Clone)]
+pub struct AuthState {
+    pub encoder: EncodingKey,
+    pub decoder: DecodingKey,
+}
+
+impl AuthState {
+    pub fn new(secret: &amp;str) -&gt; Self {
+        Self {
+            encoder: EncodingKey::from_secret(secret.as_bytes()),
+            decoder: DecodingKey::from_secret(secret.as_bytes()),
         }
-
-        // Database
-        let widget = sqlx::query_as!(
-            Widget,
-            "INSERT INTO widgets (name, quantity) VALUES ($1, $2) RETURNING *",
-            self.name,
-            self.quantity
-        )
-        .fetch_one(&amp;ctx.db)
-        .await?;
-
-        Ok(widget)
     }
 }
 <span class="boring">}</span></code></pre>
-<h2 id="step-3-register-the-route"><a class="header" href="#step-3-register-the-route">Step 3: Register the Route</a></h2>
-<p>Add the action to your router configuration.</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>// in router.rs or module definition
-.route("/widgets", post(handle_action::&lt;CreateWidget&gt;))
-<span class="boring">}</span></code></pre>
-<h2 id="step-4-add-tests"><a class="header" href="#step-4-add-tests">Step 4: Add Tests</a></h2>
-<p>Create a dedicated test file or use the <code>tests</code> module in the same file.</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_validation() {
-        let action = CreateWidget { name: "Test".into(), quantity: -1 };
-        // Assert it returns error...
-    }
-}
-<span class="boring">}</span></code></pre>
-<div style="break-before: page; page-break-before: always;"></div>
-<h1 id="recipe-maintenance--quality"><a class="header" href="#recipe-maintenance--quality">Recipe: Maintenance &amp; Quality</a></h1>
-<p>Keeping the codebase clean is as important as adding features. RustAPI accumulates “dead code” easily when features are iterated on rapidly.</p>
-<h2 id="the-quality-script"><a class="header" href="#the-quality-script">The Quality Script</a></h2>
-<p>We provide a unified script to handle linting, dead code detection, and testing.</p>
-<pre><code class="language-powershell">.\scripts\check_quality.ps1
-</code></pre>
-<h2 id="handling-dead-code"><a class="header" href="#handling-dead-code">Handling Dead Code</a></h2>
-<p>The script runs <code>cargo check</code> with <code>RUSTFLAGS="-W unused"</code>.</p>
-<h3 id="scenario-1-its-actually-dead"><a class="header" href="#scenario-1-its-actually-dead">Scenario 1: It’s actually dead</a></h3>
-<p><strong>Action</strong>: Delete it.
-Don’t comment it out. Git history remembers it if you need it back.</p>
-<h3 id="scenario-2-its-for-the-future"><a class="header" href="#scenario-2-its-for-the-future">Scenario 2: It’s for the future</a></h3>
-<p><strong>Action</strong>: Use <code>#[allow(dead_code)]</code>.
-Be explicit.</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>#[allow(dead_code)] // Planned for phase 2
-fn future_helper() { ... }
-<span class="boring">}</span></code></pre>
-<h3 id="scenario-3-false-positive"><a class="header" href="#scenario-3-false-positive">Scenario 3: False Positive</a></h3>
-<p>Struct fields that are only used in Debug impls or serialization might flag as unused.
-<strong>Action</strong>: Check if you really need that field. If yes, ignore the warning or derive <code>Allow</code>.</p>
-<h2 id="linting-clippy"><a class="header" href="#linting-clippy">Linting (Clippy)</a></h2>
-<p>We enforce <code>cargo clippy -- -D warnings</code> in CI.</p>
-<ul>
-<li><strong>Complexity</strong>: If clippy says a function is too complex, refactor it.</li>
-<li><strong>Optimization</strong>: If clippy suggests a faster iterator method, take it.</li>
-</ul>
-<div style="break-before: page; page-break-before: always;"></div>
-<h1 id="recipe-performance-tuning"><a class="header" href="#recipe-performance-tuning">Recipe: Performance Tuning</a></h1>
-<p>When the API feels slow, don’t guess—profile and benchmark.</p>
-<h2 id="1-run-the-suite"><a class="header" href="#1-run-the-suite">1. Run the Suite</a></h2>
-<p>Use the integrated benchmark tool.</p>
-<pre><code class="language-powershell">.\benches\run_benchmarks.ps1
-</code></pre>
-<p>This runs:</p>
+<h2 id="3-the-authuser-extractor"><a class="header" href="#3-the-authuser-extractor">3. The <code>AuthUser</code> Extractor</a></h2>
+<p>This is where the magic happens. We create a custom extractor that:</p>
 <ol>
-<li><strong>Micro-benchmarks</strong> (internal <code>cargo bench</code> via Criterion).</li>
-<li><strong>Macro-benchmarks</strong> (external <code>hey</code> HTTP load test).</li>
+<li>Checks the <code>Authorization</code> header.</li>
+<li>Decodes the token.</li>
+<li>Validates expiration.</li>
+<li>Returns the claims or rejects the request.</li>
 </ol>
-<h2 id="2-interpret-the-data"><a class="header" href="#2-interpret-the-data">2. Interpret the Data</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi::prelude::*;
+use jsonwebtoken::{decode, Validation, Algorithm};
+
+pub struct AuthUser(pub Claims);
+
+#[async_trait]
+impl FromRequestParts&lt;Arc&lt;AuthState&gt;&gt; for AuthUser {
+    type Rejection = (StatusCode, Json&lt;serde_json::Value&gt;);
+
+    async fn from_request_parts(
+        parts: &amp;mut Parts, 
+        state: &amp;Arc&lt;AuthState&gt;
+    ) -&gt; Result&lt;Self, Self::Rejection&gt; {
+        // 1. Get header
+        let auth_header = parts.headers.get("Authorization")
+            .ok_or((StatusCode::UNAUTHORIZED, Json(json!({"error": "Missing token"}))))?;
+            
+        let token = auth_header.to_str()
+            .map_err(|_| (StatusCode::UNAUTHORIZED, Json(json!({"error": "Invalid token format"}))))?
+            .strip_prefix("Bearer ")
+            .ok_or((StatusCode::UNAUTHORIZED, Json(json!({"error": "Invalid token type"}))))?;
+
+        // 2. Decode
+        let token_data = decode::&lt;Claims&gt;(
+            token, 
+            &amp;state.decoder, 
+            &amp;Validation::new(Algorithm::HS256)
+        ).map_err(|e| (StatusCode::UNAUTHORIZED, Json(json!({"error": e.to_string()}))))?;
+
+        Ok(AuthUser(token_data.claims))
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="4-usage-in-handlers"><a class="header" href="#4-usage-in-handlers">4. Usage in Handlers</a></h2>
+<p>Now, securing an endpoint is as simple as adding an argument.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>async fn protected_profile(
+    AuthUser(claims): AuthUser
+) -&gt; Json&lt;String&gt; {
+    Json(format!("Welcome back, {}! You are a {}.", claims.sub, claims.role))
+}
+
+async fn login(State(state): State&lt;Arc&lt;AuthState&gt;&gt;) -&gt; Json&lt;String&gt; {
+    // In a real app, validate credentials first!
+    let claims = Claims {
+        sub: "user_123".to_owned(),
+        role: "admin".to_owned(),
+        exp: 10000000000, // Future timestamp
+    };
+
+    let token = jsonwebtoken::encode(
+        &amp;jsonwebtoken::Header::default(), 
+        &amp;claims, 
+        &amp;state.encoder
+    ).unwrap();
+
+    Json(token)
+}
+<span class="boring">}</span></code></pre>
+<h2 id="5-wiring-it-up"><a class="header" href="#5-wiring-it-up">5. Wiring it Up</a></h2>
+<pre class="playground"><code class="language-rust">#[tokio::main]
+async fn main() {
+    let auth_state = Arc::new(AuthState::new("my_secret_key"));
+
+    let app = RustApi::new()
+        .route("/login", post(login))
+        .route("/profile", get(protected_profile))
+        .with_state(auth_state); // Inject state
+
+    RustApi::serve("127.0.0.1:3000", app).await.unwrap();
+}</code></pre>
+<h2 id="bonus-role-based-access-control-rbac"><a class="header" href="#bonus-role-based-access-control-rbac">Bonus: Role-Based Access Control (RBAC)</a></h2>
+<p>Since we have the <code>role</code> in our claims, we can enforce permissions easily.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>async fn admin_only(AuthUser(claims): AuthUser) -&gt; Result&lt;String, StatusCode&gt; {
+    if claims.role != "admin" {
+        return Err(StatusCode::FORBIDDEN);
+    }
+    Ok("Sensitive Admin Data".to_string())
+}
+<span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="database-integration"><a class="header" href="#database-integration">Database Integration</a></h1>
+<p>RustAPI is database-agnostic, but <strong>SQLx</strong> is the recommended driver due to its async-first design and compile-time query verification.</p>
+<p>This recipe shows how to integrate PostgreSQL/MySQL/SQLite using a global connection pool.</p>
+<h2 id="dependencies-1"><a class="header" href="#dependencies-1">Dependencies</a></h2>
+<pre><code class="language-toml">[dependencies]
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "uuid"] }
+serde = { version = "1", features = ["derive"] }
+tokio = { version = "1", features = ["full"] }
+dotenvy = "0.15"
+</code></pre>
+<h2 id="1-setup-connection-pool"><a class="header" href="#1-setup-connection-pool">1. Setup Connection Pool</a></h2>
+<p>Create the pool once at startup and share it via <code>State</code>.</p>
+<pre class="playground"><code class="language-rust">use sqlx::postgres::PgPoolOptions;
+use std::sync::Arc;
+
+pub struct AppState {
+    pub db: sqlx::PgPool,
+}
+
+#[tokio::main]
+async fn main() {
+    dotenvy::dotenv().ok();
+    let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
+
+    // Create a connection pool
+    let pool = PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&amp;db_url)
+        .await
+        .expect("Failed to connect to DB");
+
+    // Run migrations (optional but recommended)
+    sqlx::migrate!("./migrations")
+        .run(&amp;pool)
+        .await
+        .expect("Failed to migrate");
+
+    let state = Arc::new(AppState { db: pool });
+
+    let app = RustApi::new()
+        .route("/users", post(create_user))
+        .with_state(state);
+
+    RustApi::serve("0.0.0.0:3000", app).await.unwrap();
+}</code></pre>
+<h2 id="2-using-the-database-in-handlers"><a class="header" href="#2-using-the-database-in-handlers">2. Using the Database in Handlers</a></h2>
+<p>Extract the <code>State</code> to get access to the pool.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi::prelude::*;
+
+#[derive(Deserialize)]
+struct CreateUser {
+    username: String,
+    email: String,
+}
+
+#[derive(Serialize)]
+struct User {
+    id: i32,
+    username: String,
+    email: String,
+}
+
+async fn create_user(
+    State(state): State&lt;Arc&lt;AppState&gt;&gt;,
+    Json(payload): Json&lt;CreateUser&gt;,
+) -&gt; Result&lt;(StatusCode, Json&lt;User&gt;), ApiError&gt; {
+    
+    // SQLx query macro performs compile-time checking!
+    let record = sqlx::query_as!(
+        User,
+        "INSERT INTO users (username, email) VALUES ($1, $2) RETURNING id, username, email",
+        payload.username,
+        payload.email
+    )
+    .fetch_one(&amp;state.db)
+    .await
+    .map_err(|e| ApiError::InternalServerError(e.to_string()))?;
+
+    Ok((StatusCode::CREATED, Json(record)))
+}
+<span class="boring">}</span></code></pre>
+<h2 id="3-dependency-injection-for-testing"><a class="header" href="#3-dependency-injection-for-testing">3. Dependency Injection for Testing</a></h2>
+<p>To make testing easier, define a trait for your database operations. This allows you to swap the real DB for a mock.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[async_trait]
+pub trait UserRepository: Send + Sync {
+    async fn create(&amp;self, username: &amp;str, email: &amp;str) -&gt; anyhow::Result&lt;User&gt;;
+}
+
+// Production implementation
+pub struct PostgresRepo(sqlx::PgPool);
+
+#[async_trait]
+impl UserRepository for PostgresRepo {
+    async fn create(&amp;self, username: &amp;str, email: &amp;str) -&gt; anyhow::Result&lt;User&gt; {
+        // ... impl ...
+    }
+}
+<span class="boring">}</span></code></pre>
+<p>Then update your state to hold the trait object:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>struct AppState {
+    // Dyn dispatch allows swapping impls at runtime
+    db: Arc&lt;dyn UserRepository&gt;,
+}
+<span class="boring">}</span></code></pre>
+<h2 id="error-handling-1"><a class="header" href="#error-handling-1">Error Handling</a></h2>
+<p>Don’t expose raw SQL errors to users. Map them to your <code>ApiError</code> type.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>impl From&lt;sqlx::Error&gt; for ApiError {
+    fn from(err: sqlx::Error) -&gt; Self {
+        match err {
+            sqlx::Error::RowNotFound =&gt; ApiError::NotFound("Resource not found".into()),
+            _ =&gt; {
+                // Log the real error internally
+                tracing::error!("Database error: {:?}", err);
+                // Return generic error to user
+                ApiError::InternalServerError
+            }
+        }
+    }
+}
+<span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="file-uploads"><a class="header" href="#file-uploads">File Uploads</a></h1>
+<p>Handling file uploads efficiently is crucial. RustAPI allows you to stream <code>Multipart</code> data, meaning you can handle 1GB uploads without using 1GB of RAM.</p>
+<h2 id="dependencies-2"><a class="header" href="#dependencies-2">Dependencies</a></h2>
+<pre><code class="language-toml">[dependencies]
+rustapi = { version = "0.1", features = ["multipart"] }
+tokio = { version = "1", features = ["fs", "io-util"] }
+uuid = { version = "1", features = ["v4"] }
+</code></pre>
+<h2 id="streaming-upload-handler"><a class="header" href="#streaming-upload-handler">Streaming Upload Handler</a></h2>
+<p>This handler reads the incoming stream part-by-part and writes it directly to disk (or S3).</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi::prelude::*;
+use rustapi::extract::Multipart;
+use tokio::fs::File;
+use tokio::io::AsyncWriteExt;
+
+async fn upload_file(mut multipart: Multipart) -&gt; Result&lt;StatusCode, ApiError&gt; {
+    // Iterate over the fields
+    while let Some(field) = multipart.next_field().await.map_err(|_| ApiError::BadRequest)? {
+        
+        let name = field.name().unwrap_or("file").to_string();
+        let file_name = field.file_name().unwrap_or("unknown.bin").to_string();
+        let content_type = field.content_type().unwrap_or("application/octet-stream").to_string();
+
+        println!("Uploading: {} ({})", file_name, content_type);
+
+        // Security: Create a safe random filename to prevent overwrites or path traversal
+        let new_filename = format!("{}-{}", uuid::Uuid::new_v4(), file_name);
+        let path = std::path::Path::new("./uploads").join(new_filename);
+
+        // Open destination file
+        let mut file = File::create(&amp;path).await.map_err(|e| ApiError::InternalServerError(e.to_string()))?;
+
+        // Write stream to file chunk by chunk
+        let mut field_bytes = field; // field implements Stream itself (in some drivers) or we read chunks
+        
+        // In RustAPI/Axum multipart, `field.bytes()` loads the whole field into memory.
+        // To stream, we use `field.chunk()`:
+        
+        while let Some(chunk) = field.chunk().await.map_err(|_| ApiError::BadRequest)? {
+             file.write_all(&amp;chunk).await.map_err(|e| ApiError::InternalServerError(e.to_string()))?;
+        }
+    }
+
+    Ok(StatusCode::CREATED)
+}
+<span class="boring">}</span></code></pre>
+<h2 id="handling-constraints"><a class="header" href="#handling-constraints">Handling Constraints</a></h2>
+<p>You should always set limits to prevent DoS attacks.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi::extract::DefaultBodyLimit;
+
+let app = RustApi::new()
+    .route("/upload", post(upload_file))
+    // Limit request body to 10MB
+    .layer(DefaultBodyLimit::max(10 * 1024 * 1024));
+<span class="boring">}</span></code></pre>
+<h2 id="validating-content-type"><a class="header" href="#validating-content-type">Validating Content Type</a></h2>
+<p>Never trust the <code>Content-Type</code> header sent by the client implicitly for security (e.g., executing a PHP script uploaded as an image).</p>
+<p>Verify the “magic bytes” of the file content itself if strictly needed, or ensure uploaded files are stored in a non-executable directory (or S3 bucket).</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Simple check on the header (not fully secure but good UX)
+if let Some(ct) = field.content_type() {
+    if !ct.starts_with("image/") {
+        return Err(ApiError::BadRequest("Only images are allowed".into()));
+    }
+}
+<span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="custom-middleware"><a class="header" href="#custom-middleware">Custom Middleware</a></h1>
+<p><strong>Problem</strong>: You need to execute code before or after every request (e.g., logging, metrics).</p>
+<h2 id="solution-1"><a class="header" href="#solution-1">Solution</a></h2>
+<p>Implement a <code>tower::Layer</code>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Clone)]
+struct MyMiddleware&lt;S&gt; { inner: S }
+
+impl&lt;S, B&gt; Service&lt;Request&lt;B&gt;&gt; for MyMiddleware&lt;S&gt;
+where S: Service&lt;Request&lt;B&gt;&gt; {
+    type Response = S::Response;
+    type Error = S::Error;
+    type Future = S::Future;
+
+    fn poll_ready(&amp;mut self, cx: &amp;mut Context&lt;'_&gt;) -&gt; Poll&lt;Result&lt;(), Self::Error&gt;&gt; {
+        self.inner.poll_ready(cx)
+    }
+
+    fn call(&amp;mut self, req: Request&lt;B&gt;) -&gt; Self::Future {
+        println!("Request: {}", req.uri());
+        self.inner.call(req)
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="discussion-1"><a class="header" href="#discussion-1">Discussion</a></h2>
+<p>For simple cases, you can use <code>tower_http::TraceLayer</code> or <code>middleware::from_fn</code> instead of writing a full struct.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="real-time-chat-websockets"><a class="header" href="#real-time-chat-websockets">Real-time Chat (WebSockets)</a></h1>
+<p>WebSockets allow full-duplex communication between the client and server. RustAPI leverages the <code>rustapi-ws</code> crate (based on <code>tungstenite</code> and <code>tokio</code>) to make this easy.</p>
+<h2 id="dependencies-3"><a class="header" href="#dependencies-3">Dependencies</a></h2>
+<pre><code class="language-toml">[dependencies]
+rustapi-ws = "0.1"
+tokio = { version = "1", features = ["sync"] }
+futures = "0.3"
+</code></pre>
+<h2 id="the-upgrade-handler"><a class="header" href="#the-upgrade-handler">The Upgrade Handler</a></h2>
+<p>WebSocket connections start as HTTP requests. We “upgrade” them.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_ws::{WebSocket, WebSocketUpgrade, Message};
+use rustapi::prelude::*;
+use std::sync::Arc;
+use tokio::sync::broadcast;
+
+// Shared state for broadcasting messages to all connected clients
+pub struct AppState {
+    pub tx: broadcast::Sender&lt;String&gt;,
+}
+
+async fn ws_handler(
+    ws: WebSocketUpgrade,
+    State(state): State&lt;Arc&lt;AppState&gt;&gt;,
+) -&gt; impl IntoResponse {
+    // Finalize the upgrade and spawn the socket handler
+    ws.on_upgrade(|socket| handle_socket(socket, state))
+}
+<span class="boring">}</span></code></pre>
+<h2 id="handling-the-connection"><a class="header" href="#handling-the-connection">Handling the Connection</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use futures::{sink::SinkExt, stream::StreamExt};
+
+async fn handle_socket(socket: WebSocket, state: Arc&lt;AppState&gt;) {
+    // Split the socket into a sender and receiver
+    let (mut sender, mut receiver) = socket.split();
+
+    // Subscribe to the global broadcast channel
+    let mut rx = state.tx.subscribe();
+
+    // Spawn a task to forward broadcast messages to this client
+    let mut send_task = tokio::spawn(async move {
+        while let Ok(msg) = rx.recv().await {
+            // If the client disconnects, this will fail and we break
+            if sender.send(Message::Text(msg)).await.is_err() {
+                break;
+            }
+        }
+    });
+
+    // Handle incoming messages from THIS client
+    let mut recv_task = tokio::spawn(async move {
+        while let Some(Ok(msg)) = receiver.next().await {
+            if let Message::Text(text) = msg {
+                println!("Received message: {}", text);
+                // Broadcast it to everyone else
+                let _ = state.tx.send(format!("User says: {}", text));
+            }
+        }
+    });
+
+    // Wait for either task to finish (disconnection)
+    tokio::select! {
+        _ = (&amp;mut send_task) =&gt; recv_task.abort(),
+        _ = (&amp;mut recv_task) =&gt; send_task.abort(),
+    };
+}
+<span class="boring">}</span></code></pre>
+<h2 id="initialization"><a class="header" href="#initialization">Initialization</a></h2>
+<pre class="playground"><code class="language-rust">#[tokio::main]
+async fn main() {
+    // Create a broadcast channel with capacity of 100 messages
+    let (tx, _rx) = broadcast::channel(100);
+    let state = Arc::new(AppState { tx });
+
+    let app = RustApi::new()
+        .route("/ws", get(ws_handler))
+        .with_state(state);
+
+    RustApi::serve("0.0.0.0:3000", app).await.unwrap();
+}</code></pre>
+<h2 id="client-side-testing"><a class="header" href="#client-side-testing">Client-Side Testing</a></h2>
+<p>You can simpler use JavaScript in the browser console:</p>
+<pre><code class="language-javascript">let ws = new WebSocket("ws://localhost:3000/ws");
+
+ws.onmessage = (event) =&gt; {
+    console.log("Message from server:", event.data);
+};
+
+ws.send("Hello form JS!");
+</code></pre>
+<h2 id="advanced-patterns"><a class="header" href="#advanced-patterns">Advanced Patterns</a></h2>
+<ol>
+<li><strong>User Authentication</strong>: Use the same <code>AuthUser</code> extractor in the <code>ws_handler</code>. If authentication fails, return an error <em>before</em> upgrading.</li>
+<li><strong>Ping/Pong</strong>: Browsers and Load Balancers kill idle connections. Implement a heartbeat mechanism to keep the connection alive.
 <ul>
-<li><strong>High Latency, Low CPU</strong>: You are IO-bound. Check database queries (indexes?) or external API calls.</li>
-<li><strong>High Latency, High CPU</strong>: You are CPU-bound.
-<ul>
-<li>Are you doing heavy JSON serialization?</li>
-<li>Are you cloning Strings unnecessarily?</li>
-<li>Are you blocking the async runtime?</li>
+<li><code>rustapi-ws</code> handles low-level ping/pong frames automatically in many cases, but application-level pings are also robust.</li>
 </ul>
 </li>
-</ul>
-<h2 id="3-common-optimizations"><a class="header" href="#3-common-optimizations">3. Common Optimizations</a></h2>
-<ul>
-<li><strong>Allocations</strong>: Use <code>cow</code> (Clone-on-Write) or <code>&amp;str</code> reference passing.</li>
-<li><strong>JSON</strong>: Ensure <code>serde_json</code> is not re-parsing the same data.</li>
-<li><strong>Database</strong>: Use connection pooling correctly (already configured in Core).</li>
-</ul>
-<h2 id="4-verify"><a class="header" href="#4-verify">4. Verify</a></h2>
-<p>After making a change, run the benchmark script again.</p>
-<ul>
-<li>Did <code>Requests/sec</code> go up?</li>
-<li>Did <code>Average Latency</code> go down?</li>
-</ul>
-<div style="break-before: page; page-break-before: always;"></div>
-<h1 id="recipe-simulating-ci"><a class="header" href="#recipe-simulating-ci">Recipe: Simulating CI</a></h1>
-<p>Nothing is worse than pushing code and waiting 10 minutes just to fail on a formatting check.</p>
-<h2 id="the-local-ci-runner"><a class="header" href="#the-local-ci-runner">The Local CI Runner</a></h2>
-<p>We have replicated the GitHub Actions workflow in a local script.</p>
-<pre><code class="language-powershell">.\scripts\simulate_ci.ps1
-</code></pre>
-<h2 id="what-it-does"><a class="header" href="#what-it-does">What it does</a></h2>
-<ol>
-<li><strong>Format Check</strong>: <code>cargo fmt --check</code>. Fails if you code is messy.</li>
-<li><strong>Build</strong>: Ensures everything compiles.</li>
-<li><strong>Tests</strong>: Runs the full test suite.</li>
-<li><strong>Linter</strong>: Runs <code>clippy</code> with strict settings.</li>
 </ol>
-<h2 id="when-to-run-it"><a class="header" href="#when-to-run-it">When to run it</a></h2>
-<ul>
-<li>Before <strong>every</strong> push.</li>
-<li>After merging a large PR.</li>
-</ul>
-<blockquote class="blockquote-tag blockquote-tag-tip">
-<p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z"></path></svg>Tip</p>
-<p>If it passes locally, it is 99% guaranteed to pass on GitHub Actions.</p>
-</blockquote>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="reference"><a class="header" href="#reference">Reference</a></h1>
-<p>Coming soon: Links to <code>cargo doc</code> and API specifications.</p>
+<h1 id="production-tuning"><a class="header" href="#production-tuning">Production Tuning</a></h1>
+<p><strong>Problem</strong>: Your API needs to handle extreme load (10k+ requests per second).</p>
+<h2 id="solution-2"><a class="header" href="#solution-2">Solution</a></h2>
+<h3 id="1-release-profile"><a class="header" href="#1-release-profile">1. Release Profile</a></h3>
+<p>Ensure <code>Cargo.toml</code> has optimal settings:</p>
+<pre><code class="language-toml">[profile.release]
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true
+</code></pre>
+<h3 id="2-runtime-config"><a class="header" href="#2-runtime-config">2. Runtime Config</a></h3>
+<p>Configure the Tokio runtime for high throughput in <code>main.rs</code>:</p>
+<pre class="playground"><code class="language-rust">#[tokio::main(worker_threads = num_cpus::get())]
+async fn main() {
+    // ...
+}</code></pre>
+<h3 id="3-file-descriptors-linux"><a class="header" href="#3-file-descriptors-linux">3. File Descriptors (Linux)</a></h3>
+<p>Increase the limit before running:</p>
+<pre><code class="language-bash">ulimit -n 100000
+</code></pre>
+<h2 id="discussion-2"><a class="header" href="#discussion-2">Discussion</a></h2>
+<p>RustAPI is fast by default, but the OS often becomes the bottleneck using default settings. <code>panic = "abort"</code> reduces binary size and slightly improves performance by removing unwinding tables.</p>
 
                     </main>
 
