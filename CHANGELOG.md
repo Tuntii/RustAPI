@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.11] - 2026-01-14
+
+### Fixed
+- **WebSocket**: Fixed `ManualUpgrade` error by properly draining request body before upgrade in `rustapi-ws`.
+- **WebSocket**: Enabled `http1::Builder::with_upgrades()` in `rustapi-core` server for Hyper 1.0 compatibility.
+- **Examples**: Fixed compilation issues in `phase11-demo` and `graphql-api`.
+- **Examples**: Updated `websocket` example with better debug logging.
+
 ## [0.1.10] - 2026-01-14
 
 ### Documentation
