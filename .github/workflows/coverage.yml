@@ -23,7 +23,7 @@ jobs:
         run: |
           cargo tarpaulin --verbose --all-features --workspace --timeout 120 --out Xml
       - name: Upload to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }} # Optional if public repo
           fail_ci_if_error: false
