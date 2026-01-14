@@ -1,0 +1,35 @@
+name: Deploy Cookbook
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/cookbook/**'
+      - '.github/workflows/deploy-cookbook.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # To push to gh-pages branch
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install mdBook
+        uses: peaceiris/actions-mdbook@v2
+        with:
+          mdbook-version: 'latest'
+
+      - name: Build Cookbook
+        run: mdbook build docs/cookbook
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./docs/cookbook/book
+          destination_dir: cookbook
+          keep_files: true  # Keep existing files in gh-pages if any (useful if main site is also there)
+          commit_message: "Deploy cookbook: ${{ github.event.head_commit.message }}"

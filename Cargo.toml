@@ -13,24 +13,9 @@ members = [
     "crates/rustapi-testing",
     "crates/rustapi-jobs",
     "crates/cargo-rustapi",
-    "examples/hello-world",
-    "examples/sqlx-crud",
-    "examples/crud-api",
-    "examples/auth-api",
-    "examples/proof-of-concept",
-    "examples/toon-api",
-    "examples/mcp-server",
-    "examples/websocket",
-    "examples/templates",
-    "examples/rate-limit-demo",
-    "examples/graphql-api",
-    "examples/microservices",
-    "examples/microservices-advanced",
-    "examples/event-sourcing",
-    "examples/serverless-lambda",
-    "examples/middleware-chain",
-    "examples/phase11-demo",
-    "examples/cors-test",
+
+
+
     "benches/toon_bench",
     "benches/rustapi_bench",
 ]
