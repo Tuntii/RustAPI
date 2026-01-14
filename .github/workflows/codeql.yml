@@ -41,7 +41,7 @@ jobs:
     
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v6
 
     # Using a slightly different action for Rust if CodeQL is too heavy/unsupported?
     # No, let's use the official one but be simpler.
