@@ -951,6 +951,7 @@ dependencies = [
  "mysqlclient-sys",
  "percent-encoding",
  "pq-sys",
+ "r2d2",
  "sqlite-wasm-rs",
  "time",
  "url",

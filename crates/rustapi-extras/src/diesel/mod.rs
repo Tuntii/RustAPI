@@ -217,7 +217,7 @@ impl DieselPoolBuilder {
 
         builder
             .build(manager)
-            .map_err(|e| DieselPoolError::Pool(e.to_string()))
+            .map_err(|e: r2d2::Error| DieselPoolError::Pool(e.to_string()))
     }
 
     /// Build a MySQL connection pool
@@ -255,7 +255,7 @@ impl DieselPoolBuilder {
 
         builder
             .build(manager)
-            .map_err(|e| DieselPoolError::Pool(e.to_string()))
+            .map_err(|e: r2d2::Error| DieselPoolError::Pool(e.to_string()))
     }
 
     /// Build a SQLite connection pool
@@ -295,7 +295,7 @@ impl DieselPoolBuilder {
 
         builder
             .build(manager)
-            .map_err(|e| DieselPoolError::Pool(e.to_string()))
+            .map_err(|e: r2d2::Error| DieselPoolError::Pool(e.to_string()))
     }
 
     /// Create a health check for a PostgreSQL pool
