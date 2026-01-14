@@ -160,7 +160,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install MSRV Rust
-        uses: dtolnay/rust-toolchain@1.75.0
+        uses: dtolnay/rust-toolchain@1.100.0
       - name: Check
         run: cargo check --workspace
 
