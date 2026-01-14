@@ -10,6 +10,7 @@ documentation.workspace = true
 keywords.workspace = true
 categories.workspace = true
 rust-version.workspace = true
+description = "Background job processing for RustAPI with Redis and Postgres backends"
 
 [features]
 default = []
