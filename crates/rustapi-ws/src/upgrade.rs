@@ -192,7 +192,11 @@ impl IntoResponse for WebSocketUpgrade {
                         callback(socket).await;
                     }
                     Err(e) => {
-                        tracing::error!("WebSocket upgrade failed: {}", e);
+                        tracing::error!("WebSocket upgrade failed: {:?}", e);
+                        // Also try to print the source if available
+                        if let Some(source) = std::error::Error::source(&e) {
+                            tracing::error!("Cause: {:?}", source);
+                        }
                     }
                 }
             });

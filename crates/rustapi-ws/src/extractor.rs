@@ -79,7 +79,10 @@ impl FromRequest for WebSocket {
         let method = req.method();
 
         // Validate the upgrade request
-        let sec_key = validate_upgrade_request(method, headers).map_err(ApiError::from)?;
+        // Note: we clone sec_key to avoid keeping borrow of headers
+        let sec_key = validate_upgrade_request(method, headers)
+            .map_err(ApiError::from)?
+            .to_string();
 
         // Parse requested protocols
         let protocols = headers
@@ -97,6 +100,12 @@ impl FromRequest for WebSocket {
         // Capture OnUpgrade future
         let on_upgrade = req.extensions_mut().remove::<OnUpgrade>();
 
+        // IMPORTANT: Consume the request body to ensure hyper allows the upgrade.
+        if let Some(stream) = req.take_stream() {
+            use http_body_util::BodyExt;
+            let _ = stream.collect().await;
+        }
+
         Ok(Self {
             sec_key,
             protocols,
@@ -105,6 +114,7 @@ impl FromRequest for WebSocket {
         })
     }
 }
+
 
 impl OperationModifier for WebSocket {
     fn update_operation(_op: &mut Operation) {

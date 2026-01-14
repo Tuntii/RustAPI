@@ -61,7 +61,11 @@ impl Server {
                     }
                 });
 
-                if let Err(err) = http1::Builder::new().serve_connection(io, service).await {
+                if let Err(err) = http1::Builder::new()
+                    .serve_connection(io, service)
+                    .with_upgrades()
+                    .await
+                {
                     error!("Connection error: {}", err);
                 }
             });
@@ -144,7 +148,8 @@ async fn handle_request(
 fn log_request(method: &http::Method, path: &str, status: StatusCode, start: std::time::Instant) {
     let elapsed = start.elapsed();
 
-    if status.is_success() {
+    // 1xx (Informational), 2xx (Success), 3xx (Redirection) are considered successful requests
+    if status.is_success() || status.is_redirection() || status.is_informational() {
         info!(
             method = %method,
             path = %path,

@@ -311,6 +311,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::from_default_env()
+                .add_directive("rustapi_ws=debug".parse().unwrap())
                 .add_directive("websocket_example=debug".parse().unwrap())
                 .add_directive("info".parse().unwrap()),
         )
