@@ -194,14 +194,13 @@ impl MiddlewareLayer for RetryLayer {
 
                 // Success or no more retries
                 if attempt > 0 {
-                        tracing::info!(
-                            attempt = attempt + 1,
-                            status = status,
-                            "Request succeeded after retry"
-                        );
-                    }
-                    return response;
+                    tracing::info!(
+                        attempt = attempt + 1,
+                        status = status,
+                        "Request succeeded after retry"
+                    );
                 }
+                return response;
             }
 
             // Should be unreachable if logic is correct, but safe fallback
