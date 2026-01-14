@@ -311,3 +311,284 @@ mod tests {
         assert!(ctx.is_sampled());
     }
 }
+
+#[cfg(test)]
+mod property_tests {
+    use super::*;
+    use proptest::prelude::*;
+
+    /// **Feature: v1-features-roadmap, Property 13: Trace context propagation**
+    /// **Validates: Requirements 7.3**
+    ///
+    /// For any distributed trace:
+    /// - Child spans SHALL inherit parent trace ID
+    /// - Child spans SHALL have unique span IDs
+    /// - Correlation ID SHALL propagate through entire request chain
+    /// - Traceparent format SHALL conform to W3C specification
+    /// - Trace context SHALL survive serialization round-trip
+
+    /// Strategy for generating trace IDs (32 hex chars)
+    fn trace_id_strategy() -> impl Strategy<Value = String> {
+        prop::string::string_regex("[0-9a-f]{32}").unwrap()
+    }
+
+    /// Strategy for generating span IDs (16 hex chars)
+    fn span_id_strategy() -> impl Strategy<Value = String> {
+        prop::string::string_regex("[0-9a-f]{16}").unwrap()
+    }
+
+    /// Strategy for generating trace flags
+    fn trace_flags_strategy() -> impl Strategy<Value = u8> {
+        0u8..=255
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(100))]
+
+        /// Property 13: Generated trace IDs are unique
+        #[test]
+        fn prop_trace_ids_unique(_seed in 0u32..100) {
+            let ctx1 = TraceContext::new();
+            let ctx2 = TraceContext::new();
+            
+            // Each generation should produce unique IDs
+            prop_assert_ne!(ctx1.trace_id, ctx2.trace_id);
+            prop_assert_ne!(ctx1.span_id, ctx2.span_id);
+        }
+
+        /// Property 13: Generated IDs have correct format
+        #[test]
+        fn prop_generated_ids_format(_seed in 0u32..100) {
+            let ctx = TraceContext::new();
+            
+            // Trace ID: 32 hex chars
+            prop_assert_eq!(ctx.trace_id.len(), 32);
+            prop_assert!(ctx.trace_id.chars().all(|c| c.is_ascii_hexdigit()));
+            
+            // Span ID: 16 hex chars
+            prop_assert_eq!(ctx.span_id.len(), 16);
+            prop_assert!(ctx.span_id.chars().all(|c| c.is_ascii_hexdigit()));
+        }
+
+        /// Property 13: Child spans inherit parent trace ID
+        #[test]
+        fn prop_child_inherits_trace_id(_seed in 0u32..100) {
+            let parent = TraceContext::new();
+            let child = parent.child();
+            
+            // Child MUST have same trace_id as parent
+            prop_assert_eq!(child.trace_id, parent.trace_id);
+            
+            // Child MUST have different span_id
+            prop_assert_ne!(child.span_id, parent.span_id);
+            
+            // Child's parent_span_id MUST be parent's span_id
+            prop_assert_eq!(child.parent_span_id, Some(parent.span_id.clone()));
+        }
+
+        /// Property 13: Multi-level trace propagation preserves trace ID
+        #[test]
+        fn prop_multilevel_trace_propagation(_seed in 0u32..100) {
+            let root = TraceContext::new();
+            let child1 = root.child();
+            let child2 = child1.child();
+            let child3 = child2.child();
+            
+            // All spans in the chain MUST have same trace_id
+            prop_assert_eq!(child1.trace_id, root.trace_id);
+            prop_assert_eq!(child2.trace_id, root.trace_id);
+            prop_assert_eq!(child3.trace_id, root.trace_id);
+            
+            // Each span MUST have unique span_id
+            let span_ids = vec![&root.span_id, &child1.span_id, &child2.span_id, &child3.span_id];
+            for i in 0..span_ids.len() {
+                for j in (i+1)..span_ids.len() {
+                    prop_assert_ne!(span_ids[i], span_ids[j]);
+                }
+            }
+            
+            // Parent relationships MUST be correct
+            prop_assert_eq!(child1.parent_span_id, Some(root.span_id.clone()));
+            prop_assert_eq!(child2.parent_span_id, Some(child1.span_id.clone()));
+            prop_assert_eq!(child3.parent_span_id, Some(child2.span_id.clone()));
+        }
+
+        /// Property 13: Correlation ID propagates through chain
+        #[test]
+        fn prop_correlation_id_propagation(_seed in 0u32..100) {
+            let root = TraceContext::new();
+            let correlation_id = root.correlation_id.clone();
+            
+            let child1 = root.child();
+            let child2 = child1.child();
+            
+            // Correlation ID MUST propagate through entire chain
+            prop_assert_eq!(child1.correlation_id, correlation_id);
+            prop_assert_eq!(child2.correlation_id, correlation_id);
+        }
+
+        /// Property 13: Traceparent format conforms to W3C spec
+        #[test]
+        fn prop_traceparent_format(
+            trace_id in trace_id_strategy(),
+            span_id in span_id_strategy(),
+            flags in trace_flags_strategy(),
+        ) {
+            let ctx = TraceContext {
+                trace_id: trace_id.clone(),
+                span_id: span_id.clone(),
+                parent_span_id: None,
+                trace_flags: flags,
+                trace_state: None,
+                correlation_id: None,
+            };
+            
+            let traceparent = ctx.to_traceparent();
+            
+            // Format: version-trace_id-span_id-flags
+            let parts: Vec<&str> = traceparent.split('-').collect();
+            prop_assert_eq!(parts.len(), 4);
+            
+            // Version must be "00"
+            prop_assert_eq!(parts[0], "00");
+            
+            // Trace ID must match (32 hex chars)
+            prop_assert_eq!(parts[1], trace_id);
+            prop_assert_eq!(parts[1].len(), 32);
+            
+            // Span ID must match (16 hex chars)
+            prop_assert_eq!(parts[2], span_id);
+            prop_assert_eq!(parts[2].len(), 16);
+            
+            // Flags must be 2 hex chars
+            prop_assert_eq!(parts[3].len(), 2);
+            prop_assert_eq!(parts[3], format!("{:02x}", flags));
+        }
+
+        /// Property 13: Traceparent round-trip preserves data
+        #[test]
+        fn prop_traceparent_roundtrip(
+            trace_id in trace_id_strategy(),
+            span_id in span_id_strategy(),
+            flags in trace_flags_strategy(),
+        ) {
+            let original = TraceContext {
+                trace_id: trace_id.clone(),
+                span_id: span_id.clone(),
+                parent_span_id: None,
+                trace_flags: flags,
+                trace_state: None,
+                correlation_id: None,
+            };
+            
+            // Serialize to traceparent
+            let traceparent = original.to_traceparent();
+            
+            // Deserialize back
+            let parsed = TraceContext::from_traceparent(&traceparent).unwrap();
+            
+            // All fields must match
+            prop_assert_eq!(parsed.trace_id, original.trace_id);
+            prop_assert_eq!(parsed.span_id, original.span_id);
+            prop_assert_eq!(parsed.trace_flags, original.trace_flags);
+        }
+
+        /// Property 13: Sampled flag is correctly encoded/decoded
+        #[test]
+        fn prop_sampled_flag_encoding(sampled in proptest::bool::ANY) {
+            let mut ctx = TraceContext::new();
+            ctx.set_sampled(sampled);
+            
+            // Sampled flag should be reflected in is_sampled()
+            prop_assert_eq!(ctx.is_sampled(), sampled);
+            
+            // Sampled flag should survive serialization
+            let traceparent = ctx.to_traceparent();
+            let parsed = TraceContext::from_traceparent(&traceparent).unwrap();
+            prop_assert_eq!(parsed.is_sampled(), sampled);
+        }
+
+        /// Property 13: Invalid traceparent strings are rejected
+        #[test]
+        fn prop_invalid_traceparent_rejected(
+            invalid_version in "0[1-9]|[1-9][0-9]",
+            trace_id in "[0-9a-f]{10,50}",
+            span_id in "[0-9a-f]{8,20}",
+            flags in "[0-9a-f]{1,4}",
+        ) {
+            // Wrong version
+            let invalid1 = format!("{}-{}-{}-{}", invalid_version, trace_id, span_id, flags);
+            prop_assert!(TraceContext::from_traceparent(&invalid1).is_none());
+            
+            // Missing parts
+            let invalid2 = format!("00-{}-{}", trace_id, span_id);
+            prop_assert!(TraceContext::from_traceparent(&invalid2).is_none());
+        }
+
+        /// Property 13: Trace state propagation
+        #[test]
+        fn prop_trace_state_propagation(state in "[a-z0-9=,]{5,50}") {
+            let mut ctx = TraceContext::new();
+            ctx.trace_state = Some(state.clone());
+            
+            let child = ctx.child();
+            
+            // Trace state MUST propagate to child
+            prop_assert_eq!(child.trace_state, Some(state));
+        }
+
+        /// Property 13: Correlation ID format is valid
+        #[test]
+        fn prop_correlation_id_format(_seed in 0u32..100) {
+            let ctx = TraceContext::new();
+            
+            prop_assert!(ctx.correlation_id.is_some());
+            let corr_id = ctx.correlation_id.unwrap();
+            
+            // Should be non-empty
+            prop_assert!(!corr_id.is_empty());
+            
+            // Should contain hex characters and hyphen
+            prop_assert!(corr_id.contains('-'));
+            
+            // Parts should be hex
+            let parts: Vec<&str> = corr_id.split('-').collect();
+            prop_assert_eq!(parts.len(), 2);
+            prop_assert!(parts[0].chars().all(|c| c.is_ascii_hexdigit()));
+            prop_assert!(parts[1].chars().all(|c| c.is_ascii_hexdigit()));
+        }
+
+        /// Property 13: Header injection and extraction preserves context
+        #[test]
+        fn prop_header_injection_extraction(
+            trace_id in trace_id_strategy(),
+            span_id in span_id_strategy(),
+            flags in trace_flags_strategy(),
+        ) {
+            let original = TraceContext {
+                trace_id: trace_id.clone(),
+                span_id: span_id.clone(),
+                parent_span_id: None,
+                trace_flags: flags,
+                trace_state: None,
+                correlation_id: Some("test-corr-id".to_string()),
+            };
+            
+            // Inject into headers
+            let mut headers = http::HeaderMap::new();
+            inject_trace_context(&mut headers, &original);
+            
+            // Headers should contain traceparent
+            prop_assert!(headers.contains_key(TRACEPARENT_HEADER));
+            
+            // Extract traceparent back
+            let traceparent_value = headers.get(TRACEPARENT_HEADER).unwrap().to_str().unwrap();
+            let extracted = TraceContext::from_traceparent(traceparent_value).unwrap();
+            
+            // Verify trace context is preserved
+            prop_assert_eq!(extracted.trace_id, original.trace_id);
+            prop_assert_eq!(extracted.span_id, original.span_id);
+            prop_assert_eq!(extracted.trace_flags, original.trace_flags);
+        }
+    }
+}

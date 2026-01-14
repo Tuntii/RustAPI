@@ -603,3 +603,402 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+mod property_tests {
+    use super::*;
+    use proptest::prelude::*;
+    use serde_json::Value;
+
+    /// **Feature: v1-features-roadmap, Property 14: Structured log format**
+    /// **Validates: Requirements 7.4**
+    ///
+    /// For any log output:
+    /// - Format SHALL be valid JSON for JSON/Datadog/Splunk formatters
+    /// - All required fields SHALL be present (timestamp, level, message)
+    /// - Round-trip SHALL preserve all data
+    /// - Special characters SHALL be properly escaped
+    /// - Logfmt format SHALL follow key=value specification
+
+    /// Strategy for generating log levels
+    fn log_level_strategy() -> impl Strategy<Value = String> {
+        prop_oneof![
+            Just("debug".to_string()),
+            Just("info".to_string()),
+            Just("warn".to_string()),
+            Just("error".to_string()),
+        ]
+    }
+
+    /// Strategy for generating HTTP methods
+    fn http_method_strategy() -> impl Strategy<Value = String> {
+        prop_oneof![
+            Just("GET".to_string()),
+            Just("POST".to_string()),
+            Just("PUT".to_string()),
+            Just("DELETE".to_string()),
+            Just("PATCH".to_string()),
+            Just("HEAD".to_string()),
+            Just("OPTIONS".to_string()),
+        ]
+    }
+
+    /// Strategy for generating HTTP status codes
+    fn status_code_strategy() -> impl Strategy<Value = u16> {
+        prop_oneof![
+            200u16..=299, // 2xx success
+            300u16..=399, // 3xx redirect
+            400u16..=499, // 4xx client error
+            500u16..=599, // 5xx server error
+        ]
+    }
+
+    /// Strategy for generating URIs
+    fn uri_strategy() -> impl Strategy<Value = String> {
+        prop::string::string_regex("/api/[a-z]{3,10}(/[0-9]{1,5})?").unwrap()
+    }
+
+    /// Strategy for generating messages with special characters
+    fn message_strategy() -> impl Strategy<Value = String> {
+        prop::string::string_regex(r#"[a-zA-Z0-9 \n\r\t"'\\]{5,50}"#).unwrap()
+    }
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(100))]
+
+        /// Property 14: JSON formatter produces valid JSON
+        #[test]
+        fn prop_json_format_valid(
+            message in message_strategy(),
+            level in log_level_strategy(),
+            method in prop::option::of(http_method_strategy()),
+            uri in prop::option::of(uri_strategy()),
+            status in prop::option::of(status_code_strategy()),
+        ) {
+            let mut entry = LogEntry::new(message.clone()).level(level.clone());
+            if let Some(m) = method {
+                entry = entry.method(m);
+            }
+            if let Some(u) = uri {
+                entry = entry.uri(u);
+            }
+            if let Some(s) = status {
+                entry = entry.status(s);
+            }
+
+            let formatter = JsonFormatter::new();
+            let output = formatter.format(&entry);
+
+            // MUST be valid JSON
+            let parsed: Value = serde_json::from_str(&output)
+                .expect("JSON formatter must produce valid JSON");
+
+            // Required fields MUST be present
+            prop_assert!(parsed.get("timestamp").is_some());
+            prop_assert!(parsed.get("level").is_some());
+            prop_assert!(parsed.get("message").is_some());
+
+            // Values MUST match
+            prop_assert_eq!(parsed["level"].as_str().unwrap(), level);
+            prop_assert_eq!(parsed["message"].as_str().unwrap(), message);
+        }
+
+        /// Property 14: JSON formatter preserves all fields
+        #[test]
+        fn prop_json_format_preserves_fields(
+            message in "[a-zA-Z0-9 ]{5,30}",
+            method in http_method_strategy(),
+            uri in uri_strategy(),
+            status in status_code_strategy(),
+            duration in 1u64..10000,
+            correlation_id in "[a-z0-9-]{10,20}",
+            trace_id in "[a-f0-9]{32}",
+        ) {
+            let entry = LogEntry::new(message.clone())
+                .method(method.clone())
+                .uri(uri.clone())
+                .status(status)
+                .duration_ms(duration)
+                .correlation_id(correlation_id.clone())
+                .trace_id(trace_id.clone());
+
+            let formatter = JsonFormatter::new();
+            let output = formatter.format(&entry);
+            let parsed: Value = serde_json::from_str(&output).unwrap();
+
+            // All fields MUST be preserved
+            prop_assert_eq!(parsed["message"], message);
+            prop_assert_eq!(parsed["http.method"], method);
+            prop_assert_eq!(parsed["http.url"], uri);
+            prop_assert_eq!(parsed["http.status_code"], status);
+            prop_assert_eq!(parsed["duration_ms"], duration);
+            prop_assert_eq!(parsed["correlation_id"], correlation_id);
+            prop_assert_eq!(parsed["trace.id"], trace_id);
+        }
+
+        /// Property 14: Datadog formatter produces valid JSON
+        #[test]
+        fn prop_datadog_format_valid(
+            message in message_strategy(),
+            trace_id in "[a-f0-9]{32}",
+            span_id in "[a-f0-9]{16}",
+            service in "[a-z-]{5,15}",
+        ) {
+            let entry = LogEntry::new(message.clone())
+                .trace_id(trace_id.clone())
+                .span_id(span_id.clone())
+                .service_name(service.clone());
+
+            let formatter = DatadogFormatter::new();
+            let output = formatter.format(&entry);
+
+            // MUST be valid JSON
+            let parsed: Value = serde_json::from_str(&output)
+                .expect("Datadog formatter must produce valid JSON");
+
+            // Datadog-specific fields MUST be present
+            prop_assert_eq!(parsed["dd.trace_id"], trace_id);
+            prop_assert_eq!(parsed["dd.span_id"], span_id);
+            prop_assert_eq!(parsed["service"], service);
+            prop_assert_eq!(parsed["status"], "info");
+        }
+
+        /// Property 14: Datadog converts duration to nanoseconds
+        #[test]
+        fn prop_datadog_duration_nanoseconds(duration_ms in 1u64..10000) {
+            let entry = LogEntry::new("test").duration_ms(duration_ms);
+            let formatter = DatadogFormatter::new();
+            let output = formatter.format(&entry);
+            let parsed: Value = serde_json::from_str(&output).unwrap();
+
+            // Datadog duration MUST be in nanoseconds (ms * 1_000_000)
+            let expected_ns = duration_ms * 1_000_000;
+            prop_assert_eq!(parsed["duration"], expected_ns);
+        }
+
+        /// Property 14: Splunk formatter produces valid JSON
+        #[test]
+        fn prop_splunk_format_valid(
+            message in message_strategy(),
+            source in "[a-z]{5,10}",
+            sourcetype in "[a-z]{5,10}",
+            index in "[a-z]{4,8}",
+        ) {
+            let entry = LogEntry::new(message.clone());
+            let formatter = SplunkFormatter::new()
+                .source(source.clone())
+                .sourcetype(sourcetype.clone())
+                .index(index.clone());
+            let output = formatter.format(&entry);
+
+            // MUST be valid JSON
+            let parsed: Value = serde_json::from_str(&output)
+                .expect("Splunk formatter must produce valid JSON");
+
+            // Splunk HEC structure MUST be correct
+            prop_assert!(parsed.get("time").is_some());
+            prop_assert!(parsed.get("event").is_some());
+            prop_assert_eq!(parsed["source"], source);
+            prop_assert_eq!(parsed["sourcetype"], sourcetype);
+            prop_assert_eq!(parsed["index"], index);
+
+            // Event MUST contain message
+            let event = &parsed["event"];
+            prop_assert_eq!(event["message"], message);
+        }
+
+        /// Property 14: Splunk timestamp is Unix epoch
+        #[test]
+        fn prop_splunk_timestamp_format(_seed in 0u32..100) {
+            let entry = LogEntry::new("test");
+            let formatter = SplunkFormatter::new();
+            let output = formatter.format(&entry);
+            let parsed: Value = serde_json::from_str(&output).unwrap();
+
+            // Time MUST be a number (Unix timestamp)
+            prop_assert!(parsed["time"].is_f64() || parsed["time"].is_u64());
+
+            let time = parsed["time"].as_f64().unwrap();
+            // Reasonable timestamp check (after 2020-01-01, before 2100-01-01)
+            prop_assert!(time > 1577836800.0 && time < 4102444800.0);
+        }
+
+        /// Property 14: Logfmt format follows specification
+        #[test]
+        fn prop_logfmt_format_valid(
+            message in "[a-zA-Z0-9 ]{5,30}",
+            method in http_method_strategy(),
+            status in status_code_strategy(),
+        ) {
+            let entry = LogEntry::new(message.clone())
+                .method(method.clone())
+                .status(status);
+
+            let formatter = LogfmtFormatter::new();
+            let output = formatter.format(&entry);
+
+            // MUST contain required fields
+            prop_assert!(output.contains("ts="));
+            prop_assert!(output.contains("level="));
+            prop_assert!(output.contains("msg="));
+
+            // MUST contain optional fields
+            prop_assert!(output.contains(&format!("method={}", method)));
+            prop_assert!(output.contains(&format!("status={}", status)));
+
+            // MUST use key=value format
+            prop_assert!(output.split_whitespace().all(|part| part.contains('=')));
+        }
+
+        /// Property 14: Logfmt escapes special characters
+        #[test]
+        fn prop_logfmt_escapes_special_chars(
+            message in prop::string::string_regex(r#"[a-zA-Z0-9 \n\r"\\]{5,30}"#).unwrap()
+        ) {
+            let entry = LogEntry::new(message.clone());
+            let formatter = LogfmtFormatter::new();
+            let output = formatter.format(&entry);
+
+            // Quotes MUST be escaped
+            if message.contains('"') {
+                prop_assert!(output.contains(r#"\""#));
+            }
+
+            // Newlines MUST be escaped
+            if message.contains('\n') {
+                prop_assert!(output.contains(r"\n"));
+            }
+
+            // Carriage returns MUST be escaped
+            if message.contains('\r') {
+                prop_assert!(output.contains(r"\r"));
+            }
+
+            // Backslashes MUST be escaped
+            if message.contains('\\') {
+                prop_assert!(output.contains(r"\\"));
+            }
+        }
+
+        /// Property 14: Custom fields are preserved in all formats
+        #[test]
+        fn prop_custom_fields_preserved(
+            message in "[a-zA-Z0-9 ]{5,20}",
+            key in "[a-z_]{5,10}",
+            value in "[a-zA-Z0-9]{5,15}",
+        ) {
+            let entry = LogEntry::new(message).field(key.clone(), value.clone());
+
+            // JSON formatter
+            let json_formatter = JsonFormatter::new();
+            let json_output = json_formatter.format(&entry);
+            let json_parsed: Value = serde_json::from_str(&json_output).unwrap();
+            prop_assert_eq!(json_parsed[&key], value);
+
+            // Datadog formatter
+            let dd_formatter = DatadogFormatter::new();
+            let dd_output = dd_formatter.format(&entry);
+            let dd_parsed: Value = serde_json::from_str(&dd_output).unwrap();
+            prop_assert_eq!(dd_parsed[&key], value);
+
+            // Splunk formatter
+            let splunk_formatter = SplunkFormatter::new();
+            let splunk_output = splunk_formatter.format(&entry);
+            let splunk_parsed: Value = serde_json::from_str(&splunk_output).unwrap();
+            prop_assert_eq!(splunk_parsed["event"][&key], value);
+
+            // Logfmt formatter
+            let logfmt_formatter = LogfmtFormatter::new();
+            let logfmt_output = logfmt_formatter.format(&entry);
+            prop_assert!(logfmt_output.contains(&format!("{}=\"{}\"", key, value)));
+        }
+
+        /// Property 14: Error messages are properly formatted
+        #[test]
+        fn prop_error_formatting(
+            error_msg in message_strategy(),
+        ) {
+            let entry = LogEntry::new("error occurred").error(error_msg.clone());
+
+            // Level MUST be set to error
+            prop_assert_eq!(entry.level, "error");
+
+            // JSON formatter
+            let json_formatter = JsonFormatter::new();
+            let json_output = json_formatter.format(&entry);
+            let json_parsed: Value = serde_json::from_str(&json_output).unwrap();
+            prop_assert_eq!(json_parsed["level"], "error");
+            prop_assert_eq!(json_parsed["error.message"], error_msg);
+
+            // Datadog formatter
+            let dd_formatter = DatadogFormatter::new();
+            let dd_output = dd_formatter.format(&entry);
+            let dd_parsed: Value = serde_json::from_str(&dd_output).unwrap();
+            prop_assert_eq!(dd_parsed["status"], "error");
+            prop_assert_eq!(dd_parsed["error.message"], error_msg);
+        }
+
+        /// Property 14: JSON pretty printing is valid
+        #[test]
+        fn prop_json_pretty_valid(message in "[a-zA-Z0-9 ]{5,20}") {
+            let entry = LogEntry::new(message.clone());
+            let formatter = JsonFormatter::pretty();
+            let output = formatter.format(&entry);
+
+            // MUST be valid JSON despite formatting
+            let parsed: Value = serde_json::from_str(&output).unwrap();
+            prop_assert_eq!(parsed["message"], message);
+
+            // MUST contain newlines (pretty formatted)
+            prop_assert!(output.contains('\n'));
+        }
+
+        /// Property 14: Timestamps are monotonic and reasonable
+        #[test]
+        fn prop_timestamps_reasonable(_seed in 0u32..100) {
+            let entry1 = LogEntry::new("test1");
+            std::thread::sleep(std::time::Duration::from_millis(1));
+            let entry2 = LogEntry::new("test2");
+
+            let formatter = JsonFormatter::new();
+            
+            let output1 = formatter.format(&entry1);
+            let output2 = formatter.format(&entry2);
+            
+            let parsed1: Value = serde_json::from_str(&output1).unwrap();
+            let parsed2: Value = serde_json::from_str(&output2).unwrap();
+
+            let ts1 = parsed1["timestamp"].as_u64().unwrap();
+            let ts2 = parsed2["timestamp"].as_u64().unwrap();
+
+            // Later entry MUST have later or equal timestamp
+            prop_assert!(ts2 >= ts1);
+
+            // Timestamps MUST be reasonable (after 2020, before 2100)
+            prop_assert!(ts1 > 1577836800000); // 2020-01-01 in milliseconds
+            prop_assert!(ts1 < 4102444800000); // 2100-01-01 in milliseconds
+        }
+
+        /// Property 14: All formatters handle empty optional fields
+        #[test]
+        fn prop_empty_fields_handled(message in "[a-zA-Z0-9 ]{5,20}") {
+            let entry = LogEntry::new(message.clone());
+
+            // JSON
+            let json_output = JsonFormatter::new().format(&entry);
+            prop_assert!(serde_json::from_str::<Value>(&json_output).is_ok());
+
+            // Datadog
+            let dd_output = DatadogFormatter::new().format(&entry);
+            prop_assert!(serde_json::from_str::<Value>(&dd_output).is_ok());
+
+            // Splunk
+            let splunk_output = SplunkFormatter::new().format(&entry);
+            prop_assert!(serde_json::from_str::<Value>(&splunk_output).is_ok());
+
+            // Logfmt
+            let logfmt_output = LogfmtFormatter::new().format(&entry);
+            prop_assert!(logfmt_output.contains("msg="));
+        }
+    }
+}

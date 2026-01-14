@@ -180,6 +180,360 @@ mod tests {
     }
 }
 
+#[cfg(test)]
+mod property_tests {
+    use super::*;
+    use futures_util::stream;
+    use futures_util::StreamExt;
+    use proptest::prelude::*;
+
+    /// **Feature: v1-features-roadmap, Property 23: Streaming memory bounds**
+    /// **Validates: Requirements 11.2**
+    ///
+    /// For streaming request bodies:
+    /// - Memory usage SHALL never exceed configured limit
+    /// - Streams exceeding limit SHALL be rejected with 413 Payload Too Large
+    /// - Bytes read counter SHALL accurately track consumed bytes
+    /// - Limit of None SHALL allow unlimited streaming
+    /// - Multiple chunks SHALL be correctly aggregated for limit checking
+
+    proptest! {
+        #![proptest_config(ProptestConfig::with_cases(100))]
+
+        /// Property 23: Single chunk within limit is accepted
+        #[test]
+        fn prop_chunk_within_limit_accepted(
+            chunk_size in 100usize..1000,
+            limit in 1000usize..10000,
+        ) {
+            tokio::runtime::Runtime::new().unwrap().block_on(async {
+                let data = vec![0u8; chunk_size];
+                let chunks: Vec<Result<Bytes, crate::error::ApiError>> =
+                    vec![Ok(Bytes::from(data))];
+                let stream_data = stream::iter(chunks);
+
+                let mut streaming_body = StreamingBody::from_stream(stream_data, Some(limit));
+
+                // Chunk MUST be accepted (within limit)
+                let result = streaming_body.next().await;
+                prop_assert!(result.is_some());
+                prop_assert!(result.unwrap().is_ok());
+
+                // Bytes read MUST match chunk size
+                prop_assert_eq!(streaming_body.bytes_read(), chunk_size);
+
+                Ok(())
+            })?;
+        }
+
+        /// Property 23: Single chunk exceeding limit is rejected
+        #[test]
+        fn prop_chunk_exceeding_limit_rejected(
+            limit in 100usize..1000,
+            excess in 1usize..100,
+        ) {
+            tokio::runtime::Runtime::new().unwrap().block_on(async {
+                let chunk_size = limit + excess;
+                let data = vec![0u8; chunk_size];
+                let chunks: Vec<Result<Bytes, crate::error::ApiError>> =
+                    vec![Ok(Bytes::from(data))];
+                let stream_data = stream::iter(chunks);
+
+                let mut streaming_body = StreamingBody::from_stream(stream_data, Some(limit));
+
+                // Chunk MUST be rejected (exceeds limit)
+                let result = streaming_body.next().await;
+                prop_assert!(result.is_some());
+                let error = result.unwrap();
+                prop_assert!(error.is_err());
+
+                // Error MUST be Payload Too Large
+                let err = error.unwrap_err();
+                prop_assert_eq!(err.status_code, StatusCode::PAYLOAD_TOO_LARGE);
+
+                Ok(())
+            })?;
+        }
+
+        /// Property 23: Multiple chunks within limit are accepted
+        #[test]
+        fn prop_multiple_chunks_within_limit(
+            chunk_size in 100usize..500,
+            num_chunks in 2usize..5,
+        ) {
+            tokio::runtime::Runtime::new().unwrap().block_on(async {
+                let total_size = chunk_size * num_chunks;
+                let limit = total_size + 100; // Slightly above total
+
+                let chunks: Vec<Result<Bytes, crate::error::ApiError>> = (0..num_chunks)
+                    .map(|_| Ok(Bytes::from(vec![0u8; chunk_size])))
+                    .collect();
+                let stream_data = stream::iter(chunks);
+
+                let mut streaming_body = StreamingBody::from_stream(stream_data, Some(limit));
+
+                // All chunks MUST be accepted
+                let mut total_read = 0;
+                while let Some(result) = streaming_body.next().await {
+                    prop_assert!(result.is_ok());
+                    total_read += result.unwrap().len();
+                }
+
+                // Total bytes read MUST match total size
+                prop_assert_eq!(total_read, total_size);
+                prop_assert_eq!(streaming_body.bytes_read(), total_size);
+
+                Ok(())
+            })?;
+        }
+
+        /// Property 23: Multiple chunks exceeding limit are rejected
+        #[test]
+        fn prop_multiple_chunks_exceeding_limit(
+            chunk_size in 100usize..500,
+            num_chunks in 3usize..6,
+        ) {
+            tokio::runtime::Runtime::new().unwrap().block_on(async {
+                let total_size = chunk_size * num_chunks;
+                let limit = chunk_size + 50; // Less than total
+
+                let chunks: Vec<Result<Bytes, crate::error::ApiError>> = (0..num_chunks)
+                    .map(|_| Ok(Bytes::from(vec![0u8; chunk_size])))
+                    .collect();
+                let stream_data = stream::iter(chunks);
+
+                let mut streaming_body = StreamingBody::from_stream(stream_data, Some(limit));
+
+                // First chunk MUST succeed
+                let first = streaming_body.next().await;
+                prop_assert!(first.is_some());
+                prop_assert!(first.unwrap().is_ok());
+
+                // Second chunk MUST fail (exceeds limit)
+                let second = streaming_body.next().await;
+                prop_assert!(second.is_some());
+                let error = second.unwrap();
+                prop_assert!(error.is_err());
+
+                let err = error.unwrap_err();
+                prop_assert_eq!(err.status_code, StatusCode::PAYLOAD_TOO_LARGE);
+
+                Ok(())
+            })?;
+        }
+
+        /// Property 23: No limit allows unlimited streaming
+        #[test]
+        fn prop_no_limit_unlimited(
+            chunk_size in 1000usize..10000,
+            num_chunks in 5usize..10,
+        ) {
+            tokio::runtime::Runtime::new().unwrap().block_on(async {
+                let chunks: Vec<Result<Bytes, crate::error::ApiError>> = (0..num_chunks)
+                    .map(|_| Ok(Bytes::from(vec![0u8; chunk_size])))
+                    .collect();
+                let stream_data = stream::iter(chunks);
+
+                let mut streaming_body = StreamingBody::from_stream(stream_data, None);
+
+                // All chunks MUST be accepted (no limit)
+                let mut count = 0;
+                while let Some(result) = streaming_body.next().await {
+                    prop_assert!(result.is_ok());
+                    count += 1;
+                }
+
+                prop_assert_eq!(count, num_chunks);
+                prop_assert_eq!(streaming_body.bytes_read(), chunk_size * num_chunks);
+
+                Ok(())
+            })?;
+        }
+
+        /// Property 23: Bytes read counter is accurate
+        #[test]
+        fn prop_bytes_read_accurate(
+            sizes in prop::collection::vec(100usize..1000, 1..10)
+        ) {
+            tokio::runtime::Runtime::new().unwrap().block_on(async {
+                let total_size: usize = sizes.iter().sum();
+                let limit = total_size + 1000; // Above total
+
+                let chunks: Vec<Result<Bytes, crate::error::ApiError>> = sizes
+                    .iter()
+                    .map(|&size| Ok(Bytes::from(vec![0u8; size])))
+                    .collect();
+                let stream_data = stream::iter(chunks);
+
+                let mut streaming_body = StreamingBody::from_stream(stream_data, Some(limit));
+
+                let mut cumulative = 0;
+                while let Some(result) = streaming_body.next().await {
+                    let chunk = result.unwrap();
+                    cumulative += chunk.len();
+                    
+                    // Bytes read MUST match cumulative at each step
+                    prop_assert_eq!(streaming_body.bytes_read(), cumulative);
+                }
+
+                prop_assert_eq!(streaming_body.bytes_read(), total_size);
+
+                Ok(())
+            })?;
+        }
+
+        /// Property 23: Exact limit boundary is accepted
+        #[test]
+        fn prop_exact_limit_accepted(chunk_size in 500usize..5000) {
+            tokio::runtime::Runtime::new().unwrap().block_on(async {
+                let limit = chunk_size; // Exact match
+                let data = vec![0u8; chunk_size];
+                let chunks: Vec<Result<Bytes, crate::error::ApiError>> =
+                    vec![Ok(Bytes::from(data))];
+                let stream_data = stream::iter(chunks);
+
+                let mut streaming_body = StreamingBody::from_stream(stream_data, Some(limit));
+
+                // Chunk at exact limit MUST be accepted
+                let result = streaming_body.next().await;
+                prop_assert!(result.is_some());
+                prop_assert!(result.unwrap().is_ok());
+
+                prop_assert_eq!(streaming_body.bytes_read(), chunk_size);
+
+                Ok(())
+            })?;
+        }
+
+        /// Property 23: One byte over limit is rejected
+        #[test]
+        fn prop_one_byte_over_rejected(limit in 500usize..5000) {
+            tokio::runtime::Runtime::new().unwrap().block_on(async {
+                let chunk_size = limit + 1; // One byte over
+                let data = vec![0u8; chunk_size];
+                let chunks: Vec<Result<Bytes, crate::error::ApiError>> =
+                    vec![Ok(Bytes::from(data))];
+                let stream_data = stream::iter(chunks);
+
+                let mut streaming_body = StreamingBody::from_stream(stream_data, Some(limit));
+
+                // One byte over MUST be rejected
+                let result = streaming_body.next().await;
+                prop_assert!(result.is_some());
+                let error = result.unwrap();
+                prop_assert!(error.is_err());
+
+                Ok(())
+            })?;
+        }
+
+        /// Property 23: Empty chunks don't affect limit
+        #[test]
+        fn prop_empty_chunks_ignored(
+            chunk_size in 100usize..1000,
+            num_empty in 1usize..5,
+        ) {
+            tokio::runtime::Runtime::new().unwrap().block_on(async {
+                let limit = chunk_size + 100;
+
+                let mut chunks: Vec<Result<Bytes, crate::error::ApiError>> = vec![];
+                
+                // Add empty chunks
+                for _ in 0..num_empty {
+                    chunks.push(Ok(Bytes::new()));
+                }
+                
+                // Add one data chunk
+                chunks.push(Ok(Bytes::from(vec![0u8; chunk_size])));
+
+                let stream_data = stream::iter(chunks);
+                let mut streaming_body = StreamingBody::from_stream(stream_data, Some(limit));
+
+                // Process all chunks
+                while let Some(result) = streaming_body.next().await {
+                    prop_assert!(result.is_ok());
+                }
+
+                // Bytes read MUST only count non-empty chunk
+                prop_assert_eq!(streaming_body.bytes_read(), chunk_size);
+
+                Ok(())
+            })?;
+        }
+
+        /// Property 23: Limit enforcement is cumulative
+        #[test]
+        fn prop_limit_cumulative(
+            chunk1_size in 300usize..600,
+            chunk2_size in 300usize..600,
+            limit in 500usize..900,
+        ) {
+            tokio::runtime::Runtime::new().unwrap().block_on(async {
+                let chunks: Vec<Result<Bytes, crate::error::ApiError>> = vec![
+                    Ok(Bytes::from(vec![0u8; chunk1_size])),
+                    Ok(Bytes::from(vec![0u8; chunk2_size])),
+                ];
+                let stream_data = stream::iter(chunks);
+
+                let mut streaming_body = StreamingBody::from_stream(stream_data, Some(limit));
+
+                // First chunk
+                let first = streaming_body.next().await;
+                if chunk1_size <= limit {
+                    prop_assert!(first.unwrap().is_ok());
+                    
+                    // Second chunk
+                    let second = streaming_body.next().await;
+                    let total = chunk1_size + chunk2_size;
+                    
+                    if total <= limit {
+                        // Both within limit
+                        prop_assert!(second.unwrap().is_ok());
+                    } else {
+                        // Total exceeds limit
+                        prop_assert!(second.unwrap().is_err());
+                    }
+                } else {
+                    // First chunk already exceeds limit
+                    prop_assert!(first.unwrap().is_err());
+                }
+
+                Ok(())
+            })?;
+        }
+
+        /// Property 23: Default config has 10MB limit
+        #[test]
+        fn prop_default_config_limit(_seed in 0u32..10) {
+            let config = StreamingConfig::default();
+            prop_assert_eq!(config.max_body_size, Some(10 * 1024 * 1024));
+        }
+
+        /// Property 23: Error message includes limit value
+        #[test]
+        fn prop_error_message_includes_limit(limit in 1000usize..10000) {
+            tokio::runtime::Runtime::new().unwrap().block_on(async {
+                let chunk_size = limit + 100;
+                let data = vec![0u8; chunk_size];
+                let chunks: Vec<Result<Bytes, crate::error::ApiError>> =
+                    vec![Ok(Bytes::from(data))];
+                let stream_data = stream::iter(chunks);
+
+                let mut streaming_body = StreamingBody::from_stream(stream_data, Some(limit));
+
+                let result = streaming_body.next().await;
+                let error = result.unwrap().unwrap_err();
+
+                // Error message MUST include limit value
+                prop_assert!(error.message.contains(&limit.to_string()));
+                prop_assert!(error.message.contains("exceeded limit"));
+
+                Ok(())
+            })?;
+        }
+    }
+}
+
 /// Configuration for streaming request bodies
 #[derive(Debug, Clone, Copy)]
 pub struct StreamingConfig {
