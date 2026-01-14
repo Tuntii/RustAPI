@@ -19,7 +19,7 @@ rustapi-openapi = { workspace = true }
 
 # WebSocket implementation
 tokio-tungstenite = "0.24"
-tungstenite = "0.24"
+tungstenite = "0.28"
 
 # Async runtime
 tokio = { workspace = true, features = ["sync", "macros", "rt"] }
