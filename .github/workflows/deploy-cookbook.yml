@@ -4,14 +4,14 @@ on:
     branches:
       - main
     paths:
-      - 'docs/cookbook/**'
+      - 'docs/**'
       - '.github/workflows/deploy-cookbook.yml'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
-      contents: write  # To push to gh-pages branch
+      contents: write
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
     steps:
@@ -25,11 +25,20 @@ jobs:
       - name: Build Cookbook
         run: mdbook build docs/cookbook
 
+      - name: Prepare Deployment
+        run: |
+          mkdir deploy_root
+          # Copy landing page to root
+          cp -r docs/landing/* deploy_root/
+          # Copy cookbook to subdirectory
+          mkdir deploy_root/cookbook
+          cp -r docs/cookbook/book/* deploy_root/cookbook/
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          github_token: ${{ secrets.GH_PAGES_TOKEN }}
-          publish_dir: ./docs/cookbook/book
-          destination_dir: cookbook
-          keep_files: true  # Keep existing files in gh-pages if any (useful if main site is also there)
-          commit_message: "Deploy cookbook: ${{ github.event.head_commit.message }}"
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./deploy_root
+          destination_dir: ./
+          keep_files: false # We want to overwrite the root to ensure clean state
+          commit_message: "Deploy site + cookbook: ${{ github.event.head_commit.message }}"
