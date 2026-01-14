@@ -455,7 +455,6 @@ pub fn convert_sqlx_error(err: sqlx::Error) -> ApiError {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

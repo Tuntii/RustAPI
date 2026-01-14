@@ -961,10 +961,10 @@ mod property_tests {
             let entry2 = LogEntry::new("test2");
 
             let formatter = JsonFormatter::new();
-            
+
             let output1 = formatter.format(&entry1);
             let output2 = formatter.format(&entry2);
-            
+
             let parsed1: Value = serde_json::from_str(&output1).unwrap();
             let parsed2: Value = serde_json::from_str(&output2).unwrap();
 

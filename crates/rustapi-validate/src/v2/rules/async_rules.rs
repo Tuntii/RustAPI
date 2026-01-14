@@ -337,7 +337,10 @@ mod tests {
         let ctx = ValidationContext::new();
 
         let rule = AsyncUniqueRule::new("users", "email");
-        let err = rule.validate_async("test@example.com", &ctx).await.unwrap_err();
+        let err = rule
+            .validate_async("test@example.com", &ctx)
+            .await
+            .unwrap_err();
         assert!(err.message.contains("not configured"));
     }
 

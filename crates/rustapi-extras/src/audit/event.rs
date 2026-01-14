@@ -591,15 +591,19 @@ mod property_tests {
     /// Strategy for generating IP addresses
     fn ip_address_strategy() -> impl Strategy<Value = IpAddr> {
         prop_oneof![
-            (0u8..255, 0u8..255, 0u8..255, 0u8..255)
-                .prop_map(|(a, b, c, d)| format!("{}.{}.{}.{}", a, b, c, d).parse::<IpAddr>().unwrap()),
+            (0u8..255, 0u8..255, 0u8..255, 0u8..255).prop_map(|(a, b, c, d)| format!(
+                "{}.{}.{}.{}",
+                a, b, c, d
+            )
+            .parse::<IpAddr>()
+            .unwrap()),
         ]
     }
 
     /// Strategy for generating compliance info
     fn compliance_strategy() -> impl Strategy<Value = ComplianceInfo> {
         (
-            proptest::bool::ANY, // involves_personal_data
+            proptest::bool::ANY,                      // involves_personal_data
             proptest::option::of("[a-z0-9-]{10,20}"), // data_subject_id
             proptest::option::of(prop_oneof![
                 Just("consent".to_string()),
@@ -651,16 +655,16 @@ mod property_tests {
         #[test]
         fn prop_event_has_required_fields(action in audit_action_strategy()) {
             let event = AuditEvent::new(action.clone());
-            
+
             // ID must be non-empty and valid UUID format
             prop_assert!(!event.id.is_empty());
             prop_assert!(event.id.contains('-')); // UUID has hyphens
             prop_assert_eq!(event.id.split('-').count(), 5); // UUID format: 8-4-4-4-12
-            
+
             // Timestamp must be reasonable (not zero, not in far future)
             prop_assert!(event.timestamp > 0);
             prop_assert!(event.timestamp < u64::MAX / 2); // Reasonable upper bound
-            
+
             // Action must match
             prop_assert_eq!(event.action, action);
         }
@@ -670,7 +674,7 @@ mod property_tests {
         fn prop_event_ids_unique(action in audit_action_strategy()) {
             let event1 = AuditEvent::new(action.clone());
             let event2 = AuditEvent::new(action);
-            
+
             // Each event should have a unique ID
             prop_assert_ne!(event1.id, event2.id);
         }
@@ -688,13 +692,13 @@ mod property_tests {
                 .actor(actor.clone())
                 .resource(resource_type.clone(), resource_id.clone())
                 .success(success);
-            
+
             // Serialize to JSON
             let json = event.to_json().unwrap();
-            
+
             // Deserialize back
             let deserialized: AuditEvent = serde_json::from_str(&json).unwrap();
-            
+
             // All fields should match
             prop_assert_eq!(deserialized.id, event.id);
             prop_assert_eq!(deserialized.timestamp, event.timestamp);
@@ -712,13 +716,13 @@ mod property_tests {
             compliance in compliance_strategy(),
         ) {
             let event = AuditEvent::new(action).compliance(compliance.clone());
-            
+
             // Serialize to JSON
             let json = event.to_json().unwrap();
-            
+
             // Deserialize back
             let deserialized: AuditEvent = serde_json::from_str(&json).unwrap();
-            
+
             // Compliance fields should match
             prop_assert_eq!(
                 deserialized.compliance.involves_personal_data,
@@ -757,10 +761,10 @@ mod property_tests {
             ip in ip_address_strategy(),
         ) {
             let event = AuditEvent::new(action).ip_address(ip);
-            
+
             prop_assert!(event.ip_address.is_some());
             let ip_str = event.ip_address.as_ref().unwrap();
-            
+
             // Should be parseable back to IpAddr
             prop_assert!(ip_str.parse::<IpAddr>().is_ok());
         }
@@ -773,14 +777,14 @@ mod property_tests {
             value in "[a-zA-Z0-9 ]{1,50}",
         ) {
             let event = AuditEvent::new(action).meta(key.clone(), value.clone());
-            
+
             prop_assert!(event.metadata.contains_key(&key));
             prop_assert_eq!(event.metadata.get(&key), Some(&value));
-            
+
             // Serialize and deserialize
             let json = event.to_json().unwrap();
             let deserialized: AuditEvent = serde_json::from_str(&json).unwrap();
-            
+
             prop_assert_eq!(deserialized.metadata.get(&key), Some(&value));
         }
 
@@ -791,13 +795,13 @@ mod property_tests {
             error_msg in "[a-zA-Z0-9 ]{10,100}",
         ) {
             let event = AuditEvent::new(action).error(error_msg.clone());
-            
+
             // Error should set success to false
             prop_assert!(!event.success);
-            
+
             // Error message should be preserved
             prop_assert_eq!(event.error_message, Some(error_msg));
-            
+
             // Severity should be at least Warning
             prop_assert!(event.severity >= AuditSeverity::Warning);
         }
@@ -812,20 +816,20 @@ mod property_tests {
         ) {
             let changes = AuditChanges::new()
                 .field(field_name.clone(), old_value.clone(), new_value.clone());
-            
+
             let event = AuditEvent::new(action).changes(changes);
-            
+
             prop_assert!(event.changes.is_some());
             let c = event.changes.as_ref().unwrap();
-            
+
             prop_assert_eq!(c.before.get(&field_name).unwrap(), &serde_json::json!(old_value));
             prop_assert_eq!(c.after.get(&field_name).unwrap(), &serde_json::json!(new_value));
-            
+
             // Serialize and verify
             let json = event.to_json().unwrap();
             let deserialized: AuditEvent = serde_json::from_str(&json).unwrap();
             let dc = deserialized.changes.unwrap();
-            
+
             prop_assert_eq!(dc.before.get(&field_name).unwrap(), &serde_json::json!(old_value));
             prop_assert_eq!(dc.after.get(&field_name).unwrap(), &serde_json::json!(new_value));
         }
@@ -834,7 +838,7 @@ mod property_tests {
         #[test]
         fn prop_gdpr_relevance(action in audit_action_strategy()) {
             let is_gdpr = action.is_gdpr_relevant();
-            
+
             match action {
                 AuditAction::Create
                 | AuditAction::Update
@@ -856,7 +860,7 @@ mod property_tests {
         #[test]
         fn prop_soc2_relevance(action in audit_action_strategy()) {
             let is_soc2 = action.is_security_relevant();
-            
+
             match action {
                 AuditAction::Login
                 | AuditAction::LoginFailed
@@ -880,23 +884,23 @@ mod property_tests {
         #[test]
         fn prop_timestamps_reasonable(_seed in 0u32..100) {
             use std::time::{Duration, SystemTime, UNIX_EPOCH};
-            
+
             let event1 = AuditEvent::new(AuditAction::Create);
             std::thread::sleep(Duration::from_millis(1));
             let event2 = AuditEvent::new(AuditAction::Update);
-            
+
             // Timestamps should be monotonically increasing (or equal if very fast)
             prop_assert!(event2.timestamp >= event1.timestamp);
-            
+
             // Both timestamps should be close to current time
             let now_millis = SystemTime::now()
                 .duration_since(UNIX_EPOCH)
                 .unwrap()
                 .as_millis() as u64;
-            
+
             prop_assert!(event1.timestamp <= now_millis);
             prop_assert!(event2.timestamp <= now_millis);
-            
+
             // Timestamps should not be too old (within last hour)
             let one_hour_ago = now_millis - (60 * 60 * 1000);
             prop_assert!(event1.timestamp >= one_hour_ago);

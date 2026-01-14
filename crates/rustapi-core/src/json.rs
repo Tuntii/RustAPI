@@ -72,7 +72,10 @@ pub fn to_vec<T: Serialize>(value: &T) -> Result<Vec<u8>, JsonError> {
 ///
 /// Use this when you have a good estimate of the output size to avoid
 /// reallocations.
-pub fn to_vec_with_capacity<T: Serialize>(value: &T, capacity: usize) -> Result<Vec<u8>, JsonError> {
+pub fn to_vec_with_capacity<T: Serialize>(
+    value: &T,
+    capacity: usize,
+) -> Result<Vec<u8>, JsonError> {
     let mut buf = Vec::with_capacity(capacity);
     serde_json::to_writer(&mut buf, value).map_err(JsonError::SerdeJson)?;
     Ok(buf)

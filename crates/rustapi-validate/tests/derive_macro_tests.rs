@@ -4,9 +4,7 @@
 //! Validate and AsyncValidate implementations.
 
 use async_trait::async_trait;
-use rustapi_validate::v2::{
-    AsyncValidate, DatabaseValidator, Validate, ValidationContextBuilder,
-};
+use rustapi_validate::v2::{AsyncValidate, DatabaseValidator, Validate, ValidationContextBuilder};
 use rustapi_validate::DeriveValidate;
 
 // Test struct using the derive macro with sync validation rules

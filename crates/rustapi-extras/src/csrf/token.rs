@@ -88,15 +88,15 @@ mod property_tests {
         fn prop_token_generates_valid_base64(length in token_length_strategy()) {
             let token = CsrfToken::generate(length);
             let token_str = token.as_str();
-            
+
             // Should be non-empty
             prop_assert!(!token_str.is_empty());
-            
+
             // Should be valid base64 (URL_SAFE_NO_PAD)
             use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
             let decoded = URL_SAFE_NO_PAD.decode(token_str);
             prop_assert!(decoded.is_ok());
-            
+
             // Decoded bytes should match the requested length
             prop_assert_eq!(decoded.unwrap().len(), length);
         }
@@ -107,7 +107,7 @@ mod property_tests {
             let token1 = CsrfToken::generate(length);
             let token_str = token1.as_str();
             let token2 = CsrfToken::new(token_str.to_string());
-            
+
             prop_assert_eq!(token1, token2);
             prop_assert_eq!(token1.as_str(), token2.as_str());
         }
@@ -117,7 +117,7 @@ mod property_tests {
         fn prop_tokens_are_unique(length in token_length_strategy()) {
             let token1 = CsrfToken::generate(length);
             let token2 = CsrfToken::generate(length);
-            
+
             // With cryptographically secure random generation,
             // two tokens should never be equal
             prop_assert_ne!(token1, token2);
@@ -130,7 +130,7 @@ mod property_tests {
             let token = CsrfToken::generate(length);
             let as_str = token.as_str();
             let displayed = format!("{}", token);
-            
+
             prop_assert_eq!(as_str, displayed);
         }
 
@@ -139,10 +139,10 @@ mod property_tests {
         fn prop_token_is_url_safe(length in token_length_strategy()) {
             let token = CsrfToken::generate(length);
             let token_str = token.as_str();
-            
+
             // Should not contain padding (=)
             prop_assert!(!token_str.contains('='));
-            
+
             // Should only contain URL-safe base64 chars: A-Za-z0-9_-
             for c in token_str.chars() {
                 prop_assert!(c.is_ascii_alphanumeric() || c == '_' || c == '-');
@@ -157,13 +157,13 @@ mod property_tests {
             max_age_seconds in 3600u64..172800, // 1 to 48 hours
         ) {
             use std::time::Duration;
-            
+
             // Simulate token generation and validation timing
             let token = CsrfToken::generate(length);
-            
+
             // Token should be valid if elapsed < max_age
             let is_valid = Duration::from_secs(elapsed_seconds) < Duration::from_secs(max_age_seconds);
-            
+
             // This property demonstrates the lifecycle concept
             // In actual middleware, tokens would be compared with creation timestamp
             if is_valid {
@@ -171,7 +171,7 @@ mod property_tests {
             } else {
                 prop_assert!(elapsed_seconds >= max_age_seconds);
             }
-            
+
             // Token itself remains structurally valid regardless of time
             prop_assert!(!token.as_str().is_empty());
         }
@@ -181,7 +181,7 @@ mod property_tests {
     fn test_token_debug_doesnt_leak() {
         let token = CsrfToken::generate(32);
         let debug_str = format!("{:?}", token);
-        
+
         // Debug output should not contain the actual token
         assert!(!debug_str.contains(token.as_str()));
         assert!(debug_str.contains("***"));
@@ -191,7 +191,7 @@ mod property_tests {
     fn test_token_clone_equality() {
         let token1 = CsrfToken::generate(32);
         let token2 = token1.clone();
-        
+
         assert_eq!(token1, token2);
         assert_eq!(token1.as_str(), token2.as_str());
     }

@@ -1,5 +1,5 @@
 use crate::backend::{JobBackend, JobRequest};
-use crate::error::{JobError, Result};
+use crate::error::Result;
 use crate::job::{Job, JobContext, JobHandler};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -242,12 +242,12 @@ mod property_tests {
         #[test]
         fn prop_exponential_backoff_calculation(attempts in 0u32..10) {
             let expected_backoff = 2u64.saturating_pow(attempts).min(86400);
-            
+
             // This is the formula used in process_one for retries
             let calculated_backoff = 2u64.saturating_pow(attempts).min(86400);
-            
+
             prop_assert_eq!(calculated_backoff, expected_backoff);
-            
+
             // Verify exponential growth
             if attempts > 0 && expected_backoff < 86400 {
                 let previous = 2u64.saturating_pow(attempts - 1);
@@ -476,10 +476,10 @@ mod property_tests {
         fn prop_backoff_exponential_not_linear(attempt in 1u32..8) {
             let backoff_current = 2u64.saturating_pow(attempt);
             let backoff_previous = 2u64.saturating_pow(attempt - 1);
-            
+
             // Exponential: backoff_current = 2 * backoff_previous
             prop_assert_eq!(backoff_current, backoff_previous * 2);
-            
+
             // NOT linear: backoff_current != backoff_previous + constant
             let linear_would_be = backoff_previous + 2; // Linear increment of 2
             if attempt > 1 {
@@ -491,10 +491,10 @@ mod property_tests {
         #[test]
         fn prop_backoff_capped(attempt in 20u32..30) {
             let backoff = 2u64.saturating_pow(attempt).min(86400);
-            
+
             // MUST be capped at 86400
             prop_assert_eq!(backoff, 86400);
-            
+
             // Without cap, would be much larger
             let uncapped = 2u64.saturating_pow(attempt);
             prop_assert!(uncapped > 86400);

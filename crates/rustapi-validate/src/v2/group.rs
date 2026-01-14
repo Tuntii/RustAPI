@@ -32,7 +32,7 @@ use serde::{Deserialize, Serialize};
 ///     }
 /// }
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ValidationGroup {
     /// Validation rules for creating new records
@@ -42,6 +42,7 @@ pub enum ValidationGroup {
     /// Custom validation group with a name
     Custom(String),
     /// Default group - applies to all operations
+    #[default]
     Default,
 }
 
@@ -70,12 +71,6 @@ impl ValidationGroup {
             ValidationGroup::Custom(name) => name,
             ValidationGroup::Default => "default",
         }
-    }
-}
-
-impl Default for ValidationGroup {
-    fn default() -> Self {
-        Self::Default
     }
 }
 

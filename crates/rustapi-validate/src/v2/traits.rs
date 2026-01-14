@@ -323,10 +323,7 @@ impl SerializableRule {
                     .as_ref()
                     .map(|m| format!(", message = \"{}\"", m))
                     .unwrap_or_default();
-                format!(
-                    "#[validate(async_api(endpoint = \"{}\"{}))]",
-                    endpoint, msg
-                )
+                format!("#[validate(async_api(endpoint = \"{}\"{}))]", endpoint, msg)
             }
         }
     }
@@ -337,55 +334,55 @@ impl SerializableRule {
     /// serialization of validation rules.
     pub fn parse(s: &str) -> Option<Self> {
         let s = s.trim();
-        
+
         // Must start with #[validate( and end with )]
         if !s.starts_with("#[validate(") || !s.ends_with(")]") {
             return None;
         }
-        
+
         // Extract the inner content
         let inner = &s[11..s.len() - 2];
-        
+
         // Parse based on rule type
         if inner == "email" || inner.starts_with("email,") {
             let message = Self::extract_message(inner);
             return Some(SerializableRule::Email { message });
         }
-        
+
         if inner == "url" || inner.starts_with("url,") {
             let message = Self::extract_message(inner);
             return Some(SerializableRule::Url { message });
         }
-        
+
         if inner == "required" || inner.starts_with("required,") {
             let message = Self::extract_message(inner);
             return Some(SerializableRule::Required { message });
         }
-        
+
         if inner.starts_with("length(") {
             return Self::parse_length(inner);
         }
-        
+
         if inner.starts_with("range(") {
             return Self::parse_range(inner);
         }
-        
+
         if inner.starts_with("regex") {
             return Self::parse_regex(inner);
         }
-        
+
         if inner.starts_with("async_unique(") {
             return Self::parse_async_unique(inner);
         }
-        
+
         if inner.starts_with("async_exists(") {
             return Self::parse_async_exists(inner);
         }
-        
+
         if inner.starts_with("async_api(") {
             return Self::parse_async_api(inner);
         }
-        
+
         None
     }
 
@@ -404,15 +401,15 @@ impl SerializableRule {
         if let Some(idx) = s.find(&pattern) {
             let start = idx + pattern.len();
             let rest = &s[start..];
-            
+
             // Check if it's a quoted string
-            if rest.starts_with('"') {
-                if let Some(end) = rest[1..].find('"') {
-                    return Some(rest[1..end + 1].to_string());
+            if let Some(stripped) = rest.strip_prefix('"') {
+                if let Some(end) = stripped.find('"') {
+                    return Some(stripped[..end].to_string());
                 }
             } else {
                 // It's a number or other value
-                let end = rest.find(|c: char| c == ',' || c == ')').unwrap_or(rest.len());
+                let end = rest.find([',', ')']).unwrap_or(rest.len());
                 return Some(rest[..end].trim().to_string());
             }
         }
@@ -434,8 +431,8 @@ impl SerializableRule {
     }
 
     fn parse_regex(s: &str) -> Option<Self> {
-        let pattern = Self::extract_param(s, "regex")
-            .or_else(|| Self::extract_param(s, "pattern"))?;
+        let pattern =
+            Self::extract_param(s, "regex").or_else(|| Self::extract_param(s, "pattern"))?;
         let message = Self::extract_message(s);
         Some(SerializableRule::Regex { pattern, message })
     }
@@ -444,14 +441,22 @@ impl SerializableRule {
         let table = Self::extract_param(s, "table")?;
         let column = Self::extract_param(s, "column")?;
         let message = Self::extract_message(s);
-        Some(SerializableRule::AsyncUnique { table, column, message })
+        Some(SerializableRule::AsyncUnique {
+            table,
+            column,
+            message,
+        })
     }
 
     fn parse_async_exists(s: &str) -> Option<Self> {
         let table = Self::extract_param(s, "table")?;
         let column = Self::extract_param(s, "column")?;
         let message = Self::extract_message(s);
-        Some(SerializableRule::AsyncExists { table, column, message })
+        Some(SerializableRule::AsyncExists {
+            table,
+            column,
+            message,
+        })
     }
 
     fn parse_async_api(s: &str) -> Option<Self> {
@@ -463,8 +468,8 @@ impl SerializableRule {
 
 // Conversion implementations from concrete rules to SerializableRule
 use crate::v2::rules::{
-    AsyncApiRule, AsyncExistsRule, AsyncUniqueRule, EmailRule, LengthRule, RegexRule,
-    RequiredRule, UrlRule,
+    AsyncApiRule, AsyncExistsRule, AsyncUniqueRule, EmailRule, LengthRule, RegexRule, RequiredRule,
+    UrlRule,
 };
 
 impl From<EmailRule> for SerializableRule {
@@ -564,7 +569,10 @@ mod tests {
             max: Some(50),
             message: None,
         };
-        assert_eq!(rule.pretty_print(), "#[validate(length(min = 3, max = 50))]");
+        assert_eq!(
+            rule.pretty_print(),
+            "#[validate(length(min = 3, max = 50))]"
+        );
     }
 
     #[test]

@@ -2,8 +2,8 @@
 //!
 //! This module contains both synchronous and asynchronous validation rules.
 
-mod sync_rules;
 mod async_rules;
+mod sync_rules;
 
-pub use sync_rules::*;
 pub use async_rules::*;
+pub use sync_rules::*;

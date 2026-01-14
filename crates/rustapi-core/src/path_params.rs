@@ -46,10 +46,7 @@ impl PathParams {
     /// Get a value by key.
     #[inline]
     pub fn get(&self, key: &str) -> Option<&String> {
-        self.inner
-            .iter()
-            .find(|(k, _)| k == key)
-            .map(|(_, v)| v)
+        self.inner.iter().find(|(k, _)| k == key).map(|(_, v)| v)
     }
 
     /// Check if a key exists.
@@ -133,11 +130,11 @@ mod tests {
         let mut params = PathParams::new();
         params.insert("id".to_string(), "123".to_string());
         params.insert("name".to_string(), "test".to_string());
-        
+
         assert_eq!(params.get("id"), Some(&"123".to_string()));
         assert_eq!(params.get("name"), Some(&"test".to_string()));
         assert_eq!(params.len(), 2);
-        
+
         // Should be on stack (not spilled)
         assert!(!params.inner.spilled());
     }
@@ -148,7 +145,7 @@ mod tests {
         for i in 0..10 {
             params.insert(format!("key{}", i), format!("value{}", i));
         }
-        
+
         assert_eq!(params.len(), 10);
         // Should have spilled to heap
         assert!(params.inner.spilled());
@@ -156,10 +153,8 @@ mod tests {
 
     #[test]
     fn test_from_iterator() {
-        let params: PathParams = [("a", "1"), ("b", "2"), ("c", "3")]
-            .into_iter()
-            .collect();
-        
+        let params: PathParams = [("a", "1"), ("b", "2"), ("c", "3")].into_iter().collect();
+
         assert_eq!(params.get("a"), Some(&"1".to_string()));
         assert_eq!(params.get("b"), Some(&"2".to_string()));
         assert_eq!(params.get("c"), Some(&"3".to_string()));
@@ -169,7 +164,7 @@ mod tests {
     fn test_to_hashmap_conversion() {
         let mut params = PathParams::new();
         params.insert("id".to_string(), "42".to_string());
-        
+
         let map = params.to_hashmap();
         assert_eq!(map.get("id"), Some(&"42".to_string()));
     }

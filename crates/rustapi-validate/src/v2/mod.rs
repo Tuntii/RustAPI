@@ -55,9 +55,13 @@ pub use traits::{AsyncValidate, AsyncValidationRule, SerializableRule, Validate,
 
 /// Prelude module for v2 validation
 pub mod prelude {
-    pub use super::context::{DatabaseValidator, HttpValidator, ValidationContext, ValidationContextBuilder};
+    pub use super::context::{
+        DatabaseValidator, HttpValidator, ValidationContext, ValidationContextBuilder,
+    };
     pub use super::error::{RuleError, ValidationErrors};
     pub use super::group::{GroupedRule, GroupedRules, ValidationGroup};
     pub use super::rules::*;
-    pub use super::traits::{AsyncValidate, AsyncValidationRule, SerializableRule, Validate, ValidationRule};
+    pub use super::traits::{
+        AsyncValidate, AsyncValidationRule, SerializableRule, Validate, ValidationRule,
+    };
 }

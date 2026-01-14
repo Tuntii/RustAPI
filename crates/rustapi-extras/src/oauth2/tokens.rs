@@ -304,7 +304,9 @@ mod property_tests {
     fn refresh_token_strategy() -> impl Strategy<Value = Option<String>> {
         prop_oneof![
             Just(None),
-            prop::string::string_regex("[a-zA-Z0-9_.-]{20,100}").unwrap().prop_map(Some),
+            prop::string::string_regex("[a-zA-Z0-9_.-]{20,100}")
+                .unwrap()
+                .prop_map(Some),
         ]
     }
 
@@ -334,7 +336,7 @@ mod property_tests {
             token_type in token_type_strategy(),
         ) {
             let response = TokenResponse::new(access_token.clone(), token_type.clone());
-            
+
             prop_assert_eq!(response.access_token(), access_token.as_str());
             prop_assert_eq!(response.token_type(), token_type.as_str());
         }
@@ -349,14 +351,14 @@ mod property_tests {
             let expires_in = Duration::from_secs(expires_in_secs);
             let response = TokenResponse::new(access_token, token_type)
                 .with_expires_in(expires_in);
-            
+
             // Token should not be expired immediately after creation
             prop_assert!(!response.is_expired());
-            
+
             // Token should have expiration time
             let remaining = response.expires_in();
             prop_assert!(remaining.is_some());
-            
+
             // Remaining time should be close to expires_in (within a few seconds)
             let remaining_secs = remaining.unwrap().as_secs();
             prop_assert!(remaining_secs <= expires_in_secs);
@@ -372,18 +374,18 @@ mod property_tests {
             scopes in scopes_strategy(),
         ) {
             let mut response = TokenResponse::new(access_token.clone(), token_type.clone());
-            
+
             if let Some(ref rt) = refresh_token {
                 response = response.with_refresh_token(rt.clone());
             }
-            
+
             if let Some(ref sc) = scopes {
                 response = response.with_scopes(sc.clone());
             }
-            
+
             prop_assert_eq!(response.access_token(), access_token.as_str());
             prop_assert_eq!(response.refresh_token(), refresh_token.as_deref());
-            
+
             match (response.scopes(), scopes.as_ref()) {
                 (Some(got), Some(expected)) => prop_assert_eq!(got, expected.as_slice()),
                 (None, None) => {},
@@ -399,10 +401,10 @@ mod property_tests {
         ) {
             let response = TokenResponse::new(access_token.clone(), token_type.clone());
             let header = response.authorization_header();
-            
+
             let expected = format!("{} {}", token_type, access_token);
             prop_assert_eq!(header, expected);
-            
+
             // Header should start with token type
             prop_assert!(header.starts_with(&token_type));
             // Header should end with access token
@@ -414,11 +416,11 @@ mod property_tests {
         fn prop_pkce_generates_unique_challenges(_seed in 0u32..100) {
             let pkce1 = PkceVerifier::generate();
             let pkce2 = PkceVerifier::generate();
-            
+
             // Each generation should produce unique verifiers and challenges
             prop_assert_ne!(pkce1.verifier(), pkce2.verifier());
             prop_assert_ne!(pkce1.challenge(), pkce2.challenge());
-            
+
             // Method should always be S256
             prop_assert_eq!(pkce1.method(), "S256");
             prop_assert_eq!(pkce2.method(), "S256");
@@ -428,14 +430,14 @@ mod property_tests {
         #[test]
         fn prop_pkce_verifier_challenge_different(_seed in 0u32..100) {
             let pkce = PkceVerifier::generate();
-            
+
             // Verifier and challenge must be different (challenge is hash of verifier)
             prop_assert_ne!(pkce.verifier(), pkce.challenge());
-            
+
             // Both should be non-empty
             prop_assert!(!pkce.verifier().is_empty());
             prop_assert!(!pkce.challenge().is_empty());
-            
+
             // Both should be URL-safe base64
             prop_assert!(!pkce.verifier().contains('='));
             prop_assert!(!pkce.challenge().contains('='));
@@ -446,19 +448,19 @@ mod property_tests {
         fn prop_pkce_challenge_deterministic(verifier_input in "[a-zA-Z0-9_-]{32,64}") {
             use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
             use sha2::{Digest, Sha256};
-            
+
             // Create challenge from verifier
             let mut hasher = Sha256::new();
             hasher.update(verifier_input.as_bytes());
             let hash = hasher.finalize();
             let expected_challenge = URL_SAFE_NO_PAD.encode(hash);
-            
+
             // Generate again with same verifier - should produce same challenge
             let mut hasher2 = Sha256::new();
             hasher2.update(verifier_input.as_bytes());
             let hash2 = hasher2.finalize();
             let challenge2 = URL_SAFE_NO_PAD.encode(hash2);
-            
+
             prop_assert_eq!(expected_challenge, challenge2);
         }
 
@@ -467,7 +469,7 @@ mod property_tests {
         fn prop_csrf_state_unique(_seed in 0u32..100) {
             let state1 = CsrfState::generate();
             let state2 = CsrfState::generate();
-            
+
             // Each state should be unique
             prop_assert_ne!(state1, state2);
             prop_assert_ne!(state1.as_str(), state2.as_str());
@@ -480,12 +482,12 @@ mod property_tests {
             invalid_state_str in "[a-zA-Z0-9_-]{10,50}",
         ) {
             prop_assume!(valid_state_str != invalid_state_str);
-            
+
             let state = CsrfState::new(valid_state_str.clone());
-            
+
             // Should verify against itself
             prop_assert!(state.verify(&valid_state_str));
-            
+
             // Should not verify against different string
             prop_assert!(!state.verify(&invalid_state_str));
         }
@@ -495,7 +497,7 @@ mod property_tests {
         fn prop_csrf_state_roundtrip(state_str in "[a-zA-Z0-9_-]{10,50}") {
             let state1 = CsrfState::new(state_str.clone());
             let state2 = CsrfState::new(state1.as_str().to_string());
-            
+
             prop_assert_eq!(state1, state2);
             prop_assert_eq!(state1.as_str(), state2.as_str());
         }
@@ -507,7 +509,7 @@ mod property_tests {
             has_expiration in proptest::bool::ANY,
         ) {
             let mut response = TokenResponse::new(access_token, "Bearer".to_string());
-            
+
             if has_expiration {
                 response = response.with_expires_in(Duration::from_secs(3600));
                 prop_assert!(!response.is_expired());

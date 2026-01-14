@@ -19,8 +19,8 @@ use proc_macro::TokenStream;
 use quote::quote;
 use std::collections::HashSet;
 use syn::{
-    parse_macro_input, FnArg, GenericArgument, ItemFn, LitStr, PathArguments, ReturnType, Type,
-    DeriveInput, Data, Fields, Attribute, Meta, Expr, Lit,
+    parse_macro_input, Attribute, Data, DeriveInput, Expr, Fields, FnArg, GenericArgument, ItemFn,
+    Lit, LitStr, Meta, PathArguments, ReturnType, Type,
 };
 
 /// Auto-register a schema type for zero-config OpenAPI.
@@ -587,7 +587,6 @@ pub fn description(attr: TokenStream, item: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
-
 // ============================================
 // Validation Derive Macro
 // ============================================
@@ -616,9 +615,9 @@ fn parse_validate_attrs(attrs: &[Attribute]) -> Vec<ValidationRuleInfo> {
             if let Some(rule) = parse_validate_meta(&meta) {
                 rules.push(rule);
             }
-        } else if let Ok(nested) = attr.parse_args_with(
-            syn::punctuated::Punctuated::<Meta, syn::Token![,]>::parse_terminated,
-        ) {
+        } else if let Ok(nested) = attr
+            .parse_args_with(syn::punctuated::Punctuated::<Meta, syn::Token![,]>::parse_terminated)
+        {
             for meta in nested {
                 if let Some(rule) = parse_validate_meta(&meta) {
                     rules.push(rule);
@@ -655,20 +654,17 @@ fn parse_validate_meta(meta: &Meta) -> Option<ValidationRuleInfo> {
                 syn::punctuated::Punctuated::<Meta, syn::Token![,]>::parse_terminated,
             ) {
                 for nested_meta in nested {
-                    match &nested_meta {
-                        Meta::NameValue(nv) => {
-                            let key = nv.path.get_ident()?.to_string();
-                            let value = expr_to_string(&nv.value)?;
-                            
-                            if key == "message" {
-                                message = Some(value);
-                            } else if key == "group" {
-                                group = Some(value);
-                            } else {
-                                params.push((key, value));
-                            }
+                    if let Meta::NameValue(nv) = &nested_meta {
+                        let key = nv.path.get_ident()?.to_string();
+                        let value = expr_to_string(&nv.value)?;
+
+                        if key == "message" {
+                            message = Some(value);
+                        } else if key == "group" {
+                            group = Some(value);
+                        } else {
+                            params.push((key, value));
                         }
-                        _ => {}
                     }
                 }
             }
@@ -684,7 +680,7 @@ fn parse_validate_meta(meta: &Meta) -> Option<ValidationRuleInfo> {
             // Rule like #[validate(regex = "pattern")]
             let rule_type = nv.path.get_ident()?.to_string();
             let value = expr_to_string(&nv.value)?;
-            
+
             Some(ValidationRuleInfo {
                 rule_type: rule_type.clone(),
                 params: vec![(rule_type, value)],
@@ -720,7 +716,11 @@ fn generate_rule_validation(
 
     match rule.rule_type.as_str() {
         "email" => {
-            let message = rule.message.as_ref().map(|m| quote! { .with_message(#m) }).unwrap_or_default();
+            let message = rule
+                .message
+                .as_ref()
+                .map(|m| quote! { .with_message(#m) })
+                .unwrap_or_default();
             quote! {
                 {
                     let rule = ::rustapi_validate::v2::EmailRule::new() #message;
@@ -731,17 +731,31 @@ fn generate_rule_validation(
             }
         }
         "length" => {
-            let min = rule.params.iter().find(|(k, _)| k == "min").map(|(_, v)| v.parse::<usize>().ok()).flatten();
-            let max = rule.params.iter().find(|(k, _)| k == "max").map(|(_, v)| v.parse::<usize>().ok()).flatten();
-            let message = rule.message.as_ref().map(|m| quote! { .with_message(#m) }).unwrap_or_default();
-            
+            let min = rule
+                .params
+                .iter()
+                .find(|(k, _)| k == "min")
+                .and_then(|(_, v)| v.parse::<usize>().ok());
+            let max = rule
+                .params
+                .iter()
+                .find(|(k, _)| k == "max")
+                .and_then(|(_, v)| v.parse::<usize>().ok());
+            let message = rule
+                .message
+                .as_ref()
+                .map(|m| quote! { .with_message(#m) })
+                .unwrap_or_default();
+
             let rule_creation = match (min, max) {
-                (Some(min), Some(max)) => quote! { ::rustapi_validate::v2::LengthRule::new(#min, #max) },
+                (Some(min), Some(max)) => {
+                    quote! { ::rustapi_validate::v2::LengthRule::new(#min, #max) }
+                }
                 (Some(min), None) => quote! { ::rustapi_validate::v2::LengthRule::min(#min) },
                 (None, Some(max)) => quote! { ::rustapi_validate::v2::LengthRule::max(#max) },
                 (None, None) => quote! { ::rustapi_validate::v2::LengthRule::new(0, usize::MAX) },
             };
-            
+
             quote! {
                 {
                     let rule = #rule_creation #message;
@@ -752,10 +766,22 @@ fn generate_rule_validation(
             }
         }
         "range" => {
-            let min = rule.params.iter().find(|(k, _)| k == "min").map(|(_, v)| v.clone());
-            let max = rule.params.iter().find(|(k, _)| k == "max").map(|(_, v)| v.clone());
-            let message = rule.message.as_ref().map(|m| quote! { .with_message(#m) }).unwrap_or_default();
-            
+            let min = rule
+                .params
+                .iter()
+                .find(|(k, _)| k == "min")
+                .map(|(_, v)| v.clone());
+            let max = rule
+                .params
+                .iter()
+                .find(|(k, _)| k == "max")
+                .map(|(_, v)| v.clone());
+            let message = rule
+                .message
+                .as_ref()
+                .map(|m| quote! { .with_message(#m) })
+                .unwrap_or_default();
+
             // Determine the numeric type from the field type
             let rule_creation = match (min, max) {
                 (Some(min), Some(max)) => {
@@ -775,7 +801,7 @@ fn generate_rule_validation(
                     return quote! {};
                 }
             };
-            
+
             quote! {
                 {
                     let rule = #rule_creation #message;
@@ -786,9 +812,18 @@ fn generate_rule_validation(
             }
         }
         "regex" => {
-            let pattern = rule.params.iter().find(|(k, _)| k == "regex" || k == "pattern").map(|(_, v)| v.clone()).unwrap_or_default();
-            let message = rule.message.as_ref().map(|m| quote! { .with_message(#m) }).unwrap_or_default();
-            
+            let pattern = rule
+                .params
+                .iter()
+                .find(|(k, _)| k == "regex" || k == "pattern")
+                .map(|(_, v)| v.clone())
+                .unwrap_or_default();
+            let message = rule
+                .message
+                .as_ref()
+                .map(|m| quote! { .with_message(#m) })
+                .unwrap_or_default();
+
             quote! {
                 {
                     let rule = ::rustapi_validate::v2::RegexRule::new(#pattern) #message;
@@ -799,7 +834,11 @@ fn generate_rule_validation(
             }
         }
         "url" => {
-            let message = rule.message.as_ref().map(|m| quote! { .with_message(#m) }).unwrap_or_default();
+            let message = rule
+                .message
+                .as_ref()
+                .map(|m| quote! { .with_message(#m) })
+                .unwrap_or_default();
             quote! {
                 {
                     let rule = ::rustapi_validate::v2::UrlRule::new() #message;
@@ -810,7 +849,11 @@ fn generate_rule_validation(
             }
         }
         "required" => {
-            let message = rule.message.as_ref().map(|m| quote! { .with_message(#m) }).unwrap_or_default();
+            let message = rule
+                .message
+                .as_ref()
+                .map(|m| quote! { .with_message(#m) })
+                .unwrap_or_default();
             quote! {
                 {
                     let rule = ::rustapi_validate::v2::RequiredRule::new() #message;
@@ -837,10 +880,24 @@ fn generate_async_rule_validation(
 
     match rule.rule_type.as_str() {
         "async_unique" => {
-            let table = rule.params.iter().find(|(k, _)| k == "table").map(|(_, v)| v.clone()).unwrap_or_default();
-            let column = rule.params.iter().find(|(k, _)| k == "column").map(|(_, v)| v.clone()).unwrap_or_default();
-            let message = rule.message.as_ref().map(|m| quote! { .with_message(#m) }).unwrap_or_default();
-            
+            let table = rule
+                .params
+                .iter()
+                .find(|(k, _)| k == "table")
+                .map(|(_, v)| v.clone())
+                .unwrap_or_default();
+            let column = rule
+                .params
+                .iter()
+                .find(|(k, _)| k == "column")
+                .map(|(_, v)| v.clone())
+                .unwrap_or_default();
+            let message = rule
+                .message
+                .as_ref()
+                .map(|m| quote! { .with_message(#m) })
+                .unwrap_or_default();
+
             quote! {
                 {
                     let rule = ::rustapi_validate::v2::AsyncUniqueRule::new(#table, #column) #message;
@@ -851,10 +908,24 @@ fn generate_async_rule_validation(
             }
         }
         "async_exists" => {
-            let table = rule.params.iter().find(|(k, _)| k == "table").map(|(_, v)| v.clone()).unwrap_or_default();
-            let column = rule.params.iter().find(|(k, _)| k == "column").map(|(_, v)| v.clone()).unwrap_or_default();
-            let message = rule.message.as_ref().map(|m| quote! { .with_message(#m) }).unwrap_or_default();
-            
+            let table = rule
+                .params
+                .iter()
+                .find(|(k, _)| k == "table")
+                .map(|(_, v)| v.clone())
+                .unwrap_or_default();
+            let column = rule
+                .params
+                .iter()
+                .find(|(k, _)| k == "column")
+                .map(|(_, v)| v.clone())
+                .unwrap_or_default();
+            let message = rule
+                .message
+                .as_ref()
+                .map(|m| quote! { .with_message(#m) })
+                .unwrap_or_default();
+
             quote! {
                 {
                     let rule = ::rustapi_validate::v2::AsyncExistsRule::new(#table, #column) #message;
@@ -865,9 +936,18 @@ fn generate_async_rule_validation(
             }
         }
         "async_api" => {
-            let endpoint = rule.params.iter().find(|(k, _)| k == "endpoint").map(|(_, v)| v.clone()).unwrap_or_default();
-            let message = rule.message.as_ref().map(|m| quote! { .with_message(#m) }).unwrap_or_default();
-            
+            let endpoint = rule
+                .params
+                .iter()
+                .find(|(k, _)| k == "endpoint")
+                .map(|(_, v)| v.clone())
+                .unwrap_or_default();
+            let message = rule
+                .message
+                .as_ref()
+                .map(|m| quote! { .with_message(#m) })
+                .unwrap_or_default();
+
             quote! {
                 {
                     let rule = ::rustapi_validate::v2::AsyncApiRule::new(#endpoint) #message;
@@ -886,7 +966,10 @@ fn generate_async_rule_validation(
 
 /// Check if a rule is async
 fn is_async_rule(rule: &ValidationRuleInfo) -> bool {
-    matches!(rule.rule_type.as_str(), "async_unique" | "async_exists" | "async_api")
+    matches!(
+        rule.rule_type.as_str(),
+        "async_unique" | "async_exists" | "async_api"
+    )
 }
 
 /// Derive macro for implementing Validate and AsyncValidate traits
@@ -932,12 +1015,9 @@ pub fn derive_validate(input: TokenStream) -> TokenStream {
             }
         },
         _ => {
-            return syn::Error::new_spanned(
-                &input,
-                "Validate can only be derived for structs",
-            )
-            .to_compile_error()
-            .into();
+            return syn::Error::new_spanned(&input, "Validate can only be derived for structs")
+                .to_compile_error()
+                .into();
         }
     };
 
@@ -968,9 +1048,9 @@ pub fn derive_validate(input: TokenStream) -> TokenStream {
         impl #impl_generics ::rustapi_validate::v2::Validate for #name #ty_generics #where_clause {
             fn validate(&self) -> Result<(), ::rustapi_validate::v2::ValidationErrors> {
                 let mut errors = ::rustapi_validate::v2::ValidationErrors::new();
-                
+
                 #(#sync_validations)*
-                
+
                 errors.into_result()
             }
         }
@@ -983,9 +1063,9 @@ pub fn derive_validate(input: TokenStream) -> TokenStream {
             impl #impl_generics ::rustapi_validate::v2::AsyncValidate for #name #ty_generics #where_clause {
                 async fn validate_async(&self, ctx: &::rustapi_validate::v2::ValidationContext) -> Result<(), ::rustapi_validate::v2::ValidationErrors> {
                     let mut errors = ::rustapi_validate::v2::ValidationErrors::new();
-                    
+
                     #(#async_validations)*
-                    
+
                     errors.into_result()
                 }
             }

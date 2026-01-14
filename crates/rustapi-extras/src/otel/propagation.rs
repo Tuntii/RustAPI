@@ -350,7 +350,7 @@ mod property_tests {
         fn prop_trace_ids_unique(_seed in 0u32..100) {
             let ctx1 = TraceContext::new();
             let ctx2 = TraceContext::new();
-            
+
             // Each generation should produce unique IDs
             prop_assert_ne!(ctx1.trace_id, ctx2.trace_id);
             prop_assert_ne!(ctx1.span_id, ctx2.span_id);
@@ -360,11 +360,11 @@ mod property_tests {
         #[test]
         fn prop_generated_ids_format(_seed in 0u32..100) {
             let ctx = TraceContext::new();
-            
+
             // Trace ID: 32 hex chars
             prop_assert_eq!(ctx.trace_id.len(), 32);
             prop_assert!(ctx.trace_id.chars().all(|c| c.is_ascii_hexdigit()));
-            
+
             // Span ID: 16 hex chars
             prop_assert_eq!(ctx.span_id.len(), 16);
             prop_assert!(ctx.span_id.chars().all(|c| c.is_ascii_hexdigit()));
@@ -375,13 +375,13 @@ mod property_tests {
         fn prop_child_inherits_trace_id(_seed in 0u32..100) {
             let parent = TraceContext::new();
             let child = parent.child();
-            
+
             // Child MUST have same trace_id as parent
             prop_assert_eq!(child.trace_id, parent.trace_id);
-            
+
             // Child MUST have different span_id
             prop_assert_ne!(child.span_id, parent.span_id);
-            
+
             // Child's parent_span_id MUST be parent's span_id
             prop_assert_eq!(child.parent_span_id, Some(parent.span_id.clone()));
         }
@@ -393,12 +393,12 @@ mod property_tests {
             let child1 = root.child();
             let child2 = child1.child();
             let child3 = child2.child();
-            
+
             // All spans in the chain MUST have same trace_id
             prop_assert_eq!(child1.trace_id, root.trace_id);
             prop_assert_eq!(child2.trace_id, root.trace_id);
             prop_assert_eq!(child3.trace_id, root.trace_id);
-            
+
             // Each span MUST have unique span_id
             let span_ids = vec![&root.span_id, &child1.span_id, &child2.span_id, &child3.span_id];
             for i in 0..span_ids.len() {
@@ -406,7 +406,7 @@ mod property_tests {
                     prop_assert_ne!(span_ids[i], span_ids[j]);
                 }
             }
-            
+
             // Parent relationships MUST be correct
             prop_assert_eq!(child1.parent_span_id, Some(root.span_id.clone()));
             prop_assert_eq!(child2.parent_span_id, Some(child1.span_id.clone()));
@@ -418,10 +418,10 @@ mod property_tests {
         fn prop_correlation_id_propagation(_seed in 0u32..100) {
             let root = TraceContext::new();
             let correlation_id = root.correlation_id.clone();
-            
+
             let child1 = root.child();
             let child2 = child1.child();
-            
+
             // Correlation ID MUST propagate through entire chain
             prop_assert_eq!(child1.correlation_id, correlation_id);
             prop_assert_eq!(child2.correlation_id, correlation_id);
@@ -442,24 +442,24 @@ mod property_tests {
                 trace_state: None,
                 correlation_id: None,
             };
-            
+
             let traceparent = ctx.to_traceparent();
-            
+
             // Format: version-trace_id-span_id-flags
             let parts: Vec<&str> = traceparent.split('-').collect();
             prop_assert_eq!(parts.len(), 4);
-            
+
             // Version must be "00"
             prop_assert_eq!(parts[0], "00");
-            
+
             // Trace ID must match (32 hex chars)
             prop_assert_eq!(parts[1], trace_id);
             prop_assert_eq!(parts[1].len(), 32);
-            
+
             // Span ID must match (16 hex chars)
             prop_assert_eq!(parts[2], span_id);
             prop_assert_eq!(parts[2].len(), 16);
-            
+
             // Flags must be 2 hex chars
             prop_assert_eq!(parts[3].len(), 2);
             prop_assert_eq!(parts[3], format!("{:02x}", flags));
@@ -480,13 +480,13 @@ mod property_tests {
                 trace_state: None,
                 correlation_id: None,
             };
-            
+
             // Serialize to traceparent
             let traceparent = original.to_traceparent();
-            
+
             // Deserialize back
             let parsed = TraceContext::from_traceparent(&traceparent).unwrap();
-            
+
             // All fields must match
             prop_assert_eq!(parsed.trace_id, original.trace_id);
             prop_assert_eq!(parsed.span_id, original.span_id);
@@ -498,10 +498,10 @@ mod property_tests {
         fn prop_sampled_flag_encoding(sampled in proptest::bool::ANY) {
             let mut ctx = TraceContext::new();
             ctx.set_sampled(sampled);
-            
+
             // Sampled flag should be reflected in is_sampled()
             prop_assert_eq!(ctx.is_sampled(), sampled);
-            
+
             // Sampled flag should survive serialization
             let traceparent = ctx.to_traceparent();
             let parsed = TraceContext::from_traceparent(&traceparent).unwrap();
@@ -519,7 +519,7 @@ mod property_tests {
             // Wrong version
             let invalid1 = format!("{}-{}-{}-{}", invalid_version, trace_id, span_id, flags);
             prop_assert!(TraceContext::from_traceparent(&invalid1).is_none());
-            
+
             // Missing parts
             let invalid2 = format!("00-{}-{}", trace_id, span_id);
             prop_assert!(TraceContext::from_traceparent(&invalid2).is_none());
@@ -530,9 +530,9 @@ mod property_tests {
         fn prop_trace_state_propagation(state in "[a-z0-9=,]{5,50}") {
             let mut ctx = TraceContext::new();
             ctx.trace_state = Some(state.clone());
-            
+
             let child = ctx.child();
-            
+
             // Trace state MUST propagate to child
             prop_assert_eq!(child.trace_state, Some(state));
         }
@@ -541,16 +541,16 @@ mod property_tests {
         #[test]
         fn prop_correlation_id_format(_seed in 0u32..100) {
             let ctx = TraceContext::new();
-            
+
             prop_assert!(ctx.correlation_id.is_some());
             let corr_id = ctx.correlation_id.unwrap();
-            
+
             // Should be non-empty
             prop_assert!(!corr_id.is_empty());
-            
+
             // Should contain hex characters and hyphen
             prop_assert!(corr_id.contains('-'));
-            
+
             // Parts should be hex
             let parts: Vec<&str> = corr_id.split('-').collect();
             prop_assert_eq!(parts.len(), 2);
@@ -573,18 +573,18 @@ mod property_tests {
                 trace_state: None,
                 correlation_id: Some("test-corr-id".to_string()),
             };
-            
+
             // Inject into headers
             let mut headers = http::HeaderMap::new();
             inject_trace_context(&mut headers, &original);
-            
+
             // Headers should contain traceparent
             prop_assert!(headers.contains_key(TRACEPARENT_HEADER));
-            
+
             // Extract traceparent back
             let traceparent_value = headers.get(TRACEPARENT_HEADER).unwrap().to_str().unwrap();
             let extracted = TraceContext::from_traceparent(traceparent_value).unwrap();
-            
+
             // Verify trace context is preserved
             prop_assert_eq!(extracted.trace_id, original.trace_id);
             prop_assert_eq!(extracted.span_id, original.span_id);

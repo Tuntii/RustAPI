@@ -196,7 +196,8 @@ impl DieselPoolBuilder {
     {
         self.config.validate()?;
 
-        let manager = diesel::r2d2::ConnectionManager::<diesel::PgConnection>::new(&self.config.url);
+        let manager =
+            diesel::r2d2::ConnectionManager::<diesel::PgConnection>::new(&self.config.url);
 
         let mut builder = r2d2::Pool::builder()
             .max_size(self.config.max_connections)
@@ -267,8 +268,10 @@ impl DieselPoolBuilder {
     #[cfg(feature = "diesel-sqlite")]
     pub fn build_sqlite(
         self,
-    ) -> Result<r2d2::Pool<diesel::r2d2::ConnectionManager<diesel::SqliteConnection>>, DieselPoolError>
-    {
+    ) -> Result<
+        r2d2::Pool<diesel::r2d2::ConnectionManager<diesel::SqliteConnection>>,
+        DieselPoolError,
+    > {
         self.config.validate()?;
 
         let manager =
@@ -356,7 +359,6 @@ impl DieselPoolBuilder {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -399,7 +401,10 @@ mod tests {
         let config = DieselPoolConfig::default();
         let result = config.validate();
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), DieselPoolError::Configuration(_)));
+        assert!(matches!(
+            result.unwrap_err(),
+            DieselPoolError::Configuration(_)
+        ));
     }
 
     #[test]

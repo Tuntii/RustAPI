@@ -266,7 +266,7 @@ pub struct JsonSchema2020 {
 #[serde(untagged)]
 pub enum AdditionalProperties {
     Bool(bool),
-    Schema(JsonSchema2020),
+    Schema(Box<JsonSchema2020>),
 }
 
 /// Discriminator for polymorphism

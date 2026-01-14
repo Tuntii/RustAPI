@@ -447,7 +447,7 @@ impl VersionedSpecBuilder {
 
             // Add deprecation info
             if config.deprecated {
-                let mut info = format!("DEPRECATED");
+                let mut info = "DEPRECATED".to_string();
                 if let Some(msg) = &config.deprecation_message {
                     info.push_str(&format!(": {}", msg));
                 }

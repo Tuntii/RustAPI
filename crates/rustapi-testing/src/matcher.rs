@@ -173,7 +173,7 @@ mod property_tests {
         ) {
             let matcher = RequestMatcher::new();
             let headers = HeaderMap::new();
-            
+
             // Empty matcher MUST match any request
             prop_assert!(matcher.matches(&method, &path, &headers, body.as_bytes()));
         }
@@ -229,7 +229,7 @@ mod property_tests {
         ) {
             let matcher = RequestMatcher::new()
                 .header(header_name.clone(), header_value.clone());
-            
+
             let mut headers_match = HeaderMap::new();
             headers_match.insert(
                 http::header::HeaderName::from_bytes(header_name.as_bytes()).unwrap(),
@@ -267,7 +267,7 @@ mod property_tests {
             let headers = HeaderMap::new();
 
             let matching_body = serde_json::to_vec(&json_body).unwrap();
-            
+
             // MUST match exact JSON body
             prop_assert!(matcher.matches(&method, &path, &headers, &matching_body));
 
@@ -422,12 +422,12 @@ mod property_tests {
         ) {
             let json_ordered = json!({"a": 1, "b": 2, "c": 3});
             let json_reordered = json!({"c": 3, "a": 1, "b": 2});
-            
+
             let matcher = RequestMatcher::new().body_json(json_ordered);
             let headers = HeaderMap::new();
 
             let body = serde_json::to_vec(&json_reordered).unwrap();
-            
+
             // MUST match regardless of field order (JSON semantics)
             prop_assert!(matcher.matches(&method, &path, &headers, &body));
         }

@@ -14,10 +14,7 @@ mod property_tests {
 
     // Strategy for generating optional strings (for custom messages)
     fn optional_message_strategy() -> impl Strategy<Value = Option<String>> {
-        prop_oneof![
-            Just(None),
-            "[a-zA-Z0-9 ]{1,50}".prop_map(Some),
-        ]
+        prop_oneof![Just(None), "[a-zA-Z0-9 ]{1,50}".prop_map(Some),]
     }
 
     // Strategy for generating EmailRule
@@ -76,30 +73,24 @@ mod property_tests {
 
     // Strategy for generating AsyncUniqueRule
     fn async_unique_rule_strategy() -> impl Strategy<Value = AsyncUniqueRule> {
-        (
-            "[a-z_]{1,20}",
-            "[a-z_]{1,20}",
-            optional_message_strategy(),
-        )
-            .prop_map(|(table, column, message)| AsyncUniqueRule {
+        ("[a-z_]{1,20}", "[a-z_]{1,20}", optional_message_strategy()).prop_map(
+            |(table, column, message)| AsyncUniqueRule {
                 table,
                 column,
                 message,
-            })
+            },
+        )
     }
 
     // Strategy for generating AsyncExistsRule
     fn async_exists_rule_strategy() -> impl Strategy<Value = AsyncExistsRule> {
-        (
-            "[a-z_]{1,20}",
-            "[a-z_]{1,20}",
-            optional_message_strategy(),
-        )
-            .prop_map(|(table, column, message)| AsyncExistsRule {
+        ("[a-z_]{1,20}", "[a-z_]{1,20}", optional_message_strategy()).prop_map(
+            |(table, column, message)| AsyncExistsRule {
                 table,
                 column,
                 message,
-            })
+            },
+        )
     }
 
     // Strategy for generating AsyncApiRule
@@ -120,44 +111,43 @@ mod property_tests {
                 prop_oneof![Just(None), (0usize..1000).prop_map(Some)],
                 optional_message_strategy(),
             )
-                .prop_map(|(min, max, message)| SerializableRule::Length { min, max, message }),
+                .prop_map(|(min, max, message)| SerializableRule::Length {
+                    min,
+                    max,
+                    message
+                }),
             // Use integer values cast to f64 to avoid floating point precision issues
             (
                 prop_oneof![Just(None), (-1000i64..1000).prop_map(|v| Some(v as f64))],
                 prop_oneof![Just(None), (-1000i64..1000).prop_map(|v| Some(v as f64))],
                 optional_message_strategy(),
             )
-                .prop_map(|(min, max, message)| SerializableRule::Range { min, max, message }),
+                .prop_map(|(min, max, message)| SerializableRule::Range {
+                    min,
+                    max,
+                    message
+                }),
             (
-                prop_oneof![
-                    Just(r"^\d+$".to_string()),
-                    Just(r"^[a-z]+$".to_string()),
-                ],
+                prop_oneof![Just(r"^\d+$".to_string()), Just(r"^[a-z]+$".to_string()),],
                 optional_message_strategy(),
             )
                 .prop_map(|(pattern, message)| SerializableRule::Regex { pattern, message }),
             optional_message_strategy().prop_map(|message| SerializableRule::Url { message }),
             optional_message_strategy().prop_map(|message| SerializableRule::Required { message }),
-            (
-                "[a-z_]{1,20}",
-                "[a-z_]{1,20}",
-                optional_message_strategy(),
-            )
-                .prop_map(|(table, column, message)| SerializableRule::AsyncUnique {
+            ("[a-z_]{1,20}", "[a-z_]{1,20}", optional_message_strategy(),).prop_map(
+                |(table, column, message)| SerializableRule::AsyncUnique {
                     table,
                     column,
                     message,
-                }),
-            (
-                "[a-z_]{1,20}",
-                "[a-z_]{1,20}",
-                optional_message_strategy(),
-            )
-                .prop_map(|(table, column, message)| SerializableRule::AsyncExists {
+                }
+            ),
+            ("[a-z_]{1,20}", "[a-z_]{1,20}", optional_message_strategy(),).prop_map(
+                |(table, column, message)| SerializableRule::AsyncExists {
                     table,
                     column,
                     message,
-                }),
+                }
+            ),
             (
                 "https://[a-z]{1,10}\\.[a-z]{2,4}/[a-z]{1,10}",
                 optional_message_strategy(),
@@ -464,7 +454,6 @@ mod property_tests {
     }
 }
 
-
 #[cfg(test)]
 mod async_property_tests {
     use crate::v2::context::{DatabaseValidator, HttpValidator, ValidationContextBuilder};
@@ -558,13 +547,13 @@ mod async_property_tests {
     impl Validate for TestUser {
         fn validate(&self) -> Result<(), ValidationErrors> {
             let mut errors = ValidationErrors::new();
-            
+
             // Sync validation: email format
             let email_rule = EmailRule::new();
             if let Err(e) = email_rule.validate(&self.email) {
                 errors.add("email", e);
             }
-            
+
             errors.into_result()
         }
     }
@@ -622,7 +611,7 @@ mod async_property_tests {
                 } else {
                     vec![]
                 };
-                
+
                 let existing_categories = if category_exists {
                     vec![category_id.clone()]
                 } else {
@@ -644,7 +633,7 @@ mod async_property_tests {
                     // Should have errors
                     prop_assert!(result.is_err());
                     let errors = result.unwrap_err();
-                    
+
                     if email_taken {
                         prop_assert!(errors.get("email").is_some());
                     }
@@ -744,7 +733,6 @@ mod async_property_tests {
     }
 }
 
-
 #[cfg(test)]
 mod custom_message_property_tests {
     use crate::v2::error::RuleError;
@@ -783,7 +771,7 @@ mod custom_message_property_tests {
         ) {
             let rule = EmailRule::with_message(custom_msg.clone());
             let result = rule.validate(&invalid_email);
-            
+
             prop_assert!(result.is_err());
             let error = result.unwrap_err();
             prop_assert_eq!(error.message, custom_msg);
@@ -798,11 +786,11 @@ mod custom_message_property_tests {
         ) {
             prop_assume!(min <= max);
             let rule = LengthRule::new(min, max).with_message(custom_msg.clone());
-            
+
             // Use a string that's too short
             let short_value = "ab";
             let result = rule.validate(short_value);
-            
+
             prop_assert!(result.is_err());
             let error = result.unwrap_err();
             prop_assert_eq!(error.message, custom_msg);
@@ -817,11 +805,11 @@ mod custom_message_property_tests {
         ) {
             prop_assume!(min <= max);
             let rule = RangeRule::new(min, max).with_message(custom_msg.clone());
-            
+
             // Use a value below minimum
             let low_value = min - 1;
             let result = rule.validate(&low_value);
-            
+
             prop_assert!(result.is_err());
             let error = result.unwrap_err();
             prop_assert_eq!(error.message, custom_msg);
@@ -834,7 +822,7 @@ mod custom_message_property_tests {
         ) {
             let rule = RequiredRule::with_message(custom_msg.clone());
             let result = rule.validate("");
-            
+
             prop_assert!(result.is_err());
             let error = result.unwrap_err();
             prop_assert_eq!(error.message, custom_msg);
@@ -847,7 +835,7 @@ mod custom_message_property_tests {
         ) {
             let rule = UrlRule::with_message(custom_msg.clone());
             let result = rule.validate("not-a-url");
-            
+
             prop_assert!(result.is_err());
             let error = result.unwrap_err();
             prop_assert_eq!(error.message, custom_msg);
@@ -860,7 +848,7 @@ mod custom_message_property_tests {
         ) {
             let rule = RegexRule::new(r"^\d+$").with_message(custom_msg.clone());
             let result = rule.validate("not-digits");
-            
+
             prop_assert!(result.is_err());
             let error = result.unwrap_err();
             prop_assert_eq!(error.message, custom_msg);
@@ -875,14 +863,14 @@ mod custom_message_property_tests {
         ) {
             prop_assume!(min <= max);
             prop_assume!(actual > max);
-            
+
             let error = RuleError::new("range", "Value {actual} must be between {min} and {max}")
                 .param("min", min)
                 .param("max", max)
                 .param("actual", actual);
-            
+
             let interpolated = error.interpolate_message();
-            
+
             // Check that all placeholders were replaced
             let min_placeholder = "{min}";
             let max_placeholder = "{max}";
@@ -890,7 +878,7 @@ mod custom_message_property_tests {
             prop_assert!(!interpolated.contains(min_placeholder));
             prop_assert!(!interpolated.contains(max_placeholder));
             prop_assert!(!interpolated.contains(actual_placeholder));
-            
+
             // Check that values are present
             prop_assert!(interpolated.contains(&min.to_string()));
             prop_assert!(interpolated.contains(&max.to_string()));
@@ -898,7 +886,6 @@ mod custom_message_property_tests {
         }
     }
 }
-
 
 #[cfg(test)]
 mod validation_group_property_tests {
@@ -936,8 +923,8 @@ mod validation_group_property_tests {
             let mut errors = ValidationErrors::new();
 
             // Email is always required (Default group)
-            let email_rules = GroupedRules::new()
-                .always(RequiredRule::with_message("Email is required"));
+            let email_rules =
+                GroupedRules::new().always(RequiredRule::with_message("Email is required"));
 
             for rule in email_rules.for_group(group) {
                 if let Err(e) = rule.validate(&self.email) {
@@ -956,8 +943,9 @@ mod validation_group_property_tests {
             }
 
             // Password is required only for creates
-            let password_rules = GroupedRules::new()
-                .on_create(RequiredRule::with_message("Password is required for new users"));
+            let password_rules = GroupedRules::new().on_create(RequiredRule::with_message(
+                "Password is required for new users",
+            ));
 
             for rule in password_rules.for_group(group) {
                 if let Err(e) = rule.validate(&self.password) {
@@ -982,7 +970,7 @@ mod validation_group_property_tests {
             };
 
             let result = user.validate_for_group(&group_val);
-            
+
             // Email validation should fail for all groups
             prop_assert!(result.is_err());
             let errors = result.unwrap_err();
@@ -1029,7 +1017,7 @@ mod validation_group_property_tests {
         #[test]
         fn custom_groups_work(custom_name in "[a-z]{1,10}") {
             let custom_group = ValidationGroup::Custom(custom_name.clone());
-            
+
             let rules = GroupedRules::new()
                 .add("custom_rule", custom_group.clone())
                 .always("always_rule");
@@ -1062,7 +1050,7 @@ mod validation_group_property_tests {
         let user = GroupedUser {
             id: Some(1),
             email: "test@example.com".to_string(),
-            password: None,  // Missing password
+            password: None, // Missing password
         };
 
         // Should fail for Create group
@@ -1079,7 +1067,7 @@ mod validation_group_property_tests {
     #[test]
     fn update_rules_apply_only_to_update() {
         let user = GroupedUser {
-            id: None,  // Missing ID
+            id: None, // Missing ID
             email: "test@example.com".to_string(),
             password: Some("password".to_string()),
         };

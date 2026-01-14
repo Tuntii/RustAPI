@@ -97,10 +97,10 @@ pub mod prelude {
     pub use crate::error::{FieldError, ValidationError};
     pub use crate::validate::Validate;
     pub use validator::Validate as ValidatorValidate;
-    
+
     // Re-export v2 prelude
     pub use crate::v2::prelude::*;
-    
+
     // Re-export derive macro
     pub use rustapi_macros::Validate as DeriveValidate;
 }

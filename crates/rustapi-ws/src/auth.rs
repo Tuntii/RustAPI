@@ -165,21 +165,16 @@ impl TokenExtractor {
                         }
                     })
             }
-            TokenExtractor::Query(name) => {
-                req.uri()
-                    .query()
-                    .and_then(|query| {
-                        url::form_urlencoded::parse(query.as_bytes())
-                            .find(|(key, _)| key == name)
-                            .map(|(_, value)| value.into_owned())
-                    })
-            }
-            TokenExtractor::Protocol => {
-                req.headers()
-                    .get("Sec-WebSocket-Protocol")
-                    .and_then(|v| v.to_str().ok())
-                    .map(|s| s.to_string())
-            }
+            TokenExtractor::Query(name) => req.uri().query().and_then(|query| {
+                url::form_urlencoded::parse(query.as_bytes())
+                    .find(|(key, _)| key == name)
+                    .map(|(_, value)| value.into_owned())
+            }),
+            TokenExtractor::Protocol => req
+                .headers()
+                .get("Sec-WebSocket-Protocol")
+                .and_then(|v| v.to_str().ok())
+                .map(|s| s.to_string()),
         }
     }
 }
@@ -322,66 +317,67 @@ mod tests {
     #[test]
     fn test_token_extractor_header() {
         let extractor = TokenExtractor::header("Authorization");
-        
+
         let req = Request::builder()
             .header("Authorization", "Bearer test-token")
             .body(())
             .unwrap();
-        
+
         assert_eq!(extractor.extract(&req), Some("test-token".to_string()));
     }
 
     #[test]
     fn test_token_extractor_header_no_bearer() {
         let extractor = TokenExtractor::header("X-API-Key");
-        
+
         let req = Request::builder()
             .header("X-API-Key", "my-api-key")
             .body(())
             .unwrap();
-        
+
         assert_eq!(extractor.extract(&req), Some("my-api-key".to_string()));
     }
 
     #[test]
     fn test_token_extractor_query() {
         let extractor = TokenExtractor::query("token");
-        
+
         let req = Request::builder()
             .uri("ws://localhost/ws?token=query-token&other=value")
             .body(())
             .unwrap();
-        
+
         assert_eq!(extractor.extract(&req), Some("query-token".to_string()));
     }
 
     #[test]
     fn test_token_extractor_protocol() {
         let extractor = TokenExtractor::protocol();
-        
+
         let req = Request::builder()
             .header("Sec-WebSocket-Protocol", "my-protocol-token")
             .body(())
             .unwrap();
-        
-        assert_eq!(extractor.extract(&req), Some("my-protocol-token".to_string()));
+
+        assert_eq!(
+            extractor.extract(&req),
+            Some("my-protocol-token".to_string())
+        );
     }
 
     #[test]
     fn test_token_extractor_missing() {
         let extractor = TokenExtractor::header("Authorization");
-        
-        let req = Request::builder()
-            .body(())
-            .unwrap();
-        
+
+        let req = Request::builder().body(()).unwrap();
+
         assert_eq!(extractor.extract(&req), None);
     }
 
     #[tokio::test]
     async fn test_accept_all_validator() {
         let validator = AcceptAllValidator;
-        
+
         let result = validator.validate("any-token").await;
         assert!(result.is_ok());
         assert_eq!(result.unwrap().subject(), "any-token");
@@ -390,7 +386,7 @@ mod tests {
     #[tokio::test]
     async fn test_accept_all_validator_empty() {
         let validator = AcceptAllValidator;
-        
+
         let result = validator.validate("").await;
         assert!(result.is_err());
     }
@@ -398,20 +394,20 @@ mod tests {
     #[tokio::test]
     async fn test_reject_all_validator() {
         let validator = RejectAllValidator;
-        
+
         let result = validator.validate("any-token").await;
         assert!(result.is_err());
     }
 
     #[tokio::test]
     async fn test_static_token_validator() {
-        let validator = StaticTokenValidator::new()
-            .add_token("valid-token", Claims::new("user-123"));
-        
+        let validator =
+            StaticTokenValidator::new().add_token("valid-token", Claims::new("user-123"));
+
         let result = validator.validate("valid-token").await;
         assert!(result.is_ok());
         assert_eq!(result.unwrap().subject(), "user-123");
-        
+
         let result = validator.validate("invalid-token").await;
         assert!(result.is_err());
     }
@@ -421,11 +417,9 @@ mod tests {
         let config = WsAuthConfig::new(AcceptAllValidator)
             .extractor(TokenExtractor::header("Authorization"))
             .required(true);
-        
-        let req = Request::builder()
-            .body(())
-            .unwrap();
-        
+
+        let req = Request::builder().body(()).unwrap();
+
         let result = config.authenticate(&req).await;
         assert!(matches!(result, Err(AuthError::TokenMissing)));
     }
@@ -435,11 +429,9 @@ mod tests {
         let config = WsAuthConfig::new(AcceptAllValidator)
             .extractor(TokenExtractor::header("Authorization"))
             .required(false);
-        
-        let req = Request::builder()
-            .body(())
-            .unwrap();
-        
+
+        let req = Request::builder().body(()).unwrap();
+
         let result = config.authenticate(&req).await;
         assert!(result.is_ok());
         assert!(result.unwrap().is_none());
@@ -449,12 +441,12 @@ mod tests {
     async fn test_ws_auth_config_with_token() {
         let config = WsAuthConfig::new(AcceptAllValidator)
             .extractor(TokenExtractor::header("Authorization"));
-        
+
         let req = Request::builder()
             .header("Authorization", "Bearer my-token")
             .body(())
             .unwrap();
-        
+
         let result = config.authenticate(&req).await;
         assert!(result.is_ok());
         let claims = result.unwrap().unwrap();
@@ -466,7 +458,7 @@ mod tests {
         let mut claims = Claims::new("user-123");
         claims.insert("role", "admin");
         claims.insert("tenant", "acme");
-        
+
         assert_eq!(claims.subject(), "user-123");
         assert_eq!(claims.get("role"), Some("admin"));
         assert_eq!(claims.get("tenant"), Some("acme"));
@@ -477,7 +469,7 @@ mod tests {
     fn test_auth_error_display() {
         let err = AuthError::TokenMissing;
         assert_eq!(err.to_string(), "Authentication token missing");
-        
+
         let err = AuthError::validation_failed("custom error");
         assert_eq!(err.to_string(), "Token validation failed: custom error");
     }
@@ -493,7 +485,7 @@ mod tests {
 }
 
 /// Property-based tests for WebSocket authentication
-/// 
+///
 /// **Feature: v1-features-roadmap, Property 10: WebSocket authentication enforcement**
 /// **Validates: Requirements 4.1, 4.3**
 #[cfg(test)]
@@ -528,7 +520,7 @@ mod property_tests {
     proptest! {
         /// **Feature: v1-features-roadmap, Property 10: WebSocket authentication enforcement**
         /// **Validates: Requirements 4.1, 4.3**
-        /// 
+        ///
         /// For any WebSocket connection attempt with required authentication,
         /// if no token is provided, authentication SHALL fail with TokenMissing error.
         #[test]
@@ -540,13 +532,13 @@ mod property_tests {
                 let config = WsAuthConfig::new(AcceptAllValidator)
                     .extractor(extractor)
                     .required(true);
-                
+
                 // Request without any token
                 let req = http::Request::builder()
                     .uri("ws://localhost/ws")
                     .body(())
                     .unwrap();
-                
+
                 let result = config.authenticate(&req).await;
                 prop_assert!(matches!(result, Err(AuthError::TokenMissing)));
                 Ok(())
@@ -555,7 +547,7 @@ mod property_tests {
 
         /// **Feature: v1-features-roadmap, Property 10: WebSocket authentication enforcement**
         /// **Validates: Requirements 4.1, 4.3**
-        /// 
+        ///
         /// For any WebSocket connection attempt with a valid token,
         /// authentication SHALL succeed and return claims.
         #[test]
@@ -568,13 +560,13 @@ mod property_tests {
                 let config = WsAuthConfig::new(AcceptAllValidator)
                     .extractor(TokenExtractor::Header(header_name.clone()))
                     .required(true);
-                
+
                 let req = http::Request::builder()
                     .uri("ws://localhost/ws")
                     .header(&header_name, format!("Bearer {}", token))
                     .body(())
                     .unwrap();
-                
+
                 let result = config.authenticate(&req).await;
                 prop_assert!(result.is_ok());
                 let claims = result.unwrap();
@@ -587,7 +579,7 @@ mod property_tests {
 
         /// **Feature: v1-features-roadmap, Property 10: WebSocket authentication enforcement**
         /// **Validates: Requirements 4.1, 4.3**
-        /// 
+        ///
         /// For any WebSocket connection attempt with a valid token in query,
         /// authentication SHALL succeed and return claims.
         #[test]
@@ -600,13 +592,13 @@ mod property_tests {
                 let config = WsAuthConfig::new(AcceptAllValidator)
                     .extractor(TokenExtractor::Query(param_name.clone()))
                     .required(true);
-                
+
                 let uri = format!("ws://localhost/ws?{}={}", param_name, token);
                 let req = http::Request::builder()
                     .uri(&uri)
                     .body(())
                     .unwrap();
-                
+
                 let result = config.authenticate(&req).await;
                 prop_assert!(result.is_ok());
                 let claims = result.unwrap();
@@ -619,7 +611,7 @@ mod property_tests {
 
         /// **Feature: v1-features-roadmap, Property 10: WebSocket authentication enforcement**
         /// **Validates: Requirements 4.1, 4.3**
-        /// 
+        ///
         /// For any WebSocket connection attempt with an invalid token,
         /// authentication SHALL fail with validation error.
         #[test]
@@ -631,13 +623,13 @@ mod property_tests {
                 let config = WsAuthConfig::new(RejectAllValidator)
                     .extractor(TokenExtractor::Header("Authorization".to_string()))
                     .required(true);
-                
+
                 let req = http::Request::builder()
                     .uri("ws://localhost/ws")
                     .header("Authorization", format!("Bearer {}", token))
                     .body(())
                     .unwrap();
-                
+
                 let result = config.authenticate(&req).await;
                 prop_assert!(result.is_err());
                 prop_assert!(matches!(result, Err(AuthError::ValidationFailed(_))));
@@ -647,7 +639,7 @@ mod property_tests {
 
         /// **Feature: v1-features-roadmap, Property 10: WebSocket authentication enforcement**
         /// **Validates: Requirements 4.1, 4.3**
-        /// 
+        ///
         /// For any WebSocket connection with optional auth and no token,
         /// authentication SHALL succeed with None claims.
         #[test]
@@ -659,12 +651,12 @@ mod property_tests {
                 let config = WsAuthConfig::new(AcceptAllValidator)
                     .extractor(extractor)
                     .required(false);
-                
+
                 let req = http::Request::builder()
                     .uri("ws://localhost/ws")
                     .body(())
                     .unwrap();
-                
+
                 let result = config.authenticate(&req).await;
                 prop_assert!(result.is_ok());
                 prop_assert!(result.unwrap().is_none());
@@ -674,7 +666,7 @@ mod property_tests {
 
         /// **Feature: v1-features-roadmap, Property 10: WebSocket authentication enforcement**
         /// **Validates: Requirements 4.1, 4.3**
-        /// 
+        ///
         /// For any static token validator with known valid tokens,
         /// only those exact tokens SHALL be accepted.
         #[test]
@@ -687,9 +679,9 @@ mod property_tests {
             rt.block_on(async {
                 let validator = StaticTokenValidator::new()
                     .add_token(valid_token.clone(), Claims::new(user_id.clone()));
-                
+
                 let result = validator.validate(&test_token).await;
-                
+
                 if test_token == valid_token {
                     prop_assert!(result.is_ok());
                     let claims = result.unwrap();

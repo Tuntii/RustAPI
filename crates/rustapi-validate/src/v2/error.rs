@@ -92,10 +92,7 @@ impl ValidationErrors {
 
     /// Add an error for a field.
     pub fn add(&mut self, field: impl Into<String>, error: RuleError) {
-        self.fields
-            .entry(field.into())
-            .or_insert_with(Vec::new)
-            .push(error);
+        self.fields.entry(field.into()).or_default().push(error);
     }
 
     /// Add multiple errors for a field.

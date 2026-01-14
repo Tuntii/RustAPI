@@ -371,7 +371,7 @@ mod property_tests {
                 while let Some(result) = streaming_body.next().await {
                     let chunk = result.unwrap();
                     cumulative += chunk.len();
-                    
+
                     // Bytes read MUST match cumulative at each step
                     prop_assert_eq!(streaming_body.bytes_read(), cumulative);
                 }
@@ -437,12 +437,12 @@ mod property_tests {
                 let limit = chunk_size + 100;
 
                 let mut chunks: Vec<Result<Bytes, crate::error::ApiError>> = vec![];
-                
+
                 // Add empty chunks
                 for _ in 0..num_empty {
                     chunks.push(Ok(Bytes::new()));
                 }
-                
+
                 // Add one data chunk
                 chunks.push(Ok(Bytes::from(vec![0u8; chunk_size])));
 
@@ -481,11 +481,11 @@ mod property_tests {
                 let first = streaming_body.next().await;
                 if chunk1_size <= limit {
                     prop_assert!(first.unwrap().is_ok());
-                    
+
                     // Second chunk
                     let second = streaming_body.next().await;
                     let total = chunk1_size + chunk2_size;
-                    
+
                     if total <= limit {
                         // Both within limit
                         prop_assert!(second.unwrap().is_ok());

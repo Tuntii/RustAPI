@@ -7,9 +7,12 @@ pub trait Rule<T: ?Sized> {
     fn validate(&self, value: &T) -> Result<(), FieldError>;
 }
 
+/// Type alias for validation rule functions to reduce complexity.
+type ValidationRuleFn<T> = Box<dyn Fn(&T) -> Result<(), FieldError> + Send + Sync>;
+
 /// A functional validator builder.
 pub struct Validator<T> {
-    rules: Vec<Box<dyn Fn(&T) -> Result<(), FieldError> + Send + Sync>>,
+    rules: Vec<ValidationRuleFn<T>>,
 }
 
 impl<T> Default for Validator<T> {

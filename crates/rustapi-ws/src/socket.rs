@@ -18,7 +18,7 @@ type UpgradedConnection = TungsteniteStream<TokioIo<Upgraded>>;
 /// Internal implementation of the WebSocket stream
 enum StreamImpl {
     /// Direct connection (no heartbeat/management)
-    Direct(UpgradedConnection),
+    Direct(Box<UpgradedConnection>),
     /// Managed connection (heartbeat/cleanup running in background task)
     Managed {
         tx: mpsc::Sender<Message>,
@@ -35,7 +35,7 @@ impl WebSocketStream {
     /// Create a new direct WebSocket stream
     pub(crate) fn new(inner: UpgradedConnection) -> Self {
         Self {
-            inner: StreamImpl::Direct(inner),
+            inner: StreamImpl::Direct(Box::new(inner)),
         }
     }
 
@@ -111,7 +111,7 @@ impl WebSocketStream {
                     msg = internal_rx.recv() => {
                         match msg {
                             Some(msg) => {
-                                if let Err(_) = sender.send(msg.into()).await {
+                                if sender.send(msg.into()).await.is_err() {
                                     break; // Connection closed
                                 }
                             }
@@ -121,7 +121,7 @@ impl WebSocketStream {
 
                     // 3. Send Ping
                     _ = heartbeat_interval.tick() => {
-                         if let Err(_) = sender.send(Message::Ping(vec![]).into()).await {
+                         if sender.send(Message::Ping(vec![]).into()).await.is_err() {
                              break;
                          }
                     }

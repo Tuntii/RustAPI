@@ -22,27 +22,17 @@ fn email_regex() -> &'static Regex {
 }
 
 fn url_regex() -> &'static Regex {
-    URL_REGEX.get_or_init(|| {
-        Regex::new(
-            r"^(https?|ftp)://[^\s/$.?#].[^\s]*$"
-        ).unwrap()
-    })
+    URL_REGEX.get_or_init(|| Regex::new(r"^(https?|ftp)://[^\s/$.?#].[^\s]*$").unwrap())
 }
 
 /// Email format validation rule.
 ///
 /// Validates that a string is a valid email address according to RFC 5322.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 pub struct EmailRule {
     /// Custom error message
     #[serde(skip_serializing_if = "Option::is_none")]
     pub message: Option<String>,
-}
-
-impl Default for EmailRule {
-    fn default() -> Self {
-        Self { message: None }
-    }
 }
 
 impl EmailRule {
@@ -144,9 +134,10 @@ impl ValidationRule<str> for LengthRule {
 
         if let Some(min) = self.min {
             if len < min {
-                let message = self.message.clone().unwrap_or_else(|| {
-                    format!("Length must be at least {min} characters")
-                });
+                let message = self
+                    .message
+                    .clone()
+                    .unwrap_or_else(|| format!("Length must be at least {min} characters"));
                 return Err(RuleError::new("length", message)
                     .param("min", min)
                     .param("max", self.max)
@@ -156,9 +147,10 @@ impl ValidationRule<str> for LengthRule {
 
         if let Some(max) = self.max {
             if len > max {
-                let message = self.message.clone().unwrap_or_else(|| {
-                    format!("Length must be at most {max} characters")
-                });
+                let message = self
+                    .message
+                    .clone()
+                    .unwrap_or_else(|| format!("Length must be at most {max} characters"));
                 return Err(RuleError::new("length", message)
                     .param("min", self.min)
                     .param("max", max)
@@ -242,9 +234,10 @@ where
     fn validate(&self, value: &T) -> Result<(), RuleError> {
         if let Some(ref min) = self.min {
             if value < min {
-                let message = self.message.clone().unwrap_or_else(|| {
-                    format!("Value must be at least {min}")
-                });
+                let message = self
+                    .message
+                    .clone()
+                    .unwrap_or_else(|| format!("Value must be at least {min}"));
                 return Err(RuleError::new("range", message)
                     .param("min", *min)
                     .param("max", self.max)
@@ -254,9 +247,10 @@ where
 
         if let Some(ref max) = self.max {
             if value > max {
-                let message = self.message.clone().unwrap_or_else(|| {
-                    format!("Value must be at most {max}")
-                });
+                let message = self
+                    .message
+                    .clone()
+                    .unwrap_or_else(|| format!("Value must be at most {max}"));
                 return Err(RuleError::new("range", message)
                     .param("min", self.min)
                     .param("max", *max)
@@ -313,12 +307,15 @@ impl RegexRule {
         self.compiled.get_or_init(|| {
             Regex::new(&self.pattern).unwrap_or_else(|_| Regex::new("^$").unwrap())
         });
-        
+
         // Verify the pattern is valid
         if Regex::new(&self.pattern).is_err() {
-            return Err(RuleError::new("regex", format!("Invalid regex pattern: {}", self.pattern)));
+            return Err(RuleError::new(
+                "regex",
+                format!("Invalid regex pattern: {}", self.pattern),
+            ));
         }
-        
+
         Ok(self.compiled.get().unwrap())
     }
 }
@@ -326,13 +323,14 @@ impl RegexRule {
 impl ValidationRule<str> for RegexRule {
     fn validate(&self, value: &str) -> Result<(), RuleError> {
         let regex = self.get_regex()?;
-        
+
         if regex.is_match(value) {
             Ok(())
         } else {
-            let message = self.message.clone().unwrap_or_else(|| {
-                format!("Value does not match pattern: {}", self.pattern)
-            });
+            let message = self
+                .message
+                .clone()
+                .unwrap_or_else(|| format!("Value does not match pattern: {}", self.pattern));
             Err(RuleError::new("regex", message).param("pattern", self.pattern.clone()))
         }
     }
@@ -355,17 +353,11 @@ impl ValidationRule<String> for RegexRule {
 /// URL format validation rule.
 ///
 /// Validates that a string is a valid URL.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 pub struct UrlRule {
     /// Custom error message
     #[serde(skip_serializing_if = "Option::is_none")]
     pub message: Option<String>,
-}
-
-impl Default for UrlRule {
-    fn default() -> Self {
-        Self { message: None }
-    }
 }
 
 impl UrlRule {
@@ -413,17 +405,11 @@ impl ValidationRule<String> for UrlRule {
 /// Required (non-empty) validation rule.
 ///
 /// Validates that a value is not empty.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
 pub struct RequiredRule {
     /// Custom error message
     #[serde(skip_serializing_if = "Option::is_none")]
     pub message: Option<String>,
-}
-
-impl Default for RequiredRule {
-    fn default() -> Self {
-        Self { message: None }
-    }
 }
 
 impl RequiredRule {
