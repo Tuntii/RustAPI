@@ -84,7 +84,7 @@ utoipa = { version = "4.2", features = ["uuid", "chrono"] }
 toon-format = { version = "0.4", default-features = false }
 
 # Benchmarking
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { version = "0.8", features = ["html_reports"] }
 
 # WebSocket
 tokio-tungstenite = "0.24"
