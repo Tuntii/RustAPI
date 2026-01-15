@@ -30,7 +30,7 @@ homepage = "https://github.com/Tuntii/RustAPI"
 documentation = "https://docs.rs/rustapi-rs"
 keywords = ["web", "framework", "api", "rest", "http"]
 categories = ["web-programming::http-server"]
-rust-version = "1.75"
+rust-version = "1.78"
 
 [workspace.dependencies]
 # Async runtime

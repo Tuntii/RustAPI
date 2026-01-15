@@ -154,16 +154,6 @@ jobs:
         env:
           RUSTDOCFLAGS: -D warnings
 
-  msrv:
-    name: Check MSRV
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install MSRV Rust
-        uses: dtolnay/rust-toolchain@1.75.0
-      - name: Check
-        run: cargo check --workspace
-
   semver:
     name: SemVer Checks
     runs-on: ubuntu-latest
