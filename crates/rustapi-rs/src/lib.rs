@@ -8,7 +8,7 @@
 //!
 //! ## Quick Start
 //!
-//! ```rust
+//! ```rust,no_run
 //! use rustapi_rs::prelude::*;
 //!
 //! #[derive(Serialize, Schema)]

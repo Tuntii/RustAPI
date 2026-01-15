@@ -181,6 +181,11 @@ impl Request {
         &self.state
     }
 
+    /// Set path parameters (used internally after route matching)
+    pub(crate) fn set_path_params(&mut self, params: PathParams) {
+        self.path_params = params;
+    }
+
     /// Create a test request from an http::Request
     ///
     /// This is useful for testing middleware and extractors.
