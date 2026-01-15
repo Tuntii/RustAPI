@@ -88,54 +88,59 @@ async fn handle_request(
     // Convert hyper request to our Request type first
     let (parts, body) = req.into_parts();
 
-    // Match the route to get path params
-    let (handler, params) = match router.match_route(&path, &method) {
-        RouteMatch::Found { handler, params } => (handler.clone(), params),
-        RouteMatch::NotFound => {
-            let response = ApiError::not_found(format!("No route found for {} {}", method, path))
-                .into_response();
-            log_request(&method, &path, response.status(), start);
-            return response;
-        }
-        RouteMatch::MethodNotAllowed { allowed } => {
-            let allowed_str: Vec<&str> = allowed.iter().map(|m| m.as_str()).collect();
-            let mut response = ApiError::new(
-                StatusCode::METHOD_NOT_ALLOWED,
-                "method_not_allowed",
-                format!("Method {} not allowed for {}", method, path),
-            )
-            .into_response();
-
-            response
-                .headers_mut()
-                .insert(header::ALLOW, allowed_str.join(", ").parse().unwrap());
-            log_request(&method, &path, response.status(), start);
-            return response;
-        }
-    };
-
-    // Build Request (initially streaming)
+    // Build Request with empty path params (will be set after route matching)
     let request = Request::new(
         parts,
         crate::request::BodyVariant::Streaming(body),
         router.state_ref(),
-        params,
+        crate::path_params::PathParams::new(),
     );
 
     // Apply request interceptors (in registration order)
     let request = interceptors.intercept_request(request);
 
-    // Create the final handler as a BoxedNext
-    let final_handler: BoxedNext = Arc::new(move |req: Request| {
-        let handler = handler.clone();
-        Box::pin(async move { handler(req).await })
+    // Create the routing handler that does route matching inside the middleware chain
+    // This allows CORS and other middleware to intercept requests BEFORE route matching
+    let router_clone = router.clone();
+    let path_clone = path.clone();
+    let method_clone = method.clone();
+    let routing_handler: BoxedNext = Arc::new(move |mut req: Request| {
+        let router = router_clone.clone();
+        let path = path_clone.clone();
+        let method = method_clone.clone();
+        Box::pin(async move {
+            match router.match_route(&path, &method) {
+                RouteMatch::Found { handler, params } => {
+                    // Set path params on the request
+                    req.set_path_params(params);
+                    handler(req).await
+                }
+                RouteMatch::NotFound => {
+                    ApiError::not_found(format!("No route found for {} {}", method, path))
+                        .into_response()
+                }
+                RouteMatch::MethodNotAllowed { allowed } => {
+                    let allowed_str: Vec<&str> = allowed.iter().map(|m| m.as_str()).collect();
+                    let mut response = ApiError::new(
+                        StatusCode::METHOD_NOT_ALLOWED,
+                        "method_not_allowed",
+                        format!("Method {} not allowed for {}", method, path),
+                    )
+                    .into_response();
+                    response
+                        .headers_mut()
+                        .insert(header::ALLOW, allowed_str.join(", ").parse().unwrap());
+                    response
+                }
+            }
+        })
             as std::pin::Pin<
                 Box<dyn std::future::Future<Output = crate::response::Response> + Send + 'static>,
             >
     });
 
-    // Execute through middleware stack
-    let response = layers.execute(request, final_handler).await;
+    // Execute through middleware stack - middleware runs FIRST, then routing
+    let response = layers.execute(request, routing_handler).await;
 
     // Apply response interceptors (in reverse registration order)
     let response = interceptors.intercept_response(response);
