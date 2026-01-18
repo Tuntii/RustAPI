@@ -3244,6 +3244,7 @@ dependencies = [
  "hyper-util",
  "proptest",
  "reqwest",
+ "rustapi-core",
  "serde",
  "serde_json",
  "thiserror 1.0.69",

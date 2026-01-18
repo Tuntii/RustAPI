@@ -70,10 +70,9 @@ mod server;
 pub mod sse;
 pub mod static_files;
 pub mod stream;
+pub mod typed_path;
 #[macro_use]
 mod tracing_macros;
-#[cfg(any(test, feature = "test-utils"))]
-mod test_client;
 
 /// Private module for macro internals - DO NOT USE DIRECTLY
 ///
@@ -94,13 +93,14 @@ pub use error::{get_environment, ApiError, Environment, FieldError, Result};
 pub use extract::Cookies;
 pub use extract::{
     Body, BodyStream, ClientIp, Extension, FromRequest, FromRequestParts, HeaderValue, Headers,
-    Json, Path, Query, State, ValidatedJson,
+    Json, Path, Query, State, Typed, ValidatedJson,
 };
 pub use handler::{
     delete_route, get_route, patch_route, post_route, put_route, Handler, HandlerService, Route,
     RouteHandler,
 };
 pub use health::{HealthCheck, HealthCheckBuilder, HealthCheckResult, HealthStatus};
+pub use http::StatusCode;
 pub use interceptor::{InterceptorChain, RequestInterceptor, ResponseInterceptor};
 #[cfg(feature = "compression")]
 pub use middleware::CompressionLayer;
@@ -108,11 +108,10 @@ pub use middleware::{BodyLimitLayer, RequestId, RequestIdLayer, TracingLayer, DE
 #[cfg(feature = "metrics")]
 pub use middleware::{MetricsLayer, MetricsResponse};
 pub use multipart::{Multipart, MultipartConfig, MultipartField, UploadedFile};
-pub use request::Request;
+pub use request::{BodyVariant, Request};
 pub use response::{Created, Html, IntoResponse, NoContent, Redirect, Response, WithStatus};
-pub use router::{delete, get, patch, post, put, MethodRouter, Router};
+pub use router::{delete, get, patch, post, put, MethodRouter, RouteMatch, Router};
 pub use sse::{sse_response, KeepAlive, Sse, SseEvent};
 pub use static_files::{serve_dir, StaticFile, StaticFileConfig};
 pub use stream::{StreamBody, StreamingBody, StreamingConfig};
-#[cfg(any(test, feature = "test-utils"))]
-pub use test_client::{TestClient, TestRequest, TestResponse};
+pub use typed_path::TypedPath;
