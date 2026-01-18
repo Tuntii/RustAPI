@@ -195,7 +195,16 @@ impl MiddlewareLayer for CorsLayer {
     ) -> Pin<Box<dyn Future<Output = Response> + Send + 'static>> {
         let origins = self.origins.clone();
         let methods = self.methods_header_value();
-        let headers = self.headers_header_value();
+        let allow_headers = if self.headers.len() == 1 && self.headers.first().map(|value| value == "*").unwrap_or(false) {
+            req.headers()
+                .get(header::ACCESS_CONTROL_REQUEST_HEADERS)
+                .and_then(|value| value.to_str().ok())
+                .filter(|value| !value.trim().is_empty())
+                .map(str::to_string)
+                .unwrap_or_else(|| "*".to_string())
+        } else {
+            self.headers_header_value()
+        };
         let credentials = self.credentials;
         let max_age = self.max_age;
         let is_any_origin = matches!(origins, AllowedOrigins::Any);
@@ -256,7 +265,7 @@ impl MiddlewareLayer for CorsLayer {
                 // Set Allow-Headers
                 headers_mut.insert(
                     header::ACCESS_CONTROL_ALLOW_HEADERS,
-                    headers.parse().unwrap(),
+                    allow_headers.parse().unwrap(),
                 );
 
                 // Set Allow-Credentials
