@@ -195,7 +195,7 @@ impl MiddlewareLayer for CorsLayer {
     ) -> Pin<Box<dyn Future<Output = Response> + Send + 'static>> {
         let origins = self.origins.clone();
         let methods = self.methods_header_value();
-        let allow_headers = if self.headers.iter().any(|value| value == "*") {
+        let allow_headers = if self.headers.len() == 1 && self.headers.first().map(|value| value == "*").unwrap_or(false) {
             req.headers()
                 .get(header::ACCESS_CONTROL_REQUEST_HEADERS)
                 .and_then(|value| value.to_str().ok())
