@@ -290,6 +290,7 @@ pub mod prelude {
     pub use rustapi_core::route;
 
     // Re-export TypedPath derive macro
+    pub use rustapi_macros::ApiError;
     pub use rustapi_macros::TypedPath;
 
     // Re-export validation - use validator derive macro directly

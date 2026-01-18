@@ -70,6 +70,7 @@ rustapi-openapi = { workspace = true, default-features = false }
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 proptest = "1.4"
+rustapi-testing = { workspace = true }
 [features]
 default = ["swagger-ui", "tracing"]
 swagger-ui = ["rustapi-openapi/swagger-ui"]

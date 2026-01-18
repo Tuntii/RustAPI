@@ -29,6 +29,8 @@ validator = { workspace = true }
 rustapi-openapi = { workspace = true, default-features = false }
 
 [dev-dependencies]
+rustapi-core = { workspace = true }
+rustapi-macros = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 utoipa = { workspace = true }
 doc-comment = "0.3"

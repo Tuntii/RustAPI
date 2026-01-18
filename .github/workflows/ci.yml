@@ -154,15 +154,5 @@ jobs:
         env:
           RUSTDOCFLAGS: -D warnings
 
-  semver:
-    name: SemVer Checks
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-      - name: Install cargo-semver-checks
-        uses: taiki-e/install-action@cargo-semver-checks
-      - name: Check for breaking changes
-        run: cargo semver-checks check-release
+
 

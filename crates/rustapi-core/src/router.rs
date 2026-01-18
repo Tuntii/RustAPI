@@ -1030,7 +1030,7 @@ mod tests {
     #[test]
     fn test_state_tracking() {
         #[derive(Clone)]
-        struct MyState(String);
+        struct MyState(#[allow(dead_code)] String);
 
         let router = Router::new().state(MyState("test".to_string()));
 
@@ -1094,7 +1094,7 @@ mod tests {
     #[test]
     fn test_state_type_ids_merged_on_nest() {
         #[derive(Clone)]
-        struct NestedState(String);
+        struct NestedState(#[allow(dead_code)] String);
 
         async fn handler() -> &'static str {
             "handler"
@@ -1911,7 +1911,7 @@ mod property_tests {
             has_nested_state in any::<bool>(),
         ) {
             #[derive(Clone)]
-            struct TestState(i32);
+            struct TestState(#[allow(dead_code)] i32);
 
             async fn handler() -> &'static str { "handler" }
 

@@ -187,15 +187,15 @@ mod property_tests {
     use futures_util::StreamExt;
     use proptest::prelude::*;
 
-    /// **Feature: v1-features-roadmap, Property 23: Streaming memory bounds**
-    /// **Validates: Requirements 11.2**
-    ///
-    /// For streaming request bodies:
-    /// - Memory usage SHALL never exceed configured limit
-    /// - Streams exceeding limit SHALL be rejected with 413 Payload Too Large
-    /// - Bytes read counter SHALL accurately track consumed bytes
-    /// - Limit of None SHALL allow unlimited streaming
-    /// - Multiple chunks SHALL be correctly aggregated for limit checking
+    // Feature: v1-features-roadmap, Property 23: Streaming memory bounds
+    // Validates: Requirements 11.2
+    //
+    // For streaming request bodies:
+    // - Memory usage SHALL never exceed configured limit
+    // - Streams exceeding limit SHALL be rejected with 413 Payload Too Large
+    // - Bytes read counter SHALL accurately track consumed bytes
+    // - Limit of None SHALL allow unlimited streaming
+    // - Multiple chunks SHALL be correctly aggregated for limit checking
 
     proptest! {
         #![proptest_config(ProptestConfig::with_cases(100))]
@@ -294,7 +294,7 @@ mod property_tests {
             num_chunks in 3usize..6,
         ) {
             tokio::runtime::Runtime::new().unwrap().block_on(async {
-                let total_size = chunk_size * num_chunks;
+                let _total_size = chunk_size * num_chunks;
                 let limit = chunk_size + 50; // Less than total
 
                 let chunks: Vec<Result<Bytes, crate::error::ApiError>> = (0..num_chunks)

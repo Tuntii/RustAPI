@@ -1,4 +1,3 @@
-//! Procedural macros for RustAPI
 //!
 //! This crate provides the attribute macros used in RustAPI:
 //!
@@ -22,6 +21,20 @@ use syn::{
     parse_macro_input, Attribute, Data, DeriveInput, Expr, Fields, FnArg, GenericArgument, ItemFn,
     Lit, LitStr, Meta, PathArguments, ReturnType, Type,
 };
+
+mod api_error;
+
+/// Derive macro for `ApiError`
+///
+/// # Example
+///
+/// ```rust,ignore
+/// #[derive(ApiError)]
+/// enum MyError {
+///     #[error(status = 404, message = "User not found")]
+///     UserNotFound,
+/// }
+/// ```
 
 /// Auto-register a schema type for zero-config OpenAPI.
 ///
@@ -1097,70 +1110,6 @@ pub fn derive_validate(input: TokenStream) -> TokenStream {
 // ============================================
 
 /// Parsed error attribute info
-struct ErrorAttrInfo {
-    status: Option<proc_macro2::TokenStream>,
-    code: Option<String>,
-    message: Option<String>,
-}
-
-/// Parse #[error(...)] attributes
-fn parse_error_attr(attrs: &[Attribute]) -> Option<ErrorAttrInfo> {
-    for attr in attrs {
-        if !attr.path().is_ident("error") {
-            continue;
-        }
-
-        let mut status = None;
-        let mut code = None;
-        let mut message = None;
-
-        if let Ok(nested) = attr
-            .parse_args_with(syn::punctuated::Punctuated::<Meta, syn::Token![,]>::parse_terminated)
-        {
-            for meta in nested {
-                if let Meta::NameValue(nv) = &meta {
-                    let key = nv.path.get_ident()?.to_string();
-
-                    if key == "status" {
-                        // Handle status = 404 or status = StatusCode::NOT_FOUND
-                        let val = &nv.value;
-                        if let Expr::Lit(lit) = val {
-                            if let Lit::Int(i) = &lit.lit {
-                                // Convert integer literal to StatusCode::from_u16
-                                let output = quote! {
-                                    ::rustapi_rs::prelude::StatusCode::from_u16(#i).unwrap_or(::rustapi_rs::prelude::StatusCode::INTERNAL_SERVER_ERROR)
-                                };
-                                status = Some(output);
-                            }
-                        } else {
-                            // Assume it's an expression like StatusCode::NOT_FOUND
-                            let output = quote! { #val };
-                            status = Some(output);
-                        }
-                    } else if key == "code" {
-                        if let Some(s) = expr_to_string(&nv.value) {
-                            code = Some(s);
-                        }
-                    } else if key == "message" {
-                        if let Some(s) = expr_to_string(&nv.value) {
-                            message = Some(s);
-                        }
-                    }
-                }
-            }
-        }
-
-        if status.is_some() || code.is_some() || message.is_some() {
-            return Some(ErrorAttrInfo {
-                status,
-                code,
-                message,
-            });
-        }
-    }
-
-    None
-}
 
 /// Derive macro for implementing IntoResponse for error enums
 ///
@@ -1178,77 +1127,7 @@ fn parse_error_attr(attrs: &[Attribute]) -> Option<ErrorAttrInfo> {
 /// ```
 #[proc_macro_derive(ApiError, attributes(error))]
 pub fn derive_api_error(input: TokenStream) -> TokenStream {
-    let input = parse_macro_input!(input as DeriveInput);
-    let name = &input.ident;
-    let generics = &input.generics;
-    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
-
-    let variants = match &input.data {
-        Data::Enum(data) => &data.variants,
-        _ => {
-            return syn::Error::new_spanned(&input, "ApiError can only be derived for enums")
-                .to_compile_error()
-                .into();
-        }
-    };
-
-    let mut match_arms = Vec::new();
-
-    for variant in variants {
-        let variant_name = &variant.ident;
-        let attr_info = parse_error_attr(&variant.attrs);
-
-        // Default values
-        let status = attr_info
-            .as_ref()
-            .and_then(|i| i.status.clone())
-            .unwrap_or_else(|| quote! { ::rustapi_rs::prelude::StatusCode::INTERNAL_SERVER_ERROR });
-
-        let code = attr_info
-            .as_ref()
-            .and_then(|i| i.code.clone())
-            .unwrap_or_else(|| {
-                // Default code is snake_case of variant name
-                // This is a naive implementation, real world might want a proper snake_case conversion library
-                variant_name.to_string().to_lowercase()
-            });
-
-        let message = attr_info
-            .as_ref()
-            .and_then(|i| i.message.clone())
-            .unwrap_or_else(|| "An error occurred".to_string());
-
-        // Handle fields (binding)
-        let pattern = match &variant.fields {
-            Fields::Named(_) => quote! { #name::#variant_name { .. } },
-            Fields::Unnamed(_) => quote! { #name::#variant_name(..) },
-            Fields::Unit => quote! { #name::#variant_name },
-        };
-
-        match_arms.push(quote! {
-            #pattern => {
-                ::rustapi_rs::prelude::ApiError::new(
-                    #status,
-                    #code,
-                    #message
-                )
-            }
-        });
-    }
-
-    let expanded = quote! {
-        impl #impl_generics ::rustapi_rs::prelude::IntoResponse for #name #ty_generics #where_clause {
-            fn into_response(self) -> ::rustapi_rs::prelude::Response {
-                let api_error: ::rustapi_rs::prelude::ApiError = match self {
-                    #(#match_arms),*
-                };
-                ::rustapi_rs::prelude::IntoResponse::into_response(api_error)
-            }
-        }
-    };
-
-    debug_output("ApiError derive", &expanded);
-    TokenStream::from(expanded)
+    api_error::expand_derive_api_error(input)
 }
 
 // ============================================

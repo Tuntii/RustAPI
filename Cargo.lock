@@ -3118,6 +3118,7 @@ dependencies = [
  "prometheus",
  "proptest",
  "rustapi-openapi",
+ "rustapi-testing",
  "rustapi-validate",
  "serde",
  "serde_json",
