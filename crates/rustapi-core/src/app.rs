@@ -390,11 +390,6 @@ impl RustApi {
         self
     }
 
-    /// Add a typed route
-    pub fn typed<P: crate::typed_path::TypedPath>(self, method_router: MethodRouter) -> Self {
-        self.route(P::PATH, method_router)
-    }
-
     /// Mount a handler (convenience method)
     ///
     /// Alias for `.route(path, method_router)` for a single handler.

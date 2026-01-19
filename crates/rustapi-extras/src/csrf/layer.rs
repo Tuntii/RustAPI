@@ -130,8 +130,7 @@ impl MiddlewareLayer for CsrfLayer {
 mod tests {
     use super::*;
     use http::StatusCode;
-    use rustapi_core::{get, post, RustApi};
-    use rustapi_testing::{TestClient, TestRequest, TestResponse};
+    use rustapi_core::{get, post, RustApi, TestClient, TestRequest};
 
     async fn handler() -> &'static str {
         "ok"
@@ -145,7 +144,7 @@ mod tests {
             .route("/", get(handler));
 
         let client = TestClient::new(app);
-        let res: TestResponse = client.get("/").await;
+        let res = client.get("/").await;
 
         assert_eq!(res.status(), StatusCode::OK);
         let cookies = res
@@ -166,7 +165,7 @@ mod tests {
 
         let client = TestClient::new(app);
         // POST without cookie or header
-        let res: TestResponse = client.request(TestRequest::post("/")).await;
+        let res = client.request(TestRequest::post("/")).await;
 
         assert_eq!(res.status(), StatusCode::FORBIDDEN);
     }
@@ -179,7 +178,7 @@ mod tests {
             .route("/", post(handler));
 
         let client = TestClient::new(app);
-        let res: TestResponse = client
+        let res = client
             .request(
                 TestRequest::post("/")
                     .header("Cookie", "ID=token123")
@@ -198,7 +197,7 @@ mod tests {
             .route("/", post(handler));
 
         let client = TestClient::new(app);
-        let res: TestResponse = client
+        let res = client
             .request(
                 TestRequest::post("/")
                     .header("Cookie", "ID=token123")
@@ -222,7 +221,7 @@ mod tests {
         let client = TestClient::new(app);
 
         // 1. Initial GET to get token
-        let res: TestResponse = client.get("/").await;
+        let res = client.get("/").await;
         assert_eq!(res.status(), StatusCode::OK);
         let set_cookie = res
             .headers()
@@ -236,7 +235,7 @@ mod tests {
         let token_val = token_part.split('=').nth(1).unwrap();
 
         // 2. Unsafe POST with valid token
-        let res: TestResponse = client
+        let res = client
             .request(
                 TestRequest::post("/")
                     .header("Cookie", token_part)
@@ -246,7 +245,7 @@ mod tests {
         assert_eq!(res.status(), StatusCode::OK);
 
         // 3. Unsafe POST with invalid token (Mismatch)
-        let res: TestResponse = client
+        let res = client
             .request(
                 TestRequest::post("/")
                     .header("Cookie", token_part)
@@ -270,7 +269,7 @@ mod tests {
             .route("/", get(token_handler));
 
         let client = TestClient::new(app);
-        let res: TestResponse = client.get("/").await;
+        let res = client.get("/").await;
 
         assert_eq!(res.status(), StatusCode::OK);
         let body = res.text();

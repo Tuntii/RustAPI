@@ -211,30 +211,7 @@ rustapi-rs = { version = "0.1.9", features = ["jwt", "cors", "toon", "ws", "view
 | `audit` | GDPR/SOC2 audit logging |
 | `full` | All features enabled |
 
-
-### ✨ New Ergonomic Features
-
-**Declarative Error Handling:**
-```rust
-#[derive(ApiError)]
-pub enum UserError {
-    #[error(status = 404, message = "User not found")]
-    NotFound(i32),
-    #[error(status = 400, code = "validation_error")]
-    InvalidInput(String),
-}
-```
-
-**Fluent Testing:**
-```rust
-let client = TestClient::new(app);
-client.get("/users").await
-    .assert_status(200)
-    .assert_json(&expected_users);
-```
-
 ---
-
 
 ## 📂 Examples
 
