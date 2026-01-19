@@ -204,6 +204,7 @@ rustapi-rs = { version = "0.1.9", features = ["jwt", "cors", "toon", "ws", "view
 | `jwt` | JWT authentication with `AuthUser<T>` extractor |
 | `cors` | CORS middleware with builder pattern |
 | `rate-limit` | IP-based rate limiting |
+| `csrf` | CSRF protection with Double-Submit Cookie pattern |
 | `toon` | LLM-optimized TOON format responses |
 | `ws` | WebSocket support with broadcast |
 | `view` | Template engine (Tera) for SSR |

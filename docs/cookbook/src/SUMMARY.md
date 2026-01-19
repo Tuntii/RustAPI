@@ -28,9 +28,11 @@
 - [Part IV: Recipes](recipes/README.md)
     - [Creating Resources](recipes/crud_resource.md)
     - [JWT Authentication](recipes/jwt_auth.md)
+    - [CSRF Protection](recipes/csrf_protection.md)
     - [Database Integration](recipes/db_integration.md)
     - [File Uploads](recipes/file_uploads.md)
     - [Custom Middleware](recipes/custom_middleware.md)
     - [Real-time Chat](recipes/websockets.md)
     - [Production Tuning](recipes/high_performance.md)
+
 
