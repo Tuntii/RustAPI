@@ -10,6 +10,7 @@
 //! - `jwt` - JWT authentication middleware and `AuthUser<T>` extractor
 //! - `cors` - CORS middleware with builder pattern configuration
 //! - `rate-limit` - IP-based rate limiting middleware
+//! - `csrf` - CSRF protection using Double-Submit Cookie pattern
 //! - `config` - Configuration management with `.env` file support
 //! - `cookies` - Cookie parsing extractor
 //! - `sqlx` - SQLx database error conversion to ApiError
@@ -17,11 +18,25 @@
 //! - `extras` - Meta feature enabling jwt, cors, and rate-limit
 //! - `full` - All features enabled
 //!
+//! ## CSRF Protection Example
+//!
+//! ```rust,ignore
+//! use rustapi_core::RustApi;
+//! use rustapi_extras::csrf::{CsrfConfig, CsrfLayer, CsrfToken};
+//!
+//! let config = CsrfConfig::new()
+//!     .cookie_name("csrf_token")
+//!     .header_name("X-CSRF-Token");
+//!
+//! let app = RustApi::new()
+//!     .layer(CsrfLayer::new(config));
+//! ```
+//!
 //! ## Example
 //!
 //! ```toml
 //! [dependencies]
-//! rustapi-extras = { version = "0.1", features = ["jwt", "cors", "insight"] }
+//! rustapi-extras = { version = "0.1", features = ["jwt", "cors", "csrf"] }
 //! ```
 
 #![warn(missing_docs)]
