@@ -3161,6 +3161,7 @@ dependencies = [
  "reqwest",
  "rustapi-core",
  "rustapi-openapi",
+ "rustapi-testing",
  "serde",
  "serde_json",
  "serial_test",
