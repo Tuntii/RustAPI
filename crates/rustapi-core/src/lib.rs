@@ -7,6 +7,7 @@
 //! - **Application Builder**: [`RustApi`] - The main entry point for building web applications
 //! - **Routing**: [`Router`], [`get`], [`post`], [`put`], [`patch`], [`delete`] - HTTP routing primitives
 //! - **Extractors**: [`Json`], [`Query`], [`Path`], [`State`], [`Body`], [`Headers`] - Request data extraction
+//! - **Actions**: [`action_handler`], [`ActionDefinition`] - Server action registration/dispatch
 //! - **Responses**: [`IntoResponse`], [`Created`], [`NoContent`], [`Html`], [`Redirect`] - Response types
 //! - **Middleware**: [`BodyLimitLayer`], [`RequestIdLayer`], [`TracingLayer`] - Request processing layers
 //! - **Error Handling**: [`ApiError`], [`Result`] - Structured error responses
@@ -49,6 +50,7 @@
 //! full framework experience with all features and re-exports.
 
 mod app;
+mod action;
 pub mod auto_route;
 pub use auto_route::collect_auto_routes;
 pub mod auto_schema;
@@ -83,11 +85,15 @@ pub mod __private {
     pub use crate::auto_route::AUTO_ROUTES;
     pub use crate::auto_schema::AUTO_SCHEMAS;
     pub use linkme;
+    pub use inventory;
     pub use rustapi_openapi;
 }
 
 // Public API
 pub use app::{RustApi, RustApiConfig};
+pub use action::{
+    action_handler, decode_action_input, find_action, ActionDefinition, ActionRequest, ACTIONS_PATH,
+};
 pub use error::{get_environment, ApiError, Environment, FieldError, Result};
 #[cfg(feature = "cookies")]
 pub use extract::Cookies;

@@ -487,6 +487,102 @@ pub fn delete(attr: TokenStream, item: TokenStream) -> TokenStream {
     generate_route_handler("DELETE", attr, item)
 }
 
+/// Register a server action handler.
+///
+/// The annotated async function should accept a single input type that
+/// implements `serde::Deserialize` and return a type implementing
+/// `IntoResponse` (commonly `Result<Json<T>, ApiError>` or `Redirect`).
+///
+/// The action will be auto-registered and can be invoked via the
+/// `/__actions/{action_id}` endpoint.
+#[proc_macro_attribute]
+pub fn action(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(item as ItemFn);
+
+    if input.sig.asyncness.is_none() {
+        return syn::Error::new_spanned(
+            &input.sig,
+            "#[rustapi::action] functions must be async",
+        )
+        .to_compile_error()
+        .into();
+    }
+
+    if !input.sig.generics.params.is_empty() {
+        return syn::Error::new_spanned(
+            &input.sig.generics,
+            "#[rustapi::action] functions do not support generics",
+        )
+        .to_compile_error()
+        .into();
+    }
+
+    let fn_name = &input.sig.ident;
+    let fn_vis = &input.vis;
+    let fn_attrs = &input.attrs;
+    let fn_inputs = &input.sig.inputs;
+    let fn_output = &input.sig.output;
+    let fn_block = &input.block;
+
+    let first_arg = match fn_inputs.first() {
+        Some(FnArg::Typed(pat_ty)) => pat_ty.ty.clone(),
+        _ => {
+            return syn::Error::new_spanned(
+                &input.sig.inputs,
+                "#[rustapi::action] requires a single typed argument",
+            )
+            .to_compile_error()
+            .into();
+        }
+    };
+
+    if fn_inputs.len() != 1 {
+        return syn::Error::new_spanned(
+            &input.sig.inputs,
+            "#[rustapi::action] requires exactly one argument",
+        )
+        .to_compile_error()
+        .into();
+    }
+
+    let action_id = fn_name.to_string();
+    let registrar_name = syn::Ident::new(&format!("__RUSTAPI_ACTION_{}", fn_name), fn_name.span());
+    let wrapper_name = syn::Ident::new(&format!("__rustapi_action_wrapper_{}", fn_name), fn_name.span());
+
+    let expanded = quote! {
+        #(#fn_attrs)*
+        #fn_vis async fn #fn_name(#fn_inputs) #fn_output #fn_block
+
+        #[doc(hidden)]
+        #fn_vis fn #wrapper_name(
+            req: ::rustapi_rs::ActionRequest,
+        ) -> ::rustapi_rs::ActionFuture {
+            Box::pin(async move {
+                let input: #first_arg = match ::rustapi_rs::decode_action_input(req.body) {
+                    Ok(value) => value,
+                    Err(err) => {
+                        return err.into_response();
+                    }
+                };
+                let result = #fn_name(input).await;
+                ::rustapi_rs::IntoResponse::into_response(result)
+            })
+        }
+
+        #[allow(non_upper_case_globals)]
+        static #registrar_name: ::rustapi_rs::ActionDefinition = ::rustapi_rs::ActionDefinition {
+            id: #action_id,
+            handler: #wrapper_name,
+        };
+
+        ::rustapi_rs::__private::inventory::submit! { #registrar_name }
+    };
+
+    debug_output(&format!("action {}", action_id), &expanded);
+
+    TokenStream::from(expanded)
+}
+
 // ============================================
 // Route Metadata Macros
 // ============================================

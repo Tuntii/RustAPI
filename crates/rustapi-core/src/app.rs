@@ -6,6 +6,7 @@ use crate::middleware::{BodyLimitLayer, LayerStack, MiddlewareLayer, DEFAULT_BOD
 use crate::response::IntoResponse;
 use crate::router::{MethodRouter, Router};
 use crate::server::Server;
+use crate::{action_handler, ACTIONS_PATH};
 use std::collections::HashMap;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
@@ -388,6 +389,14 @@ impl RustApi {
 
         self.router = self.router.route(path, method_router);
         self
+    }
+
+    /// Enable server actions dispatch endpoint.
+    ///
+    /// Registers a POST handler at `/__actions/{action_id}` that dispatches to
+    /// action definitions registered by `#[rustapi::action]`.
+    pub fn actions(self) -> Self {
+        self.route(ACTIONS_PATH, crate::post(action_handler))
     }
 
     /// Add a typed route
