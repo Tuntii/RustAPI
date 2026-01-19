@@ -390,6 +390,14 @@ impl RustApi {
         self
     }
 
+    /// Add a UI route without registering OpenAPI operations.
+    ///
+    /// Use this for SSR or UI-only endpoints that should not appear in OpenAPI.
+    pub fn route_ui(mut self, path: &str, method_router: MethodRouter) -> Self {
+        self.router = self.router.route(path, method_router);
+        self
+    }
+
     /// Add a typed route
     pub fn typed<P: crate::typed_path::TypedPath>(self, method_router: MethodRouter) -> Self {
         self.route(P::PATH, method_router)
@@ -438,6 +446,22 @@ impl RustApi {
         self.route_with_method(route.path, method_enum, route.handler)
     }
 
+    /// Mount a UI route created with `#[rustapi::get]`, `#[rustapi::post]`, etc.
+    ///
+    /// This skips OpenAPI registration while still mounting the handler.
+    pub fn mount_route_ui(self, route: crate::handler::Route) -> Self {
+        let method_enum = match route.method {
+            "GET" => http::Method::GET,
+            "POST" => http::Method::POST,
+            "PUT" => http::Method::PUT,
+            "DELETE" => http::Method::DELETE,
+            "PATCH" => http::Method::PATCH,
+            _ => http::Method::GET,
+        };
+
+        self.route_with_method_ui(route.path, method_enum, route.handler)
+    }
+
     /// Helper to mount a single method handler
     fn route_with_method(
         self,
@@ -473,6 +497,28 @@ impl RustApi {
 
         let method_router = MethodRouter::from_boxed(handlers);
         self.route(&path, method_router)
+    }
+
+    /// Helper to mount a single method handler without OpenAPI registration
+    fn route_with_method_ui(
+        self,
+        path: &str,
+        method: http::Method,
+        handler: crate::handler::BoxedHandler,
+    ) -> Self {
+        use crate::router::MethodRouter;
+
+        let path = if !path.starts_with('/') {
+            format!("/{}", path)
+        } else {
+            path.to_string()
+        };
+
+        let mut handlers = std::collections::HashMap::new();
+        handlers.insert(method, handler);
+
+        let method_router = MethodRouter::from_boxed(handlers);
+        self.route_ui(&path, method_router)
     }
 
     /// Nest a router under a prefix
@@ -1035,6 +1081,7 @@ impl Default for RustApi {
 mod tests {
     use super::RustApi;
     use crate::extract::{FromRequestParts, State};
+    use crate::handler::Route;
     use crate::path_params::PathParams;
     use crate::request::Request;
     use crate::router::{get, post, Router};
@@ -1158,6 +1205,41 @@ mod tests {
                 _ => panic!("Expected inline schema for '{}'", name),
             }
         }
+    }
+
+    #[test]
+    fn test_route_ui_excludes_openapi() {
+        async fn handler() -> &'static str {
+            "hello"
+        }
+
+        let app = RustApi::new().route_ui("/", get(handler));
+        assert!(
+            app.openapi_spec().paths.is_empty(),
+            "UI routes should not be added to OpenAPI spec"
+        );
+
+        let router = app.into_router();
+        let routes = router.registered_routes();
+        assert!(routes.contains_key("/"), "Expected UI route to be registered");
+    }
+
+    #[test]
+    fn test_mount_route_ui_excludes_openapi() {
+        async fn handler() -> &'static str {
+            "hello"
+        }
+
+        let route = Route::new("/", "GET", handler);
+        let app = RustApi::new().mount_route_ui(route);
+        assert!(
+            app.openapi_spec().paths.is_empty(),
+            "UI routes should not be added to OpenAPI spec"
+        );
+
+        let router = app.into_router();
+        let routes = router.registered_routes();
+        assert!(routes.contains_key("/"), "Expected UI route to be registered");
     }
 
     // **Feature: router-nesting, Property 11: OpenAPI Integration**

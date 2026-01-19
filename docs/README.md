@@ -43,13 +43,25 @@ async fn hello(Path(name): Path<String>) -> Json<Message> {
     Json(Message { greeting: format!("Hello, {name}!") })
 }
 
+async fn homepage() -> Html<&'static str> {
+    Html("<h1>Welcome</h1>")
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    RustApi::auto().run("0.0.0.0:8080").await
+    RustApi::new()
+        // API routes show up in OpenAPI under /api/*
+        .route("/api/hello/{name}", get(hello))
+        // UI/SSR routes are mounted without OpenAPI entries by default
+        .route_ui("/", get(homepage))
+        .run("0.0.0.0:8080")
+        .await
 }
 ```
 
-Visit `http://localhost:8080/docs` for auto-generated Swagger UI.
+Visit `http://localhost:8080/docs` for auto-generated Swagger UI. Routes under `/api/*`
+are included in OpenAPI by default, while UI routes mounted with `route_ui`/`mount_route_ui`
+are excluded unless you register them as API routes.
 
 ## Examples
 
