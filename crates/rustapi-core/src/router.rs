@@ -43,6 +43,7 @@
 
 use crate::handler::{into_boxed_handler, BoxedHandler, Handler};
 use crate::path_params::PathParams;
+use crate::typed_path::TypedPath;
 use http::{Extensions, Method};
 use matchit::Router as MatchitRouter;
 use rustapi_openapi::Operation;
@@ -331,6 +332,11 @@ impl Router {
         }
     }
 
+    /// Add a typed route using a TypedPath
+    pub fn typed<P: TypedPath>(self, method_router: MethodRouter) -> Self {
+        self.route(P::PATH, method_router)
+    }
+
     /// Add a route
     pub fn route(mut self, path: &str, method_router: MethodRouter) -> Self {
         // Convert {param} style to :param for matchit
@@ -573,7 +579,7 @@ impl Router {
     }
 
     /// Match a request and return the handler + params
-    pub(crate) fn match_route(&self, path: &str, method: &Method) -> RouteMatch<'_> {
+    pub fn match_route(&self, path: &str, method: &Method) -> RouteMatch<'_> {
         match self.inner.at(path) {
             Ok(matched) => {
                 let method_router = matched.value;
@@ -598,7 +604,7 @@ impl Router {
     }
 
     /// Get shared state
-    pub(crate) fn state_ref(&self) -> Arc<Extensions> {
+    pub fn state_ref(&self) -> Arc<Extensions> {
         self.state.clone()
     }
 
@@ -620,7 +626,7 @@ impl Default for Router {
 }
 
 /// Result of route matching
-pub(crate) enum RouteMatch<'a> {
+pub enum RouteMatch<'a> {
     Found {
         handler: &'a BoxedHandler,
         params: PathParams,
@@ -1024,7 +1030,7 @@ mod tests {
     #[test]
     fn test_state_tracking() {
         #[derive(Clone)]
-        struct MyState(String);
+        struct MyState(#[allow(dead_code)] String);
 
         let router = Router::new().state(MyState("test".to_string()));
 
@@ -1088,7 +1094,7 @@ mod tests {
     #[test]
     fn test_state_type_ids_merged_on_nest() {
         #[derive(Clone)]
-        struct NestedState(String);
+        struct NestedState(#[allow(dead_code)] String);
 
         async fn handler() -> &'static str {
             "handler"
@@ -1905,7 +1911,7 @@ mod property_tests {
             has_nested_state in any::<bool>(),
         ) {
             #[derive(Clone)]
-            struct TestState(i32);
+            struct TestState(#[allow(dead_code)] i32);
 
             async fn handler() -> &'static str { "handler" }
 

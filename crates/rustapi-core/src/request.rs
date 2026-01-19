@@ -47,7 +47,7 @@ use hyper::body::Incoming;
 use std::sync::Arc;
 
 /// Internal representation of the request body state
-pub(crate) enum BodyVariant {
+pub enum BodyVariant {
     Buffered(Bytes),
     Streaming(Incoming),
     Consumed,
@@ -65,7 +65,7 @@ pub struct Request {
 
 impl Request {
     /// Create a new request from parts
-    pub(crate) fn new(
+    pub fn new(
         parts: Parts,
         body: BodyVariant,
         state: Arc<Extensions>,

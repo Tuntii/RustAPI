@@ -1,4 +1,3 @@
-//! Procedural macros for RustAPI
 //!
 //! This crate provides the attribute macros used in RustAPI:
 //!
@@ -22,6 +21,8 @@ use syn::{
     parse_macro_input, Attribute, Data, DeriveInput, Expr, Fields, FnArg, GenericArgument, ItemFn,
     Lit, LitStr, Meta, PathArguments, ReturnType, Type,
 };
+
+mod api_error;
 
 /// Auto-register a schema type for zero-config OpenAPI.
 ///
@@ -1089,5 +1090,126 @@ pub fn derive_validate(input: TokenStream) -> TokenStream {
 
     debug_output("Validate derive", &expanded);
 
+    TokenStream::from(expanded)
+}
+
+// ============================================
+// ApiError Derive Macro
+// ============================================
+
+/// Derive macro for implementing IntoResponse for error enums
+///
+/// # Example
+///
+/// ```rust,ignore
+/// #[derive(ApiError)]
+/// enum UserError {
+///     #[error(status = 404, message = "User not found")]
+///     NotFound(i64),
+///     
+///     #[error(status = 400, code = "validation_error")]
+///     InvalidInput(String),
+/// }
+/// ```
+#[proc_macro_derive(ApiError, attributes(error))]
+pub fn derive_api_error(input: TokenStream) -> TokenStream {
+    api_error::expand_derive_api_error(input)
+}
+
+// ============================================
+// TypedPath Derive Macro
+// ============================================
+
+/// Derive macro for TypedPath
+///
+/// # Example
+///
+/// ```rust,ignore
+/// #[derive(TypedPath, Deserialize, Serialize)]
+/// #[typed_path("/users/{id}/posts/{post_id}")]
+/// struct PostPath {
+///     id: u64,
+///     post_id: String,
+/// }
+/// ```
+#[proc_macro_derive(TypedPath, attributes(typed_path))]
+pub fn derive_typed_path(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
+    let name = &input.ident;
+    let generics = &input.generics;
+    let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+
+    // Find the #[typed_path("...")] attribute
+    let mut path_str = None;
+    for attr in &input.attrs {
+        if attr.path().is_ident("typed_path") {
+            if let Ok(lit) = attr.parse_args::<LitStr>() {
+                path_str = Some(lit.value());
+            }
+        }
+    }
+
+    let path = match path_str {
+        Some(p) => p,
+        None => {
+            return syn::Error::new_spanned(
+                &input,
+                "#[derive(TypedPath)] requires a #[typed_path(\"...\")] attribute",
+            )
+            .to_compile_error()
+            .into();
+        }
+    };
+
+    // Validate path syntax
+    if let Err(err) = validate_path_syntax(&path, proc_macro2::Span::call_site()) {
+        return err.to_compile_error().into();
+    }
+
+    // Generate to_uri implementation
+    // We need to parse the path and replace {param} with self.param
+    let mut format_string = String::new();
+    let mut format_args = Vec::new();
+
+    let mut chars = path.chars().peekable();
+    while let Some(ch) = chars.next() {
+        if ch == '{' {
+            let mut param_name = String::new();
+            while let Some(&c) = chars.peek() {
+                if c == '}' {
+                    chars.next(); // Consume '}'
+                    break;
+                }
+                param_name.push(chars.next().unwrap());
+            }
+
+            if param_name.is_empty() {
+                return syn::Error::new_spanned(
+                    &input,
+                    "Empty path parameter not allowed in typed_path",
+                )
+                .to_compile_error()
+                .into();
+            }
+
+            format_string.push_str("{}");
+            let ident = syn::Ident::new(&param_name, proc_macro2::Span::call_site());
+            format_args.push(quote! { self.#ident });
+        } else {
+            format_string.push(ch);
+        }
+    }
+
+    let expanded = quote! {
+        impl #impl_generics ::rustapi_rs::prelude::TypedPath for #name #ty_generics #where_clause {
+            const PATH: &'static str = #path;
+
+            fn to_uri(&self) -> String {
+                format!(#format_string, #(#format_args),*)
+            }
+        }
+    };
+
+    debug_output("TypedPath derive", &expanded);
     TokenStream::from(expanded)
 }

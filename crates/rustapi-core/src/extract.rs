@@ -340,6 +340,50 @@ impl<T> Deref for Path<T> {
     }
 }
 
+/// Typed path extractor
+///
+/// Extracts path parameters and deserializes them into a struct implementing `Deserialize`.
+/// This is similar to `Path<T>`, but supports complex structs that can be deserialized
+/// from a map of parameter names to values (e.g. via `serde_json`).
+///
+/// # Example
+///
+/// ```rust,ignore
+/// #[derive(Deserialize)]
+/// struct UserParams {
+///     id: u64,
+///     category: String,
+/// }
+///
+/// async fn get_user(Typed(params): Typed<UserParams>) -> impl IntoResponse {
+///     // params.id, params.category
+/// }
+/// ```
+#[derive(Debug, Clone)]
+pub struct Typed<T>(pub T);
+
+impl<T: DeserializeOwned + Send> FromRequestParts for Typed<T> {
+    fn from_request_parts(req: &Request) -> Result<Self> {
+        let params = req.path_params();
+        let mut map = serde_json::Map::new();
+        for (k, v) in params.iter() {
+            map.insert(k.to_string(), serde_json::Value::String(v.to_string()));
+        }
+        let value = serde_json::Value::Object(map);
+        let parsed: T = serde_json::from_value(value)
+            .map_err(|e| ApiError::bad_request(format!("Invalid path parameters: {}", e)))?;
+        Ok(Typed(parsed))
+    }
+}
+
+impl<T> Deref for Typed<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
 /// State extractor
 ///
 /// Extracts shared application state.
@@ -848,6 +892,13 @@ impl<T> OperationModifier for Path<T> {
         // For typed path params, the schema type defaults to "string" but will be
         // inferred from the actual type T when more sophisticated type introspection
         // is implemented.
+    }
+}
+
+// Typed - Same as Path, parameters are documented by route pattern
+impl<T> OperationModifier for Typed<T> {
+    fn update_operation(_op: &mut Operation) {
+        // No-op, managed by route registration
     }
 }
 

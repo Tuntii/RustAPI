@@ -75,6 +75,7 @@ sha2 = { version = "0.10", optional = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 proptest = "1.4"
 rustapi-core = { workspace = true, features = ["test-utils"] }
+rustapi-testing = { workspace = true }
 tempfile = "3.10"
 serial_test = "3.2"
 

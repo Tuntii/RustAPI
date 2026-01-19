@@ -266,8 +266,11 @@ pub mod prelude {
         // Static files
         StaticFile,
         StaticFileConfig,
+        StatusCode,
         StreamBody,
         TracingLayer,
+        Typed,
+        TypedPath,
         UploadedFile,
         ValidatedJson,
         WithStatus,
@@ -285,6 +288,10 @@ pub mod prelude {
 
     // Re-export the route! macro
     pub use rustapi_core::route;
+
+    // Re-export TypedPath derive macro
+    pub use rustapi_macros::ApiError;
+    pub use rustapi_macros::TypedPath;
 
     // Re-export validation - use validator derive macro directly
     pub use validator::Validate;

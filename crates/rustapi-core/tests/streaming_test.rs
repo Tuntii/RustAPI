@@ -4,7 +4,7 @@ use proptest::prelude::*;
 use rustapi_core::post;
 use rustapi_core::BodyStream;
 use rustapi_core::RustApi;
-use rustapi_core::TestClient;
+use rustapi_testing::{TestClient, TestRequest};
 
 #[tokio::test]
 async fn test_streaming_body_buffered_small() {
@@ -60,7 +60,7 @@ async fn test_streaming_body_buffered_large_fail() {
     // So StreamingBody should fail.
 
     let response = client
-        .request(rustapi_core::TestRequest::post("/stream").body(bytes))
+        .request(TestRequest::post("/stream").body(bytes))
         .await;
 
     // Handler catches error and returns string "Error: ..."
@@ -111,7 +111,7 @@ proptest! {
             // So this should always succeed.
 
             let response = client
-                .request(rustapi_core::TestRequest::post("/stream").body(bytes))
+                .request(TestRequest::post("/stream").body(bytes))
                 .await;
 
             response.assert_status(StatusCode::OK);

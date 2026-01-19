@@ -274,12 +274,14 @@ mod property_tests {
     }
 
     // Strategy for strings within length bounds
+    #[allow(dead_code)]
     fn string_within_bounds(min: usize, max: usize) -> impl Strategy<Value = String> {
         prop::collection::vec(prop::char::range('a', 'z'), min..=max)
             .prop_map(|chars| chars.into_iter().collect())
     }
 
     // Strategy for strings outside length bounds (too short)
+    #[allow(dead_code)]
     fn string_too_short(min: usize) -> impl Strategy<Value = String> {
         if min == 0 {
             Just("".to_string()).boxed()
@@ -291,6 +293,7 @@ mod property_tests {
     }
 
     // Strategy for strings outside length bounds (too long)
+    #[allow(dead_code)]
     fn string_too_long(max: usize) -> impl Strategy<Value = String> {
         prop::collection::vec(prop::char::range('a', 'z'), (max + 1)..=(max + 10))
             .prop_map(|chars| chars.into_iter().collect())

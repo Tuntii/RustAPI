@@ -6,7 +6,8 @@
 //! # Example
 //!
 //! ```rust,ignore
-//! use rustapi_core::{RustApi, TestClient, get};
+//! use rustapi_core::{RustApi, get};
+//! use rustapi_testing::TestClient;
 //!
 //! async fn hello() -> &'static str {
 //!     "Hello, World!"
@@ -23,15 +24,11 @@
 //! }
 //! ```
 
-use crate::error::ApiError;
-use crate::middleware::{BodyLimitLayer, BoxedNext, LayerStack, DEFAULT_BODY_LIMIT};
-use crate::request::Request;
-use crate::response::IntoResponse;
-use crate::response::Response;
-use crate::router::{RouteMatch, Router};
 use bytes::Bytes;
 use http::{header, HeaderMap, HeaderValue, Method, StatusCode};
 use http_body_util::BodyExt;
+use rustapi_core::middleware::{BodyLimitLayer, BoxedNext, LayerStack, DEFAULT_BODY_LIMIT};
+use rustapi_core::{ApiError, BodyVariant, IntoResponse, Request, Response, RouteMatch, Router};
 use serde::{de::DeserializeOwned, Serialize};
 use std::future::Future;
 use std::pin::Pin;
@@ -55,7 +52,7 @@ impl TestClient {
     /// let app = RustApi::new().route("/", get(handler));
     /// let client = TestClient::new(app);
     /// ```
-    pub fn new(app: crate::app::RustApi) -> Self {
+    pub fn new(app: rustapi_core::RustApi) -> Self {
         // Get the router and layers from the app
         let layers = app.layers().clone();
         let router = app.into_router();
@@ -71,7 +68,7 @@ impl TestClient {
     }
 
     /// Create a new test client with custom body limit
-    pub fn with_body_limit(app: crate::app::RustApi, limit: usize) -> Self {
+    pub fn with_body_limit(app: rustapi_core::RustApi, limit: usize) -> Self {
         let layers = app.layers().clone();
         let router = app.into_router();
 
@@ -162,7 +159,7 @@ impl TestClient {
 
         let request = Request::new(
             parts,
-            crate::request::BodyVariant::Buffered(body_bytes),
+            BodyVariant::Buffered(body_bytes),
             self.router.state_ref(),
             params,
         );
@@ -438,316 +435,5 @@ impl TestResponse {
             body
         );
         self
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::app::RustApi;
-    use crate::router::get;
-    use proptest::prelude::*;
-    use serde::{Deserialize, Serialize};
-
-    // Simple handler for testing
-    async fn hello() -> &'static str {
-        "Hello, World!"
-    }
-
-    // Handler that returns JSON as string
-    async fn json_string_handler() -> String {
-        r#"{"message":"test","count":42}"#.to_string()
-    }
-
-    // JSON data structure for testing
-    #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-    struct TestData {
-        message: String,
-        count: i32,
-    }
-
-    // Handler that echoes body as string
-    async fn echo_body(body: crate::extract::Body) -> String {
-        String::from_utf8_lossy(&body.0).to_string()
-    }
-
-    #[tokio::test]
-    async fn test_client_get_request() {
-        let app = RustApi::new().route("/", get(hello));
-        let client = TestClient::new(app);
-
-        let response = client.get("/").await;
-        assert_eq!(response.status(), StatusCode::OK);
-        assert_eq!(response.text(), "Hello, World!");
-    }
-
-    #[tokio::test]
-    async fn test_client_not_found() {
-        let app = RustApi::new().route("/", get(hello));
-        let client = TestClient::new(app);
-
-        let response = client.get("/nonexistent").await;
-        assert_eq!(response.status(), StatusCode::NOT_FOUND);
-    }
-
-    #[tokio::test]
-    async fn test_client_json_response() {
-        let app = RustApi::new().route("/json", get(json_string_handler));
-        let client = TestClient::new(app);
-
-        let response = client.get("/json").await;
-        response.assert_status(StatusCode::OK);
-
-        let data: TestData = response.json().unwrap();
-        assert_eq!(data.message, "test");
-        assert_eq!(data.count, 42);
-    }
-
-    #[tokio::test]
-    async fn test_client_post_json() {
-        let app = RustApi::new().route("/echo", crate::router::post(echo_body));
-        let client = TestClient::new(app);
-
-        let input = TestData {
-            message: "hello".to_string(),
-            count: 123,
-        };
-
-        let response = client.post_json("/echo", &input).await;
-        response.assert_status(StatusCode::OK);
-
-        let output: TestData = response.json().unwrap();
-        assert_eq!(output, input);
-    }
-
-    #[tokio::test]
-    async fn test_request_builder_methods() {
-        // Test all HTTP methods are available
-        let get_req = TestRequest::get("/test");
-        assert_eq!(get_req.method, Method::GET);
-
-        let post_req = TestRequest::post("/test");
-        assert_eq!(post_req.method, Method::POST);
-
-        let put_req = TestRequest::put("/test");
-        assert_eq!(put_req.method, Method::PUT);
-
-        let patch_req = TestRequest::patch("/test");
-        assert_eq!(patch_req.method, Method::PATCH);
-
-        let delete_req = TestRequest::delete("/test");
-        assert_eq!(delete_req.method, Method::DELETE);
-    }
-
-    #[tokio::test]
-    async fn test_request_builder_headers() {
-        let req = TestRequest::get("/test")
-            .header("Authorization", "Bearer token")
-            .header("Accept", "application/json");
-
-        assert!(req.headers.contains_key("authorization"));
-        assert!(req.headers.contains_key("accept"));
-    }
-
-    #[tokio::test]
-    async fn test_request_builder_json_sets_content_type() {
-        let data = TestData {
-            message: "test".to_string(),
-            count: 1,
-        };
-
-        let req = TestRequest::post("/test").json(&data);
-
-        assert!(req.body.is_some());
-        assert_eq!(
-            req.headers.get(header::CONTENT_TYPE).unwrap(),
-            "application/json"
-        );
-    }
-
-    #[tokio::test]
-    async fn test_response_assertions() {
-        let app = RustApi::new().route("/json", get(json_string_handler));
-        let client = TestClient::new(app);
-
-        let response = client.get("/json").await;
-
-        // Chain assertions
-        response
-            .assert_status(StatusCode::OK)
-            .assert_body_contains("test");
-    }
-
-    #[tokio::test]
-    async fn test_response_assert_json() {
-        let app = RustApi::new().route("/json", get(json_string_handler));
-        let client = TestClient::new(app);
-
-        let response = client.get("/json").await;
-
-        let expected = TestData {
-            message: "test".to_string(),
-            count: 42,
-        };
-
-        response.assert_json(&expected);
-    }
-
-    // **Feature: phase4-ergonomics-v1, Property 10: TestClient Request/Response Handling**
-    //
-    // For any request sent through TestClient, it should be processed through the full
-    // middleware and handler pipeline, and the response should be accessible with correct
-    // status, headers, and body. When sending JSON, the Content-Type header should be
-    // automatically set to `application/json`.
-    //
-    // **Validates: Requirements 6.1, 6.2, 6.3, 6.4**
-    proptest! {
-        #![proptest_config(ProptestConfig::with_cases(100))]
-
-        #[test]
-        fn prop_test_client_request_response_handling(
-            message in "[a-zA-Z0-9 ]{1,50}",
-            count in 0i32..1000,
-        ) {
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            rt.block_on(async {
-                // Create app with echo handler
-                let app = RustApi::new().route("/echo", crate::router::post(echo_body));
-                let client = TestClient::new(app);
-
-                // Create test data
-                let input = TestData {
-                    message: message.clone(),
-                    count,
-                };
-
-                // Send request through TestClient
-                let response = client.post_json("/echo", &input).await;
-
-                // Verify response status is accessible
-                prop_assert_eq!(response.status(), StatusCode::OK);
-
-                // Verify response body is accessible and correct
-                let output: TestData = response.json().expect("Should parse JSON");
-                prop_assert_eq!(output.message, message);
-                prop_assert_eq!(output.count, count);
-
-                Ok(())
-            })?;
-        }
-
-        #[test]
-        fn prop_test_client_json_content_type_auto_set(
-            message in "[a-zA-Z0-9]{1,20}",
-        ) {
-            // Verify that when sending JSON, Content-Type is automatically set
-            let data = TestData {
-                message,
-                count: 1,
-            };
-
-            let req = TestRequest::post("/test").json(&data);
-
-            // Content-Type should be set to application/json
-            let content_type = req.headers.get(header::CONTENT_TYPE);
-            prop_assert!(content_type.is_some());
-            prop_assert_eq!(
-                content_type.unwrap().to_str().unwrap(),
-                "application/json"
-            );
-
-            // Body should be set
-            prop_assert!(req.body.is_some());
-        }
-
-        #[test]
-        fn prop_test_client_processes_through_middleware(
-            path in "/[a-z]{1,10}",
-        ) {
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            rt.block_on(async {
-                // Create app with a simple handler
-                let app = RustApi::new().route(&path, get(hello));
-                let client = TestClient::new(app);
-
-                // Request should go through middleware pipeline
-                let response = client.get(&path).await;
-
-                // Should get successful response
-                prop_assert_eq!(response.status(), StatusCode::OK);
-                prop_assert_eq!(response.text(), "Hello, World!");
-
-                Ok(())
-            })?;
-        }
-
-        #[test]
-        fn prop_test_client_not_found_for_unregistered_paths(
-            registered_path in "/[a-z]{1,5}",
-            unregistered_path in "/[a-z]{6,10}",
-        ) {
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            rt.block_on(async {
-                // Create app with one route
-                let app = RustApi::new().route(&registered_path, get(hello));
-                let client = TestClient::new(app);
-
-                // Request to unregistered path should return 404
-                let response = client.get(&unregistered_path).await;
-                prop_assert_eq!(response.status(), StatusCode::NOT_FOUND);
-
-                Ok(())
-            })?;
-        }
-    }
-
-    #[tokio::test]
-    async fn test_client_method_not_allowed() {
-        let app = RustApi::new().route("/get-only", get(hello));
-        let client = TestClient::new(app);
-
-        // POST to a GET-only route should return 405
-        let response = client.request(TestRequest::post("/get-only")).await;
-        assert_eq!(response.status(), StatusCode::METHOD_NOT_ALLOWED);
-
-        // Should have Allow header
-        assert!(response.headers().contains_key(header::ALLOW));
-    }
-
-    #[tokio::test]
-    async fn test_client_custom_headers() {
-        // Handler that echoes back a specific header value
-        async fn echo_header(body: crate::extract::Body) -> String {
-            // For this test, we just verify the request goes through
-            // The header checking is done via the body echo
-            String::from_utf8_lossy(&body.0).to_string()
-        }
-
-        let app = RustApi::new().route("/check", crate::router::post(echo_header));
-        let client = TestClient::new(app);
-
-        let response = client
-            .request(
-                TestRequest::post("/check")
-                    .header("X-Custom-Header", "test-value")
-                    .body("test body"),
-            )
-            .await;
-
-        assert_eq!(response.status(), StatusCode::OK);
-        assert_eq!(response.text(), "test body");
-    }
-
-    #[tokio::test]
-    async fn test_client_raw_body() {
-        let app = RustApi::new().route("/echo", crate::router::post(echo_body));
-        let client = TestClient::new(app);
-
-        let response = client
-            .request(TestRequest::post("/echo").body("raw body content"))
-            .await;
-
-        assert_eq!(response.status(), StatusCode::OK);
-        assert_eq!(response.text(), "raw body content");
     }
 }

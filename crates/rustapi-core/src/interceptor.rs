@@ -333,37 +333,6 @@ mod tests {
         }
     }
 
-    /// A request interceptor that modifies a header
-    #[derive(Clone)]
-    struct HeaderModifyingRequestInterceptor {
-        header_name: &'static str,
-        header_value: String,
-    }
-
-    impl HeaderModifyingRequestInterceptor {
-        fn new(header_name: &'static str, header_value: impl Into<String>) -> Self {
-            Self {
-                header_name,
-                header_value: header_value.into(),
-            }
-        }
-    }
-
-    impl RequestInterceptor for HeaderModifyingRequestInterceptor {
-        fn intercept(&self, mut request: Request) -> Request {
-            // Store the value in extensions since we can't modify headers directly
-            // In a real implementation, we'd need mutable header access
-            request
-                .extensions_mut()
-                .insert(format!("{}:{}", self.header_name, self.header_value));
-            request
-        }
-
-        fn clone_box(&self) -> Box<dyn RequestInterceptor> {
-            Box::new(self.clone())
-        }
-    }
-
     /// A response interceptor that modifies a header
     #[derive(Clone)]
     struct HeaderModifyingResponseInterceptor {
