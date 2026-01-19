@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-19cf8ce6.js";
+            window.path_to_searchindex_js = "searchindex-8e8b8e10.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-163c7333.js"></script>
+        <script src="toc-22f4d6da.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -836,6 +836,7 @@ async fn list_metrics() -&gt; Json&lt;Vec&lt;Metric&gt;&gt; { ... }
 <tbody>
 <tr><td><code>jwt</code></td><td><code>JwtLayer</code>, <code>AuthUser</code> extractor</td></tr>
 <tr><td><code>cors</code></td><td><code>CorsLayer</code></td></tr>
+<tr><td><code>csrf</code></td><td><code>CsrfLayer</code>, <code>CsrfToken</code> extractor</td></tr>
 <tr><td><code>audit</code></td><td><code>AuditStore</code>, <code>AuditLogger</code></td></tr>
 <tr><td><code>rate-limit</code></td><td><code>RateLimitLayer</code></td></tr>
 </tbody>
@@ -850,6 +851,41 @@ async fn list_metrics() -&gt; Json&lt;Vec&lt;Metric&gt;&gt; { ... }
     .layer(CompressionLayer::new())
     .route("/", get(handler));
 <span class="boring">}</span></code></pre>
+<h2 id="csrf-protection"><a class="header" href="#csrf-protection">CSRF Protection</a></h2>
+<p>Cross-Site Request Forgery protection using the Double-Submit Cookie pattern.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_extras::csrf::{CsrfConfig, CsrfLayer, CsrfToken};
+
+// Configure CSRF middleware
+let csrf_config = CsrfConfig::new()
+    .cookie_name("csrf_token")
+    .header_name("X-CSRF-Token")
+    .cookie_secure(true);        // HTTPS only
+
+let app = RustApi::new()
+    .layer(CsrfLayer::new(csrf_config))
+    .route("/form", get(show_form))
+    .route("/submit", post(handle_submit));
+<span class="boring">}</span></code></pre>
+<h3 id="extracting-the-token"><a class="header" href="#extracting-the-token">Extracting the Token</a></h3>
+<p>Use the <code>CsrfToken</code> extractor to access the token in handlers:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi_rs::get("/form")]
+async fn show_form(token: CsrfToken) -&gt; Html&lt;String&gt; {
+    Html(format!(r#"
+        &lt;input type="hidden" name="_csrf" value="{}" /&gt;
+    "#, token.as_str()))
+}
+<span class="boring">}</span></code></pre>
+<h3 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h3>
+<ol>
+<li><strong>Safe methods</strong> (<code>GET</code>, <code>HEAD</code>) generate and set the token cookie</li>
+<li><strong>Unsafe methods</strong> (<code>POST</code>, <code>PUT</code>, <code>DELETE</code>) require the token in the <code>X-CSRF-Token</code> header</li>
+<li>If header doesn’t match cookie → <code>403 Forbidden</code></li>
+</ol>
+<p>See <a href="#csrf-protection-1">CSRF Protection Recipe</a> for a complete guide.</p>
 <h2 id="audit-logging"><a class="header" href="#audit-logging">Audit Logging</a></h2>
 <p>For enterprise compliance (GDPR/SOC2), the <code>audit</code> feature provides a structured way to record sensitive actions.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -1188,6 +1224,244 @@ async fn main() {
 }
 <span class="boring">}</span></code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="csrf-protection-1"><a class="header" href="#csrf-protection-1">CSRF Protection</a></h1>
+<p>Cross-Site Request Forgery (CSRF) protection for your RustAPI applications using the <strong>Double-Submit Cookie</strong> pattern.</p>
+<h2 id="what-is-csrf"><a class="header" href="#what-is-csrf">What is CSRF?</a></h2>
+<p>CSRF is an attack that tricks users into submitting unintended requests. For example, a malicious website could submit a form to your API while users are logged in, performing actions without their consent.</p>
+<p>RustAPI’s CSRF protection works by:</p>
+<ol>
+<li>Generating a cryptographic token stored in a cookie</li>
+<li>Requiring the same token in a request header for state-changing requests</li>
+<li>Rejecting requests where the cookie and header don’t match</li>
+</ol>
+<h2 id="quick-start-1"><a class="header" href="#quick-start-1">Quick Start</a></h2>
+<pre><code class="language-toml">[dependencies]
+rustapi-rs = { version = "0.1", features = ["csrf"] }
+</code></pre>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+use rustapi_extras::csrf::{CsrfConfig, CsrfLayer, CsrfToken};
+
+#[rustapi_rs::get("/form")]
+async fn show_form(token: CsrfToken) -&gt; Html&lt;String&gt; {
+    Html(format!(r#"
+        &lt;form method="POST" action="/submit"&gt;
+            &lt;input type="hidden" name="csrf_token" value="{}" /&gt;
+            &lt;button type="submit"&gt;Submit&lt;/button&gt;
+        &lt;/form&gt;
+    "#, token.as_str()))
+}
+
+#[rustapi_rs::post("/submit")]
+async fn handle_submit() -&gt; &amp;'static str {
+    // If we get here, CSRF validation passed!
+    "Form submitted successfully"
+}
+
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    let csrf_config = CsrfConfig::new()
+        .cookie_name("csrf_token")
+        .header_name("X-CSRF-Token");
+
+    RustApi::new()
+        .layer(CsrfLayer::new(csrf_config))
+        .mount(show_form)
+        .mount(handle_submit)
+        .run("127.0.0.1:8080")
+        .await
+}</code></pre>
+<h2 id="configuration-options"><a class="header" href="#configuration-options">Configuration Options</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let config = CsrfConfig::new()
+    // Cookie settings
+    .cookie_name("csrf_token")      // Default: "csrf_token"
+    .cookie_path("/")               // Default: "/"
+    .cookie_domain("example.com")   // Default: None (same domain)
+    .cookie_secure(true)            // Default: true (HTTPS only)
+    .cookie_http_only(false)        // Default: false (JS needs access)
+    .cookie_same_site(SameSite::Strict) // Default: Strict
+    
+    // Token settings
+    .header_name("X-CSRF-Token")    // Default: "X-CSRF-Token"
+    .token_length(32);              // Default: 32 bytes
+<span class="boring">}</span></code></pre>
+<h2 id="how-it-works-1"><a class="header" href="#how-it-works-1">How It Works</a></h2>
+<h3 id="safe-methods-no-validation"><a class="header" href="#safe-methods-no-validation">Safe Methods (No Validation)</a></h3>
+<p><code>GET</code>, <code>HEAD</code>, <code>OPTIONS</code>, and <code>TRACE</code> requests are considered “safe” and don’t modify state. The CSRF middleware:</p>
+<ol>
+<li>✅ Generates a new token if none exists</li>
+<li>✅ Sets the token cookie in the response</li>
+<li>✅ <strong>Does NOT validate</strong> the header</li>
+</ol>
+<h3 id="unsafe-methods-validation-required"><a class="header" href="#unsafe-methods-validation-required">Unsafe Methods (Validation Required)</a></h3>
+<p><code>POST</code>, <code>PUT</code>, <code>PATCH</code>, and <code>DELETE</code> requests require CSRF validation:</p>
+<ol>
+<li>🔍 Reads the token from the cookie</li>
+<li>🔍 Reads the expected token from the header</li>
+<li>❌ If missing or mismatched → Returns <code>403 Forbidden</code></li>
+<li>✅ If valid → Proceeds to handler</li>
+</ol>
+<h2 id="frontend-integration"><a class="header" href="#frontend-integration">Frontend Integration</a></h2>
+<h3 id="html-forms"><a class="header" href="#html-forms">HTML Forms</a></h3>
+<p>For traditional form submissions, include the token as a hidden field:</p>
+<pre><code class="language-html">&lt;form method="POST" action="/api/submit"&gt;
+    &lt;input type="hidden" name="_csrf" value="{{ csrf_token }}" /&gt;
+    &lt;!-- form fields --&gt;
+    &lt;button type="submit"&gt;Submit&lt;/button&gt;
+&lt;/form&gt;
+</code></pre>
+<h3 id="javascript--ajax"><a class="header" href="#javascript--ajax">JavaScript / AJAX</a></h3>
+<p>For API calls, include the token in the request header:</p>
+<pre><code class="language-javascript">// Read token from cookie
+function getCsrfToken() {
+    return document.cookie
+        .split('; ')
+        .find(row =&gt; row.startsWith('csrf_token='))
+        ?.split('=')[1];
+}
+
+// Include in fetch requests
+fetch('/api/users', {
+    method: 'POST',
+    headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': getCsrfToken()
+    },
+    body: JSON.stringify({ name: 'John' })
+});
+</code></pre>
+<h3 id="axios-interceptor"><a class="header" href="#axios-interceptor">Axios Interceptor</a></h3>
+<pre><code class="language-javascript">import axios from 'axios';
+
+axios.interceptors.request.use(config =&gt; {
+    if (['post', 'put', 'patch', 'delete'].includes(config.method)) {
+        config.headers['X-CSRF-Token'] = getCsrfToken();
+    }
+    return config;
+});
+</code></pre>
+<h2 id="extracting-the-token-in-handlers"><a class="header" href="#extracting-the-token-in-handlers">Extracting the Token in Handlers</a></h2>
+<p>Use the <code>CsrfToken</code> extractor to access the current token in your handlers:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_extras::csrf::CsrfToken;
+
+#[rustapi_rs::get("/api/csrf-token")]
+async fn get_csrf_token(token: CsrfToken) -&gt; Json&lt;serde_json::Value&gt; {
+    Json(serde_json::json!({
+        "csrf_token": token.as_str()
+    }))
+}
+<span class="boring">}</span></code></pre>
+<h2 id="best-practices-1"><a class="header" href="#best-practices-1">Best Practices</a></h2>
+<h3 id="1-always-use-https-in-production"><a class="header" href="#1-always-use-https-in-production">1. Always Use HTTPS in Production</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let config = CsrfConfig::new()
+    .cookie_secure(true);  // Cookie only sent over HTTPS
+<span class="boring">}</span></code></pre>
+<h3 id="2-use-strict-samesite-policy"><a class="header" href="#2-use-strict-samesite-policy">2. Use Strict SameSite Policy</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use cookie::SameSite;
+
+let config = CsrfConfig::new()
+    .cookie_same_site(SameSite::Strict);  // Most restrictive
+<span class="boring">}</span></code></pre>
+<h3 id="3-combine-with-other-security-measures"><a class="header" href="#3-combine-with-other-security-measures">3. Combine with Other Security Measures</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>RustApi::new()
+    .layer(CsrfLayer::new(csrf_config))
+    .layer(SecurityHeadersLayer::strict())  // Add security headers
+    .layer(CorsLayer::permissive())         // Configure CORS
+<span class="boring">}</span></code></pre>
+<h3 id="4-rotate-tokens-periodically"><a class="header" href="#4-rotate-tokens-periodically">4. Rotate Tokens Periodically</a></h3>
+<p>Consider regenerating tokens after sensitive actions:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi_rs::post("/auth/login")]
+async fn login(/* ... */) -&gt; impl IntoResponse {
+    // After successful login, a new CSRF token will be
+    // generated on the next GET request
+    // ...
+}
+<span class="boring">}</span></code></pre>
+<h2 id="testing-csrf-protection"><a class="header" href="#testing-csrf-protection">Testing CSRF Protection</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_testing::{TestClient, TestRequest};
+
+#[tokio::test]
+async fn test_csrf_protection() {
+    let app = create_app_with_csrf();
+    let client = TestClient::new(app);
+    
+    // GET request should work and set cookie
+    let res = client.get("/form").await;
+    assert_eq!(res.status(), StatusCode::OK);
+    
+    let csrf_cookie = res.headers()
+        .get("set-cookie")
+        .unwrap()
+        .to_str()
+        .unwrap();
+    
+    // Extract token value
+    let token = csrf_cookie
+        .split(';')
+        .next()
+        .unwrap()
+        .split('=')
+        .nth(1)
+        .unwrap();
+    
+    // POST without token should fail
+    let res = client.post("/submit").await;
+    assert_eq!(res.status(), StatusCode::FORBIDDEN);
+    
+    // POST with correct token should succeed
+    let res = client.request(
+        TestRequest::post("/submit")
+            .header("Cookie", format!("csrf_token={}", token))
+            .header("X-CSRF-Token", token)
+    ).await;
+    assert_eq!(res.status(), StatusCode::OK);
+}
+<span class="boring">}</span></code></pre>
+<h2 id="error-handling-1"><a class="header" href="#error-handling-1">Error Handling</a></h2>
+<p>When CSRF validation fails, the middleware returns a JSON error response:</p>
+<pre><code class="language-json">{
+    "error": {
+        "code": "csrf_forbidden",
+        "message": "CSRF token validation failed"
+    }
+}
+</code></pre>
+<p>You can customize this by wrapping the layer with your own error handler.</p>
+<h2 id="security-considerations"><a class="header" href="#security-considerations">Security Considerations</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Consideration</th><th>Status</th></tr>
+</thead>
+<tbody>
+<tr><td>Token in cookie</td><td>✅ HttpOnly=false (JS needs access)</td></tr>
+<tr><td>Token validation</td><td>✅ Constant-time comparison</td></tr>
+<tr><td>SameSite cookie</td><td>✅ Configurable (Strict by default)</td></tr>
+<tr><td>Secure cookie</td><td>✅ HTTPS-only by default</td></tr>
+<tr><td>Token entropy</td><td>✅ 32 bytes of cryptographic randomness</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="see-also"><a class="header" href="#see-also">See Also</a></h2>
+<ul>
+<li><a href="#jwt-authentication">JWT Authentication</a> - Token-based authentication</li>
+<li><a href="#security-headers">Security Headers</a> - Additional security layers</li>
+<li><a href="#cors">CORS Configuration</a> - Cross-origin request handling</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="database-integration"><a class="header" href="#database-integration">Database Integration</a></h1>
 <p>RustAPI is database-agnostic, but <strong>SQLx</strong> is the recommended driver due to its async-first design and compile-time query verification.</p>
 <p>This recipe shows how to integrate PostgreSQL/MySQL/SQLite using a global connection pool.</p>
@@ -1298,7 +1572,7 @@ impl UserRepository for PostgresRepo {
     db: Arc&lt;dyn UserRepository&gt;,
 }
 <span class="boring">}</span></code></pre>
-<h2 id="error-handling-1"><a class="header" href="#error-handling-1">Error Handling</a></h2>
+<h2 id="error-handling-2"><a class="header" href="#error-handling-2">Error Handling</a></h2>
 <p>Don’t expose raw SQL errors to users. Map them to your <code>ApiError</code> type.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {

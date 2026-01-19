@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-19cf8ce6.js";
+            window.path_to_searchindex_js = "../searchindex-8e8b8e10.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-163c7333.js"></script>
+        <script src="../toc-22f4d6da.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -194,6 +194,7 @@
 <tbody>
 <tr><td><code>jwt</code></td><td><code>JwtLayer</code>, <code>AuthUser</code> extractor</td></tr>
 <tr><td><code>cors</code></td><td><code>CorsLayer</code></td></tr>
+<tr><td><code>csrf</code></td><td><code>CsrfLayer</code>, <code>CsrfToken</code> extractor</td></tr>
 <tr><td><code>audit</code></td><td><code>AuditStore</code>, <code>AuditLogger</code></td></tr>
 <tr><td><code>rate-limit</code></td><td><code>RateLimitLayer</code></td></tr>
 </tbody>
@@ -208,6 +209,41 @@
     .layer(CompressionLayer::new())
     .route("/", get(handler));
 <span class="boring">}</span></code></pre>
+<h2 id="csrf-protection"><a class="header" href="#csrf-protection">CSRF Protection</a></h2>
+<p>Cross-Site Request Forgery protection using the Double-Submit Cookie pattern.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_extras::csrf::{CsrfConfig, CsrfLayer, CsrfToken};
+
+// Configure CSRF middleware
+let csrf_config = CsrfConfig::new()
+    .cookie_name("csrf_token")
+    .header_name("X-CSRF-Token")
+    .cookie_secure(true);        // HTTPS only
+
+let app = RustApi::new()
+    .layer(CsrfLayer::new(csrf_config))
+    .route("/form", get(show_form))
+    .route("/submit", post(handle_submit));
+<span class="boring">}</span></code></pre>
+<h3 id="extracting-the-token"><a class="header" href="#extracting-the-token">Extracting the Token</a></h3>
+<p>Use the <code>CsrfToken</code> extractor to access the token in handlers:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi_rs::get("/form")]
+async fn show_form(token: CsrfToken) -&gt; Html&lt;String&gt; {
+    Html(format!(r#"
+        &lt;input type="hidden" name="_csrf" value="{}" /&gt;
+    "#, token.as_str()))
+}
+<span class="boring">}</span></code></pre>
+<h3 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h3>
+<ol>
+<li><strong>Safe methods</strong> (<code>GET</code>, <code>HEAD</code>) generate and set the token cookie</li>
+<li><strong>Unsafe methods</strong> (<code>POST</code>, <code>PUT</code>, <code>DELETE</code>) require the token in the <code>X-CSRF-Token</code> header</li>
+<li>If header doesn’t match cookie → <code>403 Forbidden</code></li>
+</ol>
+<p>See <a href="../recipes/csrf_protection.html">CSRF Protection Recipe</a> for a complete guide.</p>
 <h2 id="audit-logging"><a class="header" href="#audit-logging">Audit Logging</a></h2>
 <p>For enterprise compliance (GDPR/SOC2), the <code>audit</code> feature provides a structured way to record sensitive actions.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
