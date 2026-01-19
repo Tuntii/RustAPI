@@ -10,6 +10,7 @@ members = [
     "crates/rustapi-toon",
     "crates/rustapi-ws",
     "crates/rustapi-view",
+    "crates/rustapi-ssr",
     "crates/rustapi-testing",
     "crates/rustapi-jobs",
     "crates/cargo-rustapi",
@@ -108,6 +109,6 @@ rustapi-extras = { path = "crates/rustapi-extras", version = "0.1.14" }
 rustapi-toon = { path = "crates/rustapi-toon", version = "0.1.14" }
 rustapi-ws = { path = "crates/rustapi-ws", version = "0.1.14" }
 rustapi-view = { path = "crates/rustapi-view", version = "0.1.14" }
+rustapi-ssr = { path = "crates/rustapi-ssr", version = "0.1.14" }
 rustapi-testing = { path = "crates/rustapi-testing", version = "0.1.14" }
 rustapi-jobs = { path = "crates/rustapi-jobs", version = "0.1.14" }
-

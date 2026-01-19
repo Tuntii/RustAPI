@@ -1,0 +1,25 @@
+[package]
+name = "rustapi-ssr"
+version = { workspace = true }
+edition = { workspace = true }
+license = { workspace = true }
+repository = { workspace = true }
+homepage = { workspace = true }
+documentation = { workspace = true }
+rust-version = { workspace = true }
+
+[lib]
+path = "src/lib.rs"
+
+build = "build.rs"
+
+[dependencies]
+inventory = { workspace = true }
+matchit = { workspace = true }
+thiserror = { workspace = true }
+
+[features]
+default = []
+
+[package.metadata]
+rustapi = true
