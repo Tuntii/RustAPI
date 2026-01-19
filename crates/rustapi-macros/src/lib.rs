@@ -24,18 +24,6 @@ use syn::{
 
 mod api_error;
 
-/// Derive macro for `ApiError`
-///
-/// # Example
-///
-/// ```rust,ignore
-/// #[derive(ApiError)]
-/// enum MyError {
-///     #[error(status = 404, message = "User not found")]
-///     UserNotFound,
-/// }
-/// ```
-
 /// Auto-register a schema type for zero-config OpenAPI.
 ///
 /// Attach this to a `struct` or `enum` that also derives `Schema` (utoipa::ToSchema).
@@ -1108,8 +1096,6 @@ pub fn derive_validate(input: TokenStream) -> TokenStream {
 // ============================================
 // ApiError Derive Macro
 // ============================================
-
-/// Parsed error attribute info
 
 /// Derive macro for implementing IntoResponse for error enums
 ///
