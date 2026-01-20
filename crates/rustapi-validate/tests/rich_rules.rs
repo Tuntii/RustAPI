@@ -26,7 +26,7 @@ struct RichRulesDto {
 #[test]
 fn test_rich_rules_valid() {
     let dto = RichRulesDto {
-        cc: "453201511283036".to_string(), // Valid Luhn
+        cc: "4532015112830366".to_string(), // Valid Visa test card (Luhn-valid)
         any_ip: "127.0.0.1".to_string(),
         ipv4: "192.168.1.1".to_string(),
         ipv6: "2001:db8::1".to_string(),
@@ -40,7 +40,7 @@ fn test_rich_rules_valid() {
 #[test]
 fn test_rich_rules_invalid() {
     let dto = RichRulesDto {
-        cc: "453201511283037".to_string(), // Invalid Luhn
+        cc: "1234567890123456".to_string(), // Invalid Luhn
         any_ip: "not-an-ip".to_string(),
         ipv4: "2001:db8::1".to_string(),    // IPv6 in IPv4 field
         ipv6: "192.168.1.1".to_string(),    // IPv4 in IPv6 field
@@ -60,12 +60,13 @@ fn test_rich_rules_invalid() {
     assert!(errors.get("about").is_some());
 }
 
+// Note: Custom message with nested syntax
 #[derive(Debug, Validate)]
 struct CustomMessageDto {
-    #[validate(credit_card, message = "Invalid CC")]
+    #[validate(credit_card(message = "Invalid CC"))]
     cc: String,
 
-    #[validate(ip(v4), message = "Must be IPv4")]
+    #[validate(ip(v4, message = "Must be IPv4"))]
     ipv4: String,
 }
 

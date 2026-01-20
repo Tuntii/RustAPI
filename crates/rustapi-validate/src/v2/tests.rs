@@ -548,7 +548,10 @@ mod async_property_tests {
     }
 
     impl Validate for TestUser {
-        fn validate(&self) -> Result<(), ValidationErrors> {
+        fn validate_with_group(
+            &self,
+            _group: crate::v2::group::ValidationGroup,
+        ) -> Result<(), ValidationErrors> {
             let mut errors = ValidationErrors::new();
 
             // Sync validation: email format
@@ -563,9 +566,10 @@ mod async_property_tests {
 
     #[async_trait]
     impl AsyncValidate for TestUser {
-        async fn validate_async(
+        async fn validate_async_with_group(
             &self,
             ctx: &crate::v2::context::ValidationContext,
+            _group: crate::v2::group::ValidationGroup,
         ) -> Result<(), ValidationErrors> {
             let mut errors = ValidationErrors::new();
 
