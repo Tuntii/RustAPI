@@ -740,7 +740,7 @@ cargo clippy --all-targets --all-features
 - **💬 Discussions**: [GitHub Discussions](https://github.com/Tuntii/RustAPI/discussions)
 - **🐦 Twitter**: [@Tuntii](https://twitter.com/Tuntii)
 - **🌐 Website**: [tunti35.com/projects/rustapi](https://www.tunti35.com/projects/rustapi)
-- **📧 Email**: [tunahan@tunti35.com](mailto:tunahan@tunti35.com)
+- **📧 Email**: [tunayengin21@hotmail.com](mailto:tunayengin21@hotmail.com)
 
 ---
 

@@ -39,6 +39,37 @@ pub trait MiddlewareLayer: Send + Sync + 'static {
     fn clone_box(&self) -> Box<dyn MiddlewareLayer>;
 }
 
+/// Example: Implementing a custom simple logger middleware
+///
+/// ```rust
+/// use rustapi_core::middleware::{MiddlewareLayer, BoxedNext};
+/// use rustapi_core::{Request, Response};
+/// use std::pin::Pin;
+/// use std::future::Future;
+///
+/// #[derive(Clone)]
+/// struct SimpleLogger;
+///
+/// impl MiddlewareLayer for SimpleLogger {
+///     fn call(
+///         &self,
+///         req: Request,
+///         next: BoxedNext,
+///     ) -> Pin<Box<dyn Future<Output = Response> + Send + 'static>> {
+///         Box::pin(async move {
+///             println!("Incoming request: {} {}", req.method(), req.uri());
+///             let response = next(req).await;
+///             println!("Response status: {}", response.status());
+///             response
+///         })
+///     }
+///
+///     fn clone_box(&self) -> Box<dyn MiddlewareLayer> {
+///         Box::new(self.clone())
+///     }
+/// }
+/// ```
+
 impl Clone for Box<dyn MiddlewareLayer> {
     fn clone(&self) -> Self {
         self.clone_box()

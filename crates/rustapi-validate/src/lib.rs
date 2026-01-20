@@ -71,9 +71,11 @@
 //! }
 //! ```
 
+// Load I18n locales
+rust_i18n::i18n!("locales");
+
 pub mod custom;
 mod error;
-mod validate;
 
 /// V2 validation engine with async support.
 ///
@@ -82,12 +84,7 @@ mod validate;
 pub mod v2;
 
 pub use error::{FieldError, ValidationError};
-pub use validate::Validate;
-
-// Re-export the derive macro from validator (wrapped)
-// In a full implementation, we'd create our own proc-macro
-// For now, we use validator's derive with our own trait
-pub use validator::Validate as ValidatorValidate;
+pub use v2::Validate;
 
 // Re-export the v2 Validate derive macro
 pub use rustapi_macros::Validate as DeriveValidate;
@@ -95,8 +92,7 @@ pub use rustapi_macros::Validate as DeriveValidate;
 /// Prelude module for validation
 pub mod prelude {
     pub use crate::error::{FieldError, ValidationError};
-    pub use crate::validate::Validate;
-    pub use validator::Validate as ValidatorValidate;
+    pub use crate::v2::Validate;
 
     // Re-export v2 prelude
     pub use crate::v2::prelude::*;

@@ -76,6 +76,27 @@ pub trait FromRequestParts: Sized {
     fn from_request_parts(req: &Request) -> Result<Self>;
 }
 
+/// Example: Implementing a custom extractor that requires a specific header
+///
+/// ```rust
+/// use rustapi_core::FromRequestParts;
+/// use rustapi_core::{Request, ApiError, Result};
+/// use http::StatusCode;
+///
+/// struct ApiKey(String);
+///
+/// impl FromRequestParts for ApiKey {
+///     fn from_request_parts(req: &Request) -> Result<Self> {
+///         if let Some(key) = req.headers().get("x-api-key") {
+///             if let Ok(key_str) = key.to_str() {
+///                 return Ok(ApiKey(key_str.to_string()));
+///             }
+///         }
+///         Err(ApiError::unauthorized("Missing or invalid API key"))
+///     }
+/// }
+/// ```
+
 /// Trait for extracting data from the full request (including body)
 ///
 /// This is used for extractors that consume the request body.
@@ -83,6 +104,32 @@ pub trait FromRequest: Sized {
     /// Extract from the full request
     fn from_request(req: &mut Request) -> impl Future<Output = Result<Self>> + Send;
 }
+
+/// Example: Implementing a custom extractor that consumes the body
+///
+/// ```rust
+/// use rustapi_core::FromRequest;
+/// use rustapi_core::{Request, ApiError, Result};
+/// use std::future::Future;
+///
+/// struct PlainText(String);
+///
+/// impl FromRequest for PlainText {
+///     async fn from_request(req: &mut Request) -> Result<Self> {
+///         // Ensure body is loaded
+///         req.load_body().await?;
+///         
+///         // Consume the body
+///         if let Some(bytes) = req.take_body() {
+///             if let Ok(text) = String::from_utf8(bytes.to_vec()) {
+///                 return Ok(PlainText(text));
+///             }
+///         }
+///         
+///         Err(ApiError::bad_request("Invalid plain text body"))
+///     }
+/// }
+/// ```
 
 // Blanket impl: FromRequestParts -> FromRequest
 impl<T: FromRequestParts> FromRequest for T {

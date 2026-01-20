@@ -440,6 +440,27 @@ impl From<rustapi_validate::ValidationError> for ApiError {
     }
 }
 
+impl From<rustapi_validate::v2::ValidationErrors> for ApiError {
+    fn from(err: rustapi_validate::v2::ValidationErrors) -> Self {
+        let fields = err
+            .fields
+            .into_iter()
+            .flat_map(|(field, errors)| {
+                errors.into_iter().map(move |e| {
+                    let message = e.interpolate_message();
+                    FieldError {
+                        field: field.clone(),
+                        code: e.code,
+                        message,
+                    }
+                })
+            })
+            .collect();
+
+        ApiError::validation(fields)
+    }
+}
+
 impl ApiError {
     /// Create a validation error from a ValidationError
     pub fn from_validation_error(err: rustapi_validate::ValidationError) -> Self {

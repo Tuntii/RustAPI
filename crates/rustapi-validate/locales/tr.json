@@ -1,0 +1,35 @@
+{
+    "validation": {
+        "email": {
+            "invalid": "Geçersiz e-posta formatı"
+        },
+        "length": {
+            "min": "Uzunluk en az %{min} karakter olmalıdır",
+            "max": "Uzunluk en çok %{max} karakter olmalıdır",
+            "exact": "Uzunluk tam olarak %{len} karakter olmalıdır"
+        },
+        "range": {
+            "min": "Değer en az %{min} olmalıdır",
+            "max": "Değer en çok %{max} olmalıdır",
+            "between": "Değer %{min} ile %{max} arasında olmalıdır"
+        },
+        "required": {
+            "missing": "Bu alan zorunludur"
+        },
+        "url": {
+            "invalid": "Geçersiz URL formatı"
+        },
+        "regex": {
+            "mismatch": "Değer desene uymuyor: %{pattern}"
+        },
+        "unique": {
+            "taken": "Bu değer zaten kullanımda"
+        },
+        "exists": {
+            "not_found": "Değer bulunamadı"
+        },
+        "api": {
+            "invalid": "Harici doğrulama başarısız"
+        }
+    }
+}

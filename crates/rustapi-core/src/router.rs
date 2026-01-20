@@ -459,6 +459,38 @@ impl Router {
     /// // GET /api/users/
     /// // GET /api/users/{id}
     /// ```
+    ///
+    /// # Nesting with State
+    ///
+    /// The `nest` method automatically tracks state types from the nested router to prevent
+    /// conflicts, but it does NOT automatically merge the state values instance by instance.
+    /// You should distinctively add state to the parent, or use `merge_state` if you want
+    /// to pull a specific state object from the child.
+    ///
+    /// ```rust,ignore
+    /// use rustapi_core::Router;
+    /// use std::sync::Arc;
+    ///
+    /// #[derive(Clone)]
+    /// struct Database { /* ... */ }
+    ///
+    /// let db = Database { /* ... */ };
+    ///
+    /// // Option 1: Add state to the parent (Recommended)
+    /// let api = Router::new()
+    ///     .nest("/v1", Router::new()
+    ///         .route("/users", get(list_users))) // Needs Database
+    ///     .state(db);
+    ///
+    /// // Option 2: Define specific state in sub-router and merge explicitly
+    /// let sub_router = Router::new()
+    ///     .state(Database { /* ... */ })
+    ///     .route("/items", get(list_items));
+    ///
+    /// let app = Router::new()
+    ///     .merge_state::<Database>(&sub_router) // Pulls Database from sub_router
+    ///     .nest("/api", sub_router);
+    /// ```
     pub fn nest(mut self, prefix: &str, router: Router) -> Self {
         // 1. Normalize the prefix
         let normalized_prefix = normalize_prefix(prefix);

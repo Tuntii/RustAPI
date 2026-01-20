@@ -37,10 +37,16 @@ use std::fmt::Debug;
 /// }
 /// ```
 pub trait Validate {
-    /// Validate the struct synchronously.
-    ///
-    /// Returns `Ok(())` if validation passes, or `Err(ValidationErrors)` with all field errors.
-    fn validate(&self) -> Result<(), ValidationErrors>;
+    /// Validate the struct synchronously with the default group.
+    fn validate(&self) -> Result<(), ValidationErrors> {
+        self.validate_with_group(crate::v2::group::ValidationGroup::Default)
+    }
+
+    /// Validate the struct with a specific validation group.
+    fn validate_with_group(
+        &self,
+        group: crate::v2::group::ValidationGroup,
+    ) -> Result<(), ValidationErrors>;
 
     /// Validate and return the struct if valid.
     fn validated(self) -> Result<Self, ValidationErrors>
@@ -48,6 +54,18 @@ pub trait Validate {
         Self: Sized,
     {
         self.validate()?;
+        Ok(self)
+    }
+
+    /// Validate and return the struct if valid (with group).
+    fn validated_with_group(
+        self,
+        group: crate::v2::group::ValidationGroup,
+    ) -> Result<Self, ValidationErrors>
+    where
+        Self: Sized,
+    {
+        self.validate_with_group(group)?;
         Ok(self)
     }
 }
@@ -67,7 +85,7 @@ pub trait Validate {
 ///
 /// #[async_trait]
 /// impl AsyncValidate for CreateUser {
-///     async fn validate_async(&self, ctx: &ValidationContext) -> Result<(), ValidationErrors> {
+///     async fn validate_async_with_group(&self, ctx: &ValidationContext, group: ValidationGroup) -> Result<(), ValidationErrors> {
 ///         let mut errors = ValidationErrors::new();
 ///         
 ///         // Check email uniqueness in database
@@ -84,18 +102,35 @@ pub trait Validate {
 /// ```
 #[async_trait]
 pub trait AsyncValidate: Validate + Send + Sync {
-    /// Validate the struct asynchronously.
-    ///
-    /// This method is called after `validate()` and can perform async operations
-    /// like database queries or external API calls.
-    async fn validate_async(&self, ctx: &ValidationContext) -> Result<(), ValidationErrors>;
+    /// Validate the struct asynchronously with the default group.
+    async fn validate_async(&self, ctx: &ValidationContext) -> Result<(), ValidationErrors> {
+        self.validate_async_with_group(ctx, crate::v2::group::ValidationGroup::Default)
+            .await
+    }
 
-    /// Perform full validation (sync + async).
+    /// Validate the struct asynchronously with a specific group.
+    async fn validate_async_with_group(
+        &self,
+        ctx: &ValidationContext,
+        group: crate::v2::group::ValidationGroup,
+    ) -> Result<(), ValidationErrors>;
+
+    /// Perform full validation (sync + async) with default group.
     async fn validate_full(&self, ctx: &ValidationContext) -> Result<(), ValidationErrors> {
+        self.validate_full_with_group(ctx, crate::v2::group::ValidationGroup::Default)
+            .await
+    }
+
+    /// Perform full validation (sync + async) with specific group.
+    async fn validate_full_with_group(
+        &self,
+        ctx: &ValidationContext,
+        group: crate::v2::group::ValidationGroup,
+    ) -> Result<(), ValidationErrors> {
         // First run sync validation
-        self.validate()?;
+        self.validate_with_group(group.clone())?;
         // Then run async validation
-        self.validate_async(ctx).await
+        self.validate_async_with_group(ctx, group).await
     }
 
     /// Validate and return the struct if valid (async version).
@@ -104,6 +139,19 @@ pub trait AsyncValidate: Validate + Send + Sync {
         Self: Sized,
     {
         self.validate_full(ctx).await?;
+        Ok(self)
+    }
+
+    /// Validate and return the struct if valid (async version with group).
+    async fn validated_async_with_group(
+        self,
+        ctx: &ValidationContext,
+        group: crate::v2::group::ValidationGroup,
+    ) -> Result<Self, ValidationErrors>
+    where
+        Self: Sized,
+    {
+        self.validate_full_with_group(ctx, group).await?;
         Ok(self)
     }
 }
@@ -230,6 +278,31 @@ pub enum SerializableRule {
         #[serde(skip_serializing_if = "Option::is_none")]
         message: Option<String>,
     },
+    /// Credit Card validation
+    CreditCard {
+        #[serde(skip_serializing_if = "Option::is_none")]
+        message: Option<String>,
+    },
+    /// IP Address validation
+    Ip {
+        #[serde(skip_serializing_if = "Option::is_none")]
+        v4: Option<bool>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        v6: Option<bool>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        message: Option<String>,
+    },
+    /// Phone number validation
+    Phone {
+        #[serde(skip_serializing_if = "Option::is_none")]
+        message: Option<String>,
+    },
+    /// Contains substring validation
+    Contains {
+        needle: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        message: Option<String>,
+    },
 }
 
 impl SerializableRule {
@@ -325,6 +398,44 @@ impl SerializableRule {
                     .unwrap_or_default();
                 format!("#[validate(async_api(endpoint = \"{}\"{}))]", endpoint, msg)
             }
+            SerializableRule::CreditCard { message } => {
+                let msg = message
+                    .as_ref()
+                    .map(|m| format!(", message = \"{}\"", m))
+                    .unwrap_or_default();
+                format!("#[validate(credit_card{})]", msg)
+            }
+            SerializableRule::Ip { v4, v6, message } => {
+                let mut parts = Vec::new();
+                if let Some(true) = v4 {
+                    parts.push("v4".to_string());
+                }
+                if let Some(true) = v6 {
+                    parts.push("v6".to_string());
+                }
+                if let Some(msg) = message {
+                    parts.push(format!("message = \"{}\"", msg));
+                }
+                if parts.is_empty() {
+                    "#[validate(ip)]".to_string()
+                } else {
+                    format!("#[validate(ip({}))]", parts.join(", "))
+                }
+            }
+            SerializableRule::Phone { message } => {
+                let msg = message
+                    .as_ref()
+                    .map(|m| format!(", message = \"{}\"", m))
+                    .unwrap_or_default();
+                format!("#[validate(phone{})]", msg)
+            }
+            SerializableRule::Contains { needle, message } => {
+                let msg = message
+                    .as_ref()
+                    .map(|m| format!(", message = \"{}\"", m))
+                    .unwrap_or_default();
+                format!("#[validate(contains(needle = \"{}\"{}))]", needle, msg)
+            }
         }
     }
 
@@ -381,6 +492,32 @@ impl SerializableRule {
 
         if inner.starts_with("async_api(") {
             return Self::parse_async_api(inner);
+        }
+
+        if inner == "credit_card" || inner.starts_with("credit_card,") {
+            let message = Self::extract_message(inner);
+            return Some(SerializableRule::CreditCard { message });
+        }
+
+        if inner == "ip" {
+            return Some(SerializableRule::Ip {
+                v4: None,
+                v6: None,
+                message: None,
+            });
+        }
+
+        if inner.starts_with("ip(") {
+            return Self::parse_ip(inner);
+        }
+
+        if inner == "phone" || inner.starts_with("phone,") {
+            let message = Self::extract_message(inner);
+            return Some(SerializableRule::Phone { message });
+        }
+
+        if inner.starts_with("contains(") {
+            return Self::parse_contains(inner);
         }
 
         None
@@ -464,12 +601,25 @@ impl SerializableRule {
         let message = Self::extract_message(s);
         Some(SerializableRule::AsyncApi { endpoint, message })
     }
+
+    fn parse_ip(s: &str) -> Option<Self> {
+        let v4 = if s.contains("v4") { Some(true) } else { None };
+        let v6 = if s.contains("v6") { Some(true) } else { None };
+        let message = Self::extract_message(s);
+        Some(SerializableRule::Ip { v4, v6, message })
+    }
+
+    fn parse_contains(s: &str) -> Option<Self> {
+        let needle = Self::extract_param(s, "needle")?;
+        let message = Self::extract_message(s);
+        Some(SerializableRule::Contains { needle, message })
+    }
 }
 
 // Conversion implementations from concrete rules to SerializableRule
 use crate::v2::rules::{
-    AsyncApiRule, AsyncExistsRule, AsyncUniqueRule, EmailRule, LengthRule, RegexRule, RequiredRule,
-    UrlRule,
+    AsyncApiRule, AsyncExistsRule, AsyncUniqueRule, ContainsRule, CreditCardRule, EmailRule,
+    IpRule, LengthRule, PhoneRule, RegexRule, RequiredRule, UrlRule,
 };
 
 impl From<EmailRule> for SerializableRule {
@@ -539,6 +689,41 @@ impl From<AsyncApiRule> for SerializableRule {
     fn from(rule: AsyncApiRule) -> Self {
         SerializableRule::AsyncApi {
             endpoint: rule.endpoint,
+            message: rule.message,
+        }
+    }
+}
+
+impl From<CreditCardRule> for SerializableRule {
+    fn from(rule: CreditCardRule) -> Self {
+        SerializableRule::CreditCard {
+            message: rule.message,
+        }
+    }
+}
+
+impl From<IpRule> for SerializableRule {
+    fn from(rule: IpRule) -> Self {
+        SerializableRule::Ip {
+            v4: rule.v4,
+            v6: rule.v6,
+            message: rule.message,
+        }
+    }
+}
+
+impl From<PhoneRule> for SerializableRule {
+    fn from(rule: PhoneRule) -> Self {
+        SerializableRule::Phone {
+            message: rule.message,
+        }
+    }
+}
+
+impl From<ContainsRule> for SerializableRule {
+    fn from(rule: ContainsRule) -> Self {
+        SerializableRule::Contains {
+            needle: rule.needle,
             message: rule.message,
         }
     }
@@ -680,7 +865,7 @@ mod tests {
 
     #[test]
     fn from_email_rule() {
-        let rule = EmailRule::with_message("Invalid email");
+        let rule = EmailRule::new().with_message("Invalid email");
         let serializable: SerializableRule = rule.into();
         assert_eq!(
             serializable,

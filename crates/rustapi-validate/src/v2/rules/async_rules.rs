@@ -62,9 +62,10 @@ impl AsyncValidationRule<str> for AsyncUniqueRule {
         if is_unique {
             Ok(())
         } else {
-            let message = self.message.clone().unwrap_or_else(|| {
-                format!("Value already exists in {}.{}", self.table, self.column)
-            });
+            let message = self
+                .message
+                .clone()
+                .unwrap_or_else(|| "validation.unique.taken".to_string());
             Err(RuleError::new("async_unique", message)
                 .param("table", self.table.clone())
                 .param("column", self.column.clone()))
@@ -140,9 +141,10 @@ impl AsyncValidationRule<str> for AsyncExistsRule {
         if exists {
             Ok(())
         } else {
-            let message = self.message.clone().unwrap_or_else(|| {
-                format!("Value does not exist in {}.{}", self.table, self.column)
-            });
+            let message = self
+                .message
+                .clone()
+                .unwrap_or_else(|| "validation.exists.not_found".to_string());
             Err(RuleError::new("async_exists", message)
                 .param("table", self.table.clone())
                 .param("column", self.column.clone()))
@@ -215,7 +217,7 @@ impl AsyncValidationRule<str> for AsyncApiRule {
             let message = self
                 .message
                 .clone()
-                .unwrap_or_else(|| "API validation failed".to_string());
+                .unwrap_or_else(|| "validation.api.invalid".to_string());
             Err(RuleError::new("async_api", message).param("endpoint", self.endpoint.clone()))
         }
     }

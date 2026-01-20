@@ -457,6 +457,27 @@ mod tests {
         prop_oneof![Just(None), "[a-zA-Z0-9 ]{1,100}".prop_map(Some),]
     }
 
+    /// Helper to setup stack with JWT layer
+    fn setup_stack<T: DeserializeOwned + Clone + Send + Sync + 'static>(
+        secret: &str,
+    ) -> LayerStack {
+        let mut stack = LayerStack::new();
+        stack.push(Box::new(JwtLayer::<T>::new(secret)));
+        stack
+    }
+
+    /// Helper to create a dummy handler
+    fn dummy_handler() -> rustapi_core::middleware::BoxedNext {
+        Arc::new(|_req: Request| {
+            Box::pin(async {
+                http::Response::builder()
+                    .status(StatusCode::OK)
+                    .body(Full::new(Bytes::from("success")))
+                    .unwrap()
+            }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
+        })
+    }
+
     // **Feature: phase3-batteries-included, Property 5: JWT validation correctness**
     //
     // For any JWT token signed with secret S, when JwtLayer is configured with secret S,
@@ -492,17 +513,8 @@ mod tests {
 
                 // Test 1: Token should be accepted with correct secret
                 {
-                    let mut stack = LayerStack::new();
-                    stack.push(Box::new(JwtLayer::<TestClaims>::new(&correct_secret)));
-
-                    let handler: rustapi_core::middleware::BoxedNext = Arc::new(|_req: Request| {
-                        Box::pin(async {
-                            http::Response::builder()
-                                .status(StatusCode::OK)
-                                .body(Full::new(Bytes::from("success")))
-                                .unwrap()
-                        }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
-                    });
+                    let mut stack = setup_stack::<TestClaims>(&correct_secret);
+                    let handler = dummy_handler();
 
                     let request = create_test_request(Some(&format!("Bearer {}", token)));
                     let response = stack.execute(request, handler).await;
@@ -516,17 +528,8 @@ mod tests {
 
                 // Test 2: Token should be rejected with wrong secret
                 {
-                    let mut stack = LayerStack::new();
-                    stack.push(Box::new(JwtLayer::<TestClaims>::new(&wrong_secret)));
-
-                    let handler: rustapi_core::middleware::BoxedNext = Arc::new(|_req: Request| {
-                        Box::pin(async {
-                            http::Response::builder()
-                                .status(StatusCode::OK)
-                                .body(Full::new(Bytes::from("success")))
-                                .unwrap()
-                        }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
-                    });
+                    let mut stack = setup_stack::<TestClaims>(&wrong_secret);
+                    let handler = dummy_handler();
 
                     let request = create_test_request(Some(&format!("Bearer {}", token)));
                     let response = stack.execute(request, handler).await;
@@ -573,8 +576,7 @@ mod tests {
                     .expect("Failed to create token");
 
                 // Set up middleware stack
-                let mut stack = LayerStack::new();
-                stack.push(Box::new(JwtLayer::<TestClaims>::new(&secret)));
+                let mut stack = setup_stack::<TestClaims>(&secret);
 
                 // Track extracted claims
                 let extracted_claims = Arc::new(std::sync::Mutex::new(None::<TestClaims>));
@@ -641,8 +643,7 @@ mod tests {
         ) {
             let rt = tokio::runtime::Runtime::new().unwrap();
             let result: std::result::Result<(), TestCaseError> = rt.block_on(async {
-                let mut stack = LayerStack::new();
-                stack.push(Box::new(JwtLayer::<TestClaims>::new(&secret)));
+                let mut stack = setup_stack::<TestClaims>(&secret);
 
                 // Generate different types of invalid tokens
                 let invalid_token = match invalid_token_type {
@@ -687,14 +688,7 @@ mod tests {
                     }
                 };
 
-                let handler: rustapi_core::middleware::BoxedNext = Arc::new(|_req: Request| {
-                    Box::pin(async {
-                        http::Response::builder()
-                            .status(StatusCode::OK)
-                            .body(Full::new(Bytes::from("success")))
-                            .unwrap()
-                    }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
-                });
+                let handler = dummy_handler();
 
                 let request = create_test_request(Some(&format!("Bearer {}", invalid_token)));
                 let response = stack.execute(request, handler).await;
@@ -728,51 +722,27 @@ mod tests {
 
     // Additional unit tests for edge cases
 
-    #[test]
-    fn test_missing_authorization_header() {
-        let rt = tokio::runtime::Runtime::new().unwrap();
-        rt.block_on(async {
-            let mut stack = LayerStack::new();
-            stack.push(Box::new(JwtLayer::<TestClaims>::new("secret")));
+    #[tokio::test]
+    async fn test_missing_authorization_header() {
+        let mut stack = setup_stack::<TestClaims>("secret");
+        let handler = dummy_handler();
 
-            let handler: rustapi_core::middleware::BoxedNext = Arc::new(|_req: Request| {
-                Box::pin(async {
-                    http::Response::builder()
-                        .status(StatusCode::OK)
-                        .body(Full::new(Bytes::from("success")))
-                        .unwrap()
-                }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
-            });
+        let request = create_test_request(None);
+        let response = stack.execute(request, handler).await;
 
-            let request = create_test_request(None);
-            let response = stack.execute(request, handler).await;
-
-            assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
-        });
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
     }
 
-    #[test]
-    fn test_invalid_authorization_format() {
-        let rt = tokio::runtime::Runtime::new().unwrap();
-        rt.block_on(async {
-            let mut stack = LayerStack::new();
-            stack.push(Box::new(JwtLayer::<TestClaims>::new("secret")));
+    #[tokio::test]
+    async fn test_invalid_authorization_format() {
+        let mut stack = setup_stack::<TestClaims>("secret");
+        let handler = dummy_handler();
 
-            let handler: rustapi_core::middleware::BoxedNext = Arc::new(|_req: Request| {
-                Box::pin(async {
-                    http::Response::builder()
-                        .status(StatusCode::OK)
-                        .body(Full::new(Bytes::from("success")))
-                        .unwrap()
-                }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
-            });
+        // Test with "Basic" auth instead of "Bearer"
+        let request = create_test_request(Some("Basic dXNlcjpwYXNz"));
+        let response = stack.execute(request, handler).await;
 
-            // Test with "Basic" auth instead of "Bearer"
-            let request = create_test_request(Some("Basic dXNlcjpwYXNz"));
-            let response = stack.execute(request, handler).await;
-
-            assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
-        });
+        assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
     }
 
     #[test]

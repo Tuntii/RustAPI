@@ -58,7 +58,7 @@ impl ValidationGroup {
     pub fn matches(&self, other: &ValidationGroup) -> bool {
         match (self, other) {
             (ValidationGroup::Default, _) => true,
-            (_, ValidationGroup::Default) => true,
+            // Default context check removed as it should only validate Default rules
             (a, b) => a == b,
         }
     }

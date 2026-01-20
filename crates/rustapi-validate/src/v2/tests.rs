@@ -772,7 +772,7 @@ mod custom_message_property_tests {
             custom_msg in custom_message_strategy(),
             invalid_email in invalid_email_strategy(),
         ) {
-            let rule = EmailRule::with_message(custom_msg.clone());
+            let rule = EmailRule::new().with_message(custom_msg.clone());
             let result = rule.validate(&invalid_email);
 
             prop_assert!(result.is_err());
@@ -823,7 +823,7 @@ mod custom_message_property_tests {
         fn required_rule_returns_custom_message(
             custom_msg in custom_message_strategy(),
         ) {
-            let rule = RequiredRule::with_message(custom_msg.clone());
+            let rule = RequiredRule::new().with_message(custom_msg.clone());
             let result = rule.validate("");
 
             prop_assert!(result.is_err());
@@ -836,7 +836,7 @@ mod custom_message_property_tests {
         fn url_rule_returns_custom_message(
             custom_msg in custom_message_strategy(),
         ) {
-            let rule = UrlRule::with_message(custom_msg.clone());
+            let rule = UrlRule::new().with_message(custom_msg.clone());
             let result = rule.validate("not-a-url");
 
             prop_assert!(result.is_err());
@@ -927,7 +927,7 @@ mod validation_group_property_tests {
 
             // Email is always required (Default group)
             let email_rules =
-                GroupedRules::new().always(RequiredRule::with_message("Email is required"));
+                GroupedRules::new().always(RequiredRule::new().with_message("Email is required"));
 
             for rule in email_rules.for_group(group) {
                 if let Err(e) = rule.validate(&self.email) {
@@ -937,7 +937,7 @@ mod validation_group_property_tests {
 
             // ID is required only for updates
             let id_rules = GroupedRules::new()
-                .on_update(RequiredRule::with_message("ID is required for updates"));
+                .on_update(RequiredRule::new().with_message("ID is required for updates"));
 
             for rule in id_rules.for_group(group) {
                 if let Err(e) = rule.validate(&self.id) {
@@ -946,9 +946,8 @@ mod validation_group_property_tests {
             }
 
             // Password is required only for creates
-            let password_rules = GroupedRules::new().on_create(RequiredRule::with_message(
-                "Password is required for new users",
-            ));
+            let password_rules = GroupedRules::new()
+                .on_create(RequiredRule::new().with_message("Password is required for new users"));
 
             for rule in password_rules.for_group(group) {
                 if let Err(e) = rule.validate(&self.password) {

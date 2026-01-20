@@ -10,7 +10,7 @@ use rustapi_validate::DeriveValidate;
 // Test struct using the derive macro with sync validation rules
 #[derive(DeriveValidate)]
 struct CreateUser {
-    #[validate(email, message = "Invalid email format")]
+    #[validate(email(message = "Invalid email format"))]
     email: String,
 
     #[validate(length(min = 3, max = 50))]
