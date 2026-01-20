@@ -4,19 +4,20 @@ use crate::error::ApiError;
 use crate::interceptor::InterceptorChain;
 use crate::middleware::{BoxedNext, LayerStack};
 use crate::request::Request;
-use crate::response::IntoResponse;
+use crate::response::{Body, IntoResponse};
 use crate::router::{RouteMatch, Router};
 use bytes::Bytes;
 use http::{header, StatusCode};
-use http_body_util::Full;
 use hyper::body::Incoming;
 use hyper::server::conn::http1;
 use hyper::service::service_fn;
 use hyper_util::rt::TokioIo;
 use std::convert::Infallible;
+use std::future::Future;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::net::TcpListener;
+use tokio::task::JoinSet;
 use tracing::{error, info};
 
 /// Internal server struct
@@ -37,39 +38,75 @@ impl Server {
 
     /// Run the server
     pub async fn run(self, addr: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.run_with_shutdown(addr, std::future::pending()).await
+    }
+
+    /// Run the server with graceful shutdown signal
+    pub async fn run_with_shutdown<F>(
+        self,
+        addr: &str,
+        signal: F,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
+    where
+        F: Future<Output = ()> + Send + 'static,
+    {
         let addr: SocketAddr = addr.parse()?;
         let listener = TcpListener::bind(addr).await?;
 
         info!("🚀 RustAPI server running on http://{}", addr);
 
+        let mut connections = JoinSet::new();
+        tokio::pin!(signal);
+
         loop {
-            let (stream, remote_addr) = listener.accept().await?;
-            let io = TokioIo::new(stream);
-            let router = self.router.clone();
-            let layers = self.layers.clone();
-            let interceptors = self.interceptors.clone();
+            tokio::select! {
+                accept_result = listener.accept() => {
+                    let (stream, remote_addr) = match accept_result {
+                        Ok(v) => v,
+                        Err(e) => {
+                            error!("Accept error: {}", e);
+                            continue;
+                        }
+                    };
 
-            tokio::spawn(async move {
-                let service = service_fn(move |req: hyper::Request<Incoming>| {
-                    let router = router.clone();
-                    let layers = layers.clone();
-                    let interceptors = interceptors.clone();
-                    async move {
-                        let response =
-                            handle_request(router, layers, interceptors, req, remote_addr).await;
-                        Ok::<_, Infallible>(response)
-                    }
-                });
+                    let io = TokioIo::new(stream);
+                    let router = self.router.clone();
+                    let layers = self.layers.clone();
+                    let interceptors = self.interceptors.clone();
 
-                if let Err(err) = http1::Builder::new()
-                    .serve_connection(io, service)
-                    .with_upgrades()
-                    .await
-                {
-                    error!("Connection error: {}", err);
+                    connections.spawn(async move {
+                        let service = service_fn(move |req: hyper::Request<Incoming>| {
+                            let router = router.clone();
+                            let layers = layers.clone();
+                            let interceptors = interceptors.clone();
+                            async move {
+                                let response =
+                                    handle_request(router, layers, interceptors, req, remote_addr).await;
+                                Ok::<_, Infallible>(response)
+                            }
+                        });
+
+                        if let Err(err) = http1::Builder::new()
+                            .serve_connection(io, service)
+                            .with_upgrades()
+                            .await
+                        {
+                            error!("Connection error: {}", err);
+                        }
+                    });
                 }
-            });
+                _ = &mut signal => {
+                    info!("Shutdown signal received, draining connections...");
+                    break;
+                }
+            }
         }
+
+        // Wait for all connections to finish
+        while let Some(_) = connections.join_next().await {}
+        info!("Server shutdown complete");
+
+        Ok(())
     }
 }
 
@@ -80,7 +117,7 @@ async fn handle_request(
     interceptors: Arc<InterceptorChain>,
     req: hyper::Request<Incoming>,
     _remote_addr: SocketAddr,
-) -> hyper::Response<Full<Bytes>> {
+) -> hyper::Response<Body> {
     let method = req.method().clone();
     let path = req.uri().path().to_string();
     let start = std::time::Instant::now();

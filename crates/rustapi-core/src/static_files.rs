@@ -331,7 +331,7 @@ impl StaticFile {
         }
 
         builder
-            .body(Full::new(Bytes::from(content)))
+            .body(crate::response::Body::from(content))
             .map_err(|e| ApiError::internal(format!("Failed to build response: {}", e)))
     }
 }

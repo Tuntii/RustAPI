@@ -229,7 +229,7 @@ mod tests {
     fn create_test_response(status: StatusCode) -> Response {
         http::Response::builder()
             .status(status)
-            .body(Full::new(Bytes::from("test")))
+            .body(crate::response::Body::from("test"))
             .unwrap()
     }
 

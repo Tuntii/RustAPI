@@ -144,7 +144,6 @@ impl ValidationError {
         self.fields.push(error);
     }
 
-
     /// Localize validation errors using a translator.
     pub fn localize<T: Translator>(&self, translator: &T) -> Self {
         let fields = self

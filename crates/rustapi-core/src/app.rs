@@ -715,7 +715,7 @@ impl RustApi {
                 http::Response::builder()
                     .status(http::StatusCode::OK)
                     .header(http::header::CONTENT_TYPE, "application/json")
-                    .body(http_body_util::Full::new(bytes::Bytes::from(json)))
+                    .body(crate::response::Body::from(json))
                     .unwrap()
             }
         };
@@ -824,7 +824,7 @@ impl RustApi {
                     http::Response::builder()
                         .status(http::StatusCode::OK)
                         .header(http::header::CONTENT_TYPE, "application/json")
-                        .body(http_body_util::Full::new(bytes::Bytes::from(json)))
+                        .body(crate::response::Body::from(json))
                         .unwrap()
                 })
                     as std::pin::Pin<Box<dyn std::future::Future<Output = crate::Response> + Send>>
@@ -1769,9 +1769,7 @@ fn unauthorized_response() -> crate::Response {
             "Basic realm=\"API Documentation\"",
         )
         .header(http::header::CONTENT_TYPE, "text/plain")
-        .body(http_body_util::Full::new(bytes::Bytes::from(
-            "Unauthorized",
-        )))
+        .body(crate::response::Body::from("Unauthorized"))
         .unwrap()
 }
 

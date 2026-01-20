@@ -66,6 +66,7 @@ sqlx = { version = "0.8", optional = true, default-features = false }
 
 # OpenAPI
 rustapi-openapi = { workspace = true, default-features = false }
+http-body = "1.0.1"
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

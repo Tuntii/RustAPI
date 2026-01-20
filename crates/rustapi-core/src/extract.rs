@@ -204,7 +204,7 @@ impl<T: Serialize> IntoResponse for Json<T> {
             Ok(body) => http::Response::builder()
                 .status(StatusCode::OK)
                 .header(header::CONTENT_TYPE, "application/json")
-                .body(Full::new(Bytes::from(body)))
+                .body(crate::response::Body::from(body))
                 .unwrap(),
             Err(err) => {
                 ApiError::internal(format!("Failed to serialize response: {}", err)).into_response()

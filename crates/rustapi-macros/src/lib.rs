@@ -1099,6 +1099,41 @@ fn generate_async_rule_validation(
                 }
             }
         }
+        "custom_async" => {
+            // #[validate(custom_async = "function_path")]
+            let function_path = rule
+                .params
+                .iter()
+                .find(|(k, _)| k == "custom_async" || k == "function")
+                .map(|(_, v)| v.clone())
+                .unwrap_or_default();
+
+            if function_path.is_empty() {
+                // If path is missing, don't generate invalid code
+                quote! {}
+            } else {
+                let func: syn::Path = syn::parse_str(&function_path).unwrap();
+                let message_handling = if let Some(msg) = &rule.message {
+                    quote! {
+                        let e = ::rustapi_validate::v2::RuleError::new("custom_async", #msg);
+                        errors.add(#field_name_str, e);
+                    }
+                } else {
+                    quote! {
+                        errors.add(#field_name_str, e);
+                    }
+                };
+
+                quote! {
+                    {
+                        // Call the custom async function: async fn(&T, &ValidationContext) -> Result<(), RuleError>
+                        if let Err(e) = #func(&self.#field_ident, ctx).await {
+                            #message_handling
+                        }
+                    }
+                }
+            }
+        }
         _ => {
             // Not an async rule
             quote! {}
@@ -1116,7 +1151,7 @@ fn generate_async_rule_validation(
 fn is_async_rule(rule: &ValidationRuleInfo) -> bool {
     matches!(
         rule.rule_type.as_str(),
-        "async_unique" | "async_exists" | "async_api"
+        "async_unique" | "async_exists" | "async_api" | "custom_async"
     )
 }
 

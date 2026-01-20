@@ -303,6 +303,12 @@ pub enum SerializableRule {
         #[serde(skip_serializing_if = "Option::is_none")]
         message: Option<String>,
     },
+    /// Custom async validation function
+    CustomAsync {
+        function: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        message: Option<String>,
+    },
 }
 
 impl SerializableRule {
@@ -436,6 +442,13 @@ impl SerializableRule {
                     .unwrap_or_default();
                 format!("#[validate(contains(needle = \"{}\"{}))]", needle, msg)
             }
+            SerializableRule::CustomAsync { function, message } => {
+                let msg = message
+                    .as_ref()
+                    .map(|m| format!(", message = \"{}\"", m))
+                    .unwrap_or_default();
+                format!("#[validate(custom_async = \"{}\"{})]", function, msg)
+            }
         }
     }
 
@@ -518,6 +531,10 @@ impl SerializableRule {
 
         if inner.starts_with("contains(") {
             return Self::parse_contains(inner);
+        }
+
+        if inner.starts_with("custom_async") {
+            return Self::parse_custom_async(inner);
         }
 
         None
@@ -613,6 +630,14 @@ impl SerializableRule {
         let needle = Self::extract_param(s, "needle")?;
         let message = Self::extract_message(s);
         Some(SerializableRule::Contains { needle, message })
+    }
+
+    fn parse_custom_async(s: &str) -> Option<Self> {
+        // Handle both simple 'custom_async = "func"' and logical 'custom_async(function = "func")'
+        let function = Self::extract_param(s, "custom_async")
+            .or_else(|| Self::extract_param(s, "function"))?;
+        let message = Self::extract_message(s);
+        Some(SerializableRule::CustomAsync { function, message })
     }
 }
 
