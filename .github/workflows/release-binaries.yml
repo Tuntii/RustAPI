@@ -41,6 +41,6 @@ jobs:
           cp target/${{ matrix.target }}/release/cargo-rustapi${{ matrix.extension }} cargo-rustapi-${{ matrix.target }}${{ matrix.extension }}
           
       - name: Upload Release Asset
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: cargo-rustapi-${{ matrix.target }}${{ matrix.extension }}
