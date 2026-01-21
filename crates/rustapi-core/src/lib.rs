@@ -58,6 +58,7 @@ pub use auto_schema::apply_auto_schemas;
 mod error;
 mod extract;
 mod handler;
+pub mod hateoas;
 pub mod health;
 #[cfg(feature = "http3")]
 pub mod http3;
@@ -103,6 +104,7 @@ pub use handler::{
     delete_route, get_route, patch_route, post_route, put_route, Handler, HandlerService, Route,
     RouteHandler,
 };
+pub use hateoas::{Link, LinkOrArray, Linkable, PageInfo, Resource, ResourceCollection};
 pub use health::{HealthCheck, HealthCheckBuilder, HealthCheckResult, HealthStatus};
 pub use http::StatusCode;
 #[cfg(feature = "http3")]

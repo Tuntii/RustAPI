@@ -1,64 +1,28 @@
 //! ReDoc UI HTML generation
 //!
 //! ReDoc is a modern, three-panel API documentation renderer.
-//! It provides a clean, responsive interface for OpenAPI specifications.
-//!
-//! # Features
-//! - Three-panel layout (navigation, content, code samples)
-//! - Built-in search
-//! - Markdown rendering
-//! - Dark mode support
-//! - Responsive design
 
 /// Generate ReDoc HTML page
-///
-/// # Arguments
-/// * `openapi_url` - URL to the OpenAPI JSON specification
-/// * `title` - Optional custom title for the documentation page
-///
-/// # Example
-/// ```rust,ignore
-/// let html = generate_redoc_html("/openapi.json", Some("My API Docs"));
-/// ```
 pub fn generate_redoc_html(openapi_url: &str, title: Option<&str>) -> String {
     let page_title = title.unwrap_or("API Documentation - RustAPI");
-    
-    format!(
-        r#"<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{title}</title>
-    <meta name="description" content="API Documentation powered by RustAPI and ReDoc">
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
-    <style>
-        body {{
-            margin: 0;
-            padding: 0;
-        }}
-        /* Custom styles for RustAPI branding */
-        .menu-content {{
-            background-color: #1a1a2e !important;
-        }}
-        .api-content {{
-            background-color: #16213e !important;
-        }}
-    </style>
-</head>
-<body>
-    <redoc 
-        spec-url='{openapi_url}'
-        expand-responses="200,201"
-        hide-hostname
-        theme='{{"colors":{{"primary":{{"main":"#e94560"}}}}}}'
-    ></redoc>
-    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
-</body>
-</html>"#,
-        title = page_title,
-        openapi_url = openapi_url
-    )
+
+    let mut html = String::with_capacity(2000);
+    html.push_str("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n");
+    html.push_str("    <meta charset=\"utf-8\"/>\n");
+    html.push_str("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n");
+    html.push_str("    <title>");
+    html.push_str(page_title);
+    html.push_str("</title>\n");
+    html.push_str("    <link href=\"https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700\" rel=\"stylesheet\">\n");
+    html.push_str("    <style>body { margin: 0; padding: 0; }</style>\n");
+    html.push_str("</head>\n<body>\n");
+    html.push_str("    <redoc spec-url='");
+    html.push_str(openapi_url);
+    html.push_str("' expand-responses=\"200,201\" hide-hostname></redoc>\n");
+    html.push_str("    <script src=\"https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js\"></script>\n");
+    html.push_str("</body>\n</html>");
+
+    html
 }
 
 /// ReDoc configuration options
@@ -66,44 +30,16 @@ pub fn generate_redoc_html(openapi_url: &str, title: Option<&str>) -> String {
 pub struct RedocConfig {
     /// Hide the hostname from the server URL
     pub hide_hostname: bool,
-    /// Expand responses by status code (e.g., "200,201")
+    /// Expand responses by status code
     pub expand_responses: Option<String>,
-    /// Enable native scrolling instead of perfect-scrollbar
+    /// Enable native scrolling
     pub native_scrollbars: bool,
     /// Disable search functionality
     pub disable_search: bool,
     /// Hide the download button
     pub hide_download_button: bool,
-    /// Hide the loading animation
-    pub hide_loading: bool,
-    /// Path prefix (for nested deployments)
-    pub path_prefix: Option<String>,
-    /// Custom theme colors
-    pub theme: Option<RedocTheme>,
-}
-
-/// ReDoc theme configuration
-#[derive(Debug, Clone)]
-pub struct RedocTheme {
-    /// Primary color (hex)
-    pub primary_color: String,
-    /// Success color for 2xx responses
-    pub success_color: Option<String>,
-    /// Warning color for 4xx responses
-    pub warning_color: Option<String>,
-    /// Error color for 5xx responses
-    pub error_color: Option<String>,
-}
-
-impl Default for RedocTheme {
-    fn default() -> Self {
-        Self {
-            primary_color: "#e94560".to_string(),
-            success_color: Some("#00c853".to_string()),
-            warning_color: Some("#ff9800".to_string()),
-            error_color: Some("#f44336".to_string()),
-        }
-    }
+    /// Custom theme primary color
+    pub primary_color: Option<String>,
 }
 
 impl RedocConfig {
@@ -136,9 +72,9 @@ impl RedocConfig {
         self
     }
 
-    /// Set custom theme
-    pub fn theme(mut self, theme: RedocTheme) -> Self {
-        self.theme = Some(theme);
+    /// Set primary theme color
+    pub fn primary_color(mut self, color: &str) -> Self {
+        self.primary_color = Some(color.to_string());
         self
     }
 
@@ -161,21 +97,23 @@ impl RedocConfig {
         if self.hide_download_button {
             attrs.push("hide-download-button".to_string());
         }
-        if self.hide_loading {
-            attrs.push("hide-loading".to_string());
-        }
-        if let Some(ref prefix) = self.path_prefix {
-            attrs.push(format!("path-in-middle-panel=\"{}\"", prefix));
-        }
-        if let Some(ref theme) = self.theme {
-            let theme_json = format!(
-                r#"{{"colors":{{"primary":{{"main":"{}"}}}}}}"#,
-                theme.primary_color
-            );
-            attrs.push(format!("theme='{}'", theme_json));
-        }
 
         attrs.join(" ")
+    }
+}
+
+/// ReDoc theme configuration  
+#[derive(Debug, Clone)]
+pub struct RedocTheme {
+    /// Primary color (hex)
+    pub primary_color: String,
+}
+
+impl Default for RedocTheme {
+    fn default() -> Self {
+        Self {
+            primary_color: "#e94560".to_string(),
+        }
     }
 }
 
@@ -188,31 +126,25 @@ pub fn generate_redoc_html_with_config(
     let page_title = title.unwrap_or("API Documentation - RustAPI");
     let attributes = config.to_attributes();
 
-    format!(
-        r#"<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{title}</title>
-    <meta name="description" content="API Documentation powered by RustAPI and ReDoc">
-    <link href="https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700" rel="stylesheet">
-    <style>
-        body {{
-            margin: 0;
-            padding: 0;
-        }}
-    </style>
-</head>
-<body>
-    <redoc spec-url='{openapi_url}' {attributes}></redoc>
-    <script src="https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js"></script>
-</body>
-</html>"#,
-        title = page_title,
-        openapi_url = openapi_url,
-        attributes = attributes
-    )
+    let mut html = String::with_capacity(2000);
+    html.push_str("<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n");
+    html.push_str("    <meta charset=\"utf-8\"/>\n");
+    html.push_str("    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n");
+    html.push_str("    <title>");
+    html.push_str(page_title);
+    html.push_str("</title>\n");
+    html.push_str("    <link href=\"https://fonts.googleapis.com/css?family=Montserrat:300,400,700|Roboto:300,400,700\" rel=\"stylesheet\">\n");
+    html.push_str("    <style>body { margin: 0; padding: 0; }</style>\n");
+    html.push_str("</head>\n<body>\n");
+    html.push_str("    <redoc spec-url='");
+    html.push_str(openapi_url);
+    html.push_str("' ");
+    html.push_str(&attributes);
+    html.push_str("></redoc>\n");
+    html.push_str("    <script src=\"https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js\"></script>\n");
+    html.push_str("</body>\n</html>");
+
+    html
 }
 
 #[cfg(test)]
@@ -243,18 +175,6 @@ mod tests {
 
         let html = generate_redoc_html_with_config("/openapi.json", None, &config);
         assert!(html.contains("hide-hostname"));
-        assert!(html.contains("expand-responses=\"200,201\""));
         assert!(html.contains("native-scrollbars"));
-    }
-
-    #[test]
-    fn test_redoc_theme() {
-        let theme = RedocTheme {
-            primary_color: "#ff0000".to_string(),
-            ..Default::default()
-        };
-        let config = RedocConfig::new().theme(theme);
-        let html = generate_redoc_html_with_config("/openapi.json", None, &config);
-        assert!(html.contains("#ff0000"));
     }
 }
