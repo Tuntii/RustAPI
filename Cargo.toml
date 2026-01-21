@@ -111,3 +111,10 @@ rustapi-view = { path = "crates/rustapi-view", version = "0.1.14" }
 rustapi-testing = { path = "crates/rustapi-testing", version = "0.1.14" }
 rustapi-jobs = { path = "crates/rustapi-jobs", version = "0.1.14" }
 
+# HTTP/3 (QUIC)
+quinn = "0.11"
+h3 = "0.0.8"
+h3-quinn = "0.0.10"
+rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }
+rustls-pemfile = "2.2"
+rcgen = "0.13"

@@ -42,6 +42,8 @@
 //! - `cookies` - Enable cookie parsing extractor
 //! - `test-utils` - Enable testing utilities like `TestClient`
 //! - `swagger-ui` - Enable Swagger UI documentation endpoint
+//! - `http3` - Enable HTTP/3 (QUIC) support
+//! - `http3-dev` - Enable HTTP/3 with self-signed certificate generation
 //!
 //! ## Note
 //!
@@ -57,6 +59,8 @@ mod error;
 mod extract;
 mod handler;
 pub mod health;
+#[cfg(feature = "http3")]
+pub mod http3;
 pub mod interceptor;
 pub mod json;
 pub mod middleware;
@@ -101,6 +105,8 @@ pub use handler::{
 };
 pub use health::{HealthCheck, HealthCheckBuilder, HealthCheckResult, HealthStatus};
 pub use http::StatusCode;
+#[cfg(feature = "http3")]
+pub use http3::{Http3Config, Http3Server};
 pub use interceptor::{InterceptorChain, RequestInterceptor, ResponseInterceptor};
 #[cfg(feature = "compression")]
 pub use middleware::CompressionLayer;

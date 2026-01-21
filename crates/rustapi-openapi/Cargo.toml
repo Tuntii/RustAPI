@@ -27,3 +27,4 @@ utoipa = { workspace = true }
 [features]
 default = ["swagger-ui"]
 swagger-ui = []
+redoc = []

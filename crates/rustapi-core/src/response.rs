@@ -86,7 +86,7 @@ pub enum Body {
     /// Fully buffered body (default)
     Full(Full<Bytes>),
     /// Streaming body
-    Streaming(BoxBody<Bytes, ApiError>),
+    Streaming(Pin<Box<dyn http_body::Body<Data = Bytes, Error = ApiError> + Send + 'static>>),
 }
 
 impl Body {
@@ -109,7 +109,7 @@ impl Body {
         let body = http_body_util::StreamBody::new(
             stream.map(|res| res.map_err(|e| e.into()).map(http_body::Frame::data)),
         );
-        Self::Streaming(body.boxed())
+        Self::Streaming(Box::pin(body))
     }
 }
 
@@ -131,7 +131,7 @@ impl http_body::Body for Body {
             Body::Full(b) => Pin::new(b)
                 .poll_frame(cx)
                 .map_err(|_| ApiError::internal("Infallible error")),
-            Body::Streaming(b) => Pin::new(b).poll_frame(cx),
+            Body::Streaming(b) => b.as_mut().poll_frame(cx),
         }
     }
 

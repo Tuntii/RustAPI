@@ -723,7 +723,10 @@ impl RustApi {
         // Add Swagger UI endpoint
         let docs_handler = move || {
             let url = openapi_url.clone();
-            async move { rustapi_openapi::swagger_ui_html(&url) }
+            async move {
+                let response = rustapi_openapi::swagger_ui_html(&url);
+                response.map(crate::response::Body::Full)
+            }
         };
 
         self.route(&openapi_path, get(spec_handler))
@@ -839,7 +842,8 @@ impl RustApi {
                     if !check_basic_auth(&req, &expected) {
                         return unauthorized_response();
                     }
-                    rustapi_openapi::swagger_ui_html(&url)
+                    let response = rustapi_openapi::swagger_ui_html(&url);
+                    response.map(crate::response::Body::Full)
                 })
                     as std::pin::Pin<Box<dyn std::future::Future<Output = crate::Response> + Send>>
             });
@@ -878,6 +882,25 @@ impl RustApi {
         server.run(addr).await
     }
 
+    /// Run the server with graceful shutdown signal
+    pub async fn run_with_shutdown<F>(
+        mut self,
+        addr: impl AsRef<str>,
+        signal: F,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
+    where
+        F: std::future::Future<Output = ()> + Send + 'static,
+    {
+        // Apply body limit layer if configured (should be first in the chain)
+        if let Some(limit) = self.body_limit {
+            // Prepend body limit layer so it's the first to process requests
+            self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
+        }
+
+        let server = Server::new(self.router, self.layers, self.interceptors);
+        server.run_with_shutdown(addr.as_ref(), signal).await
+    }
+
     /// Get the inner router (for testing or advanced usage)
     pub fn into_router(self) -> Router {
         self.router
@@ -891,6 +914,108 @@ impl RustApi {
     /// Get the interceptor chain (for testing)
     pub fn interceptors(&self) -> &InterceptorChain {
         &self.interceptors
+    }
+
+    /// Enable HTTP/3 support with TLS certificates
+    ///
+    /// HTTP/3 requires TLS certificates. For development, you can use
+    /// self-signed certificates with `run_http3_dev`.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// RustApi::new()
+    ///     .route("/", get(hello))
+    ///     .run_http3("0.0.0.0:443", "cert.pem", "key.pem")
+    ///     .await
+    /// ```
+    #[cfg(feature = "http3")]
+    pub async fn run_http3(
+        mut self,
+        config: crate::http3::Http3Config,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        use std::sync::Arc;
+
+        // Apply body limit layer if configured
+        if let Some(limit) = self.body_limit {
+            self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
+        }
+
+        let server = crate::http3::Http3Server::new(
+            &config,
+            Arc::new(self.router),
+            Arc::new(self.layers),
+            Arc::new(self.interceptors),
+        )
+        .await?;
+
+        server.run().await
+    }
+
+    /// Run HTTP/3 server with self-signed certificate (development only)
+    ///
+    /// This is useful for local development and testing.
+    /// **Do not use in production!**
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// RustApi::new()
+    ///     .route("/", get(hello))
+    ///     .run_http3_dev("0.0.0.0:8443")
+    ///     .await
+    /// ```
+    #[cfg(feature = "http3-dev")]
+    pub async fn run_http3_dev(
+        mut self,
+        addr: &str,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        use std::sync::Arc;
+
+        // Apply body limit layer if configured
+        if let Some(limit) = self.body_limit {
+            self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
+        }
+
+        let server = crate::http3::Http3Server::new_with_self_signed(
+            addr,
+            Arc::new(self.router),
+            Arc::new(self.layers),
+            Arc::new(self.interceptors),
+        )
+        .await?;
+
+        server.run().await
+    }
+
+    /// Run both HTTP/1.1 and HTTP/3 servers simultaneously
+    ///
+    /// This allows clients to use either protocol. The HTTP/1.1 server
+    /// will advertise HTTP/3 availability via Alt-Svc header.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// RustApi::new()
+    ///     .route("/", get(hello))
+    ///     .run_dual_stack("0.0.0.0:8080", Http3Config::new("cert.pem", "key.pem"))
+    ///     .await
+    /// ```
+    #[cfg(feature = "http3")]
+    pub async fn run_dual_stack(
+        mut self,
+        _http_addr: &str,
+        http3_config: crate::http3::Http3Config,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        // TODO: Dual-stack requires Router, LayerStack, InterceptorChain to implement Clone.
+        // For now, we only run HTTP/3.
+        // In the future, we can either:
+        // 1. Make Router/LayerStack/InterceptorChain Clone
+        // 2. Use Arc<RwLock<...>> pattern
+        // 3. Create shared state mechanism
+
+        tracing::warn!("run_dual_stack currently only runs HTTP/3. HTTP/1.1 support coming soon.");
+        self.run_http3(http3_config).await
     }
 }
 
