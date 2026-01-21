@@ -18,7 +18,7 @@ rustapi-core = { workspace = true }
 rustapi-openapi = { workspace = true }
 
 # WebSocket implementation
-tokio-tungstenite = "0.24"
+tokio-tungstenite = "0.28"
 tungstenite = "0.24"
 
 # Async runtime

@@ -87,7 +87,7 @@ toon-format = { version = "0.4", default-features = false }
 criterion = { version = "0.5", features = ["html_reports"] }
 
 # WebSocket
-tokio-tungstenite = "0.24"
+tokio-tungstenite = "0.28"
 tungstenite = "0.24"
 
 # Template engine
