@@ -1014,9 +1014,12 @@ mod validation_group_property_tests {
             prop_assert!(update_rules.contains(&&always_value));
             prop_assert!(!update_rules.contains(&&create_value));
 
-            // Default group should get all rules
+            // Default group should get only default rules
             let default_rules: Vec<_> = rules.for_group(&ValidationGroup::Default).collect();
-            prop_assert_eq!(default_rules.len(), 3);
+            prop_assert_eq!(default_rules.len(), 1);
+            prop_assert!(default_rules.contains(&&always_value));
+            prop_assert!(!default_rules.contains(&&create_value));
+            prop_assert!(!default_rules.contains(&&update_value));
         }
 
         // Property 5: Custom groups work correctly
@@ -1042,11 +1045,17 @@ mod validation_group_property_tests {
 
         // Property 5: Group matching is symmetric for Default
         #[test]
-        fn default_group_matching_symmetric(group_val in validation_group_strategy()) {
-            // Default matches everything
+        fn default_group_matching_asymmetric(group_val in validation_group_strategy()) {
+            // Default matches everything (rules in Default group apply to all contexts)
             prop_assert!(ValidationGroup::Default.matches(&group_val));
-            // Everything matches Default
-            prop_assert!(group_val.matches(&ValidationGroup::Default));
+
+            // Contexts match Default only if they ARE Default
+            // (rules in specific groups do NOT apply to Default context)
+            if group_val == ValidationGroup::Default {
+                prop_assert!(group_val.matches(&ValidationGroup::Default));
+            } else {
+                prop_assert!(!group_val.matches(&ValidationGroup::Default));
+            }
         }
     }
 
@@ -1091,14 +1100,14 @@ mod validation_group_property_tests {
 
     #[test]
     fn non_default_groups_match_only_self() {
-        // Create only matches Create and Default
+        // Create only matches Create
         assert!(ValidationGroup::Create.matches(&ValidationGroup::Create));
-        assert!(ValidationGroup::Create.matches(&ValidationGroup::Default));
+        assert!(!ValidationGroup::Create.matches(&ValidationGroup::Default));
         assert!(!ValidationGroup::Create.matches(&ValidationGroup::Update));
 
-        // Update only matches Update and Default
+        // Update only matches Update
         assert!(ValidationGroup::Update.matches(&ValidationGroup::Update));
-        assert!(ValidationGroup::Update.matches(&ValidationGroup::Default));
+        assert!(!ValidationGroup::Update.matches(&ValidationGroup::Default));
         assert!(!ValidationGroup::Update.matches(&ValidationGroup::Create));
     }
 }

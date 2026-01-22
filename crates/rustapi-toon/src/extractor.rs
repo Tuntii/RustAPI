@@ -2,9 +2,7 @@
 
 use crate::error::ToonError;
 use crate::{TOON_CONTENT_TYPE, TOON_CONTENT_TYPE_TEXT};
-use bytes::Bytes;
 use http::{header, StatusCode};
-use http_body_util::Full;
 use rustapi_core::{ApiError, FromRequest, IntoResponse, Request, Response, Result};
 use rustapi_openapi::{
     MediaType, Operation, OperationModifier, ResponseModifier, ResponseSpec, SchemaRef,

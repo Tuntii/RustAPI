@@ -42,7 +42,7 @@ use std::collections::HashMap;
 ///
 /// let link = Link::new("/users/123")
 ///     .title("User details")
-///     .templated(false);
+///     .set_templated(false);
 /// ```
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Link {

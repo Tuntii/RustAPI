@@ -1,11 +1,10 @@
 //! WebSocket upgrade response
 
 use crate::{WebSocketError, WebSocketStream, WsHeartbeatConfig};
-use bytes::Bytes;
 use http::{header, Response, StatusCode};
 use hyper::upgrade::OnUpgrade;
 use hyper_util::rt::TokioIo;
-use rustapi_core::{ApiError, IntoResponse, ResponseBody};
+use rustapi_core::{IntoResponse, ResponseBody};
 use rustapi_openapi::{Operation, ResponseModifier, ResponseSpec};
 use std::future::Future;
 use std::pin::Pin;

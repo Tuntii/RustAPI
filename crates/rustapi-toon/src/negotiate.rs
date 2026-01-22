@@ -4,9 +4,7 @@
 //! chooses between JSON and TOON format based on the client's `Accept` header.
 
 use crate::{TOON_CONTENT_TYPE, TOON_CONTENT_TYPE_TEXT};
-use bytes::Bytes;
 use http::{header, StatusCode};
-use http_body_util::Full;
 use rustapi_core::{ApiError, FromRequestParts, IntoResponse, Request, Response};
 use rustapi_openapi::{
     MediaType, Operation, OperationModifier, ResponseModifier, ResponseSpec, SchemaRef,

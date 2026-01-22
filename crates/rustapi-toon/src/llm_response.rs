@@ -35,9 +35,7 @@
 //! ```
 
 use crate::{OutputFormat, JSON_CONTENT_TYPE, TOON_CONTENT_TYPE};
-use bytes::Bytes;
 use http::{header, StatusCode};
-use http_body_util::Full;
 use rustapi_core::{ApiError, IntoResponse, Response};
 use rustapi_openapi::{
     MediaType, Operation, OperationModifier, ResponseModifier, ResponseSpec, SchemaRef,

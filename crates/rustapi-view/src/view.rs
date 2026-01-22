@@ -1,9 +1,7 @@
 //! View response type
 
 use crate::{Templates, ViewError};
-use bytes::Bytes;
 use http::{header, Response, StatusCode};
-use http_body_util::Full;
 use rustapi_core::{IntoResponse, ResponseBody};
 use rustapi_openapi::{MediaType, Operation, ResponseModifier, ResponseSpec, SchemaRef};
 use serde::Serialize;
