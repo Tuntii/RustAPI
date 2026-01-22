@@ -8,6 +8,7 @@
 2.  **Extraction**: The `FromRequest` trait definition.
 3.  **Response**: The `IntoResponse` trait definition.
 4.  **Middleware**: The `Layer` and `Service` integration with Tower.
+5.  **HTTP/3**: Built-in QUIC support via `h3` and `quinn` (optional feature).
 
 ## The `Router` Internals
 
@@ -17,6 +18,10 @@ We use `matchit`, a high-performance **Radix Tree** implementation for routing.
 - **Speed**: Lookup time is proportional to the length of the path, not the number of routes.
 - **Priority**: Specific paths (`/users/profile`) always take precedence over wildcards (`/users/:id`), regardless of definition order.
 - **Parameters**: Efficiently parses named parameters like `:id` or `*path` without regular expressions.
+
+## HTTP/3 & QUIC
+
+`rustapi-core` includes optional support for **HTTP/3** (QUIC). This is enabled via the `http3` feature flag and powered by `quinn` and `h3`. It allows generic specialized methods on `RustApi` like `.run_http3()` and `.run_dual_stack()`.
 
 ## The `Handler` Trait Magic
 

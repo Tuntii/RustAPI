@@ -34,5 +34,7 @@
     - [Custom Middleware](recipes/custom_middleware.md)
     - [Real-time Chat](recipes/websockets.md)
     - [Production Tuning](recipes/high_performance.md)
+    - [Deployment](recipes/deployment.md)
+    - [HTTP/3 (QUIC)](recipes/http3_quic.md)
 
 

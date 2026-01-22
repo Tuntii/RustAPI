@@ -382,7 +382,7 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
     let mut chained_calls = quote!();
 
     for attr in fn_attrs {
-        // Check for tag, summary, description
+        // Check for tag, summary, description, param
         // Use loose matching on the last segment to handle crate renaming or fully qualified paths
         if let Some(ident) = attr.path().segments.last().map(|s| &s.ident) {
             let ident_str = ident.to_string();
@@ -400,6 +400,53 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
                 if let Ok(lit) = attr.parse_args::<LitStr>() {
                     let val = lit.value();
                     chained_calls = quote! { #chained_calls .description(#val) };
+                }
+            } else if ident_str == "param" {
+                // Parse #[param(name, schema = "type")] or #[param(name = "type")]
+                if let Ok(param_args) = attr.parse_args_with(
+                    syn::punctuated::Punctuated::<Meta, syn::Token![,]>::parse_terminated,
+                ) {
+                    let mut param_name: Option<String> = None;
+                    let mut param_schema: Option<String> = None;
+
+                    for meta in param_args {
+                        match &meta {
+                            // Simple ident: #[param(id, ...)]
+                            Meta::Path(path) => {
+                                if param_name.is_none() {
+                                    if let Some(ident) = path.get_ident() {
+                                        param_name = Some(ident.to_string());
+                                    }
+                                }
+                            }
+                            // Named value: #[param(schema = "uuid")] or #[param(id = "uuid")]
+                            Meta::NameValue(nv) => {
+                                let key = nv.path.get_ident().map(|i| i.to_string());
+                                if let Some(key) = key {
+                                    if key == "schema" || key == "type" {
+                                        if let Expr::Lit(lit) = &nv.value {
+                                            if let Lit::Str(s) = &lit.lit {
+                                                param_schema = Some(s.value());
+                                            }
+                                        }
+                                    } else if param_name.is_none() {
+                                        // Treat as #[param(name = "schema")]
+                                        param_name = Some(key);
+                                        if let Expr::Lit(lit) = &nv.value {
+                                            if let Lit::Str(s) = &lit.lit {
+                                                param_schema = Some(s.value());
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+
+                    if let (Some(pname), Some(pschema)) = (param_name, param_schema) {
+                        chained_calls = quote! { #chained_calls .param(#pname, #pschema) };
+                    }
                 }
             }
         }
@@ -586,6 +633,44 @@ pub fn description(attr: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     TokenStream::from(expanded)
+}
+
+/// Path parameter schema macro for OpenAPI documentation
+///
+/// Use this to specify the OpenAPI schema type for a path parameter when
+/// the auto-inferred type is incorrect. This is particularly useful for
+/// UUID parameters that might be named `id`.
+///
+/// # Supported schema types
+/// - `"uuid"` - String with UUID format
+/// - `"integer"` or `"int"` - Integer with int64 format
+/// - `"string"` - Plain string
+/// - `"boolean"` or `"bool"` - Boolean
+/// - `"number"` - Number (float)
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use uuid::Uuid;
+///
+/// #[rustapi::get("/users/{id}")]
+/// #[rustapi::param(id, schema = "uuid")]
+/// async fn get_user(Path(id): Path<Uuid>) -> Json<User> {
+///     // ...
+/// }
+///
+/// // Alternative syntax:
+/// #[rustapi::get("/posts/{post_id}")]
+/// #[rustapi::param(post_id = "uuid")]
+/// async fn get_post(Path(post_id): Path<Uuid>) -> Json<Post> {
+///     // ...
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn param(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    // The param attribute is processed by the route macro (get, post, etc.)
+    // This macro just passes through the function unchanged
+    item
 }
 
 // ============================================

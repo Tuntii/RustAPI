@@ -382,7 +382,7 @@ impl RustApi {
         // Register operations in OpenAPI spec
         for (method, op) in &method_router.operations {
             let mut op = op.clone();
-            add_path_params_to_operation(path, &mut op);
+            add_path_params_to_operation(path, &mut op, &std::collections::HashMap::new());
             self.openapi_spec = self.openapi_spec.path(path, method.as_str(), op);
         }
 
@@ -432,7 +432,7 @@ impl RustApi {
 
         // Register operation in OpenAPI spec
         let mut op = route.operation;
-        add_path_params_to_operation(route.path, &mut op);
+        add_path_params_to_operation(route.path, &mut op, &route.param_schemas);
         self.openapi_spec = self.openapi_spec.path(route.path, route.method, op);
 
         self.route_with_method(route.path, method_enum, route.handler)
@@ -514,7 +514,11 @@ impl RustApi {
             // Register each operation in the OpenAPI spec
             for (method, op) in &method_router.operations {
                 let mut op = op.clone();
-                add_path_params_to_operation(&prefixed_path, &mut op);
+                add_path_params_to_operation(
+                    &prefixed_path,
+                    &mut op,
+                    &std::collections::HashMap::new(),
+                );
                 self.openapi_spec = self.openapi_spec.path(&prefixed_path, method.as_str(), op);
             }
         }
@@ -1019,7 +1023,11 @@ impl RustApi {
     }
 }
 
-fn add_path_params_to_operation(path: &str, op: &mut rustapi_openapi::Operation) {
+fn add_path_params_to_operation(
+    path: &str,
+    op: &mut rustapi_openapi::Operation,
+    param_schemas: &std::collections::HashMap<String, String>,
+) {
     let mut params: Vec<String> = Vec::new();
     let mut in_brace = false;
     let mut current = String::new();
@@ -1060,8 +1068,12 @@ fn add_path_params_to_operation(path: &str, op: &mut rustapi_openapi::Operation)
             continue;
         }
 
-        // Infer schema type based on common naming patterns
-        let schema = infer_path_param_schema(&name);
+        // Use custom schema if provided, otherwise infer from name
+        let schema = if let Some(schema_type) = param_schemas.get(&name) {
+            schema_type_to_openapi_schema(schema_type)
+        } else {
+            infer_path_param_schema(&name)
+        };
 
         op_params.push(rustapi_openapi::Parameter {
             name,
@@ -1070,6 +1082,37 @@ fn add_path_params_to_operation(path: &str, op: &mut rustapi_openapi::Operation)
             description: None,
             schema,
         });
+    }
+}
+
+/// Convert a schema type string to an OpenAPI schema reference
+fn schema_type_to_openapi_schema(schema_type: &str) -> rustapi_openapi::SchemaRef {
+    match schema_type.to_lowercase().as_str() {
+        "uuid" => rustapi_openapi::SchemaRef::Inline(serde_json::json!({
+            "type": "string",
+            "format": "uuid"
+        })),
+        "integer" | "int" | "int64" | "i64" => {
+            rustapi_openapi::SchemaRef::Inline(serde_json::json!({
+                "type": "integer",
+                "format": "int64"
+            }))
+        }
+        "int32" | "i32" => rustapi_openapi::SchemaRef::Inline(serde_json::json!({
+            "type": "integer",
+            "format": "int32"
+        })),
+        "number" | "float" | "f64" | "f32" => {
+            rustapi_openapi::SchemaRef::Inline(serde_json::json!({
+                "type": "number"
+            }))
+        }
+        "boolean" | "bool" => rustapi_openapi::SchemaRef::Inline(serde_json::json!({
+            "type": "boolean"
+        })),
+        "string" | _ => rustapi_openapi::SchemaRef::Inline(serde_json::json!({
+            "type": "string"
+        })),
     }
 }
 
@@ -1282,6 +1325,74 @@ mod tests {
                 }
                 _ => panic!("Expected inline schema for '{}'", name),
             }
+        }
+    }
+
+    #[test]
+    fn test_schema_type_to_openapi_schema() {
+        use super::schema_type_to_openapi_schema;
+
+        // Test UUID schema
+        let uuid_schema = schema_type_to_openapi_schema("uuid");
+        match uuid_schema {
+            rustapi_openapi::SchemaRef::Inline(v) => {
+                assert_eq!(v.get("type").and_then(|v| v.as_str()), Some("string"));
+                assert_eq!(v.get("format").and_then(|v| v.as_str()), Some("uuid"));
+            }
+            _ => panic!("Expected inline schema for uuid"),
+        }
+
+        // Test integer schemas
+        for schema_type in ["integer", "int", "int64", "i64"] {
+            let schema = schema_type_to_openapi_schema(schema_type);
+            match schema {
+                rustapi_openapi::SchemaRef::Inline(v) => {
+                    assert_eq!(v.get("type").and_then(|v| v.as_str()), Some("integer"));
+                    assert_eq!(v.get("format").and_then(|v| v.as_str()), Some("int64"));
+                }
+                _ => panic!("Expected inline schema for {}", schema_type),
+            }
+        }
+
+        // Test int32 schema
+        let int32_schema = schema_type_to_openapi_schema("int32");
+        match int32_schema {
+            rustapi_openapi::SchemaRef::Inline(v) => {
+                assert_eq!(v.get("type").and_then(|v| v.as_str()), Some("integer"));
+                assert_eq!(v.get("format").and_then(|v| v.as_str()), Some("int32"));
+            }
+            _ => panic!("Expected inline schema for int32"),
+        }
+
+        // Test number/float schema
+        for schema_type in ["number", "float"] {
+            let schema = schema_type_to_openapi_schema(schema_type);
+            match schema {
+                rustapi_openapi::SchemaRef::Inline(v) => {
+                    assert_eq!(v.get("type").and_then(|v| v.as_str()), Some("number"));
+                }
+                _ => panic!("Expected inline schema for {}", schema_type),
+            }
+        }
+
+        // Test boolean schema
+        for schema_type in ["boolean", "bool"] {
+            let schema = schema_type_to_openapi_schema(schema_type);
+            match schema {
+                rustapi_openapi::SchemaRef::Inline(v) => {
+                    assert_eq!(v.get("type").and_then(|v| v.as_str()), Some("boolean"));
+                }
+                _ => panic!("Expected inline schema for {}", schema_type),
+            }
+        }
+
+        // Test string schema (default)
+        let string_schema = schema_type_to_openapi_schema("string");
+        match string_schema {
+            rustapi_openapi::SchemaRef::Inline(v) => {
+                assert_eq!(v.get("type").and_then(|v| v.as_str()), Some("string"));
+            }
+            _ => panic!("Expected inline schema for string"),
         }
     }
 
