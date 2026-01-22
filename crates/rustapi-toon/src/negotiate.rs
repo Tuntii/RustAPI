@@ -251,7 +251,7 @@ impl<T: Serialize> IntoResponse for Negotiate<T> {
                 Ok(body) => http::Response::builder()
                     .status(StatusCode::OK)
                     .header(header::CONTENT_TYPE, JSON_CONTENT_TYPE)
-                    .body(Full::new(Bytes::from(body)))
+                    .body(rustapi_core::ResponseBody::from(body))
                     .unwrap(),
                 Err(err) => {
                     let error = ApiError::internal(format!("JSON serialization error: {}", err));
@@ -262,7 +262,7 @@ impl<T: Serialize> IntoResponse for Negotiate<T> {
                 Ok(body) => http::Response::builder()
                     .status(StatusCode::OK)
                     .header(header::CONTENT_TYPE, TOON_CONTENT_TYPE)
-                    .body(Full::new(Bytes::from(body)))
+                    .body(rustapi_core::ResponseBody::from(body))
                     .unwrap(),
                 Err(err) => {
                     let error = ApiError::internal(format!("TOON serialization error: {}", err));

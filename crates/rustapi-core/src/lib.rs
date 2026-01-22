@@ -117,7 +117,9 @@ pub use middleware::{BodyLimitLayer, RequestId, RequestIdLayer, TracingLayer, DE
 pub use middleware::{MetricsLayer, MetricsResponse};
 pub use multipart::{Multipart, MultipartConfig, MultipartField, UploadedFile};
 pub use request::{BodyVariant, Request};
-pub use response::{Created, Html, IntoResponse, NoContent, Redirect, Response, WithStatus};
+pub use response::{
+    Body as ResponseBody, Created, Html, IntoResponse, NoContent, Redirect, Response, WithStatus,
+};
 pub use router::{delete, get, patch, post, put, MethodRouter, RouteMatch, Router};
 pub use sse::{sse_response, KeepAlive, Sse, SseEvent};
 pub use static_files::{serve_dir, StaticFile, StaticFileConfig};
