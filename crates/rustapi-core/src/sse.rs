@@ -48,7 +48,7 @@
 use bytes::Bytes;
 use futures_util::Stream;
 use http::{header, StatusCode};
-use http_body_util::Full;
+
 use pin_project_lite::pin_project;
 use rustapi_openapi::{MediaType, Operation, ResponseModifier, ResponseSpec, SchemaRef};
 use std::fmt::Write;

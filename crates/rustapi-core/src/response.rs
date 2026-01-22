@@ -74,7 +74,7 @@ use crate::error::{ApiError, ErrorResponse};
 use bytes::Bytes;
 use futures_util::StreamExt;
 use http::{header, HeaderMap, HeaderValue, StatusCode};
-use http_body_util::{combinators::BoxBody, BodyExt, Full};
+use http_body_util::Full;
 use rustapi_openapi::{MediaType, Operation, ResponseModifier, ResponseSpec, Schema, SchemaRef};
 use serde::Serialize;
 use std::collections::HashMap;

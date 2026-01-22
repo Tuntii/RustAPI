@@ -1007,7 +1007,7 @@ impl RustApi {
     /// ```
     #[cfg(feature = "http3")]
     pub async fn run_dual_stack(
-        mut self,
+        self,
         _http_addr: &str,
         http3_config: crate::http3::Http3Config,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {

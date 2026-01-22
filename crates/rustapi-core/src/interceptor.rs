@@ -205,7 +205,7 @@ mod tests {
     use crate::path_params::PathParams;
     use bytes::Bytes;
     use http::{Extensions, Method, StatusCode};
-    use http_body_util::Full;
+
     use proptest::prelude::*;
     use std::sync::Arc;
 

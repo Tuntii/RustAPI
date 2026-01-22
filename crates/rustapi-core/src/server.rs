@@ -6,7 +6,7 @@ use crate::middleware::{BoxedNext, LayerStack};
 use crate::request::Request;
 use crate::response::{Body, IntoResponse};
 use crate::router::{RouteMatch, Router};
-use bytes::Bytes;
+
 use http::{header, StatusCode};
 use hyper::body::Incoming;
 use hyper::server::conn::http1;

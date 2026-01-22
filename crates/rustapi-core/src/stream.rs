@@ -21,7 +21,6 @@
 use bytes::Bytes;
 use futures_util::Stream;
 use http::{header, StatusCode};
-use http_body_util::Full;
 
 use crate::response::{IntoResponse, Response};
 
