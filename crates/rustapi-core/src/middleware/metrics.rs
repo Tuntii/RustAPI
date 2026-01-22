@@ -173,6 +173,191 @@ impl MetricsLayer {
             .with_label_values(&[method, &normalized_path])
             .observe(duration_secs);
     }
+
+    /// Get a builder for creating custom metrics
+    ///
+    /// Use this to create application-specific metrics that will be included
+    /// in the `/metrics` endpoint output.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// let metrics = MetricsLayer::new();
+    /// let custom = metrics.custom_metrics();
+    ///
+    /// // Create a counter
+    /// let orders_total = custom.counter("orders_total", "Total orders processed");
+    /// orders_total.inc();
+    ///
+    /// // Create a gauge
+    /// let active_users = custom.gauge("active_users", "Currently active users");
+    /// active_users.set(42.0);
+    ///
+    /// // Create a histogram
+    /// let order_value = custom.histogram(
+    ///     "order_value_dollars",
+    ///     "Order value in dollars",
+    ///     vec![1.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0]
+    /// );
+    /// order_value.observe(49.99);
+    /// ```
+    pub fn custom_metrics(&self) -> CustomMetricsBuilder {
+        CustomMetricsBuilder {
+            inner: Arc::clone(&self.inner),
+        }
+    }
+}
+
+/// Builder for creating custom application metrics
+///
+/// Provides a convenient API for registering custom Prometheus metrics
+/// that will be exported alongside the default HTTP metrics.
+///
+/// # Metric Types
+///
+/// - **Counter**: Monotonically increasing value (e.g., total requests, errors)
+/// - **Gauge**: Value that can go up and down (e.g., active connections, temperature)
+/// - **Histogram**: Distribution of values (e.g., request latency, order value)
+///
+/// # Labels
+///
+/// For labeled metrics, use `counter_vec`, `gauge_vec`, and `histogram_vec` methods.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use rustapi_core::middleware::MetricsLayer;
+///
+/// let metrics = MetricsLayer::new();
+/// let builder = metrics.custom_metrics();
+///
+/// // Simple counter
+/// let requests = builder.counter("api_requests_total", "Total API requests");
+/// requests.inc();
+///
+/// // Counter with labels
+/// let errors = builder.counter_vec(
+///     "api_errors_total",
+///     "Total API errors",
+///     &["endpoint", "error_type"]
+/// );
+/// errors.with_label_values(&["/users", "validation"]).inc();
+///
+/// // Gauge for current state
+/// let connections = builder.gauge("active_connections", "Active connections");
+/// connections.inc();
+/// connections.dec();
+///
+/// // Histogram for latency
+/// let latency = builder.histogram(
+///     "db_query_duration_seconds",
+///     "Database query duration",
+///     vec![0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0]
+/// );
+/// latency.observe(0.023);
+/// ```
+pub struct CustomMetricsBuilder {
+    inner: Arc<MetricsInner>,
+}
+
+impl CustomMetricsBuilder {
+    /// Create a new counter metric
+    ///
+    /// Counters are monotonically increasing values. Use them for things like
+    /// total requests, total errors, total orders, etc.
+    pub fn counter(&self, name: &str, help: &str) -> prometheus::Counter {
+        let counter = prometheus::Counter::new(name, help).expect("Failed to create counter");
+        self.inner
+            .registry
+            .register(Box::new(counter.clone()))
+            .expect("Failed to register counter");
+        counter
+    }
+
+    /// Create a counter with labels
+    ///
+    /// Use this when you need to differentiate metrics by dimensions.
+    pub fn counter_vec(&self, name: &str, help: &str, label_names: &[&str]) -> IntCounterVec {
+        let counter = IntCounterVec::new(Opts::new(name, help), label_names)
+            .expect("Failed to create counter vec");
+        self.inner
+            .registry
+            .register(Box::new(counter.clone()))
+            .expect("Failed to register counter vec");
+        counter
+    }
+
+    /// Create a new gauge metric
+    ///
+    /// Gauges can go up and down. Use them for things like current temperature,
+    /// active connections, queue size, etc.
+    pub fn gauge(&self, name: &str, help: &str) -> prometheus::Gauge {
+        let gauge = prometheus::Gauge::new(name, help).expect("Failed to create gauge");
+        self.inner
+            .registry
+            .register(Box::new(gauge.clone()))
+            .expect("Failed to register gauge");
+        gauge
+    }
+
+    /// Create a gauge with labels
+    pub fn gauge_vec(&self, name: &str, help: &str, label_names: &[&str]) -> GaugeVec {
+        let gauge =
+            GaugeVec::new(Opts::new(name, help), label_names).expect("Failed to create gauge vec");
+        self.inner
+            .registry
+            .register(Box::new(gauge.clone()))
+            .expect("Failed to register gauge vec");
+        gauge
+    }
+
+    /// Create a new histogram metric with custom buckets
+    ///
+    /// Histograms observe values and count them in configurable buckets.
+    /// Use them for things like request latency, order values, etc.
+    ///
+    /// # Buckets
+    ///
+    /// Choose buckets that make sense for your use case:
+    /// - Latency (seconds): `vec![0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1.0, 5.0]`
+    /// - Order value (dollars): `vec![1.0, 10.0, 50.0, 100.0, 500.0, 1000.0]`
+    /// - File size (MB): `vec![0.1, 1.0, 10.0, 100.0, 1000.0]`
+    pub fn histogram(&self, name: &str, help: &str, buckets: Vec<f64>) -> prometheus::Histogram {
+        let histogram =
+            prometheus::Histogram::with_opts(HistogramOpts::new(name, help).buckets(buckets))
+                .expect("Failed to create histogram");
+        self.inner
+            .registry
+            .register(Box::new(histogram.clone()))
+            .expect("Failed to register histogram");
+        histogram
+    }
+
+    /// Create a histogram with default latency buckets
+    ///
+    /// Uses standard latency buckets suitable for HTTP request durations:
+    /// `[0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]`
+    pub fn histogram_with_default_buckets(&self, name: &str, help: &str) -> prometheus::Histogram {
+        self.histogram(name, help, DEFAULT_BUCKETS.to_vec())
+    }
+
+    /// Create a histogram with labels
+    pub fn histogram_vec(
+        &self,
+        name: &str,
+        help: &str,
+        label_names: &[&str],
+        buckets: Vec<f64>,
+    ) -> HistogramVec {
+        let histogram =
+            HistogramVec::new(HistogramOpts::new(name, help).buckets(buckets), label_names)
+                .expect("Failed to create histogram vec");
+        self.inner
+            .registry
+            .register(Box::new(histogram.clone()))
+            .expect("Failed to register histogram vec");
+        histogram
+    }
 }
 
 impl Default for MetricsLayer {
@@ -216,13 +401,15 @@ pub struct MetricsResponse(Vec<u8>);
 
 impl crate::response::IntoResponse for MetricsResponse {
     fn into_response(self) -> Response {
+        use crate::response::Body;
+
         http::Response::builder()
             .status(http::StatusCode::OK)
             .header(
                 http::header::CONTENT_TYPE,
                 "text/plain; version=0.0.4; charset=utf-8",
             )
-            .body(http_body_util::Full::new(Bytes::from(self.0)))
+            .body(Body::Full(http_body_util::Full::new(Bytes::from(self.0))))
             .unwrap()
     }
 }

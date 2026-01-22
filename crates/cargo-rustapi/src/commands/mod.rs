@@ -1,6 +1,8 @@
 //! CLI commands
 
 mod add;
+mod client;
+mod deploy;
 mod docs;
 mod doctor;
 mod generate;
@@ -9,6 +11,8 @@ mod run;
 mod watch;
 
 pub use add::{add, AddArgs};
+pub use client::{client, ClientArgs};
+pub use deploy::{deploy, DeployArgs};
 pub use docs::open_docs;
 pub use doctor::{doctor, DoctorArgs};
 pub use generate::{generate, GenerateArgs};

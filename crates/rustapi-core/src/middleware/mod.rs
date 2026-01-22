@@ -30,6 +30,6 @@ pub use body_limit::{BodyLimitLayer, DEFAULT_BODY_LIMIT};
 pub use compression::{CompressionAlgorithm, CompressionConfig, CompressionLayer};
 pub use layer::{BoxedNext, LayerStack, MiddlewareLayer};
 #[cfg(feature = "metrics")]
-pub use metrics::{MetricsLayer, MetricsResponse};
+pub use metrics::{CustomMetricsBuilder, MetricsLayer, MetricsResponse};
 pub use request_id::{RequestId, RequestIdLayer};
 pub use tracing_layer::TracingLayer;
