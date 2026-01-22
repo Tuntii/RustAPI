@@ -214,7 +214,9 @@ impl<T: Serialize> IntoResponse for LlmResponse<T> {
             builder = builder.header(X_TOKEN_SAVINGS, format!("{:.2}%", savings));
         }
 
-        builder.body(Full::new(Bytes::from(body))).unwrap()
+        builder
+            .body(rustapi_core::ResponseBody::from(body))
+            .unwrap()
     }
 }
 

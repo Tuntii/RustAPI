@@ -90,6 +90,7 @@ where
         http::Response::builder()
             .status(StatusCode::OK)
             .header(header::CONTENT_TYPE, content_type)
+            .header(header::TRANSFER_ENCODING, "chunked")
             .body(body)
             .unwrap()
     }

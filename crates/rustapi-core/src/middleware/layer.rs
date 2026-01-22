@@ -351,7 +351,7 @@ mod tests {
                     Box::pin(async move {
                         http::Response::builder()
                             .status(status)
-                            .body(http_body_util::Full::new(Bytes::from("test")))
+                            .body(crate::response::Body::from("test"))
                             .unwrap()
                     }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
                 });
@@ -385,7 +385,7 @@ mod tests {
                 Box::pin(async {
                     http::Response::builder()
                         .status(StatusCode::OK)
-                        .body(http_body_util::Full::new(Bytes::from("direct")))
+                        .body(crate::response::Body::from("direct"))
                         .unwrap()
                 }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
             });
@@ -426,7 +426,7 @@ mod tests {
                     Box::pin(async {
                         http::Response::builder()
                             .status(StatusCode::OK)
-                            .body(http_body_util::Full::new(Bytes::from("test")))
+                            .body(crate::response::Body::from("test"))
                             .unwrap()
                     }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
                 });
@@ -490,7 +490,7 @@ mod tests {
                     // Return error response without calling next (short-circuit)
                     http::Response::builder()
                         .status(error_status)
-                        .body(http_body_util::Full::new(Bytes::from("error")))
+                        .body(crate::response::Body::from("error"))
                         .unwrap()
                 } else {
                     // Continue to next middleware/handler
@@ -549,7 +549,7 @@ mod tests {
                         handler_called.store(true, std::sync::atomic::Ordering::SeqCst);
                         http::Response::builder()
                             .status(StatusCode::OK)
-                            .body(http_body_util::Full::new(Bytes::from("handler")))
+                            .body(crate::response::Body::from("handler"))
                             .unwrap()
                     }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
                 });
@@ -611,7 +611,7 @@ mod tests {
                     handler_called.store(true, std::sync::atomic::Ordering::SeqCst);
                     http::Response::builder()
                         .status(StatusCode::OK)
-                        .body(http_body_util::Full::new(Bytes::from("handler")))
+                        .body(crate::response::Body::from("handler"))
                         .unwrap()
                 }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
             });

@@ -4,7 +4,7 @@ use crate::{Templates, ViewError};
 use bytes::Bytes;
 use http::{header, Response, StatusCode};
 use http_body_util::Full;
-use rustapi_core::IntoResponse;
+use rustapi_core::{IntoResponse, ResponseBody};
 use rustapi_openapi::{MediaType, Operation, ResponseModifier, ResponseSpec, SchemaRef};
 use serde::Serialize;
 use std::collections::HashMap;
@@ -111,23 +111,23 @@ impl View<()> {
 }
 
 impl<T> IntoResponse for View<T> {
-    fn into_response(self) -> Response<Full<Bytes>> {
+    fn into_response(self) -> rustapi_core::Response {
         match self.content {
             Ok(html) => Response::builder()
                 .status(self.status)
                 .header(header::CONTENT_TYPE, "text/html; charset=utf-8")
-                .body(Full::new(Bytes::from(html)))
+                .body(ResponseBody::from(html))
                 .unwrap(),
             Err(err) => {
                 tracing::error!("Template rendering failed: {}", err);
                 Response::builder()
                     .status(StatusCode::INTERNAL_SERVER_ERROR)
                     .header(header::CONTENT_TYPE, "text/html; charset=utf-8")
-                    .body(Full::new(Bytes::from(
+                    .body(ResponseBody::from(
                         "<!DOCTYPE html><html><head><title>Error</title></head>\
                         <body><h1>500 Internal Server Error</h1>\
                         <p>Template rendering failed</p></body></html>",
-                    )))
+                    ))
                     .unwrap()
             }
         }

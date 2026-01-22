@@ -61,7 +61,7 @@ use crate::response::IntoResponse;
 use crate::stream::{StreamingBody, StreamingConfig};
 use bytes::Bytes;
 use http::{header, StatusCode};
-use http_body_util::Full;
+
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::future::Future;

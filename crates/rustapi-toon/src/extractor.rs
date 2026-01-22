@@ -125,7 +125,7 @@ impl<T: Serialize> IntoResponse for Toon<T> {
             Ok(body) => http::Response::builder()
                 .status(StatusCode::OK)
                 .header(header::CONTENT_TYPE, TOON_CONTENT_TYPE)
-                .body(Full::new(Bytes::from(body)))
+                .body(rustapi_core::ResponseBody::from(body))
                 .unwrap(),
             Err(err) => {
                 let error: ApiError = ToonError::Encode(err.to_string()).into();
