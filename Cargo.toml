@@ -21,7 +21,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.14"
+version = "0.1.15"
 edition = "2021"
 authors = ["RustAPI Contributors"]
 license = "MIT OR Apache-2.0"
@@ -100,16 +100,16 @@ indicatif = "0.17"
 console = "0.15"
 
 # Internal crates
-rustapi-core = { path = "crates/rustapi-core", version = "0.1.14", default-features = false }
-rustapi-macros = { path = "crates/rustapi-macros", version = "0.1.14" }
-rustapi-validate = { path = "crates/rustapi-validate", version = "0.1.14" }
-rustapi-openapi = { path = "crates/rustapi-openapi", version = "0.1.14", default-features = false }
-rustapi-extras = { path = "crates/rustapi-extras", version = "0.1.14" }
-rustapi-toon = { path = "crates/rustapi-toon", version = "0.1.14" }
-rustapi-ws = { path = "crates/rustapi-ws", version = "0.1.14" }
-rustapi-view = { path = "crates/rustapi-view", version = "0.1.14" }
-rustapi-testing = { path = "crates/rustapi-testing", version = "0.1.14" }
-rustapi-jobs = { path = "crates/rustapi-jobs", version = "0.1.14" }
+rustapi-core = { path = "crates/rustapi-core", version = "0.1.15", default-features = false }
+rustapi-macros = { path = "crates/rustapi-macros", version = "0.1.15" }
+rustapi-validate = { path = "crates/rustapi-validate", version = "0.1.15" }
+rustapi-openapi = { path = "crates/rustapi-openapi", version = "0.1.15", default-features = false }
+rustapi-extras = { path = "crates/rustapi-extras", version = "0.1.15" }
+rustapi-toon = { path = "crates/rustapi-toon", version = "0.1.15" }
+rustapi-ws = { path = "crates/rustapi-ws", version = "0.1.15" }
+rustapi-view = { path = "crates/rustapi-view", version = "0.1.15" }
+rustapi-testing = { path = "crates/rustapi-testing", version = "0.1.15" }
+rustapi-jobs = { path = "crates/rustapi-jobs", version = "0.1.15" }
 
 # HTTP/3 (QUIC)
 quinn = "0.11"
