@@ -16,9 +16,9 @@
 
 use crate::error::ApiError;
 use crate::response::{IntoResponse, Response};
-use bytes::Bytes;
+
 use http::{header, StatusCode};
-use http_body_util::Full;
+
 use std::path::{Path, PathBuf};
 use std::time::SystemTime;
 use tokio::fs;
@@ -331,7 +331,7 @@ impl StaticFile {
         }
 
         builder
-            .body(Full::new(Bytes::from(content)))
+            .body(crate::response::Body::from(content))
             .map_err(|e| ApiError::internal(format!("Failed to build response: {}", e)))
     }
 }

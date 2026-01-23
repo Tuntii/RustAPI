@@ -144,43 +144,6 @@ impl ValidationError {
         self.fields.push(error);
     }
 
-    /// Convert validator errors to our format.
-    pub fn from_validator_errors(errors: validator::ValidationErrors) -> Self {
-        let mut field_errors = Vec::new();
-
-        for (field, error_kinds) in errors.field_errors() {
-            for error in error_kinds {
-                let code = error.code.to_string();
-                let message = error
-                    .message
-                    .as_ref()
-                    .map(|m| m.to_string())
-                    .unwrap_or_else(|| format!("Validation failed for field '{}'", field));
-
-                let params = if error.params.is_empty() {
-                    None
-                } else {
-                    let mut map = HashMap::new();
-                    for (key, value) in &error.params {
-                        if let Ok(json_value) = serde_json::to_value(value) {
-                            map.insert(key.to_string(), json_value);
-                        }
-                    }
-                    Some(map)
-                };
-
-                field_errors.push(FieldError {
-                    field: field.to_string(),
-                    code,
-                    message,
-                    params,
-                });
-            }
-        }
-
-        Self::new(field_errors)
-    }
-
     /// Localize validation errors using a translator.
     pub fn localize<T: Translator>(&self, translator: &T) -> Self {
         let fields = self

@@ -191,7 +191,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 | **🧪 Testing Utils** | `rustapi-testing` crate for easy integration tests |
 | **📋 Audit Logging** | GDPR/SOC2 compliance with audit trails |
 | **🌊 Streaming Body** | Handle large uploads without memory bloat |
-| **🔧 CLI Enhancements** | `watch`, `add`, `doctor` commands |
+| **🔧 CLI Enhancements** | `watch`, `add`, `doctor`, `deploy`, `client` commands |
 
 ### Optional Features
 
@@ -649,6 +649,7 @@ graph BT
 - [x] **SIMD-JSON** (optional high-performance JSON) ✨ NEW
 - [x] **Audit Logging** (GDPR/SOC2 compliance) ✨ NEW
 - [x] **Testing Utilities** (`rustapi-testing` crate) ✨ NEW
+- [x] **Deployment** (Docker, Fly.io, Railway, Shuttle) ✨ NEW
 
 ### 🔜 Coming Soon (v1.0)
 
@@ -657,7 +658,7 @@ graph BT
 - [ ] **Distributed tracing** (OpenTelemetry)
 - [ ] **Caching layers** (Redis, in-memory)
 - [ ] **Health checks** (liveness/readiness probes)
-- [ ] **HTTP/3 & QUIC** support
+- [x] **HTTP/3 & QUIC** support ✨ NEW
 - [ ] **Custom validation engine**
 
 ---
@@ -740,7 +741,7 @@ cargo clippy --all-targets --all-features
 - **💬 Discussions**: [GitHub Discussions](https://github.com/Tuntii/RustAPI/discussions)
 - **🐦 Twitter**: [@Tuntii](https://twitter.com/Tuntii)
 - **🌐 Website**: [tunti35.com/projects/rustapi](https://www.tunti35.com/projects/rustapi)
-- **📧 Email**: [tunahan@tunti35.com](mailto:tunahan@tunti35.com)
+- **📧 Email**: [tunayengin21@hotmail.com](mailto:tunayengin21@hotmail.com)
 
 ---
 

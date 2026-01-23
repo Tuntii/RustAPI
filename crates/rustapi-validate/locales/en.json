@@ -1,0 +1,35 @@
+{
+  "validation": {
+    "email": {
+      "invalid": "Invalid email format"
+    },
+    "length": {
+      "min": "Length must be at least %{min} characters",
+      "max": "Length must be at most %{max} characters",
+      "exact": "Length must be exactly %{len} characters"
+    },
+    "range": {
+      "min": "Value must be at least %{min}",
+      "max": "Value must be at most %{max}",
+      "between": "Value must be between %{min} and %{max}"
+    },
+    "required": {
+      "missing": "This field is required"
+    },
+    "url": {
+      "invalid": "Invalid URL format"
+    },
+    "regex": {
+      "mismatch": "Value does not match pattern: %{pattern}"
+    },
+    "unique": {
+      "taken": "This value is already taken"
+    },
+    "exists": {
+      "not_found": "Value does not exist"
+    },
+    "api": {
+      "invalid": "External validation failed"
+    }
+  }
+}

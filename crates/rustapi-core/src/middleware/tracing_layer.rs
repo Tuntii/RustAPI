@@ -406,7 +406,7 @@ mod tests {
                     Box::pin(async move {
                         http::Response::builder()
                             .status(status)
-                            .body(http_body_util::Full::new(Bytes::from("test")))
+                            .body(crate::response::Body::from("test"))
                             .unwrap()
                     }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
                 });
@@ -518,7 +518,7 @@ mod tests {
                 Box::pin(async {
                     http::Response::builder()
                         .status(StatusCode::OK)
-                        .body(http_body_util::Full::new(Bytes::from("ok")))
+                        .body(crate::response::Body::from("ok"))
                         .unwrap()
                 }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
             });
@@ -553,7 +553,7 @@ mod tests {
                 Box::pin(async {
                     http::Response::builder()
                         .status(StatusCode::INTERNAL_SERVER_ERROR)
-                        .body(http_body_util::Full::new(Bytes::from("error")))
+                        .body(crate::response::Body::from("error"))
                         .unwrap()
                 }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
             });

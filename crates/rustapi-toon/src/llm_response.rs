@@ -35,9 +35,7 @@
 //! ```
 
 use crate::{OutputFormat, JSON_CONTENT_TYPE, TOON_CONTENT_TYPE};
-use bytes::Bytes;
 use http::{header, StatusCode};
-use http_body_util::Full;
 use rustapi_core::{ApiError, IntoResponse, Response};
 use rustapi_openapi::{
     MediaType, Operation, OperationModifier, ResponseModifier, ResponseSpec, SchemaRef,
@@ -214,7 +212,9 @@ impl<T: Serialize> IntoResponse for LlmResponse<T> {
             builder = builder.header(X_TOKEN_SAVINGS, format!("{:.2}%", savings));
         }
 
-        builder.body(Full::new(Bytes::from(body))).unwrap()
+        builder
+            .body(rustapi_core::ResponseBody::from(body))
+            .unwrap()
     }
 }
 

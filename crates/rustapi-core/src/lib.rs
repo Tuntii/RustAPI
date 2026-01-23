@@ -42,6 +42,8 @@
 //! - `cookies` - Enable cookie parsing extractor
 //! - `test-utils` - Enable testing utilities like `TestClient`
 //! - `swagger-ui` - Enable Swagger UI documentation endpoint
+//! - `http3` - Enable HTTP/3 (QUIC) support
+//! - `http3-dev` - Enable HTTP/3 with self-signed certificate generation
 //!
 //! ## Note
 //!
@@ -56,7 +58,10 @@ pub use auto_schema::apply_auto_schemas;
 mod error;
 mod extract;
 mod handler;
+pub mod hateoas;
 pub mod health;
+#[cfg(feature = "http3")]
+pub mod http3;
 pub mod interceptor;
 pub mod json;
 pub mod middleware;
@@ -99,8 +104,11 @@ pub use handler::{
     delete_route, get_route, patch_route, post_route, put_route, Handler, HandlerService, Route,
     RouteHandler,
 };
+pub use hateoas::{Link, LinkOrArray, Linkable, PageInfo, Resource, ResourceCollection};
 pub use health::{HealthCheck, HealthCheckBuilder, HealthCheckResult, HealthStatus};
 pub use http::StatusCode;
+#[cfg(feature = "http3")]
+pub use http3::{Http3Config, Http3Server};
 pub use interceptor::{InterceptorChain, RequestInterceptor, ResponseInterceptor};
 #[cfg(feature = "compression")]
 pub use middleware::CompressionLayer;
@@ -109,7 +117,9 @@ pub use middleware::{BodyLimitLayer, RequestId, RequestIdLayer, TracingLayer, DE
 pub use middleware::{MetricsLayer, MetricsResponse};
 pub use multipart::{Multipart, MultipartConfig, MultipartField, UploadedFile};
 pub use request::{BodyVariant, Request};
-pub use response::{Created, Html, IntoResponse, NoContent, Redirect, Response, WithStatus};
+pub use response::{
+    Body as ResponseBody, Created, Html, IntoResponse, NoContent, Redirect, Response, WithStatus,
+};
 pub use router::{delete, get, patch, post, put, MethodRouter, RouteMatch, Router};
 pub use sse::{sse_response, KeepAlive, Sse, SseEvent};
 pub use static_files::{serve_dir, StaticFile, StaticFileConfig};

@@ -341,6 +341,9 @@ pub struct Route {
     pub(crate) method: &'static str,
     pub(crate) handler: BoxedHandler,
     pub(crate) operation: Operation,
+    /// Custom parameter schemas for OpenAPI (param_name -> schema_type)
+    /// Supported types: "uuid", "integer", "string", "boolean", "number"
+    pub(crate) param_schemas: std::collections::HashMap<String, String>,
 }
 
 impl Route {
@@ -358,6 +361,7 @@ impl Route {
             method,
             handler: into_boxed_handler(handler),
             operation,
+            param_schemas: std::collections::HashMap::new(),
         }
     }
     /// Set the operation summary
@@ -389,6 +393,39 @@ impl Route {
     /// Get the route method
     pub fn method(&self) -> &str {
         self.method
+    }
+
+    /// Set a custom OpenAPI schema type for a path parameter
+    ///
+    /// This is useful for overriding the auto-inferred type, e.g., when
+    /// a parameter named `id` is actually a UUID instead of an integer.
+    ///
+    /// # Supported schema types
+    /// - `"uuid"` - String with UUID format
+    /// - `"integer"` or `"int"` - Integer with int64 format
+    /// - `"string"` - Plain string
+    /// - `"boolean"` or `"bool"` - Boolean
+    /// - `"number"` - Number (float)
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// #[rustapi::get("/users/{id}")]
+    /// async fn get_user(Path(id): Path<Uuid>) -> Json<User> {
+    ///     // ...
+    /// }
+    ///
+    /// // In route registration:
+    /// get_route("/users/{id}", get_user).param("id", "uuid")
+    /// ```
+    pub fn param(mut self, name: impl Into<String>, schema_type: impl Into<String>) -> Self {
+        self.param_schemas.insert(name.into(), schema_type.into());
+        self
+    }
+
+    /// Get the custom parameter schemas
+    pub fn param_schemas(&self) -> &std::collections::HashMap<String, String> {
+        &self.param_schemas
     }
 }
 

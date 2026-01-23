@@ -11,6 +11,7 @@ use std::sync::OnceLock;
 // Pre-compiled regex patterns
 static EMAIL_REGEX: OnceLock<Regex> = OnceLock::new();
 static URL_REGEX: OnceLock<Regex> = OnceLock::new();
+static PHONE_REGEX: OnceLock<Regex> = OnceLock::new();
 
 fn email_regex() -> &'static Regex {
     EMAIL_REGEX.get_or_init(|| {
@@ -23,6 +24,11 @@ fn email_regex() -> &'static Regex {
 
 fn url_regex() -> &'static Regex {
     URL_REGEX.get_or_init(|| Regex::new(r"^(https?|ftp)://[^\s/$.?#].[^\s]*$").unwrap())
+}
+
+fn phone_regex() -> &'static Regex {
+    // E.164 format (e.g. +14155552671)
+    PHONE_REGEX.get_or_init(|| Regex::new(r"^\+[1-9]\d{1,14}$").unwrap())
 }
 
 /// Email format validation rule.
@@ -42,10 +48,9 @@ impl EmailRule {
     }
 
     /// Create an email rule with a custom message.
-    pub fn with_message(message: impl Into<String>) -> Self {
-        Self {
-            message: Some(message.into()),
-        }
+    pub fn with_message(mut self, message: impl Into<String>) -> Self {
+        self.message = Some(message.into());
+        self
     }
 }
 
@@ -57,7 +62,7 @@ impl ValidationRule<str> for EmailRule {
             let message = self
                 .message
                 .clone()
-                .unwrap_or_else(|| "Invalid email format".to_string());
+                .unwrap_or_else(|| "validation.email.invalid".to_string());
             Err(RuleError::new("email", message))
         }
     }
@@ -137,7 +142,7 @@ impl ValidationRule<str> for LengthRule {
                 let message = self
                     .message
                     .clone()
-                    .unwrap_or_else(|| format!("Length must be at least {min} characters"));
+                    .unwrap_or_else(|| "validation.length.min".to_string());
                 return Err(RuleError::new("length", message)
                     .param("min", min)
                     .param("max", self.max)
@@ -150,7 +155,7 @@ impl ValidationRule<str> for LengthRule {
                 let message = self
                     .message
                     .clone()
-                    .unwrap_or_else(|| format!("Length must be at most {max} characters"));
+                    .unwrap_or_else(|| "validation.length.max".to_string());
                 return Err(RuleError::new("length", message)
                     .param("min", self.min)
                     .param("max", max)
@@ -237,7 +242,7 @@ where
                 let message = self
                     .message
                     .clone()
-                    .unwrap_or_else(|| format!("Value must be at least {min}"));
+                    .unwrap_or_else(|| "validation.range.min".to_string());
                 return Err(RuleError::new("range", message)
                     .param("min", *min)
                     .param("max", self.max)
@@ -250,7 +255,7 @@ where
                 let message = self
                     .message
                     .clone()
-                    .unwrap_or_else(|| format!("Value must be at most {max}"));
+                    .unwrap_or_else(|| "validation.range.max".to_string());
                 return Err(RuleError::new("range", message)
                     .param("min", self.min)
                     .param("max", *max)
@@ -330,7 +335,7 @@ impl ValidationRule<str> for RegexRule {
             let message = self
                 .message
                 .clone()
-                .unwrap_or_else(|| format!("Value does not match pattern: {}", self.pattern));
+                .unwrap_or_else(|| "validation.regex.mismatch".to_string());
             Err(RuleError::new("regex", message).param("pattern", self.pattern.clone()))
         }
     }
@@ -367,10 +372,9 @@ impl UrlRule {
     }
 
     /// Create a URL rule with a custom message.
-    pub fn with_message(message: impl Into<String>) -> Self {
-        Self {
-            message: Some(message.into()),
-        }
+    pub fn with_message(mut self, message: impl Into<String>) -> Self {
+        self.message = Some(message.into());
+        self
     }
 }
 
@@ -382,7 +386,7 @@ impl ValidationRule<str> for UrlRule {
             let message = self
                 .message
                 .clone()
-                .unwrap_or_else(|| "Invalid URL format".to_string());
+                .unwrap_or_else(|| "validation.url.invalid".to_string());
             Err(RuleError::new("url", message))
         }
     }
@@ -419,10 +423,9 @@ impl RequiredRule {
     }
 
     /// Create a required rule with a custom message.
-    pub fn with_message(message: impl Into<String>) -> Self {
-        Self {
-            message: Some(message.into()),
-        }
+    pub fn with_message(mut self, message: impl Into<String>) -> Self {
+        self.message = Some(message.into());
+        self
     }
 }
 
@@ -434,7 +437,7 @@ impl ValidationRule<str> for RequiredRule {
             let message = self
                 .message
                 .clone()
-                .unwrap_or_else(|| "This field is required".to_string());
+                .unwrap_or_else(|| "validation.required.missing".to_string());
             Err(RuleError::new("required", message))
         }
     }
@@ -465,13 +468,287 @@ where
             let message = self
                 .message
                 .clone()
-                .unwrap_or_else(|| "This field is required".to_string());
+                .unwrap_or_else(|| "validation.required.missing".to_string());
             Err(RuleError::new("required", message))
         }
     }
 
     fn rule_name(&self) -> &'static str {
         "required"
+    }
+}
+
+/// Credit Card validation rule (Luhn algorithm).
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+pub struct CreditCardRule {
+    /// Custom error message
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+}
+
+impl CreditCardRule {
+    /// Create a new credit card rule.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set a custom error message.
+    pub fn with_message(mut self, message: impl Into<String>) -> Self {
+        self.message = Some(message.into());
+        self
+    }
+}
+
+impl ValidationRule<str> for CreditCardRule {
+    fn validate(&self, value: &str) -> Result<(), RuleError> {
+        let mut sum = 0;
+        let mut double = false;
+
+        // Iterate over digits in reverse
+        for c in value.chars().rev() {
+            if !c.is_ascii_digit() {
+                let message = self
+                    .message
+                    .clone()
+                    .unwrap_or_else(|| "validation.credit_card.invalid_format".to_string());
+                return Err(RuleError::new("credit_card", message));
+            }
+
+            let mut digit = c.to_digit(10).unwrap();
+
+            if double {
+                digit *= 2;
+                if digit > 9 {
+                    digit -= 9;
+                }
+            }
+
+            sum += digit;
+            double = !double;
+        }
+
+        if sum > 0 && sum % 10 == 0 {
+            Ok(())
+        } else {
+            let message = self
+                .message
+                .clone()
+                .unwrap_or_else(|| "validation.credit_card.invalid".to_string());
+            Err(RuleError::new("credit_card", message))
+        }
+    }
+
+    fn rule_name(&self) -> &'static str {
+        "credit_card"
+    }
+}
+
+impl ValidationRule<String> for CreditCardRule {
+    fn validate(&self, value: &String) -> Result<(), RuleError> {
+        <Self as ValidationRule<str>>::validate(self, value.as_str())
+    }
+
+    fn rule_name(&self) -> &'static str {
+        "credit_card"
+    }
+}
+
+/// IP Address validation rule (IPv4 and IPv6).
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+pub struct IpRule {
+    /// Check for IPv4 only
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub v4: Option<bool>,
+    /// Check for IPv6 only
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub v6: Option<bool>,
+    /// Custom error message
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+}
+
+impl IpRule {
+    /// Create a new IP rule (accepts both v4 and v6).
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Create a rule for IPv4 only.
+    pub fn v4() -> Self {
+        Self {
+            v4: Some(true),
+            v6: None,
+            message: None,
+        }
+    }
+
+    /// Create a rule for IPv6 only.
+    pub fn v6() -> Self {
+        Self {
+            v4: None,
+            v6: Some(true),
+            message: None,
+        }
+    }
+
+    /// Set a custom error message.
+    pub fn with_message(mut self, message: impl Into<String>) -> Self {
+        self.message = Some(message.into());
+        self
+    }
+}
+
+impl ValidationRule<str> for IpRule {
+    fn validate(&self, value: &str) -> Result<(), RuleError> {
+        use std::net::IpAddr;
+
+        match value.parse::<IpAddr>() {
+            Ok(ip) => {
+                if let Some(true) = self.v4 {
+                    if !ip.is_ipv4() {
+                        let message = self
+                            .message
+                            .clone()
+                            .unwrap_or_else(|| "validation.ip.v4_required".to_string());
+                        return Err(RuleError::new("ip", message));
+                    }
+                }
+                if let Some(true) = self.v6 {
+                    if !ip.is_ipv6() {
+                        let message = self
+                            .message
+                            .clone()
+                            .unwrap_or_else(|| "validation.ip.v6_required".to_string());
+                        return Err(RuleError::new("ip", message));
+                    }
+                }
+                Ok(())
+            }
+            Err(_) => {
+                let message = self
+                    .message
+                    .clone()
+                    .unwrap_or_else(|| "validation.ip.invalid".to_string());
+                Err(RuleError::new("ip", message))
+            }
+        }
+    }
+
+    fn rule_name(&self) -> &'static str {
+        "ip"
+    }
+}
+
+impl ValidationRule<String> for IpRule {
+    fn validate(&self, value: &String) -> Result<(), RuleError> {
+        <Self as ValidationRule<str>>::validate(self, value.as_str())
+    }
+
+    fn rule_name(&self) -> &'static str {
+        "ip"
+    }
+}
+
+/// Phone number validation rule (E.164).
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+pub struct PhoneRule {
+    /// Custom error message
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+}
+
+impl PhoneRule {
+    /// Create a new phone rule.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set a custom error message.
+    pub fn with_message(mut self, message: impl Into<String>) -> Self {
+        self.message = Some(message.into());
+        self
+    }
+}
+
+impl ValidationRule<str> for PhoneRule {
+    fn validate(&self, value: &str) -> Result<(), RuleError> {
+        if phone_regex().is_match(value) {
+            Ok(())
+        } else {
+            let message = self
+                .message
+                .clone()
+                .unwrap_or_else(|| "validation.phone.invalid".to_string());
+            Err(RuleError::new("phone", message))
+        }
+    }
+
+    fn rule_name(&self) -> &'static str {
+        "phone"
+    }
+}
+
+impl ValidationRule<String> for PhoneRule {
+    fn validate(&self, value: &String) -> Result<(), RuleError> {
+        <Self as ValidationRule<str>>::validate(self, value.as_str())
+    }
+
+    fn rule_name(&self) -> &'static str {
+        "phone"
+    }
+}
+
+/// Contains substring validation rule.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct ContainsRule {
+    /// The substring that must be present
+    pub needle: String,
+    /// Custom error message
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+}
+
+impl ContainsRule {
+    /// Create a new contains rule.
+    pub fn new(needle: impl Into<String>) -> Self {
+        Self {
+            needle: needle.into(),
+            message: None,
+        }
+    }
+
+    /// Set a custom error message.
+    pub fn with_message(mut self, message: impl Into<String>) -> Self {
+        self.message = Some(message.into());
+        self
+    }
+}
+
+impl ValidationRule<str> for ContainsRule {
+    fn validate(&self, value: &str) -> Result<(), RuleError> {
+        if value.contains(&self.needle) {
+            Ok(())
+        } else {
+            let message = self
+                .message
+                .clone()
+                .unwrap_or_else(|| "validation.contains.missing".to_string());
+            Err(RuleError::new("contains", message).param("needle", self.needle.clone()))
+        }
+    }
+
+    fn rule_name(&self) -> &'static str {
+        "contains"
+    }
+}
+
+impl ValidationRule<String> for ContainsRule {
+    fn validate(&self, value: &String) -> Result<(), RuleError> {
+        <Self as ValidationRule<str>>::validate(self, value.as_str())
+    }
+
+    fn rule_name(&self) -> &'static str {
+        "contains"
     }
 }
 
@@ -496,7 +773,7 @@ mod tests {
 
     #[test]
     fn email_rule_custom_message() {
-        let rule = EmailRule::with_message("Please enter a valid email");
+        let rule = EmailRule::new().with_message("Please enter a valid email");
         let err = rule.validate("invalid").unwrap_err();
         assert_eq!(err.message, "Please enter a valid email");
     }

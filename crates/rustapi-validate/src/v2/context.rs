@@ -60,6 +60,8 @@ pub struct ValidationContext {
     custom: HashMap<String, Arc<dyn CustomValidator>>,
     /// ID to exclude from uniqueness checks (for updates)
     exclude_id: Option<String>,
+    /// Locale for error messages (e.g. "en", "tr")
+    locale: Option<String>,
 }
 
 impl ValidationContext {
@@ -83,6 +85,11 @@ impl ValidationContext {
         self.custom.get(name)
     }
 
+    /// Get the locale.
+    pub fn locale(&self) -> Option<&str> {
+        self.locale.as_deref()
+    }
+
     /// Get the ID to exclude from uniqueness checks.
     pub fn exclude_id(&self) -> Option<&str> {
         self.exclude_id.as_deref()
@@ -101,6 +108,7 @@ impl std::fmt::Debug for ValidationContext {
             .field("has_http", &self.http.is_some())
             .field("custom_validators", &self.custom.keys().collect::<Vec<_>>())
             .field("exclude_id", &self.exclude_id)
+            .field("locale", &self.locale)
             .finish()
     }
 }
@@ -112,6 +120,7 @@ pub struct ValidationContextBuilder {
     http: Option<Arc<dyn HttpValidator>>,
     custom: HashMap<String, Arc<dyn CustomValidator>>,
     exclude_id: Option<String>,
+    locale: Option<String>,
 }
 
 impl ValidationContextBuilder {
@@ -170,6 +179,12 @@ impl ValidationContextBuilder {
         self
     }
 
+    /// Set the locale.
+    pub fn locale(mut self, locale: impl Into<String>) -> Self {
+        self.locale = Some(locale.into());
+        self
+    }
+
     /// Build the validation context.
     pub fn build(self) -> ValidationContext {
         ValidationContext {
@@ -177,6 +192,7 @@ impl ValidationContextBuilder {
             http: self.http,
             custom: self.custom,
             exclude_id: self.exclude_id,
+            locale: self.locale,
         }
     }
 }

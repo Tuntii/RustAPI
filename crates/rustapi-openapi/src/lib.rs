@@ -60,6 +60,8 @@
 //! ```
 
 mod config;
+#[cfg(feature = "redoc")]
+mod redoc;
 mod schemas;
 mod spec;
 #[cfg(feature = "swagger-ui")]
@@ -120,6 +122,43 @@ pub fn swagger_ui_html(openapi_url: &str) -> Response<Full<Bytes>> {
         .body(Full::new(Bytes::from(html)))
         .unwrap()
 }
+
+/// Generate ReDoc HTML response
+///
+/// ReDoc provides a three-panel API documentation interface.
+///
+/// # Example
+/// ```rust,ignore
+/// use rustapi_openapi::redoc_html;
+/// let response = redoc_html("/openapi.json");
+/// ```
+#[cfg(feature = "redoc")]
+pub fn redoc_html(openapi_url: &str) -> Response<Full<Bytes>> {
+    let html = redoc::generate_redoc_html(openapi_url, None);
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "text/html; charset=utf-8")
+        .body(Full::new(Bytes::from(html)))
+        .unwrap()
+}
+
+/// Generate ReDoc HTML response with custom configuration
+#[cfg(feature = "redoc")]
+pub fn redoc_html_with_config(
+    openapi_url: &str,
+    title: Option<&str>,
+    config: &redoc::RedocConfig,
+) -> Response<Full<Bytes>> {
+    let html = redoc::generate_redoc_html_with_config(openapi_url, title, config);
+    Response::builder()
+        .status(StatusCode::OK)
+        .header(header::CONTENT_TYPE, "text/html; charset=utf-8")
+        .body(Full::new(Bytes::from(html)))
+        .unwrap()
+}
+
+#[cfg(feature = "redoc")]
+pub use redoc::{RedocConfig, RedocTheme};
 
 /// Generate OpenAPI 3.1 JSON response
 pub fn openapi_31_json(spec: &v31::OpenApi31Spec) -> Response<Full<Bytes>> {

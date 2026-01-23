@@ -66,11 +66,22 @@ sqlx = { version = "0.8", optional = true, default-features = false }
 
 # OpenAPI
 rustapi-openapi = { workspace = true, default-features = false }
+http-body = "1.0.1"
+
+# HTTP/3 (optional)
+quinn = { workspace = true, optional = true }
+h3 = { version = "0.0.8", optional = true }
+h3-quinn = { version = "0.0.10", optional = true }
+rustls = { workspace = true, optional = true }
+rustls-pemfile = { workspace = true, optional = true }
+rcgen = { workspace = true, optional = true }
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 proptest = "1.4"
 rustapi-testing = { workspace = true }
+reqwest = { version = "0.12", features = ["json", "stream"] }
+async-stream = "0.3"
 [features]
 default = ["swagger-ui", "tracing"]
 swagger-ui = ["rustapi-openapi/swagger-ui"]
@@ -82,3 +93,5 @@ compression = ["dep:flate2"]
 compression-brotli = ["compression", "dep:brotli"]
 simd-json = ["dep:simd-json"]
 tracing = []
+http3 = ["dep:quinn", "dep:h3", "dep:h3-quinn", "dep:rustls", "dep:rustls-pemfile"]
+http3-dev = ["http3", "dep:rcgen"]

@@ -11,6 +11,8 @@ The RustAPI CLI isn't just a project generator; it's a productivity multiplier.
 
 - `cargo rustapi new <name>`: Create a new project with the perfect directory structure.
 - `cargo rustapi generate resource <name>`: Scaffold a new API resource (Model + Handlers + Tests).
+- `cargo rustapi client --spec <path> --language <lang>`: Generate a client library (Rust, TS, Python) from OpenAPI spec.
+- `cargo rustapi deploy <platform>`: Generate deployment configs for Docker, Fly.io, Railway, or Shuttle.
 - `cargo rustapi serve`: Run the development server with hot reload (future feature).
 
 ## Templates

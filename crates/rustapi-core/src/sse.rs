@@ -48,7 +48,7 @@
 use bytes::Bytes;
 use futures_util::Stream;
 use http::{header, StatusCode};
-use http_body_util::Full;
+
 use pin_project_lite::pin_project;
 use rustapi_openapi::{MediaType, Operation, ResponseModifier, ResponseSpec, SchemaRef};
 use std::fmt::Write;
@@ -361,16 +361,22 @@ where
     E: std::error::Error + Send + Sync + 'static,
 {
     fn into_response(self) -> Response {
-        // For the synchronous IntoResponse, we need to return immediately
-        // The actual streaming would be handled by an async body type
-        // For now, return headers with empty body as placeholder
-        // Real streaming requires server-side async body support
-        //
-        // Note: The SseStream wrapper can be used for true streaming
-        // when integrated with a streaming body type
+        let timer = self.keep_alive.as_ref().map(|k| {
+            let mut interval = tokio::time::interval(k.interval);
+            interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+            interval
+        });
 
-        let _ = self.stream; // Consume stream (in production, would be streamed)
-        let _ = self.keep_alive; // Keep-alive would be used in streaming
+        let stream = SseStream {
+            inner: self.stream,
+            keep_alive: self.keep_alive,
+            keep_alive_timer: timer,
+        };
+
+        use futures_util::StreamExt;
+        let stream =
+            stream.map(|res| res.map_err(|e| crate::error::ApiError::internal(e.to_string())));
+        let body = crate::response::Body::from_stream(stream);
 
         http::Response::builder()
             .status(StatusCode::OK)
@@ -378,7 +384,7 @@ where
             .header(header::CACHE_CONTROL, "no-cache")
             .header(header::CONNECTION, "keep-alive")
             .header("X-Accel-Buffering", "no") // Disable nginx buffering
-            .body(Full::new(Bytes::new()))
+            .body(body)
             .unwrap()
     }
 }
@@ -457,7 +463,7 @@ where
         .header(header::CACHE_CONTROL, "no-cache")
         .header(header::CONNECTION, "keep-alive")
         .header("X-Accel-Buffering", "no")
-        .body(Full::new(Bytes::from(buffer)))
+        .body(crate::response::Body::from(buffer))
         .unwrap()
 }
 

@@ -18,3 +18,5 @@ Each recipe follows a simple structure:
 - [Custom Middleware](custom_middleware.md)
 - [Real-time Chat](websockets.md)
 - [Production Tuning](high_performance.md)
+- [Deployment](deployment.md)
+- [HTTP/3 (QUIC)](http3_quic.md)

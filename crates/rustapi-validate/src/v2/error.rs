@@ -47,22 +47,34 @@ impl RuleError {
         self
     }
 
-    /// Interpolate parameters into the message.
+    /// Interpolate parameters into the message, optionally localized.
     ///
+    /// If a locale is provided, attempts to translate the message key.
     /// Replaces `{param_name}` placeholders with actual values.
-    pub fn interpolate_message(&self) -> String {
-        let mut result = self.message.clone();
+    pub fn interpolate_with_locale(&self, locale: Option<&str>) -> String {
+        let msg = crate::v2::i18n::translate(&self.message, locale);
+        let mut result = msg;
+
         for (key, value) in &self.params {
             let placeholder = format!("{{{}}}", key);
+            let p_placeholder = format!("%{{{}}}", key); // Support ruby style %{param} often used in i18n
+
             let replacement = match value {
                 serde_json::Value::String(s) => s.clone(),
                 serde_json::Value::Number(n) => n.to_string(),
                 serde_json::Value::Bool(b) => b.to_string(),
                 _ => value.to_string(),
             };
+            // Replace both {param} and %{param}
+            result = result.replace(&p_placeholder, &replacement);
             result = result.replace(&placeholder, &replacement);
         }
         result
+    }
+
+    /// Interpolate parameters into the message (uses default locale).
+    pub fn interpolate_message(&self) -> String {
+        self.interpolate_with_locale(None)
     }
 }
 
@@ -139,8 +151,8 @@ impl ValidationErrors {
         self.fields.keys().map(|s| s.as_str()).collect()
     }
 
-    /// Convert to the standard RustAPI error format.
-    pub fn to_api_error(&self) -> ApiValidationError {
+    /// Convert to the standard RustAPI error format with localization.
+    pub fn to_api_error_with_locale(&self, locale: Option<&str>) -> ApiValidationError {
         let fields: Vec<FieldErrorResponse> = self
             .fields
             .iter()
@@ -148,7 +160,7 @@ impl ValidationErrors {
                 errors.iter().map(move |e| FieldErrorResponse {
                     field: field.clone(),
                     code: e.code.clone(),
-                    message: e.interpolate_message(),
+                    message: e.interpolate_with_locale(locale),
                     params: if e.params.is_empty() {
                         None
                     } else {
@@ -165,6 +177,11 @@ impl ValidationErrors {
                 fields,
             },
         }
+    }
+
+    /// Convert to the standard RustAPI error format.
+    pub fn to_api_error(&self) -> ApiValidationError {
+        self.to_api_error_with_locale(None)
     }
 }
 

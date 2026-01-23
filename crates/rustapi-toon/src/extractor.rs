@@ -2,9 +2,7 @@
 
 use crate::error::ToonError;
 use crate::{TOON_CONTENT_TYPE, TOON_CONTENT_TYPE_TEXT};
-use bytes::Bytes;
 use http::{header, StatusCode};
-use http_body_util::Full;
 use rustapi_core::{ApiError, FromRequest, IntoResponse, Request, Response, Result};
 use rustapi_openapi::{
     MediaType, Operation, OperationModifier, ResponseModifier, ResponseSpec, SchemaRef,
@@ -125,7 +123,7 @@ impl<T: Serialize> IntoResponse for Toon<T> {
             Ok(body) => http::Response::builder()
                 .status(StatusCode::OK)
                 .header(header::CONTENT_TYPE, TOON_CONTENT_TYPE)
-                .body(Full::new(Bytes::from(body)))
+                .body(rustapi_core::ResponseBody::from(body))
                 .unwrap(),
             Err(err) => {
                 let error: ApiError = ToonError::Encode(err.to_string()).into();

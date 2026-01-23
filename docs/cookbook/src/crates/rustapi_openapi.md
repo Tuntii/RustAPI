@@ -44,3 +44,65 @@ RustApi::new()
     .docs("/docs") // Mounts Swagger UI at /docs
     // ...
 ```
+
+## Path Parameter Schema Types
+
+By default, RustAPI infers the OpenAPI schema type for path parameters based on naming conventions:
+- Parameters named `id`, `user_id`, `postId`, etc. → `integer`
+- Parameters named `uuid`, `user_uuid`, etc. → `string` with `uuid` format
+- Other parameters → `string`
+
+However, sometimes auto-inference is incorrect. For example, you might have a parameter named `id` that is actually a UUID. Use the `#[rustapi::param]` attribute to override the inferred type:
+
+```rust
+use uuid::Uuid;
+
+#[rustapi::get("/users/{id}")]
+#[rustapi::param(id, schema = "uuid")]
+#[rustapi::tag("Users")]
+async fn get_user(Path(id): Path<Uuid>) -> Json<User> {
+    // The OpenAPI spec will now correctly show:
+    // { "type": "string", "format": "uuid" }
+    // instead of the default { "type": "integer", "format": "int64" }
+    get_user_by_id(id).await
+}
+```
+
+### Supported Schema Types
+
+| Schema Type | OpenAPI Schema |
+|-------------|----------------|
+| `"uuid"` | `{ "type": "string", "format": "uuid" }` |
+| `"integer"`, `"int"`, `"int64"` | `{ "type": "integer", "format": "int64" }` |
+| `"int32"` | `{ "type": "integer", "format": "int32" }` |
+| `"string"` | `{ "type": "string" }` |
+| `"number"`, `"float"` | `{ "type": "number" }` |
+| `"boolean"`, `"bool"` | `{ "type": "boolean" }` |
+
+### Alternative Syntax
+
+You can also use a shorter syntax:
+
+```rust
+// Shorter syntax: param_name = "schema_type"
+#[rustapi::get("/posts/{post_id}")]
+#[rustapi::param(post_id = "uuid")]
+async fn get_post(Path(post_id): Path<Uuid>) -> Json<Post> { ... }
+```
+
+### Programmatic API
+
+When building routes programmatically, you can use the `.param()` method:
+
+```rust
+use rustapi_rs::handler::get_route;
+
+// Using the Route builder
+let route = get_route("/items/{id}", get_item)
+    .param("id", "uuid")
+    .tag("Items")
+    .summary("Get item by UUID");
+
+app.mount_route(route);
+```
+

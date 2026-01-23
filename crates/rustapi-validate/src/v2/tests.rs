@@ -548,7 +548,10 @@ mod async_property_tests {
     }
 
     impl Validate for TestUser {
-        fn validate(&self) -> Result<(), ValidationErrors> {
+        fn validate_with_group(
+            &self,
+            _group: crate::v2::group::ValidationGroup,
+        ) -> Result<(), ValidationErrors> {
             let mut errors = ValidationErrors::new();
 
             // Sync validation: email format
@@ -563,9 +566,10 @@ mod async_property_tests {
 
     #[async_trait]
     impl AsyncValidate for TestUser {
-        async fn validate_async(
+        async fn validate_async_with_group(
             &self,
             ctx: &crate::v2::context::ValidationContext,
+            _group: crate::v2::group::ValidationGroup,
         ) -> Result<(), ValidationErrors> {
             let mut errors = ValidationErrors::new();
 
@@ -772,7 +776,7 @@ mod custom_message_property_tests {
             custom_msg in custom_message_strategy(),
             invalid_email in invalid_email_strategy(),
         ) {
-            let rule = EmailRule::with_message(custom_msg.clone());
+            let rule = EmailRule::new().with_message(custom_msg.clone());
             let result = rule.validate(&invalid_email);
 
             prop_assert!(result.is_err());
@@ -823,7 +827,7 @@ mod custom_message_property_tests {
         fn required_rule_returns_custom_message(
             custom_msg in custom_message_strategy(),
         ) {
-            let rule = RequiredRule::with_message(custom_msg.clone());
+            let rule = RequiredRule::new().with_message(custom_msg.clone());
             let result = rule.validate("");
 
             prop_assert!(result.is_err());
@@ -836,7 +840,7 @@ mod custom_message_property_tests {
         fn url_rule_returns_custom_message(
             custom_msg in custom_message_strategy(),
         ) {
-            let rule = UrlRule::with_message(custom_msg.clone());
+            let rule = UrlRule::new().with_message(custom_msg.clone());
             let result = rule.validate("not-a-url");
 
             prop_assert!(result.is_err());
@@ -927,7 +931,7 @@ mod validation_group_property_tests {
 
             // Email is always required (Default group)
             let email_rules =
-                GroupedRules::new().always(RequiredRule::with_message("Email is required"));
+                GroupedRules::new().always(RequiredRule::new().with_message("Email is required"));
 
             for rule in email_rules.for_group(group) {
                 if let Err(e) = rule.validate(&self.email) {
@@ -937,7 +941,7 @@ mod validation_group_property_tests {
 
             // ID is required only for updates
             let id_rules = GroupedRules::new()
-                .on_update(RequiredRule::with_message("ID is required for updates"));
+                .on_update(RequiredRule::new().with_message("ID is required for updates"));
 
             for rule in id_rules.for_group(group) {
                 if let Err(e) = rule.validate(&self.id) {
@@ -946,9 +950,8 @@ mod validation_group_property_tests {
             }
 
             // Password is required only for creates
-            let password_rules = GroupedRules::new().on_create(RequiredRule::with_message(
-                "Password is required for new users",
-            ));
+            let password_rules = GroupedRules::new()
+                .on_create(RequiredRule::new().with_message("Password is required for new users"));
 
             for rule in password_rules.for_group(group) {
                 if let Err(e) = rule.validate(&self.password) {
@@ -1011,9 +1014,12 @@ mod validation_group_property_tests {
             prop_assert!(update_rules.contains(&&always_value));
             prop_assert!(!update_rules.contains(&&create_value));
 
-            // Default group should get all rules
+            // Default group should get only default rules
             let default_rules: Vec<_> = rules.for_group(&ValidationGroup::Default).collect();
-            prop_assert_eq!(default_rules.len(), 3);
+            prop_assert_eq!(default_rules.len(), 1);
+            prop_assert!(default_rules.contains(&&always_value));
+            prop_assert!(!default_rules.contains(&&create_value));
+            prop_assert!(!default_rules.contains(&&update_value));
         }
 
         // Property 5: Custom groups work correctly
@@ -1039,11 +1045,17 @@ mod validation_group_property_tests {
 
         // Property 5: Group matching is symmetric for Default
         #[test]
-        fn default_group_matching_symmetric(group_val in validation_group_strategy()) {
-            // Default matches everything
+        fn default_group_matching_asymmetric(group_val in validation_group_strategy()) {
+            // Default matches everything (rules in Default group apply to all contexts)
             prop_assert!(ValidationGroup::Default.matches(&group_val));
-            // Everything matches Default
-            prop_assert!(group_val.matches(&ValidationGroup::Default));
+
+            // Contexts match Default only if they ARE Default
+            // (rules in specific groups do NOT apply to Default context)
+            if group_val == ValidationGroup::Default {
+                prop_assert!(group_val.matches(&ValidationGroup::Default));
+            } else {
+                prop_assert!(!group_val.matches(&ValidationGroup::Default));
+            }
         }
     }
 
@@ -1088,14 +1100,14 @@ mod validation_group_property_tests {
 
     #[test]
     fn non_default_groups_match_only_self() {
-        // Create only matches Create and Default
+        // Create only matches Create
         assert!(ValidationGroup::Create.matches(&ValidationGroup::Create));
-        assert!(ValidationGroup::Create.matches(&ValidationGroup::Default));
+        assert!(!ValidationGroup::Create.matches(&ValidationGroup::Default));
         assert!(!ValidationGroup::Create.matches(&ValidationGroup::Update));
 
-        // Update only matches Update and Default
+        // Update only matches Update
         assert!(ValidationGroup::Update.matches(&ValidationGroup::Update));
-        assert!(ValidationGroup::Update.matches(&ValidationGroup::Default));
+        assert!(!ValidationGroup::Update.matches(&ValidationGroup::Default));
         assert!(!ValidationGroup::Update.matches(&ValidationGroup::Create));
     }
 }

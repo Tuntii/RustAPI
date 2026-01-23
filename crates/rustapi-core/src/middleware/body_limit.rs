@@ -169,7 +169,7 @@ mod tests {
             Box::pin(async {
                 http::Response::builder()
                     .status(StatusCode::OK)
-                    .body(http_body_util::Full::new(Bytes::from("ok")))
+                    .body(crate::response::Body::from("ok"))
                     .unwrap()
             }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
         })

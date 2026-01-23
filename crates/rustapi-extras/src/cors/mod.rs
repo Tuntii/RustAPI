@@ -18,7 +18,7 @@ use bytes::Bytes;
 use http::{header, Method, StatusCode};
 use http_body_util::Full;
 use rustapi_core::middleware::{BoxedNext, MiddlewareLayer};
-use rustapi_core::{Request, Response};
+use rustapi_core::{Request, Response, ResponseBody};
 use std::future::Future;
 use std::pin::Pin;
 use std::time::Duration;
@@ -242,7 +242,7 @@ impl MiddlewareLayer for CorsLayer {
             if is_preflight {
                 let mut response = http::Response::builder()
                     .status(StatusCode::NO_CONTENT)
-                    .body(Full::new(Bytes::new()))
+                    .body(ResponseBody::Full(Full::new(Bytes::new())))
                     .unwrap();
 
                 let headers_mut = response.headers_mut();

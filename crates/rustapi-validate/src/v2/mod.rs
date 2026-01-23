@@ -41,6 +41,7 @@
 mod context;
 mod error;
 mod group;
+pub mod i18n;
 mod rules;
 mod traits;
 

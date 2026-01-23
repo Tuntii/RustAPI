@@ -61,7 +61,7 @@ use crate::response::IntoResponse;
 use crate::stream::{StreamingBody, StreamingConfig};
 use bytes::Bytes;
 use http::{header, StatusCode};
-use http_body_util::Full;
+
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::future::Future;
@@ -71,6 +71,27 @@ use std::str::FromStr;
 /// Trait for extracting data from request parts (headers, path, query)
 ///
 /// This is used for extractors that don't need the request body.
+///
+/// # Example: Implementing a custom extractor that requires a specific header
+///
+/// ```rust
+/// use rustapi_core::FromRequestParts;
+/// use rustapi_core::{Request, ApiError, Result};
+/// use http::StatusCode;
+///
+/// struct ApiKey(String);
+///
+/// impl FromRequestParts for ApiKey {
+///     fn from_request_parts(req: &Request) -> Result<Self> {
+///         if let Some(key) = req.headers().get("x-api-key") {
+///             if let Ok(key_str) = key.to_str() {
+///                 return Ok(ApiKey(key_str.to_string()));
+///             }
+///         }
+///         Err(ApiError::unauthorized("Missing or invalid API key"))
+///     }
+/// }
+/// ```
 pub trait FromRequestParts: Sized {
     /// Extract from request parts
     fn from_request_parts(req: &Request) -> Result<Self>;
@@ -79,6 +100,32 @@ pub trait FromRequestParts: Sized {
 /// Trait for extracting data from the full request (including body)
 ///
 /// This is used for extractors that consume the request body.
+///
+/// # Example: Implementing a custom extractor that consumes the body
+///
+/// ```rust
+/// use rustapi_core::FromRequest;
+/// use rustapi_core::{Request, ApiError, Result};
+/// use std::future::Future;
+///
+/// struct PlainText(String);
+///
+/// impl FromRequest for PlainText {
+///     async fn from_request(req: &mut Request) -> Result<Self> {
+///         // Ensure body is loaded
+///         req.load_body().await?;
+///         
+///         // Consume the body
+///         if let Some(bytes) = req.take_body() {
+///             if let Ok(text) = String::from_utf8(bytes.to_vec()) {
+///                 return Ok(PlainText(text));
+///             }
+///         }
+///         
+///         Err(ApiError::bad_request("Invalid plain text body"))
+///     }
+/// }
+/// ```
 pub trait FromRequest: Sized {
     /// Extract from the full request
     fn from_request(req: &mut Request) -> impl Future<Output = Result<Self>> + Send;
@@ -157,7 +204,7 @@ impl<T: Serialize> IntoResponse for Json<T> {
             Ok(body) => http::Response::builder()
                 .status(StatusCode::OK)
                 .header(header::CONTENT_TYPE, "application/json")
-                .body(Full::new(Bytes::from(body)))
+                .body(crate::response::Body::from(body))
                 .unwrap(),
             Err(err) => {
                 ApiError::internal(format!("Failed to serialize response: {}", err)).into_response()

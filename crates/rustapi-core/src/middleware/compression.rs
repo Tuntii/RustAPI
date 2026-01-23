@@ -304,12 +304,20 @@ impl MiddlewareLayer for CompressionLayer {
             let (parts, body) = response.into_parts();
             let body_bytes = match body.collect().await {
                 Ok(collected) => collected.to_bytes(),
-                Err(_) => return http::Response::from_parts(parts, Full::new(Bytes::new())),
+                Err(_) => {
+                    return http::Response::from_parts(
+                        parts,
+                        crate::response::Body::Full(Full::new(Bytes::new())),
+                    )
+                }
             };
 
             // Check minimum size
             if body_bytes.len() < config.min_size {
-                let response = http::Response::from_parts(parts, Full::new(body_bytes));
+                let response = http::Response::from_parts(
+                    parts,
+                    crate::response::Body::Full(Full::new(body_bytes)),
+                );
                 return response;
             }
 
@@ -319,8 +327,10 @@ impl MiddlewareLayer for CompressionLayer {
                 Ok(compressed) => {
                     // Only use compressed if it's smaller
                     if compressed.len() < body_bytes.len() {
-                        let mut response =
-                            http::Response::from_parts(parts, Full::new(Bytes::from(compressed)));
+                        let mut response = http::Response::from_parts(
+                            parts,
+                            crate::response::Body::Full(Full::new(Bytes::from(compressed))),
+                        );
                         response.headers_mut().insert(
                             header::CONTENT_ENCODING,
                             algorithm.content_encoding().parse().unwrap(),
@@ -328,10 +338,16 @@ impl MiddlewareLayer for CompressionLayer {
                         response.headers_mut().remove(header::CONTENT_LENGTH);
                         response
                     } else {
-                        http::Response::from_parts(parts, Full::new(body_bytes))
+                        http::Response::from_parts(
+                            parts,
+                            crate::response::Body::Full(Full::new(body_bytes)),
+                        )
                     }
                 }
-                Err(_) => http::Response::from_parts(parts, Full::new(body_bytes)),
+                Err(_) => http::Response::from_parts(
+                    parts,
+                    crate::response::Body::Full(Full::new(body_bytes)),
+                ),
             }
         })
     }

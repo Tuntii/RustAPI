@@ -58,7 +58,7 @@ impl ValidationGroup {
     pub fn matches(&self, other: &ValidationGroup) -> bool {
         match (self, other) {
             (ValidationGroup::Default, _) => true,
-            (_, ValidationGroup::Default) => true,
+            // Default context check removed as it should only validate Default rules
             (a, b) => a == b,
         }
     }
@@ -187,7 +187,7 @@ mod tests {
     #[test]
     fn group_matches() {
         assert!(ValidationGroup::Default.matches(&ValidationGroup::Create));
-        assert!(ValidationGroup::Create.matches(&ValidationGroup::Default));
+        assert!(!ValidationGroup::Create.matches(&ValidationGroup::Default));
         assert!(ValidationGroup::Create.matches(&ValidationGroup::Create));
         assert!(!ValidationGroup::Create.matches(&ValidationGroup::Update));
     }
@@ -218,11 +218,11 @@ mod tests {
 
         assert!(create_rule.applies_to(&ValidationGroup::Create));
         assert!(!create_rule.applies_to(&ValidationGroup::Update));
-        assert!(create_rule.applies_to(&ValidationGroup::Default));
+        assert!(!create_rule.applies_to(&ValidationGroup::Default));
 
         assert!(!update_rule.applies_to(&ValidationGroup::Create));
         assert!(update_rule.applies_to(&ValidationGroup::Update));
-        assert!(update_rule.applies_to(&ValidationGroup::Default));
+        assert!(!update_rule.applies_to(&ValidationGroup::Default));
 
         assert!(default_rule.applies_to(&ValidationGroup::Create));
         assert!(default_rule.applies_to(&ValidationGroup::Update));

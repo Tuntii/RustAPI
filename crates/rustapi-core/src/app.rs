@@ -32,6 +32,8 @@ pub struct RustApi {
     layers: LayerStack,
     body_limit: Option<usize>,
     interceptors: InterceptorChain,
+    #[cfg(feature = "http3")]
+    http3_config: Option<crate::http3::Http3Config>,
 }
 
 impl RustApi {
@@ -57,6 +59,8 @@ impl RustApi {
             layers: LayerStack::new(),
             body_limit: Some(DEFAULT_BODY_LIMIT), // Default 1MB limit
             interceptors: InterceptorChain::new(),
+            #[cfg(feature = "http3")]
+            http3_config: None,
         }
     }
 
@@ -382,7 +386,7 @@ impl RustApi {
         // Register operations in OpenAPI spec
         for (method, op) in &method_router.operations {
             let mut op = op.clone();
-            add_path_params_to_operation(path, &mut op);
+            add_path_params_to_operation(path, &mut op, &std::collections::HashMap::new());
             self.openapi_spec = self.openapi_spec.path(path, method.as_str(), op);
         }
 
@@ -432,7 +436,7 @@ impl RustApi {
 
         // Register operation in OpenAPI spec
         let mut op = route.operation;
-        add_path_params_to_operation(route.path, &mut op);
+        add_path_params_to_operation(route.path, &mut op, &route.param_schemas);
         self.openapi_spec = self.openapi_spec.path(route.path, route.method, op);
 
         self.route_with_method(route.path, method_enum, route.handler)
@@ -514,7 +518,11 @@ impl RustApi {
             // Register each operation in the OpenAPI spec
             for (method, op) in &method_router.operations {
                 let mut op = op.clone();
-                add_path_params_to_operation(&prefixed_path, &mut op);
+                add_path_params_to_operation(
+                    &prefixed_path,
+                    &mut op,
+                    &std::collections::HashMap::new(),
+                );
                 self.openapi_spec = self.openapi_spec.path(&prefixed_path, method.as_str(), op);
             }
         }
@@ -715,7 +723,7 @@ impl RustApi {
                 http::Response::builder()
                     .status(http::StatusCode::OK)
                     .header(http::header::CONTENT_TYPE, "application/json")
-                    .body(http_body_util::Full::new(bytes::Bytes::from(json)))
+                    .body(crate::response::Body::from(json))
                     .unwrap()
             }
         };
@@ -723,7 +731,10 @@ impl RustApi {
         // Add Swagger UI endpoint
         let docs_handler = move || {
             let url = openapi_url.clone();
-            async move { rustapi_openapi::swagger_ui_html(&url) }
+            async move {
+                let response = rustapi_openapi::swagger_ui_html(&url);
+                response.map(crate::response::Body::Full)
+            }
         };
 
         self.route(&openapi_path, get(spec_handler))
@@ -824,7 +835,7 @@ impl RustApi {
                     http::Response::builder()
                         .status(http::StatusCode::OK)
                         .header(http::header::CONTENT_TYPE, "application/json")
-                        .body(http_body_util::Full::new(bytes::Bytes::from(json)))
+                        .body(crate::response::Body::from(json))
                         .unwrap()
                 })
                     as std::pin::Pin<Box<dyn std::future::Future<Output = crate::Response> + Send>>
@@ -839,7 +850,8 @@ impl RustApi {
                     if !check_basic_auth(&req, &expected) {
                         return unauthorized_response();
                     }
-                    rustapi_openapi::swagger_ui_html(&url)
+                    let response = rustapi_openapi::swagger_ui_html(&url);
+                    response.map(crate::response::Body::Full)
                 })
                     as std::pin::Pin<Box<dyn std::future::Future<Output = crate::Response> + Send>>
             });
@@ -878,6 +890,25 @@ impl RustApi {
         server.run(addr).await
     }
 
+    /// Run the server with graceful shutdown signal
+    pub async fn run_with_shutdown<F>(
+        mut self,
+        addr: impl AsRef<str>,
+        signal: F,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
+    where
+        F: std::future::Future<Output = ()> + Send + 'static,
+    {
+        // Apply body limit layer if configured (should be first in the chain)
+        if let Some(limit) = self.body_limit {
+            // Prepend body limit layer so it's the first to process requests
+            self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
+        }
+
+        let server = Server::new(self.router, self.layers, self.interceptors);
+        server.run_with_shutdown(addr.as_ref(), signal).await
+    }
+
     /// Get the inner router (for testing or advanced usage)
     pub fn into_router(self) -> Router {
         self.router
@@ -892,9 +923,149 @@ impl RustApi {
     pub fn interceptors(&self) -> &InterceptorChain {
         &self.interceptors
     }
+
+    /// Enable HTTP/3 support with TLS certificates
+    ///
+    /// HTTP/3 requires TLS certificates. For development, you can use
+    /// self-signed certificates with `run_http3_dev`.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// RustApi::new()
+    ///     .route("/", get(hello))
+    ///     .run_http3("0.0.0.0:443", "cert.pem", "key.pem")
+    ///     .await
+    /// ```
+    #[cfg(feature = "http3")]
+    pub async fn run_http3(
+        mut self,
+        config: crate::http3::Http3Config,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        use std::sync::Arc;
+
+        // Apply body limit layer if configured
+        if let Some(limit) = self.body_limit {
+            self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
+        }
+
+        let server = crate::http3::Http3Server::new(
+            &config,
+            Arc::new(self.router),
+            Arc::new(self.layers),
+            Arc::new(self.interceptors),
+        )
+        .await?;
+
+        server.run().await
+    }
+
+    /// Run HTTP/3 server with self-signed certificate (development only)
+    ///
+    /// This is useful for local development and testing.
+    /// **Do not use in production!**
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// RustApi::new()
+    ///     .route("/", get(hello))
+    ///     .run_http3_dev("0.0.0.0:8443")
+    ///     .await
+    /// ```
+    #[cfg(feature = "http3-dev")]
+    pub async fn run_http3_dev(
+        mut self,
+        addr: &str,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        use std::sync::Arc;
+
+        // Apply body limit layer if configured
+        if let Some(limit) = self.body_limit {
+            self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
+        }
+
+        let server = crate::http3::Http3Server::new_with_self_signed(
+            addr,
+            Arc::new(self.router),
+            Arc::new(self.layers),
+            Arc::new(self.interceptors),
+        )
+        .await?;
+
+        server.run().await
+    }
+
+    /// Run both HTTP/1.1 and HTTP/3 servers simultaneously
+    ///
+    /// This allows clients to use either protocol. The HTTP/1.1 server
+    /// will advertise HTTP/3 availability via Alt-Svc header.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// RustApi::new()
+    ///     .route("/", get(hello))
+    ///     .run_dual_stack("0.0.0.0:8080", Http3Config::new("cert.pem", "key.pem"))
+    ///     .await
+    /// ```
+    /// Configure HTTP/3 support
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// RustApi::new()
+    ///     .with_http3("cert.pem", "key.pem")
+    ///     .run_dual_stack("127.0.0.1:8080")
+    ///     .await
+    /// ```
+    #[cfg(feature = "http3")]
+    pub fn with_http3(mut self, cert_path: impl Into<String>, key_path: impl Into<String>) -> Self {
+        self.http3_config = Some(crate::http3::Http3Config::new(cert_path, key_path));
+        self
+    }
+
+    /// Run both HTTP/1.1 and HTTP/3 servers simultaneously
+    ///
+    /// This allows clients to use either protocol. The HTTP/1.1 server
+    /// will advertise HTTP/3 availability via Alt-Svc header.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// RustApi::new()
+    ///     .route("/", get(hello))
+    ///     .with_http3("cert.pem", "key.pem")
+    ///     .run_dual_stack("0.0.0.0:8080")
+    ///     .await
+    /// ```
+    #[cfg(feature = "http3")]
+    pub async fn run_dual_stack(
+        mut self,
+        _http_addr: &str,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        // TODO: Dual-stack requires Router, LayerStack, InterceptorChain to implement Clone.
+        // For now, we only run HTTP/3.
+        // In the future, we can either:
+        // 1. Make Router/LayerStack/InterceptorChain Clone
+        // 2. Use Arc<RwLock<...>> pattern
+        // 3. Create shared state mechanism
+
+        let config = self
+            .http3_config
+            .take()
+            .ok_or("HTTP/3 config not set. Use .with_http3(...)")?;
+
+        tracing::warn!("run_dual_stack currently only runs HTTP/3. HTTP/1.1 support coming soon.");
+        self.run_http3(config).await
+    }
 }
 
-fn add_path_params_to_operation(path: &str, op: &mut rustapi_openapi::Operation) {
+fn add_path_params_to_operation(
+    path: &str,
+    op: &mut rustapi_openapi::Operation,
+    param_schemas: &std::collections::HashMap<String, String>,
+) {
     let mut params: Vec<String> = Vec::new();
     let mut in_brace = false;
     let mut current = String::new();
@@ -935,8 +1106,12 @@ fn add_path_params_to_operation(path: &str, op: &mut rustapi_openapi::Operation)
             continue;
         }
 
-        // Infer schema type based on common naming patterns
-        let schema = infer_path_param_schema(&name);
+        // Use custom schema if provided, otherwise infer from name
+        let schema = if let Some(schema_type) = param_schemas.get(&name) {
+            schema_type_to_openapi_schema(schema_type)
+        } else {
+            infer_path_param_schema(&name)
+        };
 
         op_params.push(rustapi_openapi::Parameter {
             name,
@@ -945,6 +1120,37 @@ fn add_path_params_to_operation(path: &str, op: &mut rustapi_openapi::Operation)
             description: None,
             schema,
         });
+    }
+}
+
+/// Convert a schema type string to an OpenAPI schema reference
+fn schema_type_to_openapi_schema(schema_type: &str) -> rustapi_openapi::SchemaRef {
+    match schema_type.to_lowercase().as_str() {
+        "uuid" => rustapi_openapi::SchemaRef::Inline(serde_json::json!({
+            "type": "string",
+            "format": "uuid"
+        })),
+        "integer" | "int" | "int64" | "i64" => {
+            rustapi_openapi::SchemaRef::Inline(serde_json::json!({
+                "type": "integer",
+                "format": "int64"
+            }))
+        }
+        "int32" | "i32" => rustapi_openapi::SchemaRef::Inline(serde_json::json!({
+            "type": "integer",
+            "format": "int32"
+        })),
+        "number" | "float" | "f64" | "f32" => {
+            rustapi_openapi::SchemaRef::Inline(serde_json::json!({
+                "type": "number"
+            }))
+        }
+        "boolean" | "bool" => rustapi_openapi::SchemaRef::Inline(serde_json::json!({
+            "type": "boolean"
+        })),
+        _ => rustapi_openapi::SchemaRef::Inline(serde_json::json!({
+            "type": "string"
+        })),
     }
 }
 
@@ -1157,6 +1363,74 @@ mod tests {
                 }
                 _ => panic!("Expected inline schema for '{}'", name),
             }
+        }
+    }
+
+    #[test]
+    fn test_schema_type_to_openapi_schema() {
+        use super::schema_type_to_openapi_schema;
+
+        // Test UUID schema
+        let uuid_schema = schema_type_to_openapi_schema("uuid");
+        match uuid_schema {
+            rustapi_openapi::SchemaRef::Inline(v) => {
+                assert_eq!(v.get("type").and_then(|v| v.as_str()), Some("string"));
+                assert_eq!(v.get("format").and_then(|v| v.as_str()), Some("uuid"));
+            }
+            _ => panic!("Expected inline schema for uuid"),
+        }
+
+        // Test integer schemas
+        for schema_type in ["integer", "int", "int64", "i64"] {
+            let schema = schema_type_to_openapi_schema(schema_type);
+            match schema {
+                rustapi_openapi::SchemaRef::Inline(v) => {
+                    assert_eq!(v.get("type").and_then(|v| v.as_str()), Some("integer"));
+                    assert_eq!(v.get("format").and_then(|v| v.as_str()), Some("int64"));
+                }
+                _ => panic!("Expected inline schema for {}", schema_type),
+            }
+        }
+
+        // Test int32 schema
+        let int32_schema = schema_type_to_openapi_schema("int32");
+        match int32_schema {
+            rustapi_openapi::SchemaRef::Inline(v) => {
+                assert_eq!(v.get("type").and_then(|v| v.as_str()), Some("integer"));
+                assert_eq!(v.get("format").and_then(|v| v.as_str()), Some("int32"));
+            }
+            _ => panic!("Expected inline schema for int32"),
+        }
+
+        // Test number/float schema
+        for schema_type in ["number", "float"] {
+            let schema = schema_type_to_openapi_schema(schema_type);
+            match schema {
+                rustapi_openapi::SchemaRef::Inline(v) => {
+                    assert_eq!(v.get("type").and_then(|v| v.as_str()), Some("number"));
+                }
+                _ => panic!("Expected inline schema for {}", schema_type),
+            }
+        }
+
+        // Test boolean schema
+        for schema_type in ["boolean", "bool"] {
+            let schema = schema_type_to_openapi_schema(schema_type);
+            match schema {
+                rustapi_openapi::SchemaRef::Inline(v) => {
+                    assert_eq!(v.get("type").and_then(|v| v.as_str()), Some("boolean"));
+                }
+                _ => panic!("Expected inline schema for {}", schema_type),
+            }
+        }
+
+        // Test string schema (default)
+        let string_schema = schema_type_to_openapi_schema("string");
+        match string_schema {
+            rustapi_openapi::SchemaRef::Inline(v) => {
+                assert_eq!(v.get("type").and_then(|v| v.as_str()), Some("string"));
+            }
+            _ => panic!("Expected inline schema for string"),
         }
     }
 
@@ -1769,9 +2043,7 @@ fn unauthorized_response() -> crate::Response {
             "Basic realm=\"API Documentation\"",
         )
         .header(http::header::CONTENT_TYPE, "text/plain")
-        .body(http_body_util::Full::new(bytes::Bytes::from(
-            "Unauthorized",
-        )))
+        .body(crate::response::Body::from("Unauthorized"))
         .unwrap()
 }
 

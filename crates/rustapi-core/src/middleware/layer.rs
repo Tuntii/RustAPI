@@ -27,6 +27,37 @@ pub type BoxedNext =
 ///
 /// This trait allows both Tower layers and custom middleware to be used
 /// with the `.layer()` method.
+///
+/// # Example: Implementing a custom simple logger middleware
+///
+/// ```rust
+/// use rustapi_core::middleware::{MiddlewareLayer, BoxedNext};
+/// use rustapi_core::{Request, Response};
+/// use std::pin::Pin;
+/// use std::future::Future;
+///
+/// #[derive(Clone)]
+/// struct SimpleLogger;
+///
+/// impl MiddlewareLayer for SimpleLogger {
+///     fn call(
+///         &self,
+///         req: Request,
+///         next: BoxedNext,
+///     ) -> Pin<Box<dyn Future<Output = Response> + Send + 'static>> {
+///         Box::pin(async move {
+///             println!("Incoming request: {} {}", req.method(), req.uri());
+///             let response = next(req).await;
+///             println!("Response status: {}", response.status());
+///             response
+///         })
+///     }
+///
+///     fn clone_box(&self) -> Box<dyn MiddlewareLayer> {
+///         Box::new(self.clone())
+///     }
+/// }
+/// ```
 pub trait MiddlewareLayer: Send + Sync + 'static {
     /// Apply this middleware to a request, calling `next` to continue the chain
     fn call(
@@ -320,7 +351,7 @@ mod tests {
                     Box::pin(async move {
                         http::Response::builder()
                             .status(status)
-                            .body(http_body_util::Full::new(Bytes::from("test")))
+                            .body(crate::response::Body::from("test"))
                             .unwrap()
                     }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
                 });
@@ -354,7 +385,7 @@ mod tests {
                 Box::pin(async {
                     http::Response::builder()
                         .status(StatusCode::OK)
-                        .body(http_body_util::Full::new(Bytes::from("direct")))
+                        .body(crate::response::Body::from("direct"))
                         .unwrap()
                 }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
             });
@@ -395,7 +426,7 @@ mod tests {
                     Box::pin(async {
                         http::Response::builder()
                             .status(StatusCode::OK)
-                            .body(http_body_util::Full::new(Bytes::from("test")))
+                            .body(crate::response::Body::from("test"))
                             .unwrap()
                     }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
                 });
@@ -459,7 +490,7 @@ mod tests {
                     // Return error response without calling next (short-circuit)
                     http::Response::builder()
                         .status(error_status)
-                        .body(http_body_util::Full::new(Bytes::from("error")))
+                        .body(crate::response::Body::from("error"))
                         .unwrap()
                 } else {
                     // Continue to next middleware/handler
@@ -518,7 +549,7 @@ mod tests {
                         handler_called.store(true, std::sync::atomic::Ordering::SeqCst);
                         http::Response::builder()
                             .status(StatusCode::OK)
-                            .body(http_body_util::Full::new(Bytes::from("handler")))
+                            .body(crate::response::Body::from("handler"))
                             .unwrap()
                     }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
                 });
@@ -580,7 +611,7 @@ mod tests {
                     handler_called.store(true, std::sync::atomic::Ordering::SeqCst);
                     http::Response::builder()
                         .status(StatusCode::OK)
-                        .body(http_body_util::Full::new(Bytes::from("handler")))
+                        .body(crate::response::Body::from("handler"))
                         .unwrap()
                 }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
             });

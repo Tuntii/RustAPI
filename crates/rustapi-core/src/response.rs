@@ -72,14 +72,110 @@
 
 use crate::error::{ApiError, ErrorResponse};
 use bytes::Bytes;
+use futures_util::StreamExt;
 use http::{header, HeaderMap, HeaderValue, StatusCode};
 use http_body_util::Full;
 use rustapi_openapi::{MediaType, Operation, ResponseModifier, ResponseSpec, Schema, SchemaRef};
 use serde::Serialize;
 use std::collections::HashMap;
+use std::pin::Pin;
+use std::task::{Context, Poll};
+
+/// Unified response body type
+pub enum Body {
+    /// Fully buffered body (default)
+    Full(Full<Bytes>),
+    /// Streaming body
+    Streaming(Pin<Box<dyn http_body::Body<Data = Bytes, Error = ApiError> + Send + 'static>>),
+}
+
+impl Body {
+    /// Create a new full body from bytes
+    pub fn new(bytes: Bytes) -> Self {
+        Self::Full(Full::new(bytes))
+    }
+
+    /// Create an empty body
+    pub fn empty() -> Self {
+        Self::Full(Full::new(Bytes::new()))
+    }
+
+    /// Create a streaming body
+    pub fn from_stream<S, E>(stream: S) -> Self
+    where
+        S: futures_util::Stream<Item = Result<Bytes, E>> + Send + 'static,
+        E: Into<ApiError> + 'static,
+    {
+        let body = http_body_util::StreamBody::new(
+            stream.map(|res| res.map_err(|e| e.into()).map(http_body::Frame::data)),
+        );
+        Self::Streaming(Box::pin(body))
+    }
+}
+
+impl Default for Body {
+    fn default() -> Self {
+        Self::empty()
+    }
+}
+
+impl http_body::Body for Body {
+    type Data = Bytes;
+    type Error = ApiError;
+
+    fn poll_frame(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<Option<Result<http_body::Frame<Self::Data>, Self::Error>>> {
+        match self.get_mut() {
+            Body::Full(b) => Pin::new(b)
+                .poll_frame(cx)
+                .map_err(|_| ApiError::internal("Infallible error")),
+            Body::Streaming(b) => b.as_mut().poll_frame(cx),
+        }
+    }
+
+    fn is_end_stream(&self) -> bool {
+        match self {
+            Body::Full(b) => b.is_end_stream(),
+            Body::Streaming(b) => b.is_end_stream(),
+        }
+    }
+
+    fn size_hint(&self) -> http_body::SizeHint {
+        match self {
+            Body::Full(b) => b.size_hint(),
+            Body::Streaming(b) => b.size_hint(),
+        }
+    }
+}
+
+impl From<Bytes> for Body {
+    fn from(bytes: Bytes) -> Self {
+        Self::new(bytes)
+    }
+}
+
+impl From<String> for Body {
+    fn from(s: String) -> Self {
+        Self::new(Bytes::from(s))
+    }
+}
+
+impl From<&'static str> for Body {
+    fn from(s: &'static str) -> Self {
+        Self::new(Bytes::from(s))
+    }
+}
+
+impl From<Vec<u8>> for Body {
+    fn from(v: Vec<u8>) -> Self {
+        Self::new(Bytes::from(v))
+    }
+}
 
 /// HTTP Response type
-pub type Response = http::Response<Full<Bytes>>;
+pub type Response = http::Response<Body>;
 
 /// Trait for types that can be converted into an HTTP response
 pub trait IntoResponse {
@@ -99,7 +195,7 @@ impl IntoResponse for () {
     fn into_response(self) -> Response {
         http::Response::builder()
             .status(StatusCode::OK)
-            .body(Full::new(Bytes::new()))
+            .body(Body::empty())
             .unwrap()
     }
 }
@@ -110,7 +206,7 @@ impl IntoResponse for &'static str {
         http::Response::builder()
             .status(StatusCode::OK)
             .header(header::CONTENT_TYPE, "text/plain; charset=utf-8")
-            .body(Full::new(Bytes::from(self)))
+            .body(Body::from(self))
             .unwrap()
     }
 }
@@ -121,7 +217,7 @@ impl IntoResponse for String {
         http::Response::builder()
             .status(StatusCode::OK)
             .header(header::CONTENT_TYPE, "text/plain; charset=utf-8")
-            .body(Full::new(Bytes::from(self)))
+            .body(Body::from(self))
             .unwrap()
     }
 }
@@ -131,7 +227,7 @@ impl IntoResponse for StatusCode {
     fn into_response(self) -> Response {
         http::Response::builder()
             .status(self)
-            .body(Full::new(Bytes::new()))
+            .body(Body::empty())
             .unwrap()
     }
 }
@@ -179,7 +275,7 @@ impl IntoResponse for ApiError {
         http::Response::builder()
             .status(status)
             .header(header::CONTENT_TYPE, "application/json")
-            .body(Full::new(Bytes::from(body)))
+            .body(Body::from(body))
             .unwrap()
     }
 }
@@ -250,7 +346,7 @@ impl<T: Serialize> IntoResponse for Created<T> {
             Ok(body) => http::Response::builder()
                 .status(StatusCode::CREATED)
                 .header(header::CONTENT_TYPE, "application/json")
-                .body(Full::new(Bytes::from(body)))
+                .body(Body::from(body))
                 .unwrap(),
             Err(err) => {
                 ApiError::internal(format!("Failed to serialize response: {}", err)).into_response()
@@ -303,7 +399,7 @@ impl IntoResponse for NoContent {
     fn into_response(self) -> Response {
         http::Response::builder()
             .status(StatusCode::NO_CONTENT)
-            .body(Full::new(Bytes::new()))
+            .body(Body::empty())
             .unwrap()
     }
 }
@@ -329,7 +425,7 @@ impl<T: Into<String>> IntoResponse for Html<T> {
         http::Response::builder()
             .status(StatusCode::OK)
             .header(header::CONTENT_TYPE, "text/html; charset=utf-8")
-            .body(Full::new(Bytes::from(self.0.into())))
+            .body(Body::from(self.0.into()))
             .unwrap()
     }
 }
@@ -393,7 +489,7 @@ impl IntoResponse for Redirect {
         http::Response::builder()
             .status(self.status)
             .header(header::LOCATION, self.location)
-            .body(Full::new(Bytes::new()))
+            .body(Body::empty())
             .unwrap()
     }
 }
@@ -471,11 +567,11 @@ impl<T: for<'a> Schema<'a>, const CODE: u16> ResponseModifier for WithStatus<T, 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use http_body_util::BodyExt;
     use proptest::prelude::*;
 
     // Helper to extract body bytes from a Full<Bytes> body
-    async fn body_to_bytes(body: Full<Bytes>) -> Bytes {
+    async fn body_to_bytes(body: Body) -> Bytes {
+        use http_body_util::BodyExt;
         body.collect().await.unwrap().to_bytes()
     }
 

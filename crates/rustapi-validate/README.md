@@ -40,5 +40,6 @@ async fn signup(Json(body): Json<UserSignup>) -> impl Responder {
 - `length`
 - `range`
 - `custom` (use your own functions)
+- `custom_async` (async custom functions)
 - `contains`
 - `regex`

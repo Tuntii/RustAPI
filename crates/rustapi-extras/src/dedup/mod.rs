@@ -6,7 +6,7 @@
 use dashmap::DashMap;
 use rustapi_core::{
     middleware::{BoxedNext, MiddlewareLayer},
-    Request, Response,
+    Request, Response, ResponseBody,
 };
 use std::future::Future;
 use std::pin::Pin;
@@ -98,7 +98,7 @@ impl MiddlewareLayer for DedupLayer {
                     return http::Response::builder()
                         .status(409) // Conflict
                         .header("Content-Type", "application/json")
-                        .body(http_body_util::Full::new(bytes::Bytes::from(
+                        .body(ResponseBody::Full(http_body_util::Full::new(bytes::Bytes::from(
                             serde_json::json!({
                                 "error": {
                                     "type": "duplicate_request",
@@ -106,7 +106,7 @@ impl MiddlewareLayer for DedupLayer {
                                 }
                             })
                             .to_string(),
-                        )))
+                        ))))
                         .unwrap();
                 } else {
                     // Expired, remove

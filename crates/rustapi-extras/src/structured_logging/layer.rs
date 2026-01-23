@@ -395,6 +395,7 @@ fn generate_correlation_id() -> String {
 mod tests {
     use super::*;
     use bytes::Bytes;
+    use rustapi_core::ResponseBody;
     use std::sync::Arc;
 
     #[tokio::test]
@@ -410,7 +411,7 @@ mod tests {
             Box::pin(async {
                 http::Response::builder()
                     .status(200)
-                    .body(http_body_util::Full::new(Bytes::from("OK")))
+                    .body(ResponseBody::new(Bytes::from("OK")))
                     .unwrap()
             }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
         });

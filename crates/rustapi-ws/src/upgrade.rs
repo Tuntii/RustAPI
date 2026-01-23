@@ -1,12 +1,10 @@
 //! WebSocket upgrade response
 
 use crate::{WebSocketError, WebSocketStream, WsHeartbeatConfig};
-use bytes::Bytes;
 use http::{header, Response, StatusCode};
-use http_body_util::Full;
 use hyper::upgrade::OnUpgrade;
 use hyper_util::rt::TokioIo;
-use rustapi_core::IntoResponse;
+use rustapi_core::{IntoResponse, ResponseBody};
 use rustapi_openapi::{Operation, ResponseModifier, ResponseSpec};
 use std::future::Future;
 use std::pin::Pin;
@@ -28,7 +26,7 @@ use crate::compression::WsCompressionConfig;
 /// handshake and establish a WebSocket connection.
 pub struct WebSocketUpgrade {
     /// The upgrade response
-    response: Response<Full<Bytes>>,
+    response: Response<ResponseBody>,
     /// Callback to handle the WebSocket connection
     on_upgrade: Option<UpgradeCallback>,
     /// SEC-WebSocket-Key from request
@@ -60,7 +58,7 @@ impl WebSocketUpgrade {
             .header(header::UPGRADE, "websocket")
             .header(header::CONNECTION, "Upgrade")
             .header("Sec-WebSocket-Accept", accept_key)
-            .body(Full::new(Bytes::new()))
+            .body(ResponseBody::empty())
             .unwrap();
 
         Self {
@@ -151,7 +149,7 @@ impl WebSocketUpgrade {
 
     /// Get the underlying response (for implementing IntoResponse)
     #[allow(dead_code)]
-    pub(crate) fn into_response_inner(self) -> Response<Full<Bytes>> {
+    pub(crate) fn into_response_inner(self) -> Response<ResponseBody> {
         self.response
     }
 
@@ -163,7 +161,7 @@ impl WebSocketUpgrade {
 }
 
 impl IntoResponse for WebSocketUpgrade {
-    fn into_response(mut self) -> http::Response<Full<Bytes>> {
+    fn into_response(mut self) -> rustapi_core::Response {
         // If we have the upgrade future and a callback, spawn the upgrade task
         if let (Some(on_upgrade), Some(callback)) =
             (self.on_upgrade_fut.take(), self.on_upgrade.take())

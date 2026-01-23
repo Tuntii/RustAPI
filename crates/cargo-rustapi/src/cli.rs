@@ -1,6 +1,8 @@
 //! CLI argument parsing
 
-use crate::commands::{self, AddArgs, DoctorArgs, GenerateArgs, NewArgs, RunArgs, WatchArgs};
+use crate::commands::{
+    self, AddArgs, ClientArgs, DeployArgs, DoctorArgs, GenerateArgs, NewArgs, RunArgs, WatchArgs,
+};
 use clap::{Parser, Subcommand};
 
 /// RustAPI CLI - Project scaffolding and development utilities
@@ -40,6 +42,13 @@ enum Commands {
         #[arg(short, long, default_value = "8080")]
         port: u16,
     },
+
+    /// Generate API client from OpenAPI spec
+    Client(ClientArgs),
+
+    /// Deploy to various platforms
+    #[command(subcommand)]
+    Deploy(DeployArgs),
 }
 
 impl Cli {
@@ -53,6 +62,8 @@ impl Cli {
             Commands::Doctor(args) => commands::doctor(args).await,
             Commands::Generate(args) => commands::generate(args).await,
             Commands::Docs { port } => commands::open_docs(port).await,
+            Commands::Client(args) => commands::client(args).await,
+            Commands::Deploy(args) => commands::deploy(args).await,
         }
     }
 }

@@ -382,7 +382,7 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
     let mut chained_calls = quote!();
 
     for attr in fn_attrs {
-        // Check for tag, summary, description
+        // Check for tag, summary, description, param
         // Use loose matching on the last segment to handle crate renaming or fully qualified paths
         if let Some(ident) = attr.path().segments.last().map(|s| &s.ident) {
             let ident_str = ident.to_string();
@@ -400,6 +400,53 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
                 if let Ok(lit) = attr.parse_args::<LitStr>() {
                     let val = lit.value();
                     chained_calls = quote! { #chained_calls .description(#val) };
+                }
+            } else if ident_str == "param" {
+                // Parse #[param(name, schema = "type")] or #[param(name = "type")]
+                if let Ok(param_args) = attr.parse_args_with(
+                    syn::punctuated::Punctuated::<Meta, syn::Token![,]>::parse_terminated,
+                ) {
+                    let mut param_name: Option<String> = None;
+                    let mut param_schema: Option<String> = None;
+
+                    for meta in param_args {
+                        match &meta {
+                            // Simple ident: #[param(id, ...)]
+                            Meta::Path(path) => {
+                                if param_name.is_none() {
+                                    if let Some(ident) = path.get_ident() {
+                                        param_name = Some(ident.to_string());
+                                    }
+                                }
+                            }
+                            // Named value: #[param(schema = "uuid")] or #[param(id = "uuid")]
+                            Meta::NameValue(nv) => {
+                                let key = nv.path.get_ident().map(|i| i.to_string());
+                                if let Some(key) = key {
+                                    if key == "schema" || key == "type" {
+                                        if let Expr::Lit(lit) = &nv.value {
+                                            if let Lit::Str(s) = &lit.lit {
+                                                param_schema = Some(s.value());
+                                            }
+                                        }
+                                    } else if param_name.is_none() {
+                                        // Treat as #[param(name = "schema")]
+                                        param_name = Some(key);
+                                        if let Expr::Lit(lit) = &nv.value {
+                                            if let Lit::Str(s) = &lit.lit {
+                                                param_schema = Some(s.value());
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+
+                    if let (Some(pname), Some(pschema)) = (param_name, param_schema) {
+                        chained_calls = quote! { #chained_calls .param(#pname, #pschema) };
+                    }
                 }
             }
         }
@@ -588,6 +635,44 @@ pub fn description(attr: TokenStream, item: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
+/// Path parameter schema macro for OpenAPI documentation
+///
+/// Use this to specify the OpenAPI schema type for a path parameter when
+/// the auto-inferred type is incorrect. This is particularly useful for
+/// UUID parameters that might be named `id`.
+///
+/// # Supported schema types
+/// - `"uuid"` - String with UUID format
+/// - `"integer"` or `"int"` - Integer with int64 format
+/// - `"string"` - Plain string
+/// - `"boolean"` or `"bool"` - Boolean
+/// - `"number"` - Number (float)
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use uuid::Uuid;
+///
+/// #[rustapi::get("/users/{id}")]
+/// #[rustapi::param(id, schema = "uuid")]
+/// async fn get_user(Path(id): Path<Uuid>) -> Json<User> {
+///     // ...
+/// }
+///
+/// // Alternative syntax:
+/// #[rustapi::get("/posts/{post_id}")]
+/// #[rustapi::param(post_id = "uuid")]
+/// async fn get_post(Path(post_id): Path<Uuid>) -> Json<Post> {
+///     // ...
+/// }
+/// ```
+#[proc_macro_attribute]
+pub fn param(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    // The param attribute is processed by the route macro (get, post, etc.)
+    // This macro just passes through the function unchanged
+    item
+}
+
 // ============================================
 // Validation Derive Macro
 // ============================================
@@ -598,8 +683,7 @@ struct ValidationRuleInfo {
     rule_type: String,
     params: Vec<(String, String)>,
     message: Option<String>,
-    #[allow(dead_code)]
-    group: Option<String>,
+    groups: Vec<String>,
 }
 
 /// Parse validation attributes from a field
@@ -640,7 +724,7 @@ fn parse_validate_meta(meta: &Meta) -> Option<ValidationRuleInfo> {
                 rule_type: ident,
                 params: Vec::new(),
                 message: None,
-                group: None,
+                groups: Vec::new(),
             })
         }
         Meta::List(list) => {
@@ -648,7 +732,7 @@ fn parse_validate_meta(meta: &Meta) -> Option<ValidationRuleInfo> {
             let rule_type = list.path.get_ident()?.to_string();
             let mut params = Vec::new();
             let mut message = None;
-            let mut group = None;
+            let mut groups = Vec::new();
 
             // Parse nested params
             if let Ok(nested) = list.parse_args_with(
@@ -657,14 +741,23 @@ fn parse_validate_meta(meta: &Meta) -> Option<ValidationRuleInfo> {
                 for nested_meta in nested {
                     if let Meta::NameValue(nv) = &nested_meta {
                         let key = nv.path.get_ident()?.to_string();
-                        let value = expr_to_string(&nv.value)?;
 
-                        if key == "message" {
-                            message = Some(value);
-                        } else if key == "group" {
-                            group = Some(value);
-                        } else {
-                            params.push((key, value));
+                        if key == "groups" {
+                            let vec = expr_to_string_vec(&nv.value);
+                            groups.extend(vec);
+                        } else if let Some(value) = expr_to_string(&nv.value) {
+                            if key == "message" {
+                                message = Some(value);
+                            } else if key == "group" {
+                                groups.push(value);
+                            } else {
+                                params.push((key, value));
+                            }
+                        }
+                    } else if let Meta::Path(path) = &nested_meta {
+                        // Handle flags like #[validate(ip(v4))]
+                        if let Some(ident) = path.get_ident() {
+                            params.push((ident.to_string(), "true".to_string()));
                         }
                     }
                 }
@@ -674,7 +767,7 @@ fn parse_validate_meta(meta: &Meta) -> Option<ValidationRuleInfo> {
                 rule_type,
                 params,
                 message,
-                group,
+                groups,
             })
         }
         Meta::NameValue(nv) => {
@@ -684,9 +777,9 @@ fn parse_validate_meta(meta: &Meta) -> Option<ValidationRuleInfo> {
 
             Some(ValidationRuleInfo {
                 rule_type: rule_type.clone(),
-                params: vec![(rule_type, value)],
+                params: vec![(rule_type.clone(), value)],
                 message: None,
-                group: None,
+                groups: Vec::new(),
             })
         }
     }
@@ -706,7 +799,28 @@ fn expr_to_string(expr: &Expr) -> Option<String> {
     }
 }
 
-/// Generate validation code for a single rule
+/// Convert an expression to a vector of strings
+fn expr_to_string_vec(expr: &Expr) -> Vec<String> {
+    match expr {
+        Expr::Array(arr) => {
+            let mut result = Vec::new();
+            for elem in &arr.elems {
+                if let Some(s) = expr_to_string(elem) {
+                    result.push(s);
+                }
+            }
+            result
+        }
+        _ => {
+            if let Some(s) = expr_to_string(expr) {
+                vec![s]
+            } else {
+                Vec::new()
+            }
+        }
+    }
+}
+
 fn generate_rule_validation(
     field_name: &str,
     _field_type: &Type,
@@ -715,7 +829,20 @@ fn generate_rule_validation(
     let field_ident = syn::Ident::new(field_name, proc_macro2::Span::call_site());
     let field_name_str = field_name;
 
-    match rule.rule_type.as_str() {
+    // Generate group check
+    let group_check = if rule.groups.is_empty() {
+        quote! { true }
+    } else {
+        let group_names = rule.groups.iter().map(|g| g.as_str());
+        quote! {
+            {
+                let rule_groups = [#(::rustapi_validate::v2::ValidationGroup::from(#group_names)),*];
+                rule_groups.iter().any(|g| g.matches(&group))
+            }
+        }
+    };
+
+    let validation_logic = match rule.rule_type.as_str() {
         "email" => {
             let message = rule
                 .message
@@ -864,9 +991,95 @@ fn generate_rule_validation(
                 }
             }
         }
+        "credit_card" => {
+            let message = rule
+                .message
+                .as_ref()
+                .map(|m| quote! { .with_message(#m) })
+                .unwrap_or_default();
+            quote! {
+                {
+                    let rule = ::rustapi_validate::v2::CreditCardRule::new() #message;
+                    if let Err(e) = ::rustapi_validate::v2::ValidationRule::validate(&rule, &self.#field_ident) {
+                        errors.add(#field_name_str, e);
+                    }
+                }
+            }
+        }
+        "ip" => {
+            let v4 = rule.params.iter().any(|(k, _)| k == "v4");
+            let v6 = rule.params.iter().any(|(k, _)| k == "v6");
+
+            let rule_creation = if v4 && !v6 {
+                quote! { ::rustapi_validate::v2::IpRule::v4() }
+            } else if !v4 && v6 {
+                quote! { ::rustapi_validate::v2::IpRule::v6() }
+            } else {
+                quote! { ::rustapi_validate::v2::IpRule::new() }
+            };
+
+            let message = rule
+                .message
+                .as_ref()
+                .map(|m| quote! { .with_message(#m) })
+                .unwrap_or_default();
+
+            quote! {
+                {
+                    let rule = #rule_creation #message;
+                    if let Err(e) = ::rustapi_validate::v2::ValidationRule::validate(&rule, &self.#field_ident) {
+                        errors.add(#field_name_str, e);
+                    }
+                }
+            }
+        }
+        "phone" => {
+            let message = rule
+                .message
+                .as_ref()
+                .map(|m| quote! { .with_message(#m) })
+                .unwrap_or_default();
+            quote! {
+                {
+                    let rule = ::rustapi_validate::v2::PhoneRule::new() #message;
+                    if let Err(e) = ::rustapi_validate::v2::ValidationRule::validate(&rule, &self.#field_ident) {
+                        errors.add(#field_name_str, e);
+                    }
+                }
+            }
+        }
+        "contains" => {
+            let needle = rule
+                .params
+                .iter()
+                .find(|(k, _)| k == "needle")
+                .map(|(_, v)| v.clone())
+                .unwrap_or_default();
+
+            let message = rule
+                .message
+                .as_ref()
+                .map(|m| quote! { .with_message(#m) })
+                .unwrap_or_default();
+
+            quote! {
+                {
+                    let rule = ::rustapi_validate::v2::ContainsRule::new(#needle) #message;
+                    if let Err(e) = ::rustapi_validate::v2::ValidationRule::validate(&rule, &self.#field_ident) {
+                        errors.add(#field_name_str, e);
+                    }
+                }
+            }
+        }
         _ => {
             // Unknown rule - skip
             quote! {}
+        }
+    };
+
+    quote! {
+        if #group_check {
+            #validation_logic
         }
     }
 }
@@ -879,7 +1092,20 @@ fn generate_async_rule_validation(
     let field_ident = syn::Ident::new(field_name, proc_macro2::Span::call_site());
     let field_name_str = field_name;
 
-    match rule.rule_type.as_str() {
+    // Generate group check
+    let group_check = if rule.groups.is_empty() {
+        quote! { true }
+    } else {
+        let group_names = rule.groups.iter().map(|g| g.as_str());
+        quote! {
+            {
+                let rule_groups = [#(::rustapi_validate::v2::ValidationGroup::from(#group_names)),*];
+                rule_groups.iter().any(|g| g.matches(&group))
+            }
+        }
+    };
+
+    let validation_logic = match rule.rule_type.as_str() {
         "async_unique" => {
             let table = rule
                 .params
@@ -958,9 +1184,50 @@ fn generate_async_rule_validation(
                 }
             }
         }
+        "custom_async" => {
+            // #[validate(custom_async = "function_path")]
+            let function_path = rule
+                .params
+                .iter()
+                .find(|(k, _)| k == "custom_async" || k == "function")
+                .map(|(_, v)| v.clone())
+                .unwrap_or_default();
+
+            if function_path.is_empty() {
+                // If path is missing, don't generate invalid code
+                quote! {}
+            } else {
+                let func: syn::Path = syn::parse_str(&function_path).unwrap();
+                let message_handling = if let Some(msg) = &rule.message {
+                    quote! {
+                        let e = ::rustapi_validate::v2::RuleError::new("custom_async", #msg);
+                        errors.add(#field_name_str, e);
+                    }
+                } else {
+                    quote! {
+                        errors.add(#field_name_str, e);
+                    }
+                };
+
+                quote! {
+                    {
+                        // Call the custom async function: async fn(&T, &ValidationContext) -> Result<(), RuleError>
+                        if let Err(e) = #func(&self.#field_ident, ctx).await {
+                            #message_handling
+                        }
+                    }
+                }
+            }
+        }
         _ => {
             // Not an async rule
             quote! {}
+        }
+    };
+
+    quote! {
+        if #group_check {
+            #validation_logic
         }
     }
 }
@@ -969,7 +1236,7 @@ fn generate_async_rule_validation(
 fn is_async_rule(rule: &ValidationRuleInfo) -> bool {
     matches!(
         rule.rule_type.as_str(),
-        "async_unique" | "async_exists" | "async_api"
+        "async_unique" | "async_exists" | "async_api" | "custom_async"
     )
 }
 
@@ -1047,7 +1314,7 @@ pub fn derive_validate(input: TokenStream) -> TokenStream {
     // Generate the Validate impl
     let validate_impl = quote! {
         impl #impl_generics ::rustapi_validate::v2::Validate for #name #ty_generics #where_clause {
-            fn validate(&self) -> Result<(), ::rustapi_validate::v2::ValidationErrors> {
+            fn validate_with_group(&self, group: ::rustapi_validate::v2::ValidationGroup) -> Result<(), ::rustapi_validate::v2::ValidationErrors> {
                 let mut errors = ::rustapi_validate::v2::ValidationErrors::new();
 
                 #(#sync_validations)*
@@ -1062,7 +1329,7 @@ pub fn derive_validate(input: TokenStream) -> TokenStream {
         quote! {
             #[::async_trait::async_trait]
             impl #impl_generics ::rustapi_validate::v2::AsyncValidate for #name #ty_generics #where_clause {
-                async fn validate_async(&self, ctx: &::rustapi_validate::v2::ValidationContext) -> Result<(), ::rustapi_validate::v2::ValidationErrors> {
+                async fn validate_async_with_group(&self, ctx: &::rustapi_validate::v2::ValidationContext, group: ::rustapi_validate::v2::ValidationGroup) -> Result<(), ::rustapi_validate::v2::ValidationErrors> {
                     let mut errors = ::rustapi_validate::v2::ValidationErrors::new();
 
                     #(#async_validations)*
@@ -1076,7 +1343,7 @@ pub fn derive_validate(input: TokenStream) -> TokenStream {
         quote! {
             #[::async_trait::async_trait]
             impl #impl_generics ::rustapi_validate::v2::AsyncValidate for #name #ty_generics #where_clause {
-                async fn validate_async(&self, _ctx: &::rustapi_validate::v2::ValidationContext) -> Result<(), ::rustapi_validate::v2::ValidationErrors> {
+                async fn validate_async_with_group(&self, _ctx: &::rustapi_validate::v2::ValidationContext, _group: ::rustapi_validate::v2::ValidationGroup) -> Result<(), ::rustapi_validate::v2::ValidationErrors> {
                     Ok(())
                 }
             }

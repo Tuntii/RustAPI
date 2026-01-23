@@ -10,7 +10,7 @@ use bytes::Bytes;
 use http::StatusCode;
 use http_body_util::{BodyExt, Full};
 use rustapi_core::middleware::{BoxedNext, MiddlewareLayer};
-use rustapi_core::{Request, Response};
+use rustapi_core::{Request, Response, ResponseBody};
 use serde_json::json;
 use std::future::Future;
 use std::net::IpAddr;
@@ -197,7 +197,7 @@ impl InsightLayer {
         http::Response::builder()
             .status(StatusCode::OK)
             .header(http::header::CONTENT_TYPE, "application/json")
-            .body(Full::new(Bytes::from(body_bytes)))
+            .body(ResponseBody::Full(Full::new(Bytes::from(body_bytes))))
             .unwrap()
     }
 
@@ -208,7 +208,7 @@ impl InsightLayer {
         http::Response::builder()
             .status(StatusCode::OK)
             .header(http::header::CONTENT_TYPE, "application/json")
-            .body(Full::new(Bytes::from(body_bytes)))
+            .body(ResponseBody::Full(Full::new(Bytes::from(body_bytes))))
             .unwrap()
     }
 }
@@ -362,7 +362,7 @@ impl MiddlewareLayer for InsightLayer {
             store.store(insight);
 
             // Reconstruct response
-            http::Response::from_parts(resp_parts, Full::new(resp_body_bytes))
+            http::Response::from_parts(resp_parts, ResponseBody::Full(Full::new(resp_body_bytes)))
         })
     }
 

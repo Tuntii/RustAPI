@@ -18,7 +18,7 @@ use dashmap::DashMap;
 use http::StatusCode;
 use http_body_util::Full;
 use rustapi_core::middleware::{BoxedNext, MiddlewareLayer};
-use rustapi_core::{Request, Response};
+use rustapi_core::{Request, Response, ResponseBody};
 use std::future::Future;
 use std::net::IpAddr;
 use std::pin::Pin;
@@ -254,7 +254,7 @@ impl MiddlewareLayer for RateLimitLayer {
                     .header("X-RateLimit-Remaining", "0")
                     .header("X-RateLimit-Reset", reset.to_string())
                     .header("Retry-After", retry_after.to_string())
-                    .body(Full::new(Bytes::from(body)))
+                    .body(ResponseBody::Full(Full::new(Bytes::from(body))))
                     .unwrap();
             }
 
@@ -314,7 +314,7 @@ fn create_rate_limit_response(limit: u32, reset: u64, retry_after: u64) -> Respo
         .header("X-RateLimit-Remaining", "0")
         .header("X-RateLimit-Reset", reset.to_string())
         .header("Retry-After", retry_after.to_string())
-        .body(Full::new(Bytes::from(body)))
+        .body(ResponseBody::Full(Full::new(Bytes::from(body))))
         .unwrap()
 }
 
@@ -347,7 +347,7 @@ mod tests {
             Box::pin(async {
                 http::Response::builder()
                     .status(StatusCode::OK)
-                    .body(Full::new(Bytes::from("success")))
+                    .body(ResponseBody::Full(Full::new(Bytes::from("success"))))
                     .unwrap()
             }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
         })

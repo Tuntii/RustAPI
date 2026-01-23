@@ -21,7 +21,6 @@
 use bytes::Bytes;
 use futures_util::Stream;
 use http::{header, StatusCode};
-use http_body_util::Full;
 
 use crate::response::{IntoResponse, Response};
 
@@ -77,18 +76,21 @@ where
     E: std::error::Error + Send + Sync + 'static,
 {
     fn into_response(self) -> Response {
-        // For the initial implementation, we return a response with streaming headers
-        // and an empty body. The actual streaming would require a different body type.
-
         let content_type = self
             .content_type
             .unwrap_or_else(|| "application/octet-stream".to_string());
+
+        use futures_util::StreamExt;
+        let stream = self
+            .stream
+            .map(|res| res.map_err(|e| crate::error::ApiError::internal(e.to_string())));
+        let body = crate::response::Body::from_stream(stream);
 
         http::Response::builder()
             .status(StatusCode::OK)
             .header(header::CONTENT_TYPE, content_type)
             .header(header::TRANSFER_ENCODING, "chunked")
-            .body(Full::new(Bytes::new()))
+            .body(body)
             .unwrap()
     }
 }

@@ -250,6 +250,7 @@ impl MiddlewareLayer for LoggingLayer {
 mod tests {
     use super::*;
     use bytes::Bytes;
+    use rustapi_core::ResponseBody;
     use std::sync::Arc;
 
     #[tokio::test]
@@ -260,7 +261,7 @@ mod tests {
             Box::pin(async {
                 http::Response::builder()
                     .status(200)
-                    .body(http_body_util::Full::new(bytes::Bytes::from("OK")))
+                    .body(ResponseBody::new(Bytes::from("OK")))
                     .unwrap()
             }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
         });
@@ -284,7 +285,7 @@ mod tests {
             Box::pin(async {
                 http::Response::builder()
                     .status(200)
-                    .body(http_body_util::Full::new(bytes::Bytes::from("OK")))
+                    .body(ResponseBody::new(Bytes::from("OK")))
                     .unwrap()
             }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
         });

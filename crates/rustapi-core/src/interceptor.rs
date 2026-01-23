@@ -205,7 +205,7 @@ mod tests {
     use crate::path_params::PathParams;
     use bytes::Bytes;
     use http::{Extensions, Method, StatusCode};
-    use http_body_util::Full;
+
     use proptest::prelude::*;
     use std::sync::Arc;
 
@@ -229,7 +229,7 @@ mod tests {
     fn create_test_response(status: StatusCode) -> Response {
         http::Response::builder()
             .status(status)
-            .body(Full::new(Bytes::from("test")))
+            .body(crate::response::Body::from("test"))
             .unwrap()
     }
 
