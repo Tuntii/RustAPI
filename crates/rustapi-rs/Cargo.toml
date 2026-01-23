@@ -19,6 +19,7 @@ rustapi-extras = { workspace = true, optional = true }
 rustapi-toon = { workspace = true, optional = true }
 rustapi-ws = { workspace = true, optional = true }
 rustapi-view = { workspace = true, optional = true }
+rustapi-validate = { workspace = true }
 
 # Re-exports for user convenience
 tokio = { workspace = true }
@@ -33,6 +34,7 @@ rustapi-core = { workspace = true }
 rustapi-macros = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 utoipa = { workspace = true }
+uuid = { workspace = true }
 doc-comment = "0.3"
 
 [features]

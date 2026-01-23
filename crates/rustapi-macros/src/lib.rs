@@ -155,6 +155,162 @@ fn collect_handler_schema_types(input: &ItemFn) -> Vec<Type> {
         .collect()
 }
 
+/// Extract path parameter names from a route path string.
+/// e.g., "/users/{user_id}/posts/{post_id}" -> vec!["user_id", "post_id"]
+fn extract_path_params_from_route(path: &str) -> Vec<String> {
+    let mut params = Vec::new();
+    let mut in_brace = false;
+    let mut current = String::new();
+
+    for ch in path.chars() {
+        match ch {
+            '{' => {
+                in_brace = true;
+                current.clear();
+            }
+            '}' => {
+                if in_brace && !current.is_empty() {
+                    params.push(current.clone());
+                }
+                in_brace = false;
+                current.clear();
+            }
+            _ if in_brace => {
+                current.push(ch);
+            }
+            _ => {}
+        }
+    }
+    params
+}
+
+/// Extract parameter name from a pattern like `Path(id)` or `Path((user_id, post_id))`.
+/// Returns a list of extracted names in order.
+fn extract_param_names_from_pattern(pat: &syn::Pat) -> Vec<String> {
+    let mut names = Vec::new();
+
+    match pat {
+        // Path(id) style - single param destructuring
+        syn::Pat::TupleStruct(ts) => {
+            for elem in &ts.elems {
+                match elem {
+                    // Single ident: Path(id)
+                    syn::Pat::Ident(pi) => {
+                        names.push(pi.ident.to_string());
+                    }
+                    // Tuple inside: Path((user_id, post_id))
+                    syn::Pat::Tuple(tuple) => {
+                        for inner in &tuple.elems {
+                            if let syn::Pat::Ident(pi) = inner {
+                                names.push(pi.ident.to_string());
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+        // path: Path<T> style (no destructuring)
+        syn::Pat::Ident(pi) => {
+            names.push(pi.ident.to_string());
+        }
+        _ => {}
+    }
+    names
+}
+
+/// Extract inner types from a Path<T> or Path<(A, B, ...)> type.
+/// Returns a list of type strings in order.
+fn extract_inner_types_from_path(ty: &Type) -> Vec<String> {
+    let mut types = Vec::new();
+
+    if let Type::Path(type_path) = ty {
+        if let Some(seg) = type_path.path.segments.last() {
+            if seg.ident == "Path" {
+                if let PathArguments::AngleBracketed(args) = &seg.arguments {
+                    if let Some(GenericArgument::Type(inner)) = args.args.first() {
+                        // Check if it's a tuple type
+                        if let Type::Tuple(tuple) = inner {
+                            for elem in &tuple.elems {
+                                types.push(quote!(#elem).to_string().replace(' ', ""));
+                            }
+                        } else {
+                            // Single type
+                            types.push(quote!(#inner).to_string().replace(' ', ""));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    types
+}
+
+/// Extract Path<T> types from handler function arguments.
+/// Returns a vector of (param_name, rust_type) pairs.
+/// For tuple paths like Path<(Uuid, i64)>, the route_path is used to match param names.
+fn extract_path_param_types(input: &ItemFn, route_path: &str) -> Vec<(String, String)> {
+    let route_params = extract_path_params_from_route(route_path);
+    let mut result = Vec::new();
+
+    for arg in &input.sig.inputs {
+        if let FnArg::Typed(pat_ty) = arg {
+            // Check if type is Path<T>
+            if let Type::Path(type_path) = &*pat_ty.ty {
+                if let Some(seg) = type_path.path.segments.last() {
+                    if seg.ident == "Path" {
+                        let inner_types = extract_inner_types_from_path(&pat_ty.ty);
+                        let param_names = extract_param_names_from_pattern(&pat_ty.pat);
+
+                        // If we have multiple types (tuple), match with route params
+                        if inner_types.len() > 1 {
+                            // Use route_params order to match types
+                            for (i, param_name) in route_params.iter().enumerate() {
+                                if let Some(type_str) = inner_types.get(i) {
+                                    result.push((param_name.clone(), type_str.clone()));
+                                }
+                            }
+                        } else if let Some(type_str) = inner_types.first() {
+                            // Single param - use extracted name or first route param
+                            let name = param_names
+                                .first()
+                                .cloned()
+                                .or_else(|| route_params.first().cloned())
+                                .unwrap_or_else(|| "id".to_string());
+                            result.push((name, type_str.clone()));
+                        }
+                    }
+                }
+            }
+        }
+    }
+    result
+}
+
+/// Map Rust type to OpenAPI schema type string.
+fn rust_type_to_schema_type(type_str: &str) -> &'static str {
+    // Normalize the type string (remove whitespace, handle fully qualified paths)
+    let normalized = type_str
+        .replace(' ', "")
+        .replace("::", "")
+        .to_lowercase();
+
+    // Check for common type patterns
+    if normalized.contains("uuid") {
+        return "uuid";
+    }
+
+    match normalized.as_str() {
+        "i64" | "u64" | "isize" | "usize" => "int64",
+        "i32" | "u32" => "int32",
+        "i16" | "u16" | "i8" | "u8" => "int32",
+        "f64" | "f32" => "number",
+        "bool" => "boolean",
+        "string" | "str" | "&str" => "string",
+        _ => "string", // Default to string for unknown types
+    }
+}
+
 /// Check if RUSTAPI_DEBUG is enabled at compile time
 fn is_debug_enabled() -> bool {
     std::env::var("RUSTAPI_DEBUG")
@@ -380,6 +536,49 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
 
     // Extract metadata from attributes to chain builder methods
     let mut chained_calls = quote!();
+
+    // Collect manually specified param schemas (to allow override)
+    let mut manual_params = HashSet::<String>::new();
+
+    // First pass: collect manually specified #[param] attributes
+    for attr in fn_attrs {
+        if let Some(ident) = attr.path().segments.last().map(|s| &s.ident) {
+            if ident == "param" {
+                if let Ok(param_args) = attr.parse_args_with(
+                    syn::punctuated::Punctuated::<Meta, syn::Token![,]>::parse_terminated,
+                ) {
+                    for meta in &param_args {
+                        match meta {
+                            Meta::Path(path) => {
+                                if let Some(ident) = path.get_ident() {
+                                    manual_params.insert(ident.to_string());
+                                }
+                            }
+                            Meta::NameValue(nv) => {
+                                let key = nv.path.get_ident().map(|i| i.to_string());
+                                if let Some(key) = key {
+                                    if key != "schema" && key != "type" {
+                                        manual_params.insert(key);
+                                    }
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Auto-detect Path<T> types from handler arguments and add .param() calls
+    // Only for params NOT manually specified via #[param]
+    let auto_param_types = extract_path_param_types(&input, &path_value);
+    for (param_name, rust_type) in &auto_param_types {
+        if !manual_params.contains(param_name) {
+            let schema_type = rust_type_to_schema_type(rust_type);
+            chained_calls = quote! { #chained_calls .param(#param_name, #schema_type) };
+        }
+    }
 
     for attr in fn_attrs {
         // Check for tag, summary, description, param

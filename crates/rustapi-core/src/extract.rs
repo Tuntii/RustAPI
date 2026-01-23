@@ -253,7 +253,7 @@ impl<T> ValidatedJson<T> {
     }
 }
 
-impl<T: DeserializeOwned + rustapi_validate::Validate + Send> FromRequest for ValidatedJson<T> {
+impl<T: DeserializeOwned + validator::Validate + Send> FromRequest for ValidatedJson<T> {
     async fn from_request(req: &mut Request) -> Result<Self> {
         req.load_body().await?;
         // First, deserialize the JSON body using simd-json when available
@@ -263,10 +263,24 @@ impl<T: DeserializeOwned + rustapi_validate::Validate + Send> FromRequest for Va
 
         let value: T = json::from_slice(&body)?;
 
-        // Then, validate it
-        if let Err(validation_error) = rustapi_validate::Validate::validate(&value) {
-            // Convert validation error to API error with 422 status
-            return Err(validation_error.into());
+        // Then, validate it using the validator crate
+        if let Err(validation_errors) = validator::Validate::validate(&value) {
+            // Convert validator::ValidationErrors to Vec<FieldError>
+            let field_errors: Vec<crate::error::FieldError> = validation_errors
+                .field_errors()
+                .iter()
+                .flat_map(|(field, errors)| {
+                    let field_name = field.to_string();
+                    errors.iter().map(move |e| crate::error::FieldError {
+                        field: field_name.clone(),
+                        code: e.code.to_string(),
+                        message: e.message.clone().map(|m| m.to_string()).unwrap_or_else(|| {
+                            format!("Validation failed for field '{}'", &field_name)
+                        }),
+                    })
+                })
+                .collect();
+            return Err(ApiError::validation(field_errors));
         }
 
         Ok(ValidatedJson(value))
@@ -865,7 +879,9 @@ use rustapi_openapi::{
 use std::collections::HashMap;
 
 // ValidatedJson - Adds request body
-impl<T: for<'a> Schema<'a>> OperationModifier for ValidatedJson<T> {
+// Uses Schema<'static> bound when T implements ToSchema (via #[derive(Schema)])
+// This enables automatic OpenAPI request body documentation
+impl<T: Schema<'static>> OperationModifier for ValidatedJson<T> {
     fn update_operation(op: &mut Operation) {
         let (name, _) = T::schema();
 
@@ -907,7 +923,7 @@ impl<T: for<'a> Schema<'a>> OperationModifier for ValidatedJson<T> {
 }
 
 // Json - Adds request body (Same as ValidatedJson)
-impl<T: for<'a> Schema<'a>> OperationModifier for Json<T> {
+impl<T: Schema<'static>> OperationModifier for Json<T> {
     fn update_operation(op: &mut Operation) {
         let (name, _) = T::schema();
 

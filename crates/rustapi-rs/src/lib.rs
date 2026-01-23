@@ -294,6 +294,7 @@ pub mod prelude {
     pub use rustapi_macros::TypedPath;
 
     // Re-export validation - use validator derive macro directly
+    // Note: ValidatedJson expects rustapi_validate::Validate which re-exports validator::Validate
     pub use validator::Validate;
 
     // Re-export OpenAPI schema derive

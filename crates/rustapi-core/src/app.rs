@@ -347,8 +347,13 @@ impl RustApi {
                 format!("/{}", route.path)
             };
 
+            // Apply path param schemas to operation BEFORE grouping
+            // This ensures custom schema types (e.g., uuid for Path<Uuid>) are preserved
+            let mut op = route.operation;
+            add_path_params_to_operation(&path, &mut op, &route.param_schemas);
+
             let entry = by_path.entry(path).or_default();
-            entry.insert_boxed_with_operation(method_enum, route.handler, route.operation);
+            entry.insert_boxed_with_operation(method_enum, route.handler, op);
         }
 
         #[cfg(feature = "tracing")]
