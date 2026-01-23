@@ -32,6 +32,8 @@ pub struct RustApi {
     layers: LayerStack,
     body_limit: Option<usize>,
     interceptors: InterceptorChain,
+    #[cfg(feature = "http3")]
+    http3_config: Option<crate::http3::Http3Config>,
 }
 
 impl RustApi {
@@ -57,6 +59,8 @@ impl RustApi {
             layers: LayerStack::new(),
             body_limit: Some(DEFAULT_BODY_LIMIT), // Default 1MB limit
             interceptors: InterceptorChain::new(),
+            #[cfg(feature = "http3")]
+            http3_config: None,
         }
     }
 
@@ -1005,11 +1009,40 @@ impl RustApi {
     ///     .run_dual_stack("0.0.0.0:8080", Http3Config::new("cert.pem", "key.pem"))
     ///     .await
     /// ```
+    /// Configure HTTP/3 support
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// RustApi::new()
+    ///     .with_http3("cert.pem", "key.pem")
+    ///     .run_dual_stack("127.0.0.1:8080")
+    ///     .await
+    /// ```
+    #[cfg(feature = "http3")]
+    pub fn with_http3(mut self, cert_path: impl Into<String>, key_path: impl Into<String>) -> Self {
+        self.http3_config = Some(crate::http3::Http3Config::new(cert_path, key_path));
+        self
+    }
+
+    /// Run both HTTP/1.1 and HTTP/3 servers simultaneously
+    ///
+    /// This allows clients to use either protocol. The HTTP/1.1 server
+    /// will advertise HTTP/3 availability via Alt-Svc header.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// RustApi::new()
+    ///     .route("/", get(hello))
+    ///     .with_http3("cert.pem", "key.pem")
+    ///     .run_dual_stack("0.0.0.0:8080")
+    ///     .await
+    /// ```
     #[cfg(feature = "http3")]
     pub async fn run_dual_stack(
-        self,
+        mut self,
         _http_addr: &str,
-        http3_config: crate::http3::Http3Config,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         // TODO: Dual-stack requires Router, LayerStack, InterceptorChain to implement Clone.
         // For now, we only run HTTP/3.
@@ -1018,8 +1051,13 @@ impl RustApi {
         // 2. Use Arc<RwLock<...>> pattern
         // 3. Create shared state mechanism
 
+        let config = self
+            .http3_config
+            .take()
+            .ok_or("HTTP/3 config not set. Use .with_http3(...)")?;
+
         tracing::warn!("run_dual_stack currently only runs HTTP/3. HTTP/1.1 support coming soon.");
-        self.run_http3(http3_config).await
+        self.run_http3(config).await
     }
 }
 
