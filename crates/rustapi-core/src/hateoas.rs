@@ -331,7 +331,7 @@ impl PageInfo {
 
     /// Calculate page info from total elements and page size
     pub fn calculate(total_elements: usize, page_size: usize, current_page: usize) -> Self {
-        let total_pages = (total_elements + page_size - 1) / page_size;
+        let total_pages = total_elements.div_ceil(page_size);
         Self {
             size: page_size,
             total_elements,

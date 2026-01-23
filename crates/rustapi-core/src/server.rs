@@ -103,7 +103,7 @@ impl Server {
         }
 
         // Wait for all connections to finish
-        while let Some(_) = connections.join_next().await {}
+        while (connections.join_next().await).is_some() {}
         info!("Server shutdown complete");
 
         Ok(())

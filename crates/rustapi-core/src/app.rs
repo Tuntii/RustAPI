@@ -1148,7 +1148,7 @@ fn schema_type_to_openapi_schema(schema_type: &str) -> rustapi_openapi::SchemaRe
         "boolean" | "bool" => rustapi_openapi::SchemaRef::Inline(serde_json::json!({
             "type": "boolean"
         })),
-        "string" | _ => rustapi_openapi::SchemaRef::Inline(serde_json::json!({
+        _ => rustapi_openapi::SchemaRef::Inline(serde_json::json!({
             "type": "string"
         })),
     }

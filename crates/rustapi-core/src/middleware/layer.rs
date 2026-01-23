@@ -27,19 +27,8 @@ pub type BoxedNext =
 ///
 /// This trait allows both Tower layers and custom middleware to be used
 /// with the `.layer()` method.
-pub trait MiddlewareLayer: Send + Sync + 'static {
-    /// Apply this middleware to a request, calling `next` to continue the chain
-    fn call(
-        &self,
-        req: Request,
-        next: BoxedNext,
-    ) -> Pin<Box<dyn Future<Output = Response> + Send + 'static>>;
-
-    /// Clone this middleware into a boxed trait object
-    fn clone_box(&self) -> Box<dyn MiddlewareLayer>;
-}
-
-/// Example: Implementing a custom simple logger middleware
+///
+/// # Example: Implementing a custom simple logger middleware
 ///
 /// ```rust
 /// use rustapi_core::middleware::{MiddlewareLayer, BoxedNext};
@@ -69,6 +58,17 @@ pub trait MiddlewareLayer: Send + Sync + 'static {
 ///     }
 /// }
 /// ```
+pub trait MiddlewareLayer: Send + Sync + 'static {
+    /// Apply this middleware to a request, calling `next` to continue the chain
+    fn call(
+        &self,
+        req: Request,
+        next: BoxedNext,
+    ) -> Pin<Box<dyn Future<Output = Response> + Send + 'static>>;
+
+    /// Clone this middleware into a boxed trait object
+    fn clone_box(&self) -> Box<dyn MiddlewareLayer>;
+}
 
 impl Clone for Box<dyn MiddlewareLayer> {
     fn clone(&self) -> Self {

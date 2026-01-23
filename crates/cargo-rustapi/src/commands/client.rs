@@ -5,7 +5,7 @@
 use anyhow::{Context, Result};
 use clap::Args;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// Arguments for client generation command
 #[derive(Args, Debug)]
@@ -98,18 +98,13 @@ async fn load_spec(spec_path: &str) -> Result<String> {
 
 fn sanitize_name(name: &str) -> String {
     name.to_lowercase()
-        .replace(' ', "_")
-        .replace('-', "_")
+        .replace([' ', '-'], "_")
         .chars()
         .filter(|c| c.is_alphanumeric() || *c == '_')
         .collect()
 }
 
-async fn generate_rust_client(
-    output: &PathBuf,
-    name: &str,
-    spec: &serde_json::Value,
-) -> Result<()> {
+async fn generate_rust_client(output: &Path, name: &str, spec: &serde_json::Value) -> Result<()> {
     let src_dir = output.join("src");
     fs::create_dir_all(&src_dir)?;
 
@@ -216,7 +211,7 @@ fn generate_rust_endpoints(spec: &serde_json::Value) -> String {
                     let fn_name = to_snake_case(op_id);
                     let summary = operation["summary"].as_str().unwrap_or("");
 
-                    let rust_path = path.replace('{', "{").replace('}', "}");
+                    let rust_path = path;
 
                     endpoints.push_str(&format!(
                         r#"
@@ -277,7 +272,7 @@ fn json_type_to_rust(prop: &serde_json::Value) -> String {
 }
 
 async fn generate_typescript_client(
-    output: &PathBuf,
+    output: &Path,
     name: &str,
     spec: &serde_json::Value,
 ) -> Result<()> {
@@ -344,11 +339,7 @@ export default new ApiClient();
     Ok(())
 }
 
-async fn generate_python_client(
-    output: &PathBuf,
-    name: &str,
-    spec: &serde_json::Value,
-) -> Result<()> {
+async fn generate_python_client(output: &Path, name: &str, spec: &serde_json::Value) -> Result<()> {
     let base_url = get_base_url(spec);
 
     let client_py = format!(

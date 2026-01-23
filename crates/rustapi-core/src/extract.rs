@@ -71,12 +71,8 @@ use std::str::FromStr;
 /// Trait for extracting data from request parts (headers, path, query)
 ///
 /// This is used for extractors that don't need the request body.
-pub trait FromRequestParts: Sized {
-    /// Extract from request parts
-    fn from_request_parts(req: &Request) -> Result<Self>;
-}
-
-/// Example: Implementing a custom extractor that requires a specific header
+///
+/// # Example: Implementing a custom extractor that requires a specific header
 ///
 /// ```rust
 /// use rustapi_core::FromRequestParts;
@@ -96,16 +92,16 @@ pub trait FromRequestParts: Sized {
 ///     }
 /// }
 /// ```
+pub trait FromRequestParts: Sized {
+    /// Extract from request parts
+    fn from_request_parts(req: &Request) -> Result<Self>;
+}
 
 /// Trait for extracting data from the full request (including body)
 ///
 /// This is used for extractors that consume the request body.
-pub trait FromRequest: Sized {
-    /// Extract from the full request
-    fn from_request(req: &mut Request) -> impl Future<Output = Result<Self>> + Send;
-}
-
-/// Example: Implementing a custom extractor that consumes the body
+///
+/// # Example: Implementing a custom extractor that consumes the body
 ///
 /// ```rust
 /// use rustapi_core::FromRequest;
@@ -130,6 +126,10 @@ pub trait FromRequest: Sized {
 ///     }
 /// }
 /// ```
+pub trait FromRequest: Sized {
+    /// Extract from the full request
+    fn from_request(req: &mut Request) -> impl Future<Output = Result<Self>> + Send;
+}
 
 // Blanket impl: FromRequestParts -> FromRequest
 impl<T: FromRequestParts> FromRequest for T {
