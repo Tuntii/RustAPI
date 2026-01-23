@@ -567,7 +567,6 @@ impl<T: for<'a> Schema<'a>, const CODE: u16> ResponseModifier for WithStatus<T, 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use http_body_util::BodyExt;
     use proptest::prelude::*;
 
     // Helper to extract body bytes from a Full<Bytes> body

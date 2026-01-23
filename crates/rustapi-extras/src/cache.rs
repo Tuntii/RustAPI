@@ -115,7 +115,9 @@ impl MiddlewareLayer for CacheLayer {
                     builder = builder.header("X-Cache", "HIT");
 
                     return builder
-                        .body(ResponseBody::Full(http_body_util::Full::new(entry.body.clone())))
+                        .body(ResponseBody::Full(http_body_util::Full::new(
+                            entry.body.clone(),
+                        )))
                         .unwrap();
                 } else {
                     // Expired
@@ -145,8 +147,10 @@ impl MiddlewareLayer for CacheLayer {
 
                         store.insert(key, cached);
 
-                        let mut response =
-                            http::Response::from_parts(parts, ResponseBody::Full(http_body_util::Full::new(bytes)));
+                        let mut response = http::Response::from_parts(
+                            parts,
+                            ResponseBody::Full(http_body_util::Full::new(bytes)),
+                        );
                         response
                             .headers_mut()
                             .insert("X-Cache", "MISS".parse().unwrap());
@@ -157,7 +161,7 @@ impl MiddlewareLayer for CacheLayer {
                             .status(500)
                             .body(ResponseBody::Full(http_body_util::Full::new(Bytes::from(
                                 "Error buffering response for cache",
-                            )))
+                            ))))
                             .unwrap();
                     }
                 }
