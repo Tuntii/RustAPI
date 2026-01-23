@@ -19,6 +19,8 @@ rustapi-extras = { workspace = true, optional = true }
 rustapi-toon = { workspace = true, optional = true }
 rustapi-ws = { workspace = true, optional = true }
 rustapi-view = { workspace = true, optional = true }
+rustapi-validate = { workspace = true }
+async-trait = { workspace = true }
 
 # Re-exports for user convenience
 tokio = { workspace = true }
@@ -34,6 +36,7 @@ rustapi-macros = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 utoipa = { workspace = true }
 doc-comment = "0.3"
+uuid = { workspace = true, features = ["serde", "v4"] }
 
 [features]
 default = ["swagger-ui"]

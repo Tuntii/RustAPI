@@ -59,8 +59,10 @@ use crate::json;
 use crate::request::Request;
 use crate::response::IntoResponse;
 use crate::stream::{StreamingBody, StreamingConfig};
+use crate::validation::Validatable;
 use bytes::Bytes;
 use http::{header, StatusCode};
+use rustapi_validate::v2::{AsyncValidate, ValidationContext};
 
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -253,7 +255,7 @@ impl<T> ValidatedJson<T> {
     }
 }
 
-impl<T: DeserializeOwned + rustapi_validate::Validate + Send> FromRequest for ValidatedJson<T> {
+impl<T: DeserializeOwned + Validatable + Send> FromRequest for ValidatedJson<T> {
     async fn from_request(req: &mut Request) -> Result<Self> {
         req.load_body().await?;
         // First, deserialize the JSON body using simd-json when available
@@ -263,10 +265,9 @@ impl<T: DeserializeOwned + rustapi_validate::Validate + Send> FromRequest for Va
 
         let value: T = json::from_slice(&body)?;
 
-        // Then, validate it
-        if let Err(validation_error) = rustapi_validate::Validate::validate(&value) {
-            // Convert validation error to API error with 422 status
-            return Err(validation_error.into());
+        // Then, validate it using the unified Validatable trait
+        if let Err(e) = value.do_validate() {
+            return Err(e);
         }
 
         Ok(ValidatedJson(value))
@@ -296,6 +297,110 @@ impl<T> From<T> for ValidatedJson<T> {
 impl<T: Serialize> IntoResponse for ValidatedJson<T> {
     fn into_response(self) -> crate::response::Response {
         Json(self.0).into_response()
+    }
+}
+
+/// Async validated JSON body extractor
+///
+/// Parses the request body as JSON, deserializes into type `T`, and validates
+/// using the `AsyncValidate` trait from `rustapi-validate`.
+///
+/// This extractor supports async validation rules, such as database uniqueness checks.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use rustapi_rs::prelude::*;
+/// use rustapi_validate::v2::prelude::*;
+///
+/// #[derive(Deserialize, Validate, AsyncValidate)]
+/// struct CreateUser {
+///     #[validate(email)]
+///     email: String,
+///     
+///     #[validate(async_unique(table = "users", column = "email"))]
+///     username: String,
+/// }
+///
+/// async fn register(AsyncValidatedJson(body): AsyncValidatedJson<CreateUser>) -> impl IntoResponse {
+///     // body is validated asynchronously (e.g. checked existing email in DB)
+/// }
+/// ```
+#[derive(Debug, Clone, Copy, Default)]
+pub struct AsyncValidatedJson<T>(pub T);
+
+impl<T> AsyncValidatedJson<T> {
+    /// Create a new AsyncValidatedJson wrapper
+    pub fn new(value: T) -> Self {
+        Self(value)
+    }
+
+    /// Get the inner value
+    pub fn into_inner(self) -> T {
+        self.0
+    }
+}
+
+impl<T> Deref for AsyncValidatedJson<T> {
+    type Target = T;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<T> DerefMut for AsyncValidatedJson<T> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl<T> From<T> for AsyncValidatedJson<T> {
+    fn from(value: T) -> Self {
+        AsyncValidatedJson(value)
+    }
+}
+
+impl<T: Serialize> IntoResponse for AsyncValidatedJson<T> {
+    fn into_response(self) -> crate::response::Response {
+        Json(self.0).into_response()
+    }
+}
+
+impl<T: DeserializeOwned + AsyncValidate + Send + Sync> FromRequest for AsyncValidatedJson<T> {
+    async fn from_request(req: &mut Request) -> Result<Self> {
+        req.load_body().await?;
+
+        let body = req
+            .take_body()
+            .ok_or_else(|| ApiError::internal("Body already consumed"))?;
+
+        let value: T = json::from_slice(&body)?;
+
+        // Create validation context from request
+        // TODO: Extract validators from App State
+        let ctx = ValidationContext::default();
+
+        // Perform full validation (sync + async)
+        if let Err(errors) = value.validate_full(&ctx).await {
+            // Convert v2 ValidationErrors to ApiError
+            let field_errors: Vec<crate::error::FieldError> = errors
+                .fields
+                .iter()
+                .flat_map(|(field, errs)| {
+                    let field_name = field.to_string();
+                    errs.iter().map(move |e| crate::error::FieldError {
+                        field: field_name.clone(),
+                        code: e.code.to_string(),
+                        message: e.message.clone(),
+                    })
+                })
+                .collect();
+
+            return Err(ApiError::validation(field_errors));
+        }
+
+        Ok(AsyncValidatedJson(value))
     }
 }
 

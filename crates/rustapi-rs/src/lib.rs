@@ -210,6 +210,7 @@ pub mod view {
 /// Prelude module - import everything you need with `use rustapi_rs::prelude::*`
 pub mod prelude {
     // Core types
+    pub use rustapi_core::validation::Validatable;
     pub use rustapi_core::{
         delete,
         delete_route,
@@ -225,6 +226,7 @@ pub mod prelude {
         sse_response,
         // Error handling
         ApiError,
+        AsyncValidatedJson,
         Body,
         ClientIp,
         Created,
@@ -294,6 +296,8 @@ pub mod prelude {
     pub use rustapi_macros::TypedPath;
 
     // Re-export validation - use validator derive macro directly
+    pub use rustapi_validate::v2::AsyncValidate;
+    pub use rustapi_validate::v2::Validate as V2Validate;
     pub use validator::Validate;
 
     // Re-export OpenAPI schema derive
