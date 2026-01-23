@@ -79,7 +79,7 @@ rcgen = { workspace = true, optional = true }
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 proptest = "1.4"
-rustapi-testing = { workspace = true }
+# rustapi-testing = { workspace = true }
 reqwest = { version = "0.12", features = ["json", "stream"] }
 async-stream = "0.3"
 [features]
