@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-8e8b8e10.js";
+            window.path_to_searchindex_js = "searchindex-7923d765.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-22f4d6da.js"></script>
+        <script src="toc-8f013d36.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -646,6 +646,7 @@ async fn e2e_test() {
 <li><strong>Extraction</strong>: The <code>FromRequest</code> trait definition.</li>
 <li><strong>Response</strong>: The <code>IntoResponse</code> trait definition.</li>
 <li><strong>Middleware</strong>: The <code>Layer</code> and <code>Service</code> integration with Tower.</li>
+<li><strong>HTTP/3</strong>: Built-in QUIC support via <code>h3</code> and <code>quinn</code> (optional feature).</li>
 </ol>
 <h2 id="the-router-internals"><a class="header" href="#the-router-internals">The <code>Router</code> Internals</a></h2>
 <p>We use <code>matchit</code>, a high-performance <strong>Radix Tree</strong> implementation for routing.</p>
@@ -655,6 +656,8 @@ async fn e2e_test() {
 <li><strong>Priority</strong>: Specific paths (<code>/users/profile</code>) always take precedence over wildcards (<code>/users/:id</code>), regardless of definition order.</li>
 <li><strong>Parameters</strong>: Efficiently parses named parameters like <code>:id</code> or <code>*path</code> without regular expressions.</li>
 </ul>
+<h2 id="http3--quic"><a class="header" href="#http3--quic">HTTP/3 &amp; QUIC</a></h2>
+<p><code>rustapi-core</code> includes optional support for <strong>HTTP/3</strong> (QUIC). This is enabled via the <code>http3</code> feature flag and powered by <code>quinn</code> and <code>h3</code>. It allows generic specialized methods on <code>RustApi</code> like <code>.run_http3()</code> and <code>.run_dual_stack()</code>.</p>
 <h2 id="the-handler-trait-magic"><a class="header" href="#the-handler-trait-magic">The <code>Handler</code> Trait Magic</a></h2>
 <p>The <code>Handler</code> trait is what allows you to write functions with arbitrary arguments.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -720,6 +723,45 @@ async fn handler(input: MyExtractor) {
 }
 <span class="boring">}</span></code></pre>
 <p>This is heavily used to group multiple extractors into a single struct (often called the “Parameter Object” pattern), keeping function signatures clean.</p>
+<h2 id="route-metadata-macros"><a class="header" href="#route-metadata-macros">Route Metadata Macros</a></h2>
+<p>RustAPI provides several attribute macros for enriching OpenAPI documentation:</p>
+<h3 id="rustapitag"><a class="header" href="#rustapitag"><code>#[rustapi::tag]</code></a></h3>
+<p>Groups endpoints under a common tag in Swagger UI:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi::get("/users")]
+#[rustapi::tag("Users")]
+async fn list_users() -&gt; Json&lt;Vec&lt;User&gt;&gt; { ... }
+<span class="boring">}</span></code></pre>
+<h3 id="rustapisummary--rustapidescription"><a class="header" href="#rustapisummary--rustapidescription"><code>#[rustapi::summary]</code> &amp; <code>#[rustapi::description]</code></a></h3>
+<p>Adds human-readable documentation:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi::get("/users/{id}")]
+#[rustapi::summary("Get user by ID")]
+#[rustapi::description("Returns a single user by their unique identifier.")]
+async fn get_user(Path(id): Path&lt;i64&gt;) -&gt; Json&lt;User&gt; { ... }
+<span class="boring">}</span></code></pre>
+<h3 id="rustapiparam"><a class="header" href="#rustapiparam"><code>#[rustapi::param]</code></a></h3>
+<p>Customizes the OpenAPI schema type for path parameters. This is essential when the auto-inferred type is incorrect:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use uuid::Uuid;
+
+// Without #[param], the `id` parameter would be documented as "integer"
+// because of the naming convention. With #[param], it's correctly documented as UUID.
+#[rustapi::get("/items/{id}")]
+#[rustapi::param(id, schema = "uuid")]
+async fn get_item(Path(id): Path&lt;Uuid&gt;) -&gt; Json&lt;Item&gt; {
+    find_item(id).await
+}
+<span class="boring">}</span></code></pre>
+<p><strong>Supported schema types:</strong> <code>"uuid"</code>, <code>"integer"</code>, <code>"int32"</code>, <code>"string"</code>, <code>"number"</code>, <code>"boolean"</code></p>
+<p><strong>Alternative syntax:</strong></p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi::param(id = "uuid")]  // Shorter form
+<span class="boring">}</span></code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="rustapi-validate-the-gatekeeper"><a class="header" href="#rustapi-validate-the-gatekeeper">rustapi-validate: The Gatekeeper</a></h1>
 <p>Data validation should happen at the edges of your system, before invalid data ever reaches your business logic. <code>rustapi-validate</code> integrates the <code>validator</code> crate directly into RustAPI’s extraction flow.</p>
@@ -821,6 +863,67 @@ async fn list_metrics() -&gt; Json&lt;Vec&lt;Metric&gt;&gt; { ... }
 </span>RustApi::new()
     .docs("/docs") // Mounts Swagger UI at /docs
     // ...
+<span class="boring">}</span></code></pre>
+<h2 id="path-parameter-schema-types"><a class="header" href="#path-parameter-schema-types">Path Parameter Schema Types</a></h2>
+<p>By default, RustAPI infers the OpenAPI schema type for path parameters based on naming conventions:</p>
+<ul>
+<li>Parameters named <code>id</code>, <code>user_id</code>, <code>postId</code>, etc. → <code>integer</code></li>
+<li>Parameters named <code>uuid</code>, <code>user_uuid</code>, etc. → <code>string</code> with <code>uuid</code> format</li>
+<li>Other parameters → <code>string</code></li>
+</ul>
+<p>However, sometimes auto-inference is incorrect. For example, you might have a parameter named <code>id</code> that is actually a UUID. Use the <code>#[rustapi::param]</code> attribute to override the inferred type:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use uuid::Uuid;
+
+#[rustapi::get("/users/{id}")]
+#[rustapi::param(id, schema = "uuid")]
+#[rustapi::tag("Users")]
+async fn get_user(Path(id): Path&lt;Uuid&gt;) -&gt; Json&lt;User&gt; {
+    // The OpenAPI spec will now correctly show:
+    // { "type": "string", "format": "uuid" }
+    // instead of the default { "type": "integer", "format": "int64" }
+    get_user_by_id(id).await
+}
+<span class="boring">}</span></code></pre>
+<h3 id="supported-schema-types"><a class="header" href="#supported-schema-types">Supported Schema Types</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Schema Type</th><th>OpenAPI Schema</th></tr>
+</thead>
+<tbody>
+<tr><td><code>"uuid"</code></td><td><code>{ "type": "string", "format": "uuid" }</code></td></tr>
+<tr><td><code>"integer"</code>, <code>"int"</code>, <code>"int64"</code></td><td><code>{ "type": "integer", "format": "int64" }</code></td></tr>
+<tr><td><code>"int32"</code></td><td><code>{ "type": "integer", "format": "int32" }</code></td></tr>
+<tr><td><code>"string"</code></td><td><code>{ "type": "string" }</code></td></tr>
+<tr><td><code>"number"</code>, <code>"float"</code></td><td><code>{ "type": "number" }</code></td></tr>
+<tr><td><code>"boolean"</code>, <code>"bool"</code></td><td><code>{ "type": "boolean" }</code></td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="alternative-syntax"><a class="header" href="#alternative-syntax">Alternative Syntax</a></h3>
+<p>You can also use a shorter syntax:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Shorter syntax: param_name = "schema_type"
+#[rustapi::get("/posts/{post_id}")]
+#[rustapi::param(post_id = "uuid")]
+async fn get_post(Path(post_id): Path&lt;Uuid&gt;) -&gt; Json&lt;Post&gt; { ... }
+<span class="boring">}</span></code></pre>
+<h3 id="programmatic-api"><a class="header" href="#programmatic-api">Programmatic API</a></h3>
+<p>When building routes programmatically, you can use the <code>.param()</code> method:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::handler::get_route;
+
+// Using the Route builder
+let route = get_route("/items/{id}", get_item)
+    .param("id", "uuid")
+    .tag("Items")
+    .summary("Get item by UUID");
+
+app.mount_route(route);
 <span class="boring">}</span></code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="rustapi-extras-the-toolbox"><a class="header" href="#rustapi-extras-the-toolbox">rustapi-extras: The Toolbox</a></h1>
@@ -1017,6 +1120,8 @@ queue.push(EmailJob { to: "alice@example.com" }).await;
 <ul>
 <li><code>cargo rustapi new &lt;name&gt;</code>: Create a new project with the perfect directory structure.</li>
 <li><code>cargo rustapi generate resource &lt;name&gt;</code>: Scaffold a new API resource (Model + Handlers + Tests).</li>
+<li><code>cargo rustapi client --spec &lt;path&gt; --language &lt;lang&gt;</code>: Generate a client library (Rust, TS, Python) from OpenAPI spec.</li>
+<li><code>cargo rustapi deploy &lt;platform&gt;</code>: Generate deployment configs for Docker, Fly.io, Railway, or Shuttle.</li>
 <li><code>cargo rustapi serve</code>: Run the development server with hot reload (future feature).</li>
 </ul>
 <h2 id="templates"><a class="header" href="#templates">Templates</a></h2>
@@ -1045,6 +1150,8 @@ queue.push(EmailJob { to: "alice@example.com" }).await;
 <li><a href="#custom-middleware">Custom Middleware</a></li>
 <li><a href="#real-time-chat-websockets">Real-time Chat</a></li>
 <li><a href="#production-tuning">Production Tuning</a></li>
+<li><a href="#deployment">Deployment</a></li>
+<li><a href="#http3-quic-support">HTTP/3 (QUIC)</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="creating-resources"><a class="header" href="#creating-resources">Creating Resources</a></h1>
@@ -1664,32 +1771,128 @@ if let Some(ct) = field.content_type() {
 <span class="boring">}</span></code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="custom-middleware"><a class="header" href="#custom-middleware">Custom Middleware</a></h1>
-<p><strong>Problem</strong>: You need to execute code before or after every request (e.g., logging, metrics).</p>
+<p><strong>Problem</strong>: You need to execute code before or after every request (e.g., logging, authentication, metrics) or modify the response.</p>
 <h2 id="solution-1"><a class="header" href="#solution-1">Solution</a></h2>
-<p>Implement a <code>tower::Layer</code>.</p>
+<p>In RustAPI, the idiomatic way to implement custom middleware is by implementing the <code>MiddlewareLayer</code> trait. This trait provides a safe, asynchronous interface for inspecting and modifying requests and responses.</p>
+<h3 id="the-middlewarelayer-trait"><a class="header" href="#the-middlewarelayer-trait">The <code>MiddlewareLayer</code> Trait</a></h3>
+<p>The trait is defined in <code>rustapi_core::middleware</code>:</p>
+<pre><code class="language-rust ignore">pub trait MiddlewareLayer: Send + Sync + 'static {
+    fn call(
+        &amp;self,
+        req: Request,
+        next: BoxedNext,
+    ) -&gt; Pin&lt;Box&lt;dyn Future&lt;Output = Response&gt; + Send + 'static&gt;&gt;;
+
+    fn clone_box(&amp;self) -&gt; Box&lt;dyn MiddlewareLayer&gt;;
+}</code></pre>
+<h3 id="basic-example-logging-middleware"><a class="header" href="#basic-example-logging-middleware">Basic Example: Logging Middleware</a></h3>
+<p>Here is a simple middleware that logs the incoming request method and URI, calls the next handler, and then logs the response status.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>#[derive(Clone)]
-struct MyMiddleware&lt;S&gt; { inner: S }
+</span>use rustapi_core::middleware::{MiddlewareLayer, BoxedNext};
+use rustapi_core::{Request, Response};
+use std::pin::Pin;
+use std::future::Future;
 
-impl&lt;S, B&gt; Service&lt;Request&lt;B&gt;&gt; for MyMiddleware&lt;S&gt;
-where S: Service&lt;Request&lt;B&gt;&gt; {
-    type Response = S::Response;
-    type Error = S::Error;
-    type Future = S::Future;
+#[derive(Clone)]
+pub struct SimpleLogger;
 
-    fn poll_ready(&amp;mut self, cx: &amp;mut Context&lt;'_&gt;) -&gt; Poll&lt;Result&lt;(), Self::Error&gt;&gt; {
-        self.inner.poll_ready(cx)
+impl MiddlewareLayer for SimpleLogger {
+    fn call(
+        &amp;self,
+        req: Request,
+        next: BoxedNext,
+    ) -&gt; Pin&lt;Box&lt;dyn Future&lt;Output = Response&gt; + Send + 'static&gt;&gt; {
+        // logic before handling request
+        let method = req.method().clone();
+        let uri = req.uri().clone();
+        println!("Incoming: {} {}", method, uri);
+
+        Box::pin(async move {
+            // call the next middleware/handler
+            let response = next(req).await;
+
+            // logic after handling request
+            println!("Completed: {} {} -&gt; {}", method, uri, response.status());
+            
+            response
+        })
     }
 
-    fn call(&amp;mut self, req: Request&lt;B&gt;) -&gt; Self::Future {
-        println!("Request: {}", req.uri());
-        self.inner.call(req)
+    fn clone_box(&amp;self) -&gt; Box&lt;dyn MiddlewareLayer&gt; {
+        Box::new(self.clone())
     }
 }
 <span class="boring">}</span></code></pre>
-<h2 id="discussion-1"><a class="header" href="#discussion-1">Discussion</a></h2>
-<p>For simple cases, you can use <code>tower_http::TraceLayer</code> or <code>middleware::from_fn</code> instead of writing a full struct.</p>
+<h3 id="applying-middleware"><a class="header" href="#applying-middleware">Applying Middleware</a></h3>
+<p>You can apply your custom middleware using <code>.layer()</code>:</p>
+<pre><code class="language-rust ignore">RustApi::new()
+    .layer(SimpleLogger)
+    .route("/", get(handler))
+    .run("127.0.0.1:8080")
+    .await?;</code></pre>
+<h2 id="advanced-patterns"><a class="header" href="#advanced-patterns">Advanced Patterns</a></h2>
+<h3 id="configuration"><a class="header" href="#configuration">Configuration</a></h3>
+<p>You can pass configuration to your middleware struct.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Clone)]
+pub struct RateLimitLayer {
+    max_requests: u32,
+    window_secs: u64,
+}
+
+impl RateLimitLayer {
+    pub fn new(max_requests: u32, window_secs: u64) -&gt; Self {
+        Self { max_requests, window_secs }
+    }
+}
+
+// impl MiddlewareLayer for RateLimitLayer ...
+<span class="boring">}</span></code></pre>
+<h3 id="injecting-state-extensions"><a class="header" href="#injecting-state-extensions">Injecting State (Extensions)</a></h3>
+<p>Middleware can inject data into the request’s extensions, which can then be retrieved by handlers (e.g., via <code>FromRequest</code> extractors).</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// In your middleware
+fn call(&amp;self, mut req: Request, next: BoxedNext) -&gt; ... {
+    let user_id = "user_123".to_string();
+    req.extensions_mut().insert(user_id);
+    next(req)
+}
+
+// In your handler
+async fn handler(req: Request) -&gt; ... {
+    let user_id = req.extensions().get::&lt;String&gt;().unwrap();
+    // ...
+}
+<span class="boring">}</span></code></pre>
+<h3 id="short-circuiting-authentication"><a class="header" href="#short-circuiting-authentication">Short-Circuiting (Authentication)</a></h3>
+<p>If a request fails validation (e.g., invalid token), you can return a response immediately without calling <code>next(req)</code>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>fn call(&amp;self, req: Request, next: BoxedNext) -&gt; ... {
+    if !is_authorized(&amp;req) {
+        return Box::pin(async {
+            http::Response::builder()
+                .status(401)
+                .body("Unauthorized".into())
+                .unwrap()
+        });
+    }
+    
+    next(req)
+}
+<span class="boring">}</span></code></pre>
+<h3 id="modifying-the-response"><a class="header" href="#modifying-the-response">Modifying the Response</a></h3>
+<p>You can inspect and modify the response returned by the handler.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let response = next(req).await;
+let (mut parts, body) = response.into_parts();
+parts.headers.insert("X-Custom-Header", "Value".parse().unwrap());
+Response::from_parts(parts, body)
+<span class="boring">}</span></code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="real-time-chat-websockets"><a class="header" href="#real-time-chat-websockets">Real-time Chat (WebSockets)</a></h1>
 <p>WebSockets allow full-duplex communication between the client and server. RustAPI leverages the <code>rustapi-ws</code> crate (based on <code>tungstenite</code> and <code>tokio</code>) to make this easy.</p>
@@ -1784,7 +1987,7 @@ ws.onmessage = (event) =&gt; {
 
 ws.send("Hello form JS!");
 </code></pre>
-<h2 id="advanced-patterns"><a class="header" href="#advanced-patterns">Advanced Patterns</a></h2>
+<h2 id="advanced-patterns-1"><a class="header" href="#advanced-patterns-1">Advanced Patterns</a></h2>
 <ol>
 <li><strong>User Authentication</strong>: Use the same <code>AuthUser</code> extractor in the <code>ws_handler</code>. If authentication fails, return an error <em>before</em> upgrading.</li>
 <li><strong>Ping/Pong</strong>: Browsers and Load Balancers kill idle connections. Implement a heartbeat mechanism to keep the connection alive.
@@ -1815,8 +2018,125 @@ async fn main() {
 <p>Increase the limit before running:</p>
 <pre><code class="language-bash">ulimit -n 100000
 </code></pre>
-<h2 id="discussion-2"><a class="header" href="#discussion-2">Discussion</a></h2>
+<h2 id="discussion-1"><a class="header" href="#discussion-1">Discussion</a></h2>
 <p>RustAPI is fast by default, but the OS often becomes the bottleneck using default settings. <code>panic = "abort"</code> reduces binary size and slightly improves performance by removing unwinding tables.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="deployment"><a class="header" href="#deployment">Deployment</a></h1>
+<p>RustAPI includes built-in deployment tooling to helping you ship your applications to production with ease. The <code>cargo rustapi deploy</code> command generates configuration files and provides instructions for various platforms.</p>
+<h2 id="supported-platforms"><a class="header" href="#supported-platforms">Supported Platforms</a></h2>
+<ul>
+<li><strong>Docker</strong>: Generate a production-ready <code>Dockerfile</code>.</li>
+<li><strong>Fly.io</strong>: Generate <code>fly.toml</code> and deploy instructions.</li>
+<li><strong>Railway</strong>: Generate <code>railway.toml</code> and project setup.</li>
+<li><strong>Shuttle.rs</strong>: Generate <code>Shuttle.toml</code> and setup instructions.</li>
+</ul>
+<h2 id="usage"><a class="header" href="#usage">Usage</a></h2>
+<h3 id="docker"><a class="header" href="#docker">Docker</a></h3>
+<p>Generate a <code>Dockerfile</code> optimized for RustAPI applications:</p>
+<pre><code class="language-bash">cargo rustapi deploy docker
+</code></pre>
+<p>Options:</p>
+<ul>
+<li><code>--output &lt;path&gt;</code>: Output path (default: <code>./Dockerfile</code>)</li>
+<li><code>--rust-version &lt;ver&gt;</code>: Rust version (default: 1.78)</li>
+<li><code>--port &lt;port&gt;</code>: Port to expose (default: 8080)</li>
+<li><code>--binary &lt;name&gt;</code>: Binary name (default: package name)</li>
+</ul>
+<h3 id="flyio"><a class="header" href="#flyio">Fly.io</a></h3>
+<p>Prepare your application for Fly.io:</p>
+<pre><code class="language-bash">cargo rustapi deploy fly
+</code></pre>
+<p>Options:</p>
+<ul>
+<li><code>--app &lt;name&gt;</code>: Application name</li>
+<li><code>--region &lt;region&gt;</code>: Fly.io region (default: iad)</li>
+<li><code>--init_only</code>: Only generate config, don’t show deployment steps</li>
+</ul>
+<h3 id="railway"><a class="header" href="#railway">Railway</a></h3>
+<p>Prepare your application for Railway:</p>
+<pre><code class="language-bash">cargo rustapi deploy railway
+</code></pre>
+<p>Options:</p>
+<ul>
+<li><code>--project &lt;name&gt;</code>: Project name</li>
+<li><code>--environment &lt;env&gt;</code>: Environment name (default: production)</li>
+</ul>
+<h3 id="shuttlers"><a class="header" href="#shuttlers">Shuttle.rs</a></h3>
+<p>Prepare your application for Shuttle.rs serverless deployment:</p>
+<pre><code class="language-bash">cargo rustapi deploy shuttle
+</code></pre>
+<p>Options:</p>
+<ul>
+<li><code>--project &lt;name&gt;</code>: Project name</li>
+<li><code>--init_only</code>: Only generate config</li>
+</ul>
+<blockquote>
+<p><strong>Note</strong>: Shuttle.rs requires some code changes to use their runtime macro <code>#[shuttle_runtime::main]</code>. The deploy command generates the configuration but you will need to adjust your <code>main.rs</code> to use their attributes if you are deploying to their platform.</p>
+</blockquote>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="http3-quic-support"><a class="header" href="#http3-quic-support">HTTP/3 (QUIC) Support</a></h1>
+<p>RustAPI supports HTTP/3 (QUIC), the next generation of the HTTP protocol, providing lower latency, better performance over unstable networks, and improved security.</p>
+<h2 id="enabling-http3"><a class="header" href="#enabling-http3">Enabling HTTP/3</a></h2>
+<p>HTTP/3 support is optional and can be enabled via feature flags in <code>Cargo.toml</code>.</p>
+<pre><code class="language-toml">[dependencies]
+rustapi-rs = { version = "0.1.9", features = ["http3"] }
+# For development with self-signed certificates
+rustapi-rs = { version = "0.1.9", features = ["http3", "http3-dev"] }
+</code></pre>
+<h2 id="running-an-http3-server"><a class="header" href="#running-an-http3-server">Running an HTTP/3 Server</a></h2>
+<p>Since HTTP/3 requires TLS (even for local development), RustAPI provides helpers to make this easy.</p>
+<h3 id="development-self-signed-certs"><a class="header" href="#development-self-signed-certs">Development (Self-Signed Certs)</a></h3>
+<p>For local development, you can use <code>run_http3_dev</code> which automatically generates self-signed certificates.</p>
+<pre class="playground"><code class="language-rust no_run">use rustapi_rs::prelude::*;
+
+#[rustapi_rs::get("/")]
+async fn hello() -&gt; &amp;'static str {
+    "Hello from HTTP/3!"
+}
+
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    // Requires "http3-dev" feature
+    RustApi::auto()
+        .run_http3_dev("127.0.0.1:8080")
+        .await
+}</code></pre>
+<h3 id="production-quic"><a class="header" href="#production-quic">Production (QUIC)</a></h3>
+<p>For production, you should provide valid certificates.</p>
+<pre class="playground"><code class="language-rust no_run">use rustapi_rs::prelude::*;
+use rustapi_core::http3::Http3Config;
+
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    let config = Http3Config::new("cert.pem", "key.pem");
+    
+    RustApi::auto()
+        .run_http3(config)
+        .await
+}</code></pre>
+<h3 id="dual-stack-http11--http3"><a class="header" href="#dual-stack-http11--http3">Dual Stack (HTTP/1.1 + HTTP/3)</a></h3>
+<p>You can serve both HTTP/1.1 and HTTP/3 on the same port (via Alt-Svc header promotion) or different ports.</p>
+<pre class="playground"><code class="language-rust no_run">use rustapi_rs::prelude::*;
+
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    // Run HTTP/1.1 on port 8080 and HTTP/3 on port 4433 (or same port if supported)
+    RustApi::auto()
+        .run_dual_stack("127.0.0.1:8080")
+        .await
+}</code></pre>
+<h2 id="how-it-works-2"><a class="header" href="#how-it-works-2">How It Works</a></h2>
+<p>HTTP/3 in RustAPI is built on top of <code>quinn</code> and <code>h3</code>. When enabled:</p>
+<ol>
+<li><strong>UDP Binding</strong>: The server binds to a UDP socket (in addition to TCP if dual-stack).</li>
+<li><strong>TLS</strong>: QUIC requires TLS 1.3. RustAPI handles the TLS configuration.</li>
+<li><strong>Optimization</strong>: Responses are optimized for QUIC streams.</li>
+</ol>
+<h2 id="testing"><a class="header" href="#testing">Testing</a></h2>
+<p>You can test HTTP/3 support using <code>curl</code> with HTTP/3 support:</p>
+<pre><code class="language-bash">curl --http3 -k https://localhost:8080/
+</code></pre>
+<p>Or using online tools like <a href="https://http3check.net/">http3check.net</a>.</p>
 
                     </main>
 

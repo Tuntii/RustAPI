@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-8e8b8e10.js";
+            window.path_to_searchindex_js = "../searchindex-7923d765.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-22f4d6da.js"></script>
+        <script src="../toc-8f013d36.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -217,6 +217,67 @@ async fn list_metrics() -&gt; Json&lt;Vec&lt;Metric&gt;&gt; { ... }
 </span>RustApi::new()
     .docs("/docs") // Mounts Swagger UI at /docs
     // ...
+<span class="boring">}</span></code></pre>
+<h2 id="path-parameter-schema-types"><a class="header" href="#path-parameter-schema-types">Path Parameter Schema Types</a></h2>
+<p>By default, RustAPI infers the OpenAPI schema type for path parameters based on naming conventions:</p>
+<ul>
+<li>Parameters named <code>id</code>, <code>user_id</code>, <code>postId</code>, etc. → <code>integer</code></li>
+<li>Parameters named <code>uuid</code>, <code>user_uuid</code>, etc. → <code>string</code> with <code>uuid</code> format</li>
+<li>Other parameters → <code>string</code></li>
+</ul>
+<p>However, sometimes auto-inference is incorrect. For example, you might have a parameter named <code>id</code> that is actually a UUID. Use the <code>#[rustapi::param]</code> attribute to override the inferred type:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use uuid::Uuid;
+
+#[rustapi::get("/users/{id}")]
+#[rustapi::param(id, schema = "uuid")]
+#[rustapi::tag("Users")]
+async fn get_user(Path(id): Path&lt;Uuid&gt;) -&gt; Json&lt;User&gt; {
+    // The OpenAPI spec will now correctly show:
+    // { "type": "string", "format": "uuid" }
+    // instead of the default { "type": "integer", "format": "int64" }
+    get_user_by_id(id).await
+}
+<span class="boring">}</span></code></pre>
+<h3 id="supported-schema-types"><a class="header" href="#supported-schema-types">Supported Schema Types</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Schema Type</th><th>OpenAPI Schema</th></tr>
+</thead>
+<tbody>
+<tr><td><code>"uuid"</code></td><td><code>{ "type": "string", "format": "uuid" }</code></td></tr>
+<tr><td><code>"integer"</code>, <code>"int"</code>, <code>"int64"</code></td><td><code>{ "type": "integer", "format": "int64" }</code></td></tr>
+<tr><td><code>"int32"</code></td><td><code>{ "type": "integer", "format": "int32" }</code></td></tr>
+<tr><td><code>"string"</code></td><td><code>{ "type": "string" }</code></td></tr>
+<tr><td><code>"number"</code>, <code>"float"</code></td><td><code>{ "type": "number" }</code></td></tr>
+<tr><td><code>"boolean"</code>, <code>"bool"</code></td><td><code>{ "type": "boolean" }</code></td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="alternative-syntax"><a class="header" href="#alternative-syntax">Alternative Syntax</a></h3>
+<p>You can also use a shorter syntax:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Shorter syntax: param_name = "schema_type"
+#[rustapi::get("/posts/{post_id}")]
+#[rustapi::param(post_id = "uuid")]
+async fn get_post(Path(post_id): Path&lt;Uuid&gt;) -&gt; Json&lt;Post&gt; { ... }
+<span class="boring">}</span></code></pre>
+<h3 id="programmatic-api"><a class="header" href="#programmatic-api">Programmatic API</a></h3>
+<p>When building routes programmatically, you can use the <code>.param()</code> method:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::handler::get_route;
+
+// Using the Route builder
+let route = get_route("/items/{id}", get_item)
+    .param("id", "uuid")
+    .tag("Items")
+    .summary("Get item by UUID");
+
+app.mount_route(route);
 <span class="boring">}</span></code></pre>
 
                     </main>

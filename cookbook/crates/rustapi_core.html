@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-8e8b8e10.js";
+            window.path_to_searchindex_js = "../searchindex-7923d765.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-22f4d6da.js"></script>
+        <script src="../toc-8f013d36.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -189,6 +189,7 @@
 <li><strong>Extraction</strong>: The <code>FromRequest</code> trait definition.</li>
 <li><strong>Response</strong>: The <code>IntoResponse</code> trait definition.</li>
 <li><strong>Middleware</strong>: The <code>Layer</code> and <code>Service</code> integration with Tower.</li>
+<li><strong>HTTP/3</strong>: Built-in QUIC support via <code>h3</code> and <code>quinn</code> (optional feature).</li>
 </ol>
 <h2 id="the-router-internals"><a class="header" href="#the-router-internals">The <code>Router</code> Internals</a></h2>
 <p>We use <code>matchit</code>, a high-performance <strong>Radix Tree</strong> implementation for routing.</p>
@@ -198,6 +199,8 @@
 <li><strong>Priority</strong>: Specific paths (<code>/users/profile</code>) always take precedence over wildcards (<code>/users/:id</code>), regardless of definition order.</li>
 <li><strong>Parameters</strong>: Efficiently parses named parameters like <code>:id</code> or <code>*path</code> without regular expressions.</li>
 </ul>
+<h2 id="http3--quic"><a class="header" href="#http3--quic">HTTP/3 &amp; QUIC</a></h2>
+<p><code>rustapi-core</code> includes optional support for <strong>HTTP/3</strong> (QUIC). This is enabled via the <code>http3</code> feature flag and powered by <code>quinn</code> and <code>h3</code>. It allows generic specialized methods on <code>RustApi</code> like <code>.run_http3()</code> and <code>.run_dual_stack()</code>.</p>
 <h2 id="the-handler-trait-magic"><a class="header" href="#the-handler-trait-magic">The <code>Handler</code> Trait Magic</a></h2>
 <p>The <code>Handler</code> trait is what allows you to write functions with arbitrary arguments.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
