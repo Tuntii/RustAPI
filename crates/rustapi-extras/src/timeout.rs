@@ -20,7 +20,7 @@
 //! }
 //! ```
 
-use rustapi_core::{middleware::BoxedNext, middleware::MiddlewareLayer, Request, Response};
+use rustapi_core::{middleware::BoxedNext, middleware::MiddlewareLayer, Request, Response, ResponseBody};
 use std::future::Future;
 use std::pin::Pin;
 use std::time::Duration;
@@ -90,7 +90,7 @@ impl MiddlewareLayer for TimeoutLayer {
                     http::Response::builder()
                         .status(408)
                         .header("Content-Type", "application/json")
-                        .body(http_body_util::Full::new(bytes::Bytes::from(
+                        .body(ResponseBody::Full(http_body_util::Full::new(bytes::Bytes::from(
                             serde_json::json!({
                                 "error": {
                                     "type": "request_timeout",
@@ -129,7 +129,7 @@ mod tests {
                 sleep(Duration::from_millis(200)).await;
                 http::Response::builder()
                     .status(200)
-                    .body(http_body_util::Full::new(bytes::Bytes::from("OK")))
+                    .body(ResponseBody::Full(http_body_util::Full::new(bytes::Bytes::from("OK"))))
                     .unwrap()
             }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
         });
@@ -155,7 +155,7 @@ mod tests {
                 sleep(Duration::from_millis(50)).await;
                 http::Response::builder()
                     .status(200)
-                    .body(http_body_util::Full::new(bytes::Bytes::from("OK")))
+                    .body(ResponseBody::Full(http_body_util::Full::new(bytes::Bytes::from("OK"))))
                     .unwrap()
             }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
         });

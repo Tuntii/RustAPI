@@ -32,7 +32,7 @@
 
 use rustapi_core::{
     middleware::{BoxedNext, MiddlewareLayer},
-    Request, Response,
+    Request, Response, ResponseBody,
 };
 use std::future::Future;
 use std::pin::Pin;
@@ -208,7 +208,7 @@ impl MiddlewareLayer for CircuitBreakerLayer {
                             return http::Response::builder()
                                 .status(503)
                                 .header("Content-Type", "application/json")
-                                .body(http_body_util::Full::new(bytes::Bytes::from(
+                                .body(ResponseBody::Full(http_body_util::Full::new(bytes::Bytes::from(
                                     serde_json::json!({
                                         "error": {
                                             "type": "service_unavailable",
@@ -315,7 +315,7 @@ mod tests {
             Box::pin(async {
                 http::Response::builder()
                     .status(500)
-                    .body(http_body_util::Full::new(bytes::Bytes::from("Error")))
+                    .body(ResponseBody::Full(http_body_util::Full::new(bytes::Bytes::from("Error"))))
                     .unwrap()
             }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
         });
@@ -360,7 +360,7 @@ mod tests {
             Box::pin(async {
                 http::Response::builder()
                     .status(500)
-                    .body(http_body_util::Full::new(bytes::Bytes::from("Error")))
+                    .body(ResponseBody::Full(http_body_util::Full::new(bytes::Bytes::from("Error"))))
                     .unwrap()
             }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
         });
@@ -385,7 +385,7 @@ mod tests {
             Box::pin(async {
                 http::Response::builder()
                     .status(200)
-                    .body(http_body_util::Full::new(bytes::Bytes::from("OK")))
+                    .body(ResponseBody::Full(http_body_util::Full::new(bytes::Bytes::from("OK"))))
                     .unwrap()
             }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
         });

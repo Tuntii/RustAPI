@@ -25,7 +25,7 @@
 
 use rustapi_core::{
     middleware::{BoxedNext, MiddlewareLayer},
-    Request, Response,
+    Request, Response, ResponseBody,
 };
 use std::collections::HashSet;
 use std::future::Future;
@@ -190,7 +190,9 @@ fn create_unauthorized_response(message: &str) -> Response {
     http::Response::builder()
         .status(401)
         .header("Content-Type", "application/json")
-        .body(http_body_util::Full::new(bytes::Bytes::from(body)))
+        .body(ResponseBody::Full(http_body_util::Full::new(
+            bytes::Bytes::from(body),
+        )))
         .unwrap()
 }
 
@@ -210,7 +212,9 @@ mod tests {
             Box::pin(async {
                 http::Response::builder()
                     .status(200)
-                    .body(http_body_util::Full::new(bytes::Bytes::from("OK")))
+                    .body(ResponseBody::Full(http_body_util::Full::new(
+                        bytes::Bytes::from("OK"),
+                    )))
                     .unwrap()
             }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
         });
@@ -237,7 +241,9 @@ mod tests {
             Box::pin(async {
                 http::Response::builder()
                     .status(200)
-                    .body(http_body_util::Full::new(bytes::Bytes::from("OK")))
+                    .body(ResponseBody::Full(http_body_util::Full::new(
+                        bytes::Bytes::from("OK"),
+                    )))
                     .unwrap()
             }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
         });
@@ -264,7 +270,9 @@ mod tests {
             Box::pin(async {
                 http::Response::builder()
                     .status(200)
-                    .body(http_body_util::Full::new(bytes::Bytes::from("OK")))
+                    .body(ResponseBody::Full(http_body_util::Full::new(
+                        bytes::Bytes::from("OK"),
+                    )))
                     .unwrap()
             }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
         });
@@ -290,7 +298,9 @@ mod tests {
             Box::pin(async {
                 http::Response::builder()
                     .status(200)
-                    .body(http_body_util::Full::new(bytes::Bytes::from("OK")))
+                    .body(ResponseBody::Full(http_body_util::Full::new(
+                        bytes::Bytes::from("OK"),
+                    )))
                     .unwrap()
             }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
         });
@@ -316,7 +326,9 @@ mod tests {
             Box::pin(async {
                 http::Response::builder()
                     .status(200)
-                    .body(http_body_util::Full::new(bytes::Bytes::from("OK")))
+                    .body(ResponseBody::Full(http_body_util::Full::new(
+                        bytes::Bytes::from("OK"),
+                    )))
                     .unwrap()
             }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
         });

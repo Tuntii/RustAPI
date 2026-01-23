@@ -25,7 +25,7 @@ use http::StatusCode;
 use http_body_util::Full;
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use rustapi_core::middleware::{BoxedNext, MiddlewareLayer};
-use rustapi_core::{ApiError, FromRequestParts, Request, Response, Result};
+use rustapi_core::{ApiError, FromRequestParts, Request, Response, ResponseBody, Result};
 use rustapi_openapi::{Operation, OperationModifier};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
@@ -257,7 +257,7 @@ fn create_unauthorized_response(message: &str) -> Response {
     http::Response::builder()
         .status(StatusCode::UNAUTHORIZED)
         .header(http::header::CONTENT_TYPE, "application/json")
-        .body(Full::new(Bytes::from(body)))
+        .body(ResponseBody::Full(Full::new(Bytes::from(body))))
         .unwrap()
 }
 
@@ -472,7 +472,7 @@ mod tests {
             Box::pin(async {
                 http::Response::builder()
                     .status(StatusCode::OK)
-                    .body(Full::new(Bytes::from("success")))
+                    .body(ResponseBody::Full(Full::new(Bytes::from("success"))))
                     .unwrap()
             }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
         })
@@ -592,7 +592,7 @@ mod tests {
 
                         http::Response::builder()
                             .status(StatusCode::OK)
-                            .body(Full::new(Bytes::from("success")))
+                            .body(ResponseBody::Full(Full::new(Bytes::from("success"))))
                             .unwrap()
                     }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
                 });

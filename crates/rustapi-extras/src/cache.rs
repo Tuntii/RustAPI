@@ -8,7 +8,7 @@ use dashmap::DashMap;
 use http_body_util::BodyExt;
 use rustapi_core::{
     middleware::{BoxedNext, MiddlewareLayer},
-    Request, Response,
+    Request, Response, ResponseBody,
 };
 use std::future::Future;
 use std::pin::Pin;
@@ -115,7 +115,7 @@ impl MiddlewareLayer for CacheLayer {
                     builder = builder.header("X-Cache", "HIT");
 
                     return builder
-                        .body(http_body_util::Full::new(entry.body.clone()))
+                        .body(ResponseBody::Full(http_body_util::Full::new(entry.body.clone())))
                         .unwrap();
                 } else {
                     // Expired
@@ -146,7 +146,7 @@ impl MiddlewareLayer for CacheLayer {
                         store.insert(key, cached);
 
                         let mut response =
-                            http::Response::from_parts(parts, http_body_util::Full::new(bytes));
+                            http::Response::from_parts(parts, ResponseBody::Full(http_body_util::Full::new(bytes)));
                         response
                             .headers_mut()
                             .insert("X-Cache", "MISS".parse().unwrap());
@@ -155,7 +155,7 @@ impl MiddlewareLayer for CacheLayer {
                     Err(_) => {
                         return http::Response::builder()
                             .status(500)
-                            .body(http_body_util::Full::new(Bytes::from(
+                            .body(ResponseBody::Full(http_body_util::Full::new(Bytes::from(
                                 "Error buffering response for cache",
                             )))
                             .unwrap();
