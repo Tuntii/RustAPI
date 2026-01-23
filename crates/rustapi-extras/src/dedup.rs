@@ -106,7 +106,7 @@ impl MiddlewareLayer for DedupLayer {
                                 }
                             })
                             .to_string(),
-                        )))
+                        ))))
                         .unwrap();
                 } else {
                     // Expired, remove
