@@ -208,14 +208,16 @@ impl MiddlewareLayer for CircuitBreakerLayer {
                             return http::Response::builder()
                                 .status(503)
                                 .header("Content-Type", "application/json")
-                                .body(ResponseBody::Full(http_body_util::Full::new(bytes::Bytes::from(
-                                    serde_json::json!({
-                                        "error": {
-                                            "type": "service_unavailable",
-                                            "message": "Circuit breaker is OPEN"
-                                        }
-                                    })
-                                    .to_string(),
+                                .body(ResponseBody::Full(http_body_util::Full::new(
+                                    bytes::Bytes::from(
+                                        serde_json::json!({
+                                            "error": {
+                                                "type": "service_unavailable",
+                                                "message": "Circuit breaker is OPEN"
+                                            }
+                                        })
+                                        .to_string(),
+                                    ),
                                 )))
                                 .unwrap();
                         }
@@ -315,7 +317,9 @@ mod tests {
             Box::pin(async {
                 http::Response::builder()
                     .status(500)
-                    .body(ResponseBody::Full(http_body_util::Full::new(bytes::Bytes::from("Error"))))
+                    .body(ResponseBody::Full(http_body_util::Full::new(
+                        bytes::Bytes::from("Error"),
+                    )))
                     .unwrap()
             }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
         });
@@ -360,7 +364,9 @@ mod tests {
             Box::pin(async {
                 http::Response::builder()
                     .status(500)
-                    .body(ResponseBody::Full(http_body_util::Full::new(bytes::Bytes::from("Error"))))
+                    .body(ResponseBody::Full(http_body_util::Full::new(
+                        bytes::Bytes::from("Error"),
+                    )))
                     .unwrap()
             }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
         });
@@ -385,7 +391,9 @@ mod tests {
             Box::pin(async {
                 http::Response::builder()
                     .status(200)
-                    .body(ResponseBody::Full(http_body_util::Full::new(bytes::Bytes::from("OK"))))
+                    .body(ResponseBody::Full(http_body_util::Full::new(
+                        bytes::Bytes::from("OK"),
+                    )))
                     .unwrap()
             }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
         });
