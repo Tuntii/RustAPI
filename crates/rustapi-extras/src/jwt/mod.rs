@@ -513,7 +513,7 @@ mod tests {
 
                 // Test 1: Token should be accepted with correct secret
                 {
-                    let mut stack = setup_stack::<TestClaims>(&correct_secret);
+                    let stack = setup_stack::<TestClaims>(&correct_secret);
                     let handler = dummy_handler();
 
                     let request = create_test_request(Some(&format!("Bearer {}", token)));
@@ -528,7 +528,7 @@ mod tests {
 
                 // Test 2: Token should be rejected with wrong secret
                 {
-                    let mut stack = setup_stack::<TestClaims>(&wrong_secret);
+                    let stack = setup_stack::<TestClaims>(&wrong_secret);
                     let handler = dummy_handler();
 
                     let request = create_test_request(Some(&format!("Bearer {}", token)));
@@ -576,7 +576,7 @@ mod tests {
                     .expect("Failed to create token");
 
                 // Set up middleware stack
-                let mut stack = setup_stack::<TestClaims>(&secret);
+                let stack = setup_stack::<TestClaims>(&secret);
 
                 // Track extracted claims
                 let extracted_claims = Arc::new(std::sync::Mutex::new(None::<TestClaims>));
@@ -643,7 +643,7 @@ mod tests {
         ) {
             let rt = tokio::runtime::Runtime::new().unwrap();
             let result: std::result::Result<(), TestCaseError> = rt.block_on(async {
-                let mut stack = setup_stack::<TestClaims>(&secret);
+                let stack = setup_stack::<TestClaims>(&secret);
 
                 // Generate different types of invalid tokens
                 let invalid_token = match invalid_token_type {
@@ -724,7 +724,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_missing_authorization_header() {
-        let mut stack = setup_stack::<TestClaims>("secret");
+        let stack = setup_stack::<TestClaims>("secret");
         let handler = dummy_handler();
 
         let request = create_test_request(None);
@@ -735,7 +735,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_invalid_authorization_format() {
-        let mut stack = setup_stack::<TestClaims>("secret");
+        let stack = setup_stack::<TestClaims>("secret");
         let handler = dummy_handler();
 
         // Test with "Basic" auth instead of "Bearer"

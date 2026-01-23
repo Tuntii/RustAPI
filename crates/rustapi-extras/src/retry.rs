@@ -217,6 +217,7 @@ impl MiddlewareLayer for RetryLayer {
 mod tests {
     use super::*;
     use bytes::Bytes;
+    use rustapi_core::ResponseBody;
     use std::sync::atomic::{AtomicU32, Ordering};
     use std::sync::Arc;
 
@@ -237,7 +238,7 @@ mod tests {
 
                 http::Response::builder()
                     .status(status)
-                    .body(http_body_util::Full::new(bytes::Bytes::from("OK")))
+                    .body(ResponseBody::new(Bytes::from("OK")))
                     .unwrap()
             }) as Pin<Box<dyn Future<Output = Response> + Send + 'static>>
         });
