@@ -1441,12 +1441,14 @@ pub fn derive_validate(input: TokenStream) -> TokenStream {
     };
 
     // Generate the Validatable impl for rustapi-core integration (exposed via rustapi-rs)
+    // We use ::rustapi_core path because this macro is used in crates that might not depend on rustapi-rs directly
+    // (like rustapi-validate tests), but usually have access to rustapi-core (e.g. via dev-dependencies).
     let validatable_impl = quote! {
-        impl #impl_generics ::rustapi_rs::validation::Validatable for #name #ty_generics #where_clause {
-            fn do_validate(&self) -> Result<(), ::rustapi_rs::ApiError> {
+        impl #impl_generics ::rustapi_core::validation::Validatable for #name #ty_generics #where_clause {
+            fn do_validate(&self) -> Result<(), ::rustapi_core::ApiError> {
                 match ::rustapi_validate::v2::Validate::validate(self) {
                     Ok(_) => Ok(()),
-                    Err(e) => Err(::rustapi_rs::validation::convert_v2_errors(e)),
+                    Err(e) => Err(::rustapi_core::validation::convert_v2_errors(e)),
                 }
             }
         }

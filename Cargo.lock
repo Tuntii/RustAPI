@@ -3541,6 +3541,7 @@ dependencies = [
  "proptest",
  "regex",
  "rust-i18n",
+ "rustapi-core",
  "rustapi-macros",
  "serde",
  "serde_json",
