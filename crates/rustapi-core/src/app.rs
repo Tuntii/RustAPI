@@ -1176,10 +1176,8 @@ fn infer_path_param_schema(name: &str) -> rustapi_openapi::SchemaRef {
     }
 
     // Integer patterns
-    let is_integer = lower == "id"
-        || lower.ends_with("_id")
-        || (lower.ends_with("id") && lower.len() > 2) // e.g., "userId", but not "uuid"
-        || lower == "page"
+    // Integer patterns
+    let is_integer = lower == "page"
         || lower == "limit"
         || lower == "offset"
         || lower == "count"
@@ -1276,10 +1274,6 @@ mod tests {
 
         // Test common integer patterns
         let int_params = [
-            "id",
-            "user_id",
-            "userId",
-            "postId",
             "page",
             "limit",
             "offset",
@@ -1342,7 +1336,9 @@ mod tests {
         use super::infer_path_param_schema;
 
         // Test string (default) patterns
-        let string_params = ["name", "slug", "code", "token", "username"];
+        let string_params = [
+            "name", "slug", "code", "token", "username", "id", "user_id", "userId", "postId",
+        ];
 
         for name in string_params {
             let schema = infer_path_param_schema(name);
