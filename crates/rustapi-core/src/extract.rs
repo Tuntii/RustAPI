@@ -266,9 +266,7 @@ impl<T: DeserializeOwned + Validatable + Send> FromRequest for ValidatedJson<T> 
         let value: T = json::from_slice(&body)?;
 
         // Then, validate it using the unified Validatable trait
-        if let Err(e) = value.do_validate() {
-            return Err(e);
-        }
+        value.do_validate()?;
 
         Ok(ValidatedJson(value))
     }
