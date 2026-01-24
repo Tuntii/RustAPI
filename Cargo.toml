@@ -21,7 +21,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.191"
+version = "0.1.194"
 edition = "2021"
 authors = ["RustAPI Contributors"]
 license = "MIT OR Apache-2.0"
@@ -118,4 +118,5 @@ h3-quinn = "0.0.10"
 rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }
 rustls-pemfile = "2.2"
 rcgen = "0.13"
+
 
