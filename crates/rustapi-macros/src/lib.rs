@@ -155,6 +155,88 @@ fn collect_handler_schema_types(input: &ItemFn) -> Vec<Type> {
         .collect()
 }
 
+/// Collect path parameters and their inferred types from function arguments
+///
+/// Returns a list of (name, schema_type) tuples.
+fn collect_path_params(input: &ItemFn) -> Vec<(String, String)> {
+    let mut params = Vec::new();
+
+    for arg in &input.sig.inputs {
+        if let FnArg::Typed(pat_ty) = arg {
+            // Check if the argument is a Path extractor
+            if let Type::Path(tp) = &*pat_ty.ty {
+                if let Some(seg) = tp.path.segments.last() {
+                    if seg.ident == "Path" {
+                        // Extract the inner type T from Path<T>
+                        if let PathArguments::AngleBracketed(args) = &seg.arguments {
+                            if let Some(GenericArgument::Type(inner_ty)) = args.args.first() {
+                                // Map inner type to schema string
+                                if let Some(schema_type) = map_type_to_schema(inner_ty) {
+                                    // Extract the parameter name
+                                    // We handle the pattern `Path(name)` or `name: Path<T>`
+                                    // For `Path(id): Path<Uuid>`, the variable binding is inside the tuple struct pattern?
+                                    // No, wait. `Path(id): Path<Uuid>` is NOT valid Rust syntax for function arguments!
+                                    // Extractor destructuring uses `Path(id)` as the PATTERN.
+                                    // e.g. `fn handler(Path(id): Path<Uuid>)`
+
+                                    if let Some(name) = extract_param_name(&pat_ty.pat) {
+                                        params.push((name, schema_type));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    params
+}
+
+/// Extract parameter name from pattern
+///
+/// Handles `Path(id)` -> "id"
+/// Handles `id` -> "id" (if simple binding)
+fn extract_param_name(pat: &syn::Pat) -> Option<String> {
+    match pat {
+        syn::Pat::Ident(ident) => Some(ident.ident.to_string()),
+        syn::Pat::TupleStruct(ts) => {
+            // Handle Path(id) destructuring
+            // We assume the first field is the parameter we want if it's a simple identifier
+            if let Some(first) = ts.elems.first() {
+                extract_param_name(first)
+            } else {
+                None
+            }
+        }
+        _ => None, // Complex patterns not supported for auto-detection yet
+    }
+}
+
+/// Map Rust type to OpenAPI schema type string
+fn map_type_to_schema(ty: &Type) -> Option<String> {
+    match ty {
+        Type::Path(tp) => {
+            if let Some(seg) = tp.path.segments.last() {
+                let ident = seg.ident.to_string();
+                match ident.as_str() {
+                    "Uuid" => Some("uuid".to_string()),
+                    "String" | "str" => Some("string".to_string()),
+                    "bool" => Some("boolean".to_string()),
+                    "i8" | "i16" | "i32" | "i64" | "isize" | "u8" | "u16" | "u32" | "u64"
+                    | "usize" => Some("integer".to_string()),
+                    "f32" | "f64" => Some("number".to_string()),
+                    _ => None,
+                }
+            } else {
+                None
+            }
+        }
+        _ => None,
+    }
+}
+
 /// Check if RUSTAPI_DEBUG is enabled at compile time
 fn is_debug_enabled() -> bool {
     std::env::var("RUSTAPI_DEBUG")
@@ -378,8 +460,16 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
         _ => quote!(::rustapi_rs::get_route),
     };
 
+    // Auto-detect path parameters from function arguments
+    let auto_params = collect_path_params(&input);
+
     // Extract metadata from attributes to chain builder methods
     let mut chained_calls = quote!();
+
+    // Add auto-detected parameters first (can be overridden by attributes)
+    for (name, schema) in auto_params {
+        chained_calls = quote! { #chained_calls .param(#name, #schema) };
+    }
 
     for attr in fn_attrs {
         // Check for tag, summary, description, param
@@ -1350,9 +1440,24 @@ pub fn derive_validate(input: TokenStream) -> TokenStream {
         }
     };
 
+    // Generate the Validatable impl for rustapi-core integration (exposed via rustapi-rs)
+    // We use ::rustapi_core path because this macro is used in crates that might not depend on rustapi-rs directly
+    // (like rustapi-validate tests), but usually have access to rustapi-core (e.g. via dev-dependencies).
+    let validatable_impl = quote! {
+        impl #impl_generics ::rustapi_core::validation::Validatable for #name #ty_generics #where_clause {
+            fn do_validate(&self) -> Result<(), ::rustapi_core::ApiError> {
+                match ::rustapi_validate::v2::Validate::validate(self) {
+                    Ok(_) => Ok(()),
+                    Err(e) => Err(::rustapi_core::validation::convert_v2_errors(e)),
+                }
+            }
+        }
+    };
+
     let expanded = quote! {
         #validate_impl
         #async_validate_impl
+        #validatable_impl
     };
 
     debug_output("Validate derive", &expanded);

@@ -76,6 +76,7 @@ pub mod sse;
 pub mod static_files;
 pub mod stream;
 pub mod typed_path;
+pub mod validation;
 #[macro_use]
 mod tracing_macros;
 
@@ -97,8 +98,8 @@ pub use error::{get_environment, ApiError, Environment, FieldError, Result};
 #[cfg(feature = "cookies")]
 pub use extract::Cookies;
 pub use extract::{
-    Body, BodyStream, ClientIp, Extension, FromRequest, FromRequestParts, HeaderValue, Headers,
-    Json, Path, Query, State, Typed, ValidatedJson,
+    AsyncValidatedJson, Body, BodyStream, ClientIp, Extension, FromRequest, FromRequestParts,
+    HeaderValue, Headers, Json, Path, Query, State, Typed, ValidatedJson,
 };
 pub use handler::{
     delete_route, get_route, patch_route, post_route, put_route, Handler, HandlerService, Route,
@@ -125,3 +126,4 @@ pub use sse::{sse_response, KeepAlive, Sse, SseEvent};
 pub use static_files::{serve_dir, StaticFile, StaticFileConfig};
 pub use stream::{StreamBody, StreamingBody, StreamingConfig};
 pub use typed_path::TypedPath;
+pub use validation::Validatable;
