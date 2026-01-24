@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-7923d765.js";
+            window.path_to_searchindex_js = "../searchindex-7f96d28f.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-8f013d36.js"></script>
@@ -182,12 +182,23 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="rustapi-validate-the-gatekeeper"><a class="header" href="#rustapi-validate-the-gatekeeper">rustapi-validate: The Gatekeeper</a></h1>
-<p>Data validation should happen at the edges of your system, before invalid data ever reaches your business logic. <code>rustapi-validate</code> integrates the <code>validator</code> crate directly into RustAPI’s extraction flow.</p>
-<h2 id="the-validate-trait"><a class="header" href="#the-validate-trait">The <code>Validate</code> Trait</a></h2>
-<p>First, define your rules using attributes on your struct.</p>
+<p>Data validation should happen at the edges of your system, before invalid data ever reaches your business logic. <code>rustapi-validate</code> provides a robust, unified validation engine supporting both synchronous and asynchronous rules.</p>
+<h2 id="the-unified-validation-system"><a class="header" href="#the-unified-validation-system">The Unified Validation System</a></h2>
+<p>RustAPI (v0.1.15+) introduces a unified validation system that supports:</p>
+<ol>
+<li><strong>Legacy Validator</strong>: The classic <code>validator</code> crate (via <code>#[derive(validator::Validate)]</code>).</li>
+<li><strong>V2 Engine</strong>: The new native engine (via <code>#[derive(rustapi_macros::Validate)]</code>) which properly supports async usage.</li>
+<li><strong>Async Validation</strong>: Database checks, API calls, and other IO-bound validation rules.</li>
+</ol>
+<h2 id="synchronous-validation"><a class="header" href="#synchronous-validation">Synchronous Validation</a></h2>
+<p>For standard validation rules (length, email, range, regex), use the <code>Validate</code> macro.</p>
+<blockquote class="blockquote-tag blockquote-tag-tip">
+<p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z"></path></svg>Tip</p>
+<p>Use <code>rustapi_macros::Validate</code> for new code to unlock async features.</p>
+</blockquote>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use rustapi_validate::Validate;
+</span>use rustapi_macros::Validate; // Logic from V2 engine
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize, Validate)]
@@ -202,47 +213,95 @@ pub struct SignupRequest {
     pub age: u8,
 }
 <span class="boring">}</span></code></pre>
-<h2 id="the-validatedjson-extractor"><a class="header" href="#the-validatedjson-extractor">The <code>ValidatedJson</code> Extractor</a></h2>
-<p>Instead of using the standard <code>Json&lt;T&gt;</code>, use <code>ValidatedJson&lt;T&gt;</code>.</p>
+<h3 id="the-validatedjson-extractor"><a class="header" href="#the-validatedjson-extractor">The <code>ValidatedJson</code> Extractor</a></h3>
+<p>For synchronous validation, use the <code>ValidatedJson&lt;T&gt;</code> extractor.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use rustapi_validate::ValidatedJson;
+</span>use rustapi_rs::prelude::*;
 
 async fn signup(
     ValidatedJson(payload): ValidatedJson&lt;SignupRequest&gt;
 ) -&gt; impl IntoResponse {
-    // If we reach here, 'payload' is guaranteed to be valid!
-    // No need to check if email includes '@' or age &gt;= 18.
-    
+    // payload is guaranteed to be valid here
     process_signup(payload)
 }
 <span class="boring">}</span></code></pre>
-<h2 id="automatic-error-handling"><a class="header" href="#automatic-error-handling">Automatic Error Handling</a></h2>
-<p>If validation fails, <code>ValidatedJson</code> automatically returns a <code>400 Bad Request</code> response with a structured JSON error body detailing exactly which fields failed and why.</p>
-<pre><code class="language-json">{
-  "error": "Validation Failed",
-  "fields": {
-    "email": ["Invalid email format"],
-    "age": ["Must be at least 18"]
-  }
-}
-</code></pre>
-<h2 id="custom-validation-logic"><a class="header" href="#custom-validation-logic">Custom Validation logic</a></h2>
-<p>You can also write custom validation functions.</p>
+<h2 id="asynchronous-validation"><a class="header" href="#asynchronous-validation">Asynchronous Validation</a></h2>
+<p>When you need to check data against a database (e.g., “is this email unique?”) or an external service, use Async Validation.</p>
+<h3 id="async-rules"><a class="header" href="#async-rules">Async Rules</a></h3>
+<p>The V2 engine supports async rules directly in the struct definition.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>#[derive(Validate)]
-struct Request {
-    #[validate(custom = "validate_premium_status")]
-    code: String,
+</span>use rustapi_macros::Validate;
+use rustapi_validate::v2::{ValidationContext, RuleError};
+
+#[derive(Debug, Deserialize, Validate)]
+pub struct CreateUserRequest {
+    // Built-in async rule (requires database integration)
+    #[validate(async_unique(table = "users", column = "email"))]
+    pub email: String,
+
+    // Custom async function
+    #[validate(custom_async = "check_username_availability")]
+    pub username: String,
 }
 
-fn validate_premium_status(code: &amp;str) -&gt; Result&lt;(), rustapi_validate::ValidationError&gt; {
-    if !code.starts_with("PREMIUM_") {
-        return Err(rustapi_validate::ValidationError::new("Invalid premium code"));
+// Custom async validator function
+async fn check_username_availability(
+    username: &amp;String,
+    _ctx: &amp;ValidationContext
+) -&gt; Result&lt;(), RuleError&gt; {
+    if username == "admin" {
+        return Err(RuleError::new("reserved", "This username is reserved"));
     }
+    // Perform DB check...
     Ok(())
 }
+<span class="boring">}</span></code></pre>
+<h3 id="the-asyncvalidatedjson-extractor"><a class="header" href="#the-asyncvalidatedjson-extractor">The <code>AsyncValidatedJson</code> Extractor</a></h3>
+<p>For types with async rules, you <strong>must</strong> use <code>AsyncValidatedJson</code>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+
+async fn create_user(
+    AsyncValidatedJson(payload): AsyncValidatedJson&lt;CreateUserRequest&gt;
+) -&gt; impl IntoResponse {
+    // payload is valid AND unique in database
+    create_user_in_db(payload).await
+}
+<span class="boring">}</span></code></pre>
+<h2 id="error-handling"><a class="header" href="#error-handling">Error Handling</a></h2>
+<p>Whether you use synchronous or asynchronous validation, errors are normalized into a standard <code>ApiError</code> format (HTTP 422 Unprocessable Entity).</p>
+<pre><code class="language-json">{
+  "error": {
+    "type": "validation_error",
+    "message": "Request validation failed",
+    "fields": [
+      {
+        "field": "email",
+        "code": "email",
+        "message": "Invalid email format"
+      },
+      {
+        "field": "username",
+        "code": "reserved",
+        "message": "This username is reserved"
+      }
+    ]
+  },
+  "error_id": "err_a1b2..."
+}
+</code></pre>
+<h2 id="backward-compatibility"><a class="header" href="#backward-compatibility">Backward Compatibility</a></h2>
+<p>The system is fully backward compatible. You can continue using <code>validator::Validate</code> on your structs, and <code>ValidatedJson</code> will accept them automatically via the unified <code>Validatable</code> trait.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Legacy code still works!
+#[derive(validator::Validate)]
+struct OldStruct { ... }
+
+async fn handler(ValidatedJson(body): ValidatedJson&lt;OldStruct&gt;) { ... }
 <span class="boring">}</span></code></pre>
 
                     </main>
