@@ -39,8 +39,12 @@ doc-comment = "0.3"
 uuid = { workspace = true, features = ["serde", "v4"] }
 
 [features]
-default = ["swagger-ui"]
+default = ["swagger-ui", "tracing"]
 swagger-ui = ["rustapi-core/swagger-ui", "rustapi-openapi/swagger-ui"]
+
+# Performance features
+simd-json = ["rustapi-core/simd-json"]
+tracing = ["rustapi-core/tracing"]
 
 # Compression middleware
 compression = ["rustapi-core/compression"]

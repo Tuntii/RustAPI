@@ -17,7 +17,6 @@ use std::future::Future;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tokio::net::TcpListener;
-use tokio::task::JoinSet;
 use tracing::{error, info};
 
 /// Internal server struct
@@ -55,11 +54,17 @@ impl Server {
 
         info!("🚀 RustAPI server running on http://{}", addr);
 
-        let mut connections = JoinSet::new();
+        // Arc-wrap self for sharing across tasks
+        let router = self.router;
+        let layers = self.layers;
+        let interceptors = self.interceptors;
+
         tokio::pin!(signal);
 
         loop {
             tokio::select! {
+                biased; // Prioritize accept over shutdown for better throughput
+                
                 accept_result = listener.accept() => {
                     let (stream, remote_addr) = match accept_result {
                         Ok(v) => v,
@@ -70,11 +75,12 @@ impl Server {
                     };
 
                     let io = TokioIo::new(stream);
-                    let router = self.router.clone();
-                    let layers = self.layers.clone();
-                    let interceptors = self.interceptors.clone();
+                    let router = router.clone();
+                    let layers = layers.clone();
+                    let interceptors = interceptors.clone();
 
-                    connections.spawn(async move {
+                    // Spawn connection handler as independent task for better parallelism
+                    tokio::spawn(async move {
                         let service = service_fn(move |req: hyper::Request<Incoming>| {
                             let router = router.clone();
                             let layers = layers.clone();
@@ -87,24 +93,24 @@ impl Server {
                         });
 
                         if let Err(err) = http1::Builder::new()
+                            .keep_alive(true)
                             .serve_connection(io, service)
                             .with_upgrades()
                             .await
                         {
-                            error!("Connection error: {}", err);
+                            // Only log actual errors, not client disconnects
+                            if !err.is_incomplete_message() {
+                                error!("Connection error: {}", err);
+                            }
                         }
                     });
                 }
                 _ = &mut signal => {
-                    info!("Shutdown signal received, draining connections...");
+                    info!("Shutdown signal received");
                     break;
                 }
             }
         }
-
-        // Wait for all connections to finish
-        while (connections.join_next().await).is_some() {}
-        info!("Server shutdown complete");
 
         Ok(())
     }
@@ -187,25 +193,36 @@ async fn handle_request(
 }
 
 /// Log request completion
+#[inline(always)]
 fn log_request(method: &http::Method, path: &str, status: StatusCode, start: std::time::Instant) {
-    let elapsed = start.elapsed();
+    // Skip logging in release builds for performance, unless tracing feature is enabled
+    #[cfg(feature = "tracing")]
+    {
+        let elapsed = start.elapsed();
 
-    // 1xx (Informational), 2xx (Success), 3xx (Redirection) are considered successful requests
-    if status.is_success() || status.is_redirection() || status.is_informational() {
-        info!(
-            method = %method,
-            path = %path,
-            status = %status.as_u16(),
-            duration_ms = %elapsed.as_millis(),
-            "Request completed"
-        );
-    } else {
-        error!(
-            method = %method,
-            path = %path,
-            status = %status.as_u16(),
-            duration_ms = %elapsed.as_millis(),
-            "Request failed"
-        );
+        // 1xx (Informational), 2xx (Success), 3xx (Redirection) are considered successful requests
+        if status.is_success() || status.is_redirection() || status.is_informational() {
+            info!(
+                method = %method,
+                path = %path,
+                status = %status.as_u16(),
+                duration_ms = %elapsed.as_millis(),
+                "Request completed"
+            );
+        } else {
+            error!(
+                method = %method,
+                path = %path,
+                status = %status.as_u16(),
+                duration_ms = %elapsed.as_millis(),
+                "Request failed"
+            );
+        }
+    }
+    
+    // Suppress unused variable warnings when tracing is disabled
+    #[cfg(not(feature = "tracing"))]
+    {
+        let _ = (method, path, status, start);
     }
 }

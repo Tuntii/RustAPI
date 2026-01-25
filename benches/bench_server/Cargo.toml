@@ -9,7 +9,11 @@ name = "bench-server"
 path = "src/main.rs"
 
 [dependencies]
-rustapi-rs.workspace = true
+# RustAPI with minimum features for benchmarking:
+# - No swagger-ui overhead
+# - No tracing overhead
+# - simd-json for faster JSON parsing
+rustapi-rs = { workspace = true, default-features = false, features = ["simd-json"] }
 tokio.workspace = true
 serde.workspace = true
 serde_json.workspace = true

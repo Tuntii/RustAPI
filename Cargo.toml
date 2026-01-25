@@ -14,8 +14,9 @@ members = [
     "crates/rustapi-jobs",
     "crates/cargo-rustapi",
 
-
-
+    # Benchmark servers
+    "benches/bench_server",
+    "benches/actix_bench_server",
     "benches/toon_bench",
     "benches/rustapi_bench",
 ]
@@ -100,6 +101,7 @@ indicatif = "0.17"
 console = "0.15"
 
 # Internal crates
+rustapi-rs = { path = "crates/rustapi-rs", version = "0.1.188", default-features = false }
 rustapi-core = { path = "crates/rustapi-core", version = "0.1.188", default-features = false }
 rustapi-macros = { path = "crates/rustapi-macros", version = "0.1.188" }
 rustapi-validate = { path = "crates/rustapi-validate", version = "0.1.188" }
@@ -118,6 +120,29 @@ h3-quinn = "0.0.10"
 rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }
 rustls-pemfile = "2.2"
 rcgen = "0.13"
+
+# ============================================
+# Release Profile - Maximum Performance
+# ============================================
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = true
+debug = false
+
+# Benchmark Profile - Even more aggressive
+[profile.bench]
+inherits = "release"
+lto = "fat"
+codegen-units = 1
+
+# Release with debug symbols for profiling
+[profile.release-with-debug]
+inherits = "release"
+debug = true
+strip = false
 
 
 
