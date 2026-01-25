@@ -9,6 +9,7 @@
 
 - [Part II: Core Concepts](concepts/README.md)
     - [Handlers & Extractors](concepts/handlers.md)
+    - [System Overview](architecture/system_overview.md)
     - [Performance Philosophy](concepts/performance.md)
     - [Testing Strategy](concepts/testing.md)
 
