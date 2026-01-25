@@ -8,14 +8,6 @@
 
 use rustapi_rs::prelude::*;
 
-// ============================================
-// Pre-computed static responses for maximum performance
-// ============================================
-
-// Static JSON bytes - avoid allocation on every request
-static JSON_HELLO_BYTES: &[u8] = br#"{"message":"Hello, World!"}"#;
-static USER_RESPONSE_BYTES: &[u8] = br#"{"id":1,"name":"Test User","email":"test@example.com","created_at":"2024-01-01T00:00:00Z","is_active":true}"#;
-
 #[derive(Serialize, Schema)]
 struct HelloResponse {
     message: &'static str,
