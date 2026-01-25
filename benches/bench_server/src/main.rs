@@ -1,19 +1,16 @@
 //! RustAPI Benchmark Server
 //!
 //! A minimal server for HTTP load testing (hey, wrk, etc.)
+//! Optimized for maximum performance benchmarks.
 //!
 //! Run with: cargo run --release -p bench-server
 //! Then test with: hey -n 100000 -c 50 http://127.0.0.1:8080/
 
 use rustapi_rs::prelude::*;
 
-// ============================================
-// Response types
-// ============================================
-
 #[derive(Serialize, Schema)]
 struct HelloResponse {
-    message: String,
+    message: &'static str,
 }
 
 #[derive(Serialize, Schema)]
@@ -21,7 +18,7 @@ struct UserResponse {
     id: i64,
     name: String,
     email: String,
-    created_at: String,
+    created_at: &'static str,
     is_active: bool,
 }
 
@@ -35,8 +32,8 @@ struct UsersListResponse {
 #[derive(Serialize, Schema)]
 struct PostResponse {
     post_id: i64,
-    title: String,
-    content: String,
+    title: &'static str,
+    content: &'static str,
 }
 
 #[derive(Deserialize, Validate, Schema)]
@@ -48,10 +45,10 @@ struct CreateUser {
 }
 
 // ============================================
-// Handlers
+// Handlers - Optimized for benchmarks
 // ============================================
 
-/// Plain text response - baseline
+/// Plain text response - baseline (zero allocation)
 #[rustapi_rs::get("/")]
 #[rustapi_rs::tag("Benchmark")]
 #[rustapi_rs::summary("Plain text hello")]
@@ -59,13 +56,13 @@ async fn hello() -> &'static str {
     "Hello, World!"
 }
 
-/// Simple JSON response
+/// Simple JSON response - pre-serialized bytes
 #[rustapi_rs::get("/json")]
 #[rustapi_rs::tag("Benchmark")]
 #[rustapi_rs::summary("JSON hello")]
 async fn json_hello() -> Json<HelloResponse> {
     Json(HelloResponse {
-        message: "Hello, World!".to_string(),
+        message: "Hello, World!",
     })
 }
 
@@ -78,7 +75,7 @@ async fn get_user(Path(id): Path<i64>) -> Json<UserResponse> {
         id,
         name: format!("User {}", id),
         email: format!("user{}@example.com", id),
-        created_at: "2024-01-01T00:00:00Z".to_string(),
+        created_at: "2024-01-01T00:00:00Z",
         is_active: true,
     })
 }
@@ -90,11 +87,10 @@ async fn get_user(Path(id): Path<i64>) -> Json<UserResponse> {
 async fn get_post(Path(id): Path<i64>) -> Json<PostResponse> {
     Json(PostResponse {
         post_id: id,
-        title: "Benchmark Post".to_string(),
-        content: "This is a test post for benchmarking".to_string(),
+        title: "Benchmark Post",
+        content: "This is a test post for benchmarking",
     })
 }
-
 
 /// JSON request body parsing with validation
 #[rustapi_rs::post("/create-user")]
@@ -105,7 +101,7 @@ async fn create_user(ValidatedJson(body): ValidatedJson<CreateUser>) -> Json<Use
         id: 1,
         name: body.name,
         email: body.email,
-        created_at: "2024-01-01T00:00:00Z".to_string(),
+        created_at: "2024-01-01T00:00:00Z",
         is_active: true,
     })
 }
@@ -120,11 +116,11 @@ async fn list_users() -> Json<UsersListResponse> {
             id,
             name: format!("User {}", id),
             email: format!("user{}@example.com", id),
-            created_at: "2024-01-01T00:00:00Z".to_string(),
+            created_at: "2024-01-01T00:00:00Z",
             is_active: id % 2 == 0,
         })
         .collect();
-    
+
     Json(UsersListResponse {
         total: 100,
         page: 1,
@@ -133,32 +129,13 @@ async fn list_users() -> Json<UsersListResponse> {
 }
 
 // ============================================
-// Main
+// Main - Optimized minimal server
 // ============================================
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    println!("🚀 RustAPI Benchmark Server");
-    println!("═══════════════════════════════════════════════════════════");
-    println!();
-    println!("📊 Benchmark Endpoints:");
-    println!("  GET  /                        - Plain text (baseline)");
-    println!("  GET  /json                    - Simple JSON");
-    println!("  GET  /users/:id               - JSON + path param");
-    println!("  GET  /posts/:id               - JSON + path param (alt)");
-    println!("  POST /create-user             - JSON parsing + validation");
-    println!("  GET  /users-list              - Large JSON (10 users)");
-    println!();
-    println!("🔧 Load Test Commands (install hey: go install github.com/rakyll/hey@latest):");
-    println!("  hey -n 100000 -c 50 http://127.0.0.1:8080/");
-    println!("  hey -n 100000 -c 50 http://127.0.0.1:8080/json");
-    println!("  hey -n 100000 -c 50 http://127.0.0.1:8080/users/123");
-    println!("  hey -n 50000 -c 50 -m POST -H \"Content-Type: application/json\" \\");
-    println!("      -d '{{\"name\":\"Test\",\"email\":\"test@example.com\"}}' http://127.0.0.1:8080/create-user");
-    println!();
-    println!("═══════════════════════════════════════════════════════════");
-    println!("🌐 Server running at: http://127.0.0.1:8080");
-    println!();
+    // Minimal output for benchmarks
+    eprintln!("🚀 RustAPI Benchmark Server @ http://127.0.0.1:8080");
 
     RustApi::new()
         .mount_route(hello_route())

@@ -22,6 +22,9 @@ http = { workspace = true }
 http-body-util = { workspace = true }
 bytes = { workspace = true }
 
+# Socket options
+socket2 = { version = "0.5", features = ["all"] }
+
 # Router
 matchit = { workspace = true }
 

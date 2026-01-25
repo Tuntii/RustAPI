@@ -106,7 +106,7 @@ async fn list_users() -> impl Responder {
             is_active: id % 2 == 0,
         })
         .collect();
-    
+
     HttpResponse::Ok().json(UsersListResponse {
         total: 100,
         page: 1,
