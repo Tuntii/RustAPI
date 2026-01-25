@@ -64,6 +64,15 @@ pub fn from_slice_mut<T: DeserializeOwned>(slice: &mut [u8]) -> Result<T, JsonEr
 /// Serialize a value to a JSON byte vector.
 ///
 /// Uses pre-allocated buffer with estimated capacity for better performance.
+#[cfg(feature = "simd-json")]
+pub fn to_vec<T: Serialize>(value: &T) -> Result<Vec<u8>, JsonError> {
+    simd_json::to_vec(value).map_err(JsonError::SimdJson)
+}
+
+/// Serialize a value to a JSON byte vector.
+///
+/// Uses pre-allocated buffer with estimated capacity for better performance.
+#[cfg(not(feature = "simd-json"))]
 pub fn to_vec<T: Serialize>(value: &T) -> Result<Vec<u8>, JsonError> {
     serde_json::to_vec(value).map_err(JsonError::SerdeJson)
 }
@@ -72,6 +81,21 @@ pub fn to_vec<T: Serialize>(value: &T) -> Result<Vec<u8>, JsonError> {
 ///
 /// Use this when you have a good estimate of the output size to avoid
 /// reallocations.
+#[cfg(feature = "simd-json")]
+pub fn to_vec_with_capacity<T: Serialize>(
+    value: &T,
+    capacity: usize,
+) -> Result<Vec<u8>, JsonError> {
+    let mut buf = Vec::with_capacity(capacity);
+    simd_json::to_writer(&mut buf, value).map_err(JsonError::SimdJson)?;
+    Ok(buf)
+}
+
+/// Serialize a value to a JSON byte vector with pre-allocated capacity.
+///
+/// Use this when you have a good estimate of the output size to avoid
+/// reallocations.
+#[cfg(not(feature = "simd-json"))]
 pub fn to_vec_with_capacity<T: Serialize>(
     value: &T,
     capacity: usize,

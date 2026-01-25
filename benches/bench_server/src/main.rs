@@ -100,7 +100,6 @@ async fn get_post(Path(id): Path<i64>) -> Json<PostResponse> {
     })
 }
 
-
 /// JSON request body parsing with validation
 #[rustapi_rs::post("/create-user")]
 #[rustapi_rs::tag("Benchmark")]
@@ -129,7 +128,7 @@ async fn list_users() -> Json<UsersListResponse> {
             is_active: id % 2 == 0,
         })
         .collect();
-    
+
     Json(UsersListResponse {
         total: 100,
         page: 1,

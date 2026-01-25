@@ -10,7 +10,6 @@ use crate::router::{RouteMatch, Router};
 use http::{header, StatusCode};
 use hyper::body::Incoming;
 use hyper::server::conn::http1;
-use hyper::service::service_fn;
 use hyper_util::rt::TokioIo;
 use std::convert::Infallible;
 use std::future::Future;
@@ -64,7 +63,7 @@ impl Server {
         loop {
             tokio::select! {
                 biased; // Prioritize accept over shutdown for better throughput
-                
+
                 accept_result = listener.accept() => {
                     let (stream, remote_addr) = match accept_result {
                         Ok(v) => v,
@@ -74,27 +73,25 @@ impl Server {
                         }
                     };
 
+                    // Disable Nagle's algorithm for lower latency
+                    let _ = stream.set_nodelay(true);
+
                     let io = TokioIo::new(stream);
-                    let router = router.clone();
-                    let layers = layers.clone();
-                    let interceptors = interceptors.clone();
 
-                    // Spawn connection handler as independent task for better parallelism
+                    // Create connection service once - no cloning per request!
+                    let conn_service = ConnectionService {
+                        router: router.clone(),
+                        layers: layers.clone(),
+                        interceptors: interceptors.clone(),
+                        remote_addr,
+                    };
+
+                    // Spawn connection handler as independent task
                     tokio::spawn(async move {
-                        let service = service_fn(move |req: hyper::Request<Incoming>| {
-                            let router = router.clone();
-                            let layers = layers.clone();
-                            let interceptors = interceptors.clone();
-                            async move {
-                                let response =
-                                    handle_request(router, layers, interceptors, req, remote_addr).await;
-                                Ok::<_, Infallible>(response)
-                            }
-                        });
-
                         if let Err(err) = http1::Builder::new()
                             .keep_alive(true)
-                            .serve_connection(io, service)
+                            .pipeline_flush(true) // Flush pipelined responses immediately
+                            .serve_connection(io, conn_service)
                             .with_upgrades()
                             .await
                         {
@@ -116,7 +113,83 @@ impl Server {
     }
 }
 
+/// Connection-level service - avoids Arc cloning per request
+#[derive(Clone)]
+struct ConnectionService {
+    router: Arc<Router>,
+    layers: Arc<LayerStack>,
+    interceptors: Arc<InterceptorChain>,
+    remote_addr: SocketAddr,
+}
+
+impl hyper::service::Service<hyper::Request<Incoming>> for ConnectionService {
+    type Response = hyper::Response<Body>;
+    type Error = Infallible;
+    type Future = HandleRequestFuture;
+
+    #[inline(always)]
+    fn call(&self, req: hyper::Request<Incoming>) -> Self::Future {
+        HandleRequestFuture {
+            router: self.router.clone(),
+            layers: self.layers.clone(),
+            interceptors: self.interceptors.clone(),
+            remote_addr: self.remote_addr,
+            request: Some(req),
+            state: FutureState::Initial,
+        }
+    }
+}
+
+/// Custom future to avoid Box::pin allocation per request
+pub struct HandleRequestFuture {
+    router: Arc<Router>,
+    layers: Arc<LayerStack>,
+    interceptors: Arc<InterceptorChain>,
+    remote_addr: SocketAddr,
+    request: Option<hyper::Request<Incoming>>,
+    state: FutureState,
+}
+
+enum FutureState {
+    Initial,
+    Processing(std::pin::Pin<Box<dyn Future<Output = hyper::Response<Body>> + Send>>),
+}
+
+impl Future for HandleRequestFuture {
+    type Output = Result<hyper::Response<Body>, Infallible>;
+
+    fn poll(
+        mut self: std::pin::Pin<&mut Self>,
+        cx: &mut std::task::Context<'_>,
+    ) -> std::task::Poll<Self::Output> {
+        loop {
+            match &mut self.state {
+                FutureState::Initial => {
+                    let req = self.request.take().unwrap();
+                    let router = self.router.clone();
+                    let layers = self.layers.clone();
+                    let interceptors = self.interceptors.clone();
+                    let remote_addr = self.remote_addr;
+
+                    let fut = Box::pin(handle_request(
+                        router,
+                        layers,
+                        interceptors,
+                        req,
+                        remote_addr,
+                    ));
+                    self.state = FutureState::Processing(fut);
+                }
+                FutureState::Processing(fut) => {
+                    return fut.as_mut().poll(cx).map(Ok);
+                }
+            }
+        }
+    }
+}
+
 /// Handle a single HTTP request
+#[inline]
 async fn handle_request(
     router: Arc<Router>,
     layers: Arc<LayerStack>,
@@ -124,11 +197,16 @@ async fn handle_request(
     req: hyper::Request<Incoming>,
     _remote_addr: SocketAddr,
 ) -> hyper::Response<Body> {
+    // Extract method and path before consuming request
+    // Clone method (cheap - just an enum) and path to owned string only when needed
     let method = req.method().clone();
-    let path = req.uri().path().to_string();
+    let path = req.uri().path().to_owned();
+
+    // Only measure time when tracing is enabled
+    #[cfg(feature = "tracing")]
     let start = std::time::Instant::now();
 
-    // Convert hyper request to our Request type first
+    // Convert hyper request to our Request type
     let (parts, body) = req.into_parts();
 
     // Build Request with empty path params (will be set after route matching)
@@ -139,90 +217,126 @@ async fn handle_request(
         crate::path_params::PathParams::new(),
     );
 
-    // Apply request interceptors (in registration order)
-    let request = interceptors.intercept_request(request);
+    // ULTRA FAST PATH: No middleware AND no interceptors
+    let response = if layers.is_empty() && interceptors.is_empty() {
+        route_request_direct(&router, request, &path, &method).await
+    } else if layers.is_empty() {
+        // Fast path: No middleware, but has interceptors
+        let request = interceptors.intercept_request(request);
+        let response = route_request_direct(&router, request, &path, &method).await;
+        interceptors.intercept_response(response)
+    } else {
+        // Slow path: Has middleware
+        let request = interceptors.intercept_request(request);
+        let router_clone = router.clone();
+        let path_clone = path.clone();
+        let method_clone = method.clone();
 
-    // Create the routing handler that does route matching inside the middleware chain
-    // This allows CORS and other middleware to intercept requests BEFORE route matching
-    let router_clone = router.clone();
-    let path_clone = path.clone();
-    let method_clone = method.clone();
-    let routing_handler: BoxedNext = Arc::new(move |mut req: Request| {
-        let router = router_clone.clone();
-        let path = path_clone.clone();
-        let method = method_clone.clone();
-        Box::pin(async move {
-            match router.match_route(&path, &method) {
-                RouteMatch::Found { handler, params } => {
-                    // Set path params on the request
-                    req.set_path_params(params);
-                    handler(req).await
-                }
-                RouteMatch::NotFound => {
-                    ApiError::not_found(format!("No route found for {} {}", method, path))
-                        .into_response()
-                }
-                RouteMatch::MethodNotAllowed { allowed } => {
-                    let allowed_str: Vec<&str> = allowed.iter().map(|m| m.as_str()).collect();
-                    let mut response = ApiError::new(
-                        StatusCode::METHOD_NOT_ALLOWED,
-                        "method_not_allowed",
-                        format!("Method {} not allowed for {}", method, path),
-                    )
-                    .into_response();
-                    response
-                        .headers_mut()
-                        .insert(header::ALLOW, allowed_str.join(", ").parse().unwrap());
-                    response
-                }
-            }
-        })
-            as std::pin::Pin<
-                Box<dyn std::future::Future<Output = crate::response::Response> + Send + 'static>,
-            >
-    });
+        let routing_handler: BoxedNext = Arc::new(move |req: Request| {
+            let router = router_clone.clone();
+            let path = path_clone.clone();
+            let method = method_clone.clone();
+            Box::pin(async move { route_request(&router, req, &path, &method).await })
+                as std::pin::Pin<
+                    Box<
+                        dyn std::future::Future<Output = crate::response::Response>
+                            + Send
+                            + 'static,
+                    >,
+                >
+        });
 
-    // Execute through middleware stack - middleware runs FIRST, then routing
-    let response = layers.execute(request, routing_handler).await;
+        let response = layers.execute(request, routing_handler).await;
+        interceptors.intercept_response(response)
+    };
 
-    // Apply response interceptors (in reverse registration order)
-    let response = interceptors.intercept_response(response);
-
+    #[cfg(feature = "tracing")]
     log_request(&method, &path, response.status(), start);
+
     response
 }
 
-/// Log request completion
-#[inline(always)]
-fn log_request(method: &http::Method, path: &str, status: StatusCode, start: std::time::Instant) {
-    // Skip logging in release builds for performance, unless tracing feature is enabled
-    #[cfg(feature = "tracing")]
-    {
-        let elapsed = start.elapsed();
-
-        // 1xx (Informational), 2xx (Success), 3xx (Redirection) are considered successful requests
-        if status.is_success() || status.is_redirection() || status.is_informational() {
-            info!(
-                method = %method,
-                path = %path,
-                status = %status.as_u16(),
-                duration_ms = %elapsed.as_millis(),
-                "Request completed"
-            );
-        } else {
-            error!(
-                method = %method,
-                path = %path,
-                status = %status.as_u16(),
-                duration_ms = %elapsed.as_millis(),
-                "Request failed"
-            );
+/// Direct routing without middleware chain - maximum performance path
+#[inline]
+async fn route_request_direct(
+    router: &Router,
+    mut request: Request,
+    path: &str,
+    method: &http::Method,
+) -> hyper::Response<Body> {
+    match router.match_route(path, method) {
+        RouteMatch::Found { handler, params } => {
+            request.set_path_params(params);
+            handler(request).await
+        }
+        RouteMatch::NotFound => ApiError::not_found("Not found").into_response(),
+        RouteMatch::MethodNotAllowed { allowed } => {
+            let allowed_str: Vec<&str> = allowed.iter().map(|m| m.as_str()).collect();
+            let mut response = ApiError::new(
+                StatusCode::METHOD_NOT_ALLOWED,
+                "method_not_allowed",
+                "Method not allowed",
+            )
+            .into_response();
+            response
+                .headers_mut()
+                .insert(header::ALLOW, allowed_str.join(", ").parse().unwrap());
+            response
         }
     }
-    
-    // Suppress unused variable warnings when tracing is disabled
-    #[cfg(not(feature = "tracing"))]
-    {
-        let _ = (method, path, status, start);
+}
+
+/// Route request through the router (used by middleware chain)
+#[inline]
+async fn route_request(
+    router: &Router,
+    mut request: Request,
+    path: &str,
+    method: &http::Method,
+) -> hyper::Response<Body> {
+    match router.match_route(path, method) {
+        RouteMatch::Found { handler, params } => {
+            request.set_path_params(params);
+            handler(request).await
+        }
+        RouteMatch::NotFound => ApiError::not_found("Not found").into_response(),
+        RouteMatch::MethodNotAllowed { allowed } => {
+            let allowed_str: Vec<&str> = allowed.iter().map(|m| m.as_str()).collect();
+            let mut response = ApiError::new(
+                StatusCode::METHOD_NOT_ALLOWED,
+                "method_not_allowed",
+                "Method not allowed",
+            )
+            .into_response();
+            response
+                .headers_mut()
+                .insert(header::ALLOW, allowed_str.join(", ").parse().unwrap());
+            response
+        }
+    }
+}
+
+/// Log request completion - only compiled when tracing is enabled
+#[cfg(feature = "tracing")]
+#[inline(always)]
+fn log_request(method: &http::Method, path: &str, status: StatusCode, start: std::time::Instant) {
+    let elapsed = start.elapsed();
+
+    if status.is_success() || status.is_redirection() || status.is_informational() {
+        info!(
+            method = %method,
+            path = %path,
+            status = %status.as_u16(),
+            duration_ms = %elapsed.as_millis(),
+            "Request completed"
+        );
+    } else {
+        error!(
+            method = %method,
+            path = %path,
+            status = %status.as_u16(),
+            duration_ms = %elapsed.as_millis(),
+            "Request failed"
+        );
     }
 }

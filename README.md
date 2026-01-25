@@ -39,7 +39,7 @@ We optimize for **Developer Joy** without sacrificing **Req/Sec**.
 
 | Feature | **RustAPI** | Actix-web | Axum | FastAPI (Python) |
 |:-------|:-----------:|:---------:|:----:|:----------------:|
-| **Performance** | **~220k req/s** 🚀 | ~178k | ~165k | ~12k |
+| **Performance** | **~92k req/s** | ~105k | ~100k | ~12k |
 | **DX (Simplicity)** | 🟢 **High** | 🔴 Low | 🟡 Medium | 🟢 High |
 | **Boilerplate** | **Zero** | High | Medium | Zero |
 | **AI/LLM Native** | ✅ **Yes** | ❌ No | ❌ No | ❌ No |

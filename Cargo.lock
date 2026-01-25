@@ -3675,6 +3675,7 @@ dependencies = [
  "serde_urlencoded",
  "simd-json",
  "smallvec",
+ "socket2 0.5.10",
  "sqlx",
  "thiserror 1.0.69",
  "tokio",
