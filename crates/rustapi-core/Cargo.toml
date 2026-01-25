@@ -76,6 +76,7 @@ h3-quinn = { version = "0.0.10", optional = true }
 rustls = { workspace = true, optional = true }
 rustls-pemfile = { workspace = true, optional = true }
 rcgen = { workspace = true, optional = true }
+chrono = "0.4.43"
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
@@ -96,5 +97,6 @@ simd-json = ["dep:simd-json"]
 tracing = []
 http3 = ["dep:quinn", "dep:h3", "dep:h3-quinn", "dep:rustls", "dep:rustls-pemfile"]
 http3-dev = ["http3", "dep:rcgen"]
+
 
 

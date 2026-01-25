@@ -34,6 +34,7 @@ pub struct RustApi {
     interceptors: InterceptorChain,
     #[cfg(feature = "http3")]
     http3_config: Option<crate::http3::Http3Config>,
+    status_config: Option<crate::status::StatusConfig>,
 }
 
 impl RustApi {
@@ -61,6 +62,7 @@ impl RustApi {
             interceptors: InterceptorChain::new(),
             #[cfg(feature = "http3")]
             http3_config: None,
+            status_config: None,
         }
     }
 
@@ -869,6 +871,54 @@ impl RustApi {
             .route(path, docs_router)
     }
 
+    /// Enable automatic status page with default configuration
+    pub fn status_page(self) -> Self {
+        self.status_page_with_config(crate::status::StatusConfig::default())
+    }
+
+    /// Enable automatic status page with custom configuration
+    pub fn status_page_with_config(mut self, config: crate::status::StatusConfig) -> Self {
+        self.status_config = Some(config);
+        self
+    }
+
+    // Helper to apply status page logic (monitor, layer, route)
+    fn apply_status_page(&mut self) {
+        if let Some(config) = &self.status_config {
+            let monitor = std::sync::Arc::new(crate::status::StatusMonitor::new());
+
+            // 1. Add middleware layer
+            self.layers
+                .push(Box::new(crate::status::StatusLayer::new(monitor.clone())));
+
+            // 2. Add status route
+            use crate::router::MethodRouter;
+            use std::collections::HashMap;
+
+            let monitor = monitor.clone();
+            let config = config.clone();
+            let path = config.path.clone(); // Clone path before moving config
+
+            let handler: crate::handler::BoxedHandler = std::sync::Arc::new(move |_| {
+                let monitor = monitor.clone();
+                let config = config.clone();
+                Box::pin(async move {
+                    crate::status::status_handler(monitor, config)
+                        .await
+                        .into_response()
+                })
+            });
+
+            let mut handlers = HashMap::new();
+            handlers.insert(http::Method::GET, handler);
+            let method_router = MethodRouter::from_boxed(handlers);
+
+            // We need to take the router out to call route() which consumes it
+            let router = std::mem::take(&mut self.router);
+            self.router = router.route(&path, method_router);
+        }
+    }
+
     /// Run the server
     ///
     /// # Example
@@ -880,6 +930,9 @@ impl RustApi {
     ///     .await
     /// ```
     pub async fn run(mut self, addr: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        // Apply status page if configured
+        self.apply_status_page();
+
         // Apply body limit layer if configured (should be first in the chain)
         if let Some(limit) = self.body_limit {
             // Prepend body limit layer so it's the first to process requests
@@ -899,9 +952,10 @@ impl RustApi {
     where
         F: std::future::Future<Output = ()> + Send + 'static,
     {
-        // Apply body limit layer if configured (should be first in the chain)
+        // Apply status page if configured
+        self.apply_status_page();
+
         if let Some(limit) = self.body_limit {
-            // Prepend body limit layer so it's the first to process requests
             self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
         }
 
@@ -944,6 +998,9 @@ impl RustApi {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         use std::sync::Arc;
 
+        // Apply status page if configured
+        self.apply_status_page();
+
         // Apply body limit layer if configured
         if let Some(limit) = self.body_limit {
             self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
@@ -979,6 +1036,9 @@ impl RustApi {
         addr: &str,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         use std::sync::Arc;
+
+        // Apply status page if configured
+        self.apply_status_page();
 
         // Apply body limit layer if configured
         if let Some(limit) = self.body_limit {
