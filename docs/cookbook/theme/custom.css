@@ -3,15 +3,15 @@
 /* 1. Define Variables & Defaults (Dark Mode) */
 :root {
     /* Custom Palette */
-    --premium-bg: #0f172a;
-    --premium-sidebar: #1e293b;
-    --premium-text: #e2e8f0;
-    --premium-heading: #f8fafc;
-    --premium-accent: #06b6d4;
-    --premium-accent-hover: #22d3ee;
-    --premium-border: #334155;
-    --premium-code-bg: #1e293b;
-    --premium-link: #38bdf8;
+    --premium-bg: #2d3748;
+    --premium-sidebar: #232b38; /* Slightly darker than bg */
+    --premium-text: #f7f9fb;
+    --premium-heading: #f7f9fb;
+    --premium-accent: #e06c3c;
+    --premium-accent-hover: #ff8a65;
+    --premium-border: #607d8b;
+    --premium-code-bg: #1a202c;
+    --premium-link: #e06c3c;
 
     /* Fonts */
     --font-primary: 'Inter', system-ui, -apple-system, sans-serif;
@@ -23,7 +23,7 @@
     --sidebar-bg: var(--premium-sidebar);
     --sidebar-fg: var(--premium-text);
     --sidebar-non-existant: var(--premium-text);
-    --quote-bg: rgba(59, 130, 246, 0.1);
+    --quote-bg: rgba(224, 108, 60, 0.1);
     --table-header-bg: var(--premium-sidebar);
     --table-border-color: var(--premium-border);
 }
@@ -33,30 +33,23 @@
 .light,
 .rust {
     /* Custom Palette - High Contrast */
-    --premium-bg: #ffffff;
-    --premium-sidebar: #f1f5f9;
-    /* Slate 100 */
-    --premium-text: #334155;
-    /* Slate 700 - Dark Grey */
-    --premium-heading: #0f172a;
-    /* Slate 900 - Black */
-    --premium-accent: #0891b2;
-    /* Cyan 600 */
-    --premium-accent-hover: #06b6d4;
+    --premium-bg: #f7f9fb;
+    --premium-sidebar: #ffffff;
+    --premium-text: #2d3748;
+    --premium-heading: #1a202c;
+    --premium-accent: #e06c3c;
+    --premium-accent-hover: #d85a2b;
     --premium-border: #cbd5e1;
-    /* Slate 300 */
-    --premium-code-bg: #f8fafc;
-    /* Slate 50 */
-    --premium-link: #0284c7;
-    /* Sky 600 */
+    --premium-code-bg: #e2e8f0;
+    --premium-link: #e06c3c;
 
     /* Override MDBook Variables for Light Mode */
     --bg: var(--premium-bg);
     --fg: var(--premium-text);
     --sidebar-bg: var(--premium-sidebar);
     --sidebar-fg: var(--premium-text);
-    --quote-bg: rgba(59, 130, 246, 0.05);
-    --table-header-bg: #f8fafc;
+    --quote-bg: rgba(224, 108, 60, 0.05);
+    --table-header-bg: #fff;
     --table-border-color: var(--premium-border);
 }
 
@@ -86,24 +79,15 @@ h4 {
     color: var(--premium-heading);
     font-weight: 700;
     margin-top: 2em;
+    font-family: var(--font-mono); /* Geeky font for headers */
 }
 
 h1 {
     font-size: 2.5em;
     border-bottom: 2px solid var(--premium-border);
     padding-bottom: 0.5em;
-    background: linear-gradient(to right, #22d3ee, #818cf8);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--premium-accent);
     display: inline-block;
-}
-
-/* Darker gradient for Light Mode */
-.light h1,
-.rust h1 {
-    background: linear-gradient(to right, #0891b2, #4f46e5);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
 }
 
 /* Links */
@@ -132,12 +116,12 @@ a:hover {
 .chapter li.active>a {
     color: var(--premium-accent);
     border-left: 2px solid var(--premium-accent);
-    background: rgba(6, 182, 212, 0.1);
+    background: rgba(224, 108, 60, 0.1);
     padding-left: 8px;
 }
 
 .light .chapter li.active>a {
-    background: rgba(8, 145, 178, 0.1);
+    background: rgba(224, 108, 60, 0.1);
 }
 
 .chapter a {
@@ -158,7 +142,7 @@ a:hover {
 pre,
 code {
     background-color: var(--premium-code-bg);
-    border-radius: 8px;
+    border-radius: 0px; /* Sharper, techy look */
     border: 1px solid var(--premium-border);
     font-family: var(--font-mono);
 }
@@ -171,12 +155,11 @@ pre {
 /* Blockquotes */
 blockquote {
     background: var(--quote-bg);
-    border-left: 4px solid #3b82f6;
+    border-left: 4px solid var(--premium-accent);
     margin: 1.5em 0;
     padding: 1em;
     border-radius: 0 8px 8px 0;
     color: var(--fg);
-    /* Ensure this inherits correct text color */
 }
 
 /* Tables */
@@ -196,6 +179,7 @@ th {
     font-weight: 600;
     padding: 12px;
     border-bottom: 1px solid var(--table-border-color);
+    font-family: var(--font-mono);
 }
 
 td {
@@ -209,12 +193,7 @@ tr:last-child td {
 }
 
 tr:hover td {
-    background-color: rgba(255, 255, 255, 0.02);
-}
-
-.light tr:hover td,
-.rust tr:hover td {
-    background-color: rgba(0, 0, 0, 0.02);
+    background-color: rgba(224, 108, 60, 0.05);
 }
 
 /* Scrollbars */
@@ -233,5 +212,5 @@ tr:hover td {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #475569;
+    background: var(--premium-accent);
 }
