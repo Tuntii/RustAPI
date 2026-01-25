@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-7f96d28f.js";
+            window.path_to_searchindex_js = "searchindex-e132de6e.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-8f013d36.js"></script>
+        <script src="toc-ebe32a58.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -2196,6 +2196,130 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&g
 <pre><code class="language-bash">curl --http3 -k https://localhost:8080/
 </code></pre>
 <p>Or using online tools like <a href="https://http3check.net/">http3check.net</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="automatic-status-page"><a class="header" href="#automatic-status-page">Automatic Status Page</a></h1>
+<p>RustAPI comes with a built-in, zero-configuration status page that gives you instant visibility into your application’s health and performance.</p>
+<h2 id="enabling-the-status-page"><a class="header" href="#enabling-the-status-page">Enabling the Status Page</a></h2>
+<p>To enable the status page, simply call <code>.status_page()</code> on your <code>RustApi</code> builder:</p>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+
+#[rustapi::main]
+async fn main() -&gt; Result&lt;()&gt; {
+    RustApi::auto()
+        .status_page() // &lt;--- Enable Status Page
+        .run("127.0.0.1:8080")
+        .await
+}</code></pre>
+<p>By default, the status page is available at <code>/status</code>.</p>
+<h2 id="full-example"><a class="header" href="#full-example">Full Example</a></h2>
+<p>Here is a complete, runnable example that demonstrates how to set up the status page and generate some traffic to see the metrics in action.</p>
+<p>You can find this example in <code>crates/rustapi-rs/examples/status_demo.rs</code>.</p>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+use std::time::Duration;
+use tokio::time::sleep;
+
+/// A simple demo to showcase the RustAPI Status Page.
+///
+/// Run with: `cargo run -p rustapi-rs --example status_demo`
+/// Then verify:
+/// - Status Page: http://127.0.0.1:3000/status
+/// - Generate Traffic: http://127.0.0.1:3000/api/fast
+/// - Generate Errors: http://127.0.0.1:3000/api/slow
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    // 1. Define some handlers to generate metrics
+
+    // A fast endpoint
+    async fn fast_handler() -&gt; &amp;'static str {
+        "Fast response!"
+    }
+
+    // A slow endpoint with random delay to show latency
+    async fn slow_handler() -&gt; &amp;'static str {
+        sleep(Duration::from_millis(500)).await;
+        "Slow response... sleepy..."
+    }
+
+    // An endpoint that sometimes fails
+    async fn flaky_handler() -&gt; Result&lt;&amp;'static str, rustapi_rs::Response&gt; {
+        use std::sync::atomic::{AtomicBool, Ordering};
+        static FAILURE: AtomicBool = AtomicBool::new(false);
+
+        // Toggle failure every call
+        let fail = FAILURE.fetch_xor(true, Ordering::Relaxed);
+
+        if !fail {
+            Ok("Success!")
+        } else {
+            Err(rustapi_rs::StatusCode::INTERNAL_SERVER_ERROR.into_response())
+        }
+    }
+
+    // 2. Build the app with status page enabled
+    println!("Starting Status Page Demo...");
+    println!(" -&gt; Open http://127.0.0.1:3000/status to see the dashboard");
+    println!(" -&gt; Visit http://127.0.0.1:3000/fast to generate traffic");
+    println!(" -&gt; Visit http://127.0.0.1:3000/slow to generate latency");
+    println!(" -&gt; Visit http://127.0.0.1:3000/flaky to generate errors");
+
+    RustApi::auto()
+        .status_page() // &lt;--- Enable Status Page
+        .route("/fast", get(fast_handler))
+        .route("/slow", get(slow_handler))
+        .route("/flaky", get(flaky_handler))
+        .run("127.0.0.1:3000")
+        .await
+}</code></pre>
+<h2 id="dashboard-overview"><a class="header" href="#dashboard-overview">Dashboard Overview</a></h2>
+<p>The status page provides a comprehensive real-time view of your system.</p>
+<h3 id="1-global-system-stats"><a class="header" href="#1-global-system-stats">1. Global System Stats</a></h3>
+<p>At the top of the dashboard, you’ll see high-level metrics for the entire application:</p>
+<ul>
+<li><strong>System Uptime</strong>: How long the server has been running.</li>
+<li><strong>Total Requests</strong>: The aggregate number of requests served across all endpoints.</li>
+<li><strong>Active Endpoints</strong>: The number of distinct routes that have received traffic.</li>
+<li><strong>Auto-Refresh</strong>: The page automatically updates every 5 seconds, so you can keep it open on a second monitor.</li>
+</ul>
+<h3 id="2-endpoint-metrics-grid"><a class="header" href="#2-endpoint-metrics-grid">2. Endpoint Metrics Grid</a></h3>
+<p>The main section is a detailed table showing granular performance data for every endpoint:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Metric</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Endpoint</strong></td><td>The path of the route (e.g., <code>/api/users</code>).</td></tr>
+<tr><td><strong>Requests</strong></td><td>Total number of hits this specific route has received.</td></tr>
+<tr><td><strong>Success Rate</strong></td><td>Visual indicator of health. <br>🟢 <strong>Green</strong>: ≥95% success <br>🔴 <strong>Red</strong>: &lt;95% success</td></tr>
+<tr><td><strong>Avg Latency</strong></td><td>The average time (in milliseconds) it takes to serve a request.</td></tr>
+<tr><td><strong>Last Access</strong></td><td>Timestamp of the most recent request to this endpoint.</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="3-visual-design"><a class="header" href="#3-visual-design">3. Visual Design</a></h3>
+<p>The dashboard is built with a “zero-dependency” philosophy. It renders a single, self-contained HTML page directly from the binary.</p>
+<ul>
+<li><strong>Modern UI</strong>: Clean, card-based layout using system fonts.</li>
+<li><strong>Responsive</strong>: Adapts perfectly to mobile and desktop screens.</li>
+<li><strong>Lightweight</strong>: No external CSS/JS files to manage or load.</li>
+</ul>
+<h2 id="custom-configuration"><a class="header" href="#custom-configuration">Custom Configuration</a></h2>
+<p>If you need more control, you can customize the path and title of the status page:</p>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+use rustapi_rs::status::StatusConfig;
+
+#[rustapi::main]
+async fn main() -&gt; Result&lt;()&gt; {
+    // Configure the status page
+    let config = StatusConfig::new()
+        .path("/admin/health")      // Change URL to /admin/health
+        .title("Production Node 1"); // Custom title for easy identification
+
+    RustApi::auto()
+        .status_page_with_config(config)
+        .run("127.0.0.1:8080")
+        .await
+}</code></pre>
 
                     </main>
 

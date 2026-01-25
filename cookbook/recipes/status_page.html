@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>CSRF Protection - RustAPI Architecture Cookbook</title>
+        <title>Automatic Status Page - RustAPI Architecture Cookbook</title>
 
 
         <!-- Custom HTML head -->
@@ -147,7 +147,7 @@
                         <a href="https://github.com/Tuntii/RustAPI" title="Git repository" aria-label="Git repository">
                             <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
                         </a>
-                        <a href="https://github.com/Tuntii/RustAPI/edit/master/docs/cookbook/src/recipes/csrf_protection.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                        <a href="https://github.com/Tuntii/RustAPI/edit/master/docs/cookbook/src/recipes/status_page.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
                             <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
                         </a>
 
@@ -181,255 +181,138 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="csrf-protection"><a class="header" href="#csrf-protection">CSRF Protection</a></h1>
-<p>Cross-Site Request Forgery (CSRF) protection for your RustAPI applications using the <strong>Double-Submit Cookie</strong> pattern.</p>
-<h2 id="what-is-csrf"><a class="header" href="#what-is-csrf">What is CSRF?</a></h2>
-<p>CSRF is an attack that tricks users into submitting unintended requests. For example, a malicious website could submit a form to your API while users are logged in, performing actions without their consent.</p>
-<p>RustAPI’s CSRF protection works by:</p>
-<ol>
-<li>Generating a cryptographic token stored in a cookie</li>
-<li>Requiring the same token in a request header for state-changing requests</li>
-<li>Rejecting requests where the cookie and header don’t match</li>
-</ol>
-<h2 id="quick-start"><a class="header" href="#quick-start">Quick Start</a></h2>
-<pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1", features = ["csrf"] }
-</code></pre>
+                        <h1 id="automatic-status-page"><a class="header" href="#automatic-status-page">Automatic Status Page</a></h1>
+<p>RustAPI comes with a built-in, zero-configuration status page that gives you instant visibility into your application’s health and performance.</p>
+<h2 id="enabling-the-status-page"><a class="header" href="#enabling-the-status-page">Enabling the Status Page</a></h2>
+<p>To enable the status page, simply call <code>.status_page()</code> on your <code>RustApi</code> builder:</p>
 <pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
-use rustapi_extras::csrf::{CsrfConfig, CsrfLayer, CsrfToken};
 
-#[rustapi_rs::get("/form")]
-async fn show_form(token: CsrfToken) -&gt; Html&lt;String&gt; {
-    Html(format!(r#"
-        &lt;form method="POST" action="/submit"&gt;
-            &lt;input type="hidden" name="csrf_token" value="{}" /&gt;
-            &lt;button type="submit"&gt;Submit&lt;/button&gt;
-        &lt;/form&gt;
-    "#, token.as_str()))
-}
-
-#[rustapi_rs::post("/submit")]
-async fn handle_submit() -&gt; &amp;'static str {
-    // If we get here, CSRF validation passed!
-    "Form submitted successfully"
-}
-
-#[tokio::main]
-async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
-    let csrf_config = CsrfConfig::new()
-        .cookie_name("csrf_token")
-        .header_name("X-CSRF-Token");
-
-    RustApi::new()
-        .layer(CsrfLayer::new(csrf_config))
-        .mount(show_form)
-        .mount(handle_submit)
+#[rustapi::main]
+async fn main() -&gt; Result&lt;()&gt; {
+    RustApi::auto()
+        .status_page() // &lt;--- Enable Status Page
         .run("127.0.0.1:8080")
         .await
 }</code></pre>
-<h2 id="configuration-options"><a class="header" href="#configuration-options">Configuration Options</a></h2>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>let config = CsrfConfig::new()
-    // Cookie settings
-    .cookie_name("csrf_token")      // Default: "csrf_token"
-    .cookie_path("/")               // Default: "/"
-    .cookie_domain("example.com")   // Default: None (same domain)
-    .cookie_secure(true)            // Default: true (HTTPS only)
-    .cookie_http_only(false)        // Default: false (JS needs access)
-    .cookie_same_site(SameSite::Strict) // Default: Strict
-    
-    // Token settings
-    .header_name("X-CSRF-Token")    // Default: "X-CSRF-Token"
-    .token_length(32);              // Default: 32 bytes
-<span class="boring">}</span></code></pre>
-<h2 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h2>
-<h3 id="safe-methods-no-validation"><a class="header" href="#safe-methods-no-validation">Safe Methods (No Validation)</a></h3>
-<p><code>GET</code>, <code>HEAD</code>, <code>OPTIONS</code>, and <code>TRACE</code> requests are considered “safe” and don’t modify state. The CSRF middleware:</p>
-<ol>
-<li>✅ Generates a new token if none exists</li>
-<li>✅ Sets the token cookie in the response</li>
-<li>✅ <strong>Does NOT validate</strong> the header</li>
-</ol>
-<h3 id="unsafe-methods-validation-required"><a class="header" href="#unsafe-methods-validation-required">Unsafe Methods (Validation Required)</a></h3>
-<p><code>POST</code>, <code>PUT</code>, <code>PATCH</code>, and <code>DELETE</code> requests require CSRF validation:</p>
-<ol>
-<li>🔍 Reads the token from the cookie</li>
-<li>🔍 Reads the expected token from the header</li>
-<li>❌ If missing or mismatched → Returns <code>403 Forbidden</code></li>
-<li>✅ If valid → Proceeds to handler</li>
-</ol>
-<h2 id="frontend-integration"><a class="header" href="#frontend-integration">Frontend Integration</a></h2>
-<h3 id="html-forms"><a class="header" href="#html-forms">HTML Forms</a></h3>
-<p>For traditional form submissions, include the token as a hidden field:</p>
-<pre><code class="language-html">&lt;form method="POST" action="/api/submit"&gt;
-    &lt;input type="hidden" name="_csrf" value="{{ csrf_token }}" /&gt;
-    &lt;!-- form fields --&gt;
-    &lt;button type="submit"&gt;Submit&lt;/button&gt;
-&lt;/form&gt;
-</code></pre>
-<h3 id="javascript--ajax"><a class="header" href="#javascript--ajax">JavaScript / AJAX</a></h3>
-<p>For API calls, include the token in the request header:</p>
-<pre><code class="language-javascript">// Read token from cookie
-function getCsrfToken() {
-    return document.cookie
-        .split('; ')
-        .find(row =&gt; row.startsWith('csrf_token='))
-        ?.split('=')[1];
-}
+<p>By default, the status page is available at <code>/status</code>.</p>
+<h2 id="full-example"><a class="header" href="#full-example">Full Example</a></h2>
+<p>Here is a complete, runnable example that demonstrates how to set up the status page and generate some traffic to see the metrics in action.</p>
+<p>You can find this example in <code>crates/rustapi-rs/examples/status_demo.rs</code>.</p>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+use std::time::Duration;
+use tokio::time::sleep;
 
-// Include in fetch requests
-fetch('/api/users', {
-    method: 'POST',
-    headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': getCsrfToken()
-    },
-    body: JSON.stringify({ name: 'John' })
-});
-</code></pre>
-<h3 id="axios-interceptor"><a class="header" href="#axios-interceptor">Axios Interceptor</a></h3>
-<pre><code class="language-javascript">import axios from 'axios';
+/// A simple demo to showcase the RustAPI Status Page.
+///
+/// Run with: `cargo run -p rustapi-rs --example status_demo`
+/// Then verify:
+/// - Status Page: http://127.0.0.1:3000/status
+/// - Generate Traffic: http://127.0.0.1:3000/api/fast
+/// - Generate Errors: http://127.0.0.1:3000/api/slow
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    // 1. Define some handlers to generate metrics
 
-axios.interceptors.request.use(config =&gt; {
-    if (['post', 'put', 'patch', 'delete'].includes(config.method)) {
-        config.headers['X-CSRF-Token'] = getCsrfToken();
+    // A fast endpoint
+    async fn fast_handler() -&gt; &amp;'static str {
+        "Fast response!"
     }
-    return config;
-});
-</code></pre>
-<h2 id="extracting-the-token-in-handlers"><a class="header" href="#extracting-the-token-in-handlers">Extracting the Token in Handlers</a></h2>
-<p>Use the <code>CsrfToken</code> extractor to access the current token in your handlers:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use rustapi_extras::csrf::CsrfToken;
 
-#[rustapi_rs::get("/api/csrf-token")]
-async fn get_csrf_token(token: CsrfToken) -&gt; Json&lt;serde_json::Value&gt; {
-    Json(serde_json::json!({
-        "csrf_token": token.as_str()
-    }))
-}
-<span class="boring">}</span></code></pre>
-<h2 id="best-practices"><a class="header" href="#best-practices">Best Practices</a></h2>
-<h3 id="1-always-use-https-in-production"><a class="header" href="#1-always-use-https-in-production">1. Always Use HTTPS in Production</a></h3>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>let config = CsrfConfig::new()
-    .cookie_secure(true);  // Cookie only sent over HTTPS
-<span class="boring">}</span></code></pre>
-<h3 id="2-use-strict-samesite-policy"><a class="header" href="#2-use-strict-samesite-policy">2. Use Strict SameSite Policy</a></h3>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use cookie::SameSite;
-
-let config = CsrfConfig::new()
-    .cookie_same_site(SameSite::Strict);  // Most restrictive
-<span class="boring">}</span></code></pre>
-<h3 id="3-combine-with-other-security-measures"><a class="header" href="#3-combine-with-other-security-measures">3. Combine with Other Security Measures</a></h3>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>RustApi::new()
-    .layer(CsrfLayer::new(csrf_config))
-    .layer(SecurityHeadersLayer::strict())  // Add security headers
-    .layer(CorsLayer::permissive())         // Configure CORS
-<span class="boring">}</span></code></pre>
-<h3 id="4-rotate-tokens-periodically"><a class="header" href="#4-rotate-tokens-periodically">4. Rotate Tokens Periodically</a></h3>
-<p>Consider regenerating tokens after sensitive actions:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>#[rustapi_rs::post("/auth/login")]
-async fn login(/* ... */) -&gt; impl IntoResponse {
-    // After successful login, a new CSRF token will be
-    // generated on the next GET request
-    // ...
-}
-<span class="boring">}</span></code></pre>
-<h2 id="testing-csrf-protection"><a class="header" href="#testing-csrf-protection">Testing CSRF Protection</a></h2>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use rustapi_testing::{TestClient, TestRequest};
-
-#[tokio::test]
-async fn test_csrf_protection() {
-    let app = create_app_with_csrf();
-    let client = TestClient::new(app);
-    
-    // GET request should work and set cookie
-    let res = client.get("/form").await;
-    assert_eq!(res.status(), StatusCode::OK);
-    
-    let csrf_cookie = res.headers()
-        .get("set-cookie")
-        .unwrap()
-        .to_str()
-        .unwrap();
-    
-    // Extract token value
-    let token = csrf_cookie
-        .split(';')
-        .next()
-        .unwrap()
-        .split('=')
-        .nth(1)
-        .unwrap();
-    
-    // POST without token should fail
-    let res = client.post("/submit").await;
-    assert_eq!(res.status(), StatusCode::FORBIDDEN);
-    
-    // POST with correct token should succeed
-    let res = client.request(
-        TestRequest::post("/submit")
-            .header("Cookie", format!("csrf_token={}", token))
-            .header("X-CSRF-Token", token)
-    ).await;
-    assert_eq!(res.status(), StatusCode::OK);
-}
-<span class="boring">}</span></code></pre>
-<h2 id="error-handling"><a class="header" href="#error-handling">Error Handling</a></h2>
-<p>When CSRF validation fails, the middleware returns a JSON error response:</p>
-<pre><code class="language-json">{
-    "error": {
-        "code": "csrf_forbidden",
-        "message": "CSRF token validation failed"
+    // A slow endpoint with random delay to show latency
+    async fn slow_handler() -&gt; &amp;'static str {
+        sleep(Duration::from_millis(500)).await;
+        "Slow response... sleepy..."
     }
-}
-</code></pre>
-<p>You can customize this by wrapping the layer with your own error handler.</p>
-<h2 id="security-considerations"><a class="header" href="#security-considerations">Security Considerations</a></h2>
+
+    // An endpoint that sometimes fails
+    async fn flaky_handler() -&gt; Result&lt;&amp;'static str, rustapi_rs::Response&gt; {
+        use std::sync::atomic::{AtomicBool, Ordering};
+        static FAILURE: AtomicBool = AtomicBool::new(false);
+
+        // Toggle failure every call
+        let fail = FAILURE.fetch_xor(true, Ordering::Relaxed);
+
+        if !fail {
+            Ok("Success!")
+        } else {
+            Err(rustapi_rs::StatusCode::INTERNAL_SERVER_ERROR.into_response())
+        }
+    }
+
+    // 2. Build the app with status page enabled
+    println!("Starting Status Page Demo...");
+    println!(" -&gt; Open http://127.0.0.1:3000/status to see the dashboard");
+    println!(" -&gt; Visit http://127.0.0.1:3000/fast to generate traffic");
+    println!(" -&gt; Visit http://127.0.0.1:3000/slow to generate latency");
+    println!(" -&gt; Visit http://127.0.0.1:3000/flaky to generate errors");
+
+    RustApi::auto()
+        .status_page() // &lt;--- Enable Status Page
+        .route("/fast", get(fast_handler))
+        .route("/slow", get(slow_handler))
+        .route("/flaky", get(flaky_handler))
+        .run("127.0.0.1:3000")
+        .await
+}</code></pre>
+<h2 id="dashboard-overview"><a class="header" href="#dashboard-overview">Dashboard Overview</a></h2>
+<p>The status page provides a comprehensive real-time view of your system.</p>
+<h3 id="1-global-system-stats"><a class="header" href="#1-global-system-stats">1. Global System Stats</a></h3>
+<p>At the top of the dashboard, you’ll see high-level metrics for the entire application:</p>
+<ul>
+<li><strong>System Uptime</strong>: How long the server has been running.</li>
+<li><strong>Total Requests</strong>: The aggregate number of requests served across all endpoints.</li>
+<li><strong>Active Endpoints</strong>: The number of distinct routes that have received traffic.</li>
+<li><strong>Auto-Refresh</strong>: The page automatically updates every 5 seconds, so you can keep it open on a second monitor.</li>
+</ul>
+<h3 id="2-endpoint-metrics-grid"><a class="header" href="#2-endpoint-metrics-grid">2. Endpoint Metrics Grid</a></h3>
+<p>The main section is a detailed table showing granular performance data for every endpoint:</p>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Consideration</th><th>Status</th></tr>
+<tr><th>Metric</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td>Token in cookie</td><td>✅ HttpOnly=false (JS needs access)</td></tr>
-<tr><td>Token validation</td><td>✅ Constant-time comparison</td></tr>
-<tr><td>SameSite cookie</td><td>✅ Configurable (Strict by default)</td></tr>
-<tr><td>Secure cookie</td><td>✅ HTTPS-only by default</td></tr>
-<tr><td>Token entropy</td><td>✅ 32 bytes of cryptographic randomness</td></tr>
+<tr><td><strong>Endpoint</strong></td><td>The path of the route (e.g., <code>/api/users</code>).</td></tr>
+<tr><td><strong>Requests</strong></td><td>Total number of hits this specific route has received.</td></tr>
+<tr><td><strong>Success Rate</strong></td><td>Visual indicator of health. <br>🟢 <strong>Green</strong>: ≥95% success <br>🔴 <strong>Red</strong>: &lt;95% success</td></tr>
+<tr><td><strong>Avg Latency</strong></td><td>The average time (in milliseconds) it takes to serve a request.</td></tr>
+<tr><td><strong>Last Access</strong></td><td>Timestamp of the most recent request to this endpoint.</td></tr>
 </tbody>
 </table>
 </div>
-<h2 id="see-also"><a class="header" href="#see-also">See Also</a></h2>
+<h3 id="3-visual-design"><a class="header" href="#3-visual-design">3. Visual Design</a></h3>
+<p>The dashboard is built with a “zero-dependency” philosophy. It renders a single, self-contained HTML page directly from the binary.</p>
 <ul>
-<li><a href="jwt_auth.html">JWT Authentication</a> - Token-based authentication</li>
-<li><a href="../crates/rustapi_extras.html#security-headers">Security Headers</a> - Additional security layers</li>
-<li><a href="../crates/rustapi_extras.html#cors">CORS Configuration</a> - Cross-origin request handling</li>
+<li><strong>Modern UI</strong>: Clean, card-based layout using system fonts.</li>
+<li><strong>Responsive</strong>: Adapts perfectly to mobile and desktop screens.</li>
+<li><strong>Lightweight</strong>: No external CSS/JS files to manage or load.</li>
 </ul>
+<h2 id="custom-configuration"><a class="header" href="#custom-configuration">Custom Configuration</a></h2>
+<p>If you need more control, you can customize the path and title of the status page:</p>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+use rustapi_rs::status::StatusConfig;
+
+#[rustapi::main]
+async fn main() -&gt; Result&lt;()&gt; {
+    // Configure the status page
+    let config = StatusConfig::new()
+        .path("/admin/health")      // Change URL to /admin/health
+        .title("Production Node 1"); // Custom title for easy identification
+
+    RustApi::auto()
+        .status_page_with_config(config)
+        .run("127.0.0.1:8080")
+        .await
+}</code></pre>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../recipes/jwt_auth.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../recipes/http3_quic.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="../recipes/db_integration.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
-                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -437,13 +320,10 @@ async fn test_csrf_protection() {
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../recipes/jwt_auth.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../recipes/http3_quic.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="../recipes/db_integration.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
-                    </a>
             </nav>
 
         </div>
