@@ -119,7 +119,7 @@ If you need more control, you can customize the path and title of the status pag
 
 ```rust
 use rustapi_rs::prelude::*;
-use rustapi_core::status::StatusConfig;
+use rustapi_rs::status::StatusConfig;
 
 #[rustapi::main]
 async fn main() -> Result<()> {
