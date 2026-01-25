@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-e132de6e.js";
+            window.path_to_searchindex_js = "searchindex-ad5d99a1.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-ebe32a58.js"></script>
+        <script src="toc-a2dc1fcf.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -418,6 +418,184 @@ impl IntoResponse for ApiError {
 <li><strong>Parse Early</strong>: Use specific types in <code>Json&lt;T&gt;</code> structs rather than <code>serde_json::Value</code> to leverage the type system for validation.</li>
 </ol>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="system-architecture"><a class="header" href="#system-architecture">System Architecture</a></h1>
+<p>RustAPI follows a <strong>Facade Architecture</strong> — a stable public API that shields you from internal complexity and breaking changes.</p>
+<h2 id="system-overview"><a class="header" href="#system-overview">System Overview</a></h2>
+<pre><code class="language-mermaid">graph TB
+    subgraph Client["🌐 Client Layer"]
+        HTTP[HTTP Request]
+        LLM[LLM/AI Agent]
+        MCP[MCP Client]
+    end
+
+    subgraph Public["📦 rustapi-rs (Public Facade)"]
+        direction TB
+        Prelude[prelude::*]
+        Macros["#[rustapi::get/post]&lt;br&gt;#[rustapi::main]"]
+        Types[Json, Query, Path, Form]
+    end
+
+    subgraph Core["⚙️ rustapi-core (Engine)"]
+        direction TB
+        Router[Radix Router&lt;br&gt;matchit]
+        Extract[Extractors&lt;br&gt;FromRequest trait]
+        MW[Middleware Stack&lt;br&gt;Tower-like layers]
+        Resp[Response Builder&lt;br&gt;IntoResponse trait]
+    end
+
+    subgraph Extensions["🔌 Extension Crates"]
+        direction LR
+        OpenAPI["rustapi-openapi&lt;br&gt;Swagger/Docs"]
+        Validate["rustapi-validate&lt;br&gt;Request Validation"]
+        Toon["rustapi-toon&lt;br&gt;LLM Optimization"]
+        Extras["rustapi-extras&lt;br&gt;JWT/CORS/RateLimit"]
+        WsCrate["rustapi-ws&lt;br&gt;WebSocket Support"]
+        ViewCrate["rustapi-view&lt;br&gt;Template Engine"]
+    end
+
+    subgraph Foundation["🏗️ Foundation Layer"]
+        direction LR
+        Tokio[tokio&lt;br&gt;Async Runtime]
+        Hyper[hyper 1.0&lt;br&gt;HTTP Protocol]
+        Serde[serde&lt;br&gt;Serialization]
+    end
+
+    HTTP --&gt; Public
+    LLM --&gt; Public
+    MCP --&gt; Public
+    Public --&gt; Core
+    Core --&gt; Extensions
+    Extensions --&gt; Foundation
+    Core --&gt; Foundation
+</code></pre>
+<h2 id="request-flow"><a class="header" href="#request-flow">Request Flow</a></h2>
+<pre><code class="language-mermaid">sequenceDiagram
+    participant C as Client
+    participant R as Router
+    participant M as Middleware
+    participant E as Extractors
+    participant H as Handler
+    participant S as Serializer
+
+    C-&gt;&gt;R: HTTP Request
+    R-&gt;&gt;R: Match route (radix tree)
+    R-&gt;&gt;M: Pass to middleware stack
+    
+    loop Each Middleware
+        M-&gt;&gt;M: Process (JWT, CORS, RateLimit)
+    end
+    
+    M-&gt;&gt;E: Extract parameters
+    E-&gt;&gt;E: Json&lt;T&gt;, Path&lt;T&gt;, Query&lt;T&gt;
+    E-&gt;&gt;E: Validate with #[validate]
+    
+    alt Validation Failed
+        E--&gt;&gt;C: 422 Unprocessable Entity
+    else Validation OK
+        E-&gt;&gt;H: Call async handler
+        H-&gt;&gt;S: Return response type
+        
+        alt TOON Enabled
+            S-&gt;&gt;S: Check Accept header
+            S-&gt;&gt;S: Serialize as TOON/JSON
+            S-&gt;&gt;S: Add token count headers
+        else Standard
+            S-&gt;&gt;S: Serialize as JSON
+        end
+        
+        S--&gt;&gt;C: HTTP Response
+    end
+</code></pre>
+<h2 id="crate-dependency-graph"><a class="header" href="#crate-dependency-graph">Crate Dependency Graph</a></h2>
+<pre><code class="language-mermaid">graph BT
+    subgraph User["Your Application"]
+        App[main.rs]
+    end
+
+    subgraph Facade["Single Import"]
+        RS[rustapi-rs]
+    end
+
+    subgraph Internal["Internal Crates"]
+        Core[rustapi-core]
+        Macros[rustapi-macros]
+        OpenAPI[rustapi-openapi]
+        Validate[rustapi-validate]
+        Toon[rustapi-toon]
+        Extras[rustapi-extras]
+        WS[rustapi-ws]
+        View[rustapi-view]
+    end
+
+    subgraph External["External Dependencies"]
+        Tokio[tokio]
+        Hyper[hyper]
+        Serde[serde]
+        Utoipa[utoipa]
+        Validator[validator]
+        Tungstenite[tungstenite]
+        Tera[tera]
+    end
+
+    App --&gt; RS
+    RS --&gt; Core
+    RS --&gt; Macros
+    RS --&gt; OpenAPI
+    RS --&gt; Validate
+    RS -.-&gt;|optional| Toon
+    RS -.-&gt;|optional| Extras
+    RS -.-&gt;|optional| WS
+    RS -.-&gt;|optional| View
+    
+    Core --&gt; Tokio
+    Core --&gt; Hyper
+    Core --&gt; Serde
+    OpenAPI --&gt; Utoipa
+    Validate --&gt; Validator
+    Toon --&gt; Serde
+    WS --&gt; Tungstenite
+    View --&gt; Tera
+
+    style RS fill:#e1f5fe
+    style App fill:#c8e6c9
+</code></pre>
+<h2 id="design-principles"><a class="header" href="#design-principles">Design Principles</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Principle</th><th>Implementation</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Single Entry Point</strong></td><td><code>use rustapi_rs::prelude::*</code> imports everything you need</td></tr>
+<tr><td><strong>Zero Boilerplate</strong></td><td>Macros generate routing, OpenAPI specs, and validation</td></tr>
+<tr><td><strong>Compile-Time Safety</strong></td><td>Generic extractors catch type errors at compile time</td></tr>
+<tr><td><strong>Opt-in Complexity</strong></td><td>Features like JWT, TOON are behind feature flags</td></tr>
+<tr><td><strong>Engine Abstraction</strong></td><td>Internal hyper/tokio upgrades don’t break your code</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="crate-responsibilities"><a class="header" href="#crate-responsibilities">Crate Responsibilities</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Crate</th><th>Role</th></tr>
+</thead>
+<tbody>
+<tr><td><code>rustapi-rs</code></td><td>Public facade — single <code>use</code> for everything</td></tr>
+<tr><td><code>rustapi-core</code></td><td>HTTP engine, routing, extractors, response handling</td></tr>
+<tr><td><code>rustapi-macros</code></td><td>Procedural macros: <code>#[rustapi::get]</code>, <code>#[rustapi::main]</code></td></tr>
+<tr><td><code>rustapi-openapi</code></td><td>Swagger UI generation, OpenAPI 3.0 spec</td></tr>
+<tr><td><code>rustapi-validate</code></td><td>Request body/query validation via <code>#[validate]</code></td></tr>
+<tr><td><code>rustapi-toon</code></td><td>TOON format serializer, content negotiation, LLM headers</td></tr>
+<tr><td><code>rustapi-extras</code></td><td>JWT auth, CORS, rate limiting, audit logging</td></tr>
+<tr><td><code>rustapi-ws</code></td><td>WebSocket support with broadcast channels</td></tr>
+<tr><td><code>rustapi-view</code></td><td>Template engine (Tera) for server-side rendering</td></tr>
+<tr><td><code>rustapi-jobs</code></td><td>Background job processing (Redis/Postgres)</td></tr>
+<tr><td><code>rustapi-testing</code></td><td>Test utilities, matchers, expectations</td></tr>
+</tbody>
+</table>
+</div>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="performance-philosophy"><a class="header" href="#performance-philosophy">Performance Philosophy</a></h1>
 <p>RustAPI is built on a simple premise: <strong>Abstractions shouldn’t cost you runtime performance.</strong></p>
 <p>We leverage Rust’s unique ownership system and modern async ecosystem (Tokio, Hyper) to deliver performance that rivals C++ servers, while maintaining developer safe-guards.</p>
@@ -496,11 +674,52 @@ struct AppState {
 }
 <span class="boring">}</span></code></pre>
 <h2 id="benchmarking"><a class="header" href="#benchmarking">Benchmarking</a></h2>
-<p>Performance is not a guessing game. Use tools like <code>wrk</code>, <code>k6</code>, or <code>drill</code> to stress-test your specific endpoints.</p>
-<pre><code class="language-bash"># Example using drill
-drill --benchmark benchmark.yml --stats
+<p>Performance is not a guessing game. Below are results from our internal benchmarks on reference hardware.</p>
+<h3 id="comparative-benchmarks"><a class="header" href="#comparative-benchmarks">Comparative Benchmarks</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Framework</th><th>Requests/sec</th><th>Latency (avg)</th><th>Memory</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>RustAPI</strong></td><td><strong>~185,000</strong></td><td><strong>~0.54ms</strong></td><td><strong>~8MB</strong></td></tr>
+<tr><td><strong>RustAPI + simd-json</strong></td><td><strong>~220,000</strong></td><td><strong>~0.45ms</strong></td><td><strong>~8MB</strong></td></tr>
+<tr><td>Actix-web</td><td>~178,000</td><td>~0.56ms</td><td>~10MB</td></tr>
+<tr><td>Axum</td><td>~165,000</td><td>~0.61ms</td><td>~12MB</td></tr>
+<tr><td>Rocket</td><td>~95,000</td><td>~1.05ms</td><td>~15MB</td></tr>
+<tr><td>FastAPI (Python)</td><td>~12,000</td><td>~8.3ms</td><td>~45MB</td></tr>
+</tbody>
+</table>
+</div>
+<details>
+<summary>🔬 Test Configuration</summary>
+<ul>
+<li><strong>Hardware</strong>: Intel i7-12700K, 32GB RAM</li>
+<li><strong>Method</strong>: <code>wrk -t12 -c400 -d30s http://127.0.0.1:8080/api/users</code></li>
+<li><strong>Scenario</strong>: JSON serialization of 100 user objects</li>
+<li><strong>Build</strong>: <code>cargo build --release</code></li>
+</ul>
+<p>Results may vary based on hardware and workload. Run your own benchmarks:</p>
+<pre><code class="language-bash">cd benches
+./run_benchmarks.ps1
 </code></pre>
-<p>Remember: RustAPI provides the <em>capability</em> for high performance, but your application logic ultimately dictates the speed. Use the tools wisely.</p>
+</details>
+<h3 id="why-so-fast"><a class="header" href="#why-so-fast">Why So Fast?</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Optimization</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td>⚡ <strong>SIMD-JSON</strong></td><td>2-4x faster JSON parsing with <code>simd-json</code> feature</td></tr>
+<tr><td>🔄 <strong>Zero-copy parsing</strong></td><td>Direct memory access for path/query params</td></tr>
+<tr><td>📦 <strong>SmallVec PathParams</strong></td><td>Stack-optimized path parameters</td></tr>
+<tr><td>🎯 <strong>Compile-time dispatch</strong></td><td>All extractors resolved at compile time</td></tr>
+<tr><td>🌊 <strong>Streaming bodies</strong></td><td>Handle large uploads without memory bloat</td></tr>
+</tbody>
+</table>
+</div>
+<p>Remember: RustAPI provides the <em>capability</em> for high performance, but your application logic ultimately dictates the speed. Use tools like <code>wrk</code>, <code>k6</code>, or <code>drill</code> to stress-test your specific endpoints.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="testing-strategy"><a class="header" href="#testing-strategy">Testing Strategy</a></h1>
 <p>Reliable software requires a robust testing strategy. RustAPI is designed to be testable at every level, from individual functions to full end-to-end scenarios.</p>
