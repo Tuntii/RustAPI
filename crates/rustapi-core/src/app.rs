@@ -914,7 +914,7 @@ impl RustApi {
             let method_router = MethodRouter::from_boxed(handlers);
 
             // We need to take the router out to call route() which consumes it
-            let router = std::mem::replace(&mut self.router, crate::router::Router::new());
+            let router = std::mem::take(&mut self.router);
             self.router = router.route(&path, method_router);
         }
     }
