@@ -74,6 +74,7 @@ mod router;
 mod server;
 pub mod sse;
 pub mod static_files;
+pub mod status;
 pub mod stream;
 pub mod typed_path;
 pub mod validation;
