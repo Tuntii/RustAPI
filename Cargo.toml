@@ -70,7 +70,7 @@ inventory = "0.3"
 linkme = "0.3"
 
 # Validation
-validator = { version = "0.18", features = ["derive"] }
+validator = { version = "0.20", features = ["derive"] }
 
 # UUID
 uuid = { version = "1.6", features = ["v4"] }
