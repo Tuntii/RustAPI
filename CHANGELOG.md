@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.202] - 2026-01-26
+
+### Performance - 12x Improvement 🚀
+
+This release delivers a **12x performance improvement**, bringing RustAPI from ~8K req/s to **~92K req/s**.
+
+#### Benchmark Results
+
+| Framework | Requests/sec | Latency (avg) |
+|-----------|-------------|---------------|
+| **RustAPI** | ~92,000 | ~1.1ms |
+| Actix-web 4 | ~105,000 | ~0.95ms |
+| Axum | ~100,000 | ~1.0ms |
+
+*Tested with `hey -n 100000 -c 100` on Windows 11, Ryzen 9 5900X*
+
+### Added
+- **Ultra-Fast Path**: New routing path that bypasses both middleware AND interceptors for maximum performance
+- **simd-json Serialization**: Extended simd-json support from parsing-only to full serialization with `to_vec` and `to_vec_with_capacity`
+
+### Changed
+- **TCP_NODELAY**: Disabled Nagle's algorithm for lower latency
+- **Pipeline Flush**: Enabled HTTP/1.1 pipeline flushing for better throughput
+- **ConnectionService**: Reduced Arc cloning overhead per connection
+- **HandleRequestFuture**: Custom future implementation for request handling
+
+### Fixed
+- Removed unused static variables from bench_server
+
+### Documentation
+- Updated README.md with accurate benchmark numbers
+- Removed inflated performance claims
+- Added TechEmpower-based comparison data
+- Created [BEAT_ACTIX_ROADMAP.md](memories/BEAT_ACTIX_ROADMAP.md) for future optimizations
+
 ## [0.1.15] - 2026-01-23
 
 ### Added
