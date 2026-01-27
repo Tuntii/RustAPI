@@ -39,4 +39,6 @@
     - [HTTP/3 (QUIC)](recipes/http3_quic.md)
     - [Automatic Status Page](recipes/status_page.md)
 
+- [Part V: Learning & Examples](learning/README.md)
+
 
