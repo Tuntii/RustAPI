@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-ad5d99a1.js";
+            window.path_to_searchindex_js = "searchindex-d21ccfbd.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-a2dc1fcf.js"></script>
+        <script src="toc-5ece1d58.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -191,7 +191,26 @@
 <li><strong>Keynotes</strong>: High-level architectural decisions and “why” we made them.</li>
 <li><strong>Patterns</strong>: The repeated structures (like <code>Action</code> and <code>Service</code>) that form the backbone of our code.</li>
 <li><strong>Recipes</strong>: Practical, step-by-step guides for adding features, testing, and maintaining cleanliness.</li>
+<li><strong>Learning Paths</strong>: Structured progressions with real-world examples.</li>
 </ul>
+<h2 id="-new-examples-repository"><a class="header" href="#-new-examples-repository">🚀 New: Examples Repository</a></h2>
+<p>Looking for hands-on learning? Check out our <strong><a href="https://github.com/Tuntii/rustapi-rs-examples">Examples Repository</a></strong> with 18 complete projects:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Category</th><th>Examples</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Getting Started</strong></td><td>hello-world, crud-api</td></tr>
+<tr><td><strong>Authentication</strong></td><td>auth-api (JWT), rate-limit-demo</td></tr>
+<tr><td><strong>Database</strong></td><td>sqlx-crud, event-sourcing</td></tr>
+<tr><td><strong>AI/LLM</strong></td><td>toon-api, mcp-server</td></tr>
+<tr><td><strong>Real-time</strong></td><td>websocket, graphql-api</td></tr>
+<tr><td><strong>Production</strong></td><td>microservices, serverless-lambda</td></tr>
+</tbody>
+</table>
+</div>
+<p>👉 See <a href="learning/README.html">Learning &amp; Examples</a> for structured learning paths.</p>
 <h2 id="visual-identity"><a class="header" href="#visual-identity">Visual Identity</a></h2>
 <p>This cookbook is styled with the <strong>RustAPI Premium Dark</strong> theme, focusing on readability, contrast, and modern “glassmorphism” aesthetics.</p>
 <h2 id="quick-start"><a class="header" href="#quick-start">Quick Start</a></h2>
@@ -199,6 +218,7 @@
 <li>Want to add a feature? Jump to <a href="recipes/new_feature.html">Adding a New Feature</a>.</li>
 <li>Want to understand performance? Read <a href="architecture/performance.html">Performance Philosophy</a>.</li>
 <li>Need to check code quality? See <a href="recipes/maintenance.html">Maintenance</a>.</li>
+<li><strong>New to RustAPI?</strong> Follow our <a href="learning/README.html">Learning Paths</a>.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="getting-started"><a class="header" href="#getting-started">Getting Started</a></h1>
@@ -2539,6 +2559,289 @@ async fn main() -&gt; Result&lt;()&gt; {
         .run("127.0.0.1:8080")
         .await
 }</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="learning--examples"><a class="header" href="#learning--examples">Learning &amp; Examples</a></h1>
+<p>Welcome to the RustAPI learning resources! This section provides structured learning paths and links to comprehensive real-world examples to help you master the framework.</p>
+<h2 id="-learning-resources"><a class="header" href="#-learning-resources">📚 Learning Resources</a></h2>
+<h3 id="official-examples-repository"><a class="header" href="#official-examples-repository">Official Examples Repository</a></h3>
+<p>We maintain a comprehensive examples repository with <strong>18 real-world projects</strong> demonstrating RustAPI’s full capabilities:</p>
+<p>🔗 <strong><a href="https://github.com/Tuntii/rustapi-rs-examples">rustapi-rs-examples</a></strong> - Complete examples from hello-world to production microservices</p>
+<h3 id="why-use-the-examples-repository"><a class="header" href="#why-use-the-examples-repository">Why Use the Examples Repository?</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Benefit</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>Structured Learning</strong></td><td>Progress from beginner → intermediate → advanced</td></tr>
+<tr><td><strong>Real-world Patterns</strong></td><td>Production-ready implementations you can adapt</td></tr>
+<tr><td><strong>Feature Discovery</strong></td><td>Find examples by the features you want to learn</td></tr>
+<tr><td><strong>AI-Friendly</strong></td><td>Module-level docs help AI assistants understand your code</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="-learning-paths"><a class="header" href="#-learning-paths">🎯 Learning Paths</a></h2>
+<p>Choose a learning path based on your goals:</p>
+<h3 id="-path-1-rest-api-developer"><a class="header" href="#-path-1-rest-api-developer">🚀 Path 1: REST API Developer</a></h3>
+<p>Build production-ready REST APIs with RustAPI.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Step</th><th>Example</th><th>Skills Learned</th></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td><code>hello-world</code></td><td>Basic routing, handlers, server setup</td></tr>
+<tr><td>2</td><td><code>crud-api</code></td><td>CRUD operations, extractors, error handling</td></tr>
+<tr><td>3</td><td><code>auth-api</code></td><td>JWT authentication, protected routes</td></tr>
+<tr><td>4</td><td><code>middleware-chain</code></td><td>Custom middleware, logging, CORS</td></tr>
+<tr><td>5</td><td><code>sqlx-crud</code></td><td>Database integration, async queries</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Related Cookbook Recipes:</strong></p>
+<ul>
+<li><a href="#creating-resources">Creating Resources</a></li>
+<li><a href="#jwt-authentication">JWT Authentication</a></li>
+<li><a href="#database-integration">Database Integration</a></li>
+</ul>
+<hr>
+<h3 id="-path-2-microservices-architect"><a class="header" href="#-path-2-microservices-architect">🏗️ Path 2: Microservices Architect</a></h3>
+<p>Design and build distributed systems with RustAPI.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Step</th><th>Example</th><th>Skills Learned</th></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td><code>crud-api</code></td><td>Service fundamentals</td></tr>
+<tr><td>2</td><td><code>middleware-chain</code></td><td>Cross-cutting concerns</td></tr>
+<tr><td>3</td><td><code>rate-limit-demo</code></td><td>API protection, throttling</td></tr>
+<tr><td>4</td><td><code>microservices</code></td><td>Service communication patterns</td></tr>
+<tr><td>5</td><td><code>microservices-advanced</code></td><td>Service discovery, Consul integration</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Related Cookbook Recipes:</strong></p>
+<ul>
+<li><a href="#custom-middleware">Custom Middleware</a></li>
+<li><a href="#production-tuning">Production Tuning</a></li>
+<li><a href="#deployment">Deployment</a></li>
+</ul>
+<hr>
+<h3 id="-path-3-real-time-applications"><a class="header" href="#-path-3-real-time-applications">⚡ Path 3: Real-time Applications</a></h3>
+<p>Build interactive, real-time features with WebSockets.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Step</th><th>Example</th><th>Skills Learned</th></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td><code>hello-world</code></td><td>Framework basics</td></tr>
+<tr><td>2</td><td><code>websocket</code></td><td>WebSocket connections, message handling</td></tr>
+<tr><td>3</td><td><code>middleware-chain</code></td><td>Connection middleware</td></tr>
+<tr><td>4</td><td><code>graphql-api</code></td><td>Subscriptions, real-time queries</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Related Cookbook Recipes:</strong></p>
+<ul>
+<li><a href="#real-time-chat-websockets">Real-time Chat</a></li>
+<li><a href="#handlers--extractors">Handlers &amp; Extractors</a></li>
+</ul>
+<hr>
+<h3 id="-path-4-aillm-integration"><a class="header" href="#-path-4-aillm-integration">🤖 Path 4: AI/LLM Integration</a></h3>
+<p>Build AI-friendly APIs with TOON format and MCP support.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Step</th><th>Example</th><th>Skills Learned</th></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td><code>crud-api</code></td><td>API fundamentals</td></tr>
+<tr><td>2</td><td><code>toon-api</code></td><td>TOON format for LLM-friendly responses</td></tr>
+<tr><td>3</td><td><code>mcp-server</code></td><td>Model Context Protocol implementation</td></tr>
+<tr><td>4</td><td><code>proof-of-concept</code></td><td>Combining multiple AI features</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Related Cookbook Recipes:</strong></p>
+<ul>
+<li><a href="#rustapi-toon-the-diplomat">rustapi-toon: The Diplomat</a></li>
+</ul>
+<hr>
+<h2 id="-examples-by-category"><a class="header" href="#-examples-by-category">📦 Examples by Category</a></h2>
+<h3 id="getting-started-1"><a class="header" href="#getting-started-1">Getting Started</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Example</th><th>Description</th><th>Difficulty</th></tr>
+</thead>
+<tbody>
+<tr><td><code>hello-world</code></td><td>Minimal RustAPI server</td><td>⭐ Beginner</td></tr>
+<tr><td><code>crud-api</code></td><td>Complete CRUD operations</td><td>⭐ Beginner</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="authentication--security"><a class="header" href="#authentication--security">Authentication &amp; Security</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Example</th><th>Description</th><th>Difficulty</th></tr>
+</thead>
+<tbody>
+<tr><td><code>auth-api</code></td><td>JWT authentication flow</td><td>⭐⭐ Intermediate</td></tr>
+<tr><td><code>middleware-chain</code></td><td>Middleware composition</td><td>⭐⭐ Intermediate</td></tr>
+<tr><td><code>rate-limit-demo</code></td><td>API rate limiting</td><td>⭐⭐ Intermediate</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="database-integration-1"><a class="header" href="#database-integration-1">Database Integration</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Example</th><th>Description</th><th>Difficulty</th></tr>
+</thead>
+<tbody>
+<tr><td><code>sqlx-crud</code></td><td>SQLx with PostgreSQL/SQLite</td><td>⭐⭐ Intermediate</td></tr>
+<tr><td><code>event-sourcing</code></td><td>Event sourcing patterns</td><td>⭐⭐⭐ Advanced</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="ai--llm"><a class="header" href="#ai--llm">AI &amp; LLM</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Example</th><th>Description</th><th>Difficulty</th></tr>
+</thead>
+<tbody>
+<tr><td><code>toon-api</code></td><td>TOON format responses</td><td>⭐⭐ Intermediate</td></tr>
+<tr><td><code>mcp-server</code></td><td>Model Context Protocol</td><td>⭐⭐⭐ Advanced</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="real-time--graphql"><a class="header" href="#real-time--graphql">Real-time &amp; GraphQL</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Example</th><th>Description</th><th>Difficulty</th></tr>
+</thead>
+<tbody>
+<tr><td><code>websocket</code></td><td>WebSocket chat example</td><td>⭐⭐ Intermediate</td></tr>
+<tr><td><code>graphql-api</code></td><td>GraphQL with async-graphql</td><td>⭐⭐⭐ Advanced</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="production-patterns"><a class="header" href="#production-patterns">Production Patterns</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Example</th><th>Description</th><th>Difficulty</th></tr>
+</thead>
+<tbody>
+<tr><td><code>microservices</code></td><td>Basic service communication</td><td>⭐⭐⭐ Advanced</td></tr>
+<tr><td><code>microservices-advanced</code></td><td>Consul service discovery</td><td>⭐⭐⭐ Advanced</td></tr>
+<tr><td><code>serverless-lambda</code></td><td>AWS Lambda deployment</td><td>⭐⭐⭐ Advanced</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="-feature-matrix"><a class="header" href="#-feature-matrix">🔧 Feature Matrix</a></h2>
+<p>Find examples by the RustAPI features they demonstrate:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Feature</th><th>Examples</th></tr>
+</thead>
+<tbody>
+<tr><td><code>#[get]</code>, <code>#[post]</code> macros</td><td>All examples</td></tr>
+<tr><td><code>State&lt;T&gt;</code> extractor</td><td><code>crud-api</code>, <code>auth-api</code>, <code>sqlx-crud</code></td></tr>
+<tr><td><code>Json&lt;T&gt;</code> extractor</td><td><code>crud-api</code>, <code>auth-api</code>, <code>graphql-api</code></td></tr>
+<tr><td><code>ValidatedJson&lt;T&gt;</code></td><td><code>auth-api</code>, <code>crud-api</code></td></tr>
+<tr><td>JWT (<code>jwt</code> feature)</td><td><code>auth-api</code>, <code>microservices</code></td></tr>
+<tr><td>CORS (<code>cors</code> feature)</td><td><code>middleware-chain</code>, <code>auth-api</code></td></tr>
+<tr><td>Rate Limiting</td><td><code>rate-limit-demo</code>, <code>auth-api</code></td></tr>
+<tr><td>WebSockets (<code>ws</code> feature)</td><td><code>websocket</code>, <code>graphql-api</code></td></tr>
+<tr><td>TOON (<code>toon</code> feature)</td><td><code>toon-api</code>, <code>mcp-server</code></td></tr>
+<tr><td>OpenAPI/Swagger</td><td>All examples</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="-getting-started-with-examples"><a class="header" href="#-getting-started-with-examples">🚦 Getting Started with Examples</a></h2>
+<h3 id="clone-the-repository"><a class="header" href="#clone-the-repository">Clone the Repository</a></h3>
+<pre><code class="language-bash">git clone https://github.com/Tuntii/rustapi-rs-examples.git
+cd rustapi-rs-examples
+</code></pre>
+<h3 id="run-an-example"><a class="header" href="#run-an-example">Run an Example</a></h3>
+<pre><code class="language-bash">cd hello-world
+cargo run
+</code></pre>
+<h3 id="test-an-example"><a class="header" href="#test-an-example">Test an Example</a></h3>
+<pre><code class="language-bash"># Most examples have tests
+cargo test
+
+# Or use the TestClient
+cd ../crud-api
+cargo test
+</code></pre>
+<h3 id="explore-the-structure"><a class="header" href="#explore-the-structure">Explore the Structure</a></h3>
+<p>Each example includes:</p>
+<ul>
+<li><code>README.md</code> - Detailed documentation with API endpoints</li>
+<li><code>src/main.rs</code> - Entry point with server setup</li>
+<li><code>src/handlers.rs</code> - Request handlers (where applicable)</li>
+<li><code>Cargo.toml</code> - Dependencies and feature flags</li>
+<li>Tests demonstrating the TestClient</li>
+</ul>
+<hr>
+<h2 id="-cross-reference-cookbook--examples"><a class="header" href="#-cross-reference-cookbook--examples">📖 Cross-Reference: Cookbook ↔ Examples</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Cookbook Recipe</th><th>Related Examples</th></tr>
+</thead>
+<tbody>
+<tr><td><a href="#creating-resources">Creating Resources</a></td><td><code>crud-api</code>, <code>sqlx-crud</code></td></tr>
+<tr><td><a href="#jwt-authentication">JWT Authentication</a></td><td><code>auth-api</code></td></tr>
+<tr><td><a href="#csrf-protection-1">CSRF Protection</a></td><td><code>auth-api</code>, <code>middleware-chain</code></td></tr>
+<tr><td><a href="#database-integration">Database Integration</a></td><td><code>sqlx-crud</code>, <code>event-sourcing</code></td></tr>
+<tr><td><a href="#file-uploads">File Uploads</a></td><td><code>file-upload</code> (coming soon)</td></tr>
+<tr><td><a href="#custom-middleware">Custom Middleware</a></td><td><code>middleware-chain</code></td></tr>
+<tr><td><a href="#real-time-chat-websockets">Real-time Chat</a></td><td><code>websocket</code></td></tr>
+<tr><td><a href="#production-tuning">Production Tuning</a></td><td><code>microservices-advanced</code></td></tr>
+<tr><td><a href="#deployment">Deployment</a></td><td><code>serverless-lambda</code></td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="-contributing-examples"><a class="header" href="#-contributing-examples">💡 Contributing Examples</a></h2>
+<p>Have a great example to share? We welcome contributions!</p>
+<ol>
+<li>Fork the <a href="https://github.com/Tuntii/rustapi-rs-examples">rustapi-rs-examples</a> repository</li>
+<li>Create your example following our structure guidelines</li>
+<li>Add comprehensive documentation in README.md</li>
+<li>Submit a pull request</li>
+</ol>
+<h3 id="example-guidelines"><a class="header" href="#example-guidelines">Example Guidelines</a></h3>
+<ul>
+<li>Include a clear README with prerequisites and API endpoints</li>
+<li>Add code comments explaining RustAPI-specific patterns</li>
+<li>Include working tests using <code>rustapi-testing</code></li>
+<li>List the feature flags used</li>
+</ul>
+<hr>
+<h2 id="-additional-resources"><a class="header" href="#-additional-resources">🔗 Additional Resources</a></h2>
+<ul>
+<li><strong><a href="https://github.com/Tuntii/RustAPI">RustAPI GitHub</a></strong> - Framework source code</li>
+<li><strong><a href="https://docs.rs/rustapi-rs">API Reference</a></strong> - Generated documentation</li>
+<li><strong><a href="reference">Feature Flags Reference</a></strong> - All available features</li>
+<li><strong><a href="#system-architecture">Architecture Guide</a></strong> - How RustAPI works internally</li>
+</ul>
+<hr>
+<blockquote>
+<p>💬 <strong>Need help?</strong> Open an issue in the examples repository or join our community discussions!</p>
+</blockquote>
 
                     </main>
 
