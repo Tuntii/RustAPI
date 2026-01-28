@@ -105,9 +105,9 @@ validator = "0.16"
 2. We bump `rustapi-rs` to `0.2.0`
 3. **Your code stays exactly the same** — just update the version
 
-### External Dependency Reduction (Dış Bağımlılıkları Azaltma)
+### External Dependency Reduction (Harici Bağımlılıkları Azaltma)
 
-RustAPI already hides external crates behind internal adapters. To reduce dependency debt, we focus on components with a stable spec and a small surface area, while keeping the public API unchanged. The playbook is:
+RustAPI already hides external crates behind internal adapters. To reduce dependency debt, we focus on components, each with a stable spec and a small surface area, while keeping the public API unchanged. The playbook is:
 
 1. Wrap dependencies with internal traits/types so behavior is defined by RustAPI.
 2. Add contract tests to lock in behavior before replacing internals.

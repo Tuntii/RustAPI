@@ -30,7 +30,7 @@ RustAPI provides a stable, ergonomic public API. Internal dependencies (`hyper`,
 
 ### External Dependency Plan
 
-To reduce external dependency debt (dış borç), we prioritize replacing crates with stable specs and small surfaces while keeping the public API unchanged. Candidate areas for RustAPI-owned implementations are validation, routing, OpenAPI generation, and the TOON format. Foundational runtime and HTTP crates (`tokio`, `hyper`, `tower`) remain external for stability and security.
+To reduce external dependency debt (bağımlılık borcu), we prioritize replacing crates with stable specs and small surfaces, while keeping the public API unchanged. Candidate areas for RustAPI-owned implementations are validation, routing, OpenAPI generation, and the TOON format. Foundational runtime and HTTP crates (`tokio`, `hyper`, `tower`) remain external for stability and security.
 
 ## Getting Started
 
