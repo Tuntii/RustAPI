@@ -79,7 +79,7 @@ uuid = { version = "1.6", features = ["v4"] }
 prometheus = "0.13"
 
 # OpenAPI
-utoipa = { version = "4.2", features = ["uuid", "chrono"] }
+utoipa = { version = "5.4", features = ["uuid", "chrono"] }
 
 # TOON format
 toon-format = { version = "0.4", default-features = false }
