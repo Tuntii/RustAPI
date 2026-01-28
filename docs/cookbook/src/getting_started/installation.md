@@ -22,7 +22,7 @@ cargo install cargo-rustapi
 Verify your installation:
 
 ```bash
-cargo rustapi --version
+cargo-rustapi --version
 ```
 
 ## Editor Setup
