@@ -28,6 +28,10 @@ RustAPI is an ergonomic web framework for Rust, inspired by FastAPI's developer 
 
 RustAPI provides a stable, ergonomic public API. Internal dependencies (`hyper`, `tokio`, `validator`) are implementation details that can be upgraded without breaking your code.
 
+### External Dependency Plan
+
+To reduce external dependency debt (dış borç), we prioritize replacing crates with stable specs and small surfaces while keeping the public API unchanged. Candidate areas for RustAPI-owned implementations are validation, routing, OpenAPI generation, and the TOON format. Foundational runtime and HTTP crates (`tokio`, `hyper`, `tower`) remain external for stability and security.
+
 ## Getting Started
 
 ```toml

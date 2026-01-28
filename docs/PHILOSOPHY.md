@@ -105,6 +105,23 @@ validator = "0.16"
 2. We bump `rustapi-rs` to `0.2.0`
 3. **Your code stays exactly the same** — just update the version
 
+### External Dependency Reduction (Dış Bağımlılıkları Azaltma)
+
+RustAPI already hides external crates behind internal adapters. To reduce dependency debt, we focus on components with a stable spec and a small surface area, while keeping the public API unchanged. The playbook is:
+
+1. Wrap dependencies with internal traits/types so behavior is defined by RustAPI.
+2. Add contract tests to lock in behavior before replacing internals.
+3. Ship replacements behind feature flags, then flip defaults.
+
+Good candidates for in-house implementations:
+- Validation (`validator`) → native validation engine (already planned).
+- Router (`matchit`) → internal radix tree with RustAPI-specific optimizations.
+- OpenAPI (`utoipa`) → native schema generator to control outputs.
+- TOON format (`toon-format`) → move core format logic into `rustapi-toon`.
+- Template engine (`tera`) → minimal renderer for basic HTML views.
+
+Not near-term targets: `tokio`, `hyper`, `tower` — large, security-sensitive, and foundational crates best kept upstream for now.
+
 ### 4. 🎁 Batteries Included (But Optional)
 
 **Everything you need, nothing you don't.**
