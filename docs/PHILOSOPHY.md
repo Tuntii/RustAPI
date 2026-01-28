@@ -96,7 +96,7 @@ validator = "0.16"
 |-----------|----------------|--------------|
 | HTTP Server | `hyper 1.x` | `hyper 2.x`, `h3` (HTTP/3) |
 | Async Runtime | `tokio` | `smol`, `async-std` (future) |
-| Validation | `validator` | Custom engine (planned for v1.0) |
+| Validation | `rustapi-validate` | Custom engine (available) |
 | Router | `matchit` | Custom radix tree |
 | OpenAPI | `utoipa` | Native implementation |
 
@@ -114,7 +114,6 @@ RustAPI already hides external crates behind internal adapters. To reduce depend
 3. Ship replacements behind feature flags, then flip defaults.
 
 Good candidates for in-house implementations:
-- Validation (`validator`) → native validation engine (already planned).
 - Router (`matchit`) → internal radix tree with RustAPI-specific optimizations.
 - OpenAPI (`utoipa`) → native schema generator to control outputs.
 - TOON format (`toon-format`) → move core format logic into `rustapi-toon`.
