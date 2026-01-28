@@ -96,7 +96,7 @@ validator = "0.16"
 |-----------|----------------|--------------|
 | HTTP Server | `hyper 1.x` | `hyper 2.x`, `h3` (HTTP/3) |
 | Async Runtime | `tokio` | `smol`, `async-std` (future) |
-| Validation | `validator` | Custom engine (planned for v1.0) |
+| Validation | `rustapi-validate` | Custom engine (available) |
 | Router | `matchit` | Custom radix tree |
 | OpenAPI | `utoipa` | Native implementation |
 
@@ -104,6 +104,22 @@ validator = "0.16"
 1. We update `rustapi-core` to use `hyper 2.0`
 2. We bump `rustapi-rs` to `0.2.0`
 3. **Your code stays exactly the same** — just update the version
+
+### External Dependency Reduction (Harici Bağımlılıkları Azaltma)
+
+RustAPI already hides external crates behind internal adapters. To reduce dependency debt, we target components with stable specs and small surface areas for replacement, while keeping the public API unchanged. The playbook is:
+
+1. Wrap dependencies with internal traits/types so behavior is defined by RustAPI.
+2. Add contract tests to lock in behavior before replacing internals.
+3. Ship replacements behind feature flags, then flip defaults.
+
+Good candidates for in-house implementations:
+- Router (`matchit`) → internal radix tree with RustAPI-specific optimizations.
+- OpenAPI (`utoipa`) → native schema generator to control outputs.
+- TOON format (`toon-format`) → move core format logic into `rustapi-toon`.
+- Template engine (`tera`) → minimal renderer for basic HTML views.
+
+Not near-term targets: `tokio`, `hyper`, `tower` — large, security-sensitive, and foundational crates best kept upstream for now.
 
 ### 4. 🎁 Batteries Included (But Optional)
 
