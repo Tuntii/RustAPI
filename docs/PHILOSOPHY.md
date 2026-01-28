@@ -107,7 +107,7 @@ validator = "0.16"
 
 ### External Dependency Reduction (Harici Bağımlılıkları Azaltma)
 
-RustAPI already hides external crates behind internal adapters. To reduce dependency debt, we focus on components, each with a stable spec and a small surface area, while keeping the public API unchanged. The playbook is:
+RustAPI already hides external crates behind internal adapters. To reduce dependency debt, we target components with stable specs and small surface areas for replacement, while keeping the public API unchanged. The playbook is:
 
 1. Wrap dependencies with internal traits/types so behavior is defined by RustAPI.
 2. Add contract tests to lock in behavior before replacing internals.
