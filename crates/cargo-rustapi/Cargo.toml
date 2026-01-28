@@ -25,7 +25,7 @@ console = { workspace = true }
 
 # File system
 walkdir = "2.5"
-toml_edit = "0.22"
+toml_edit = "0.24"
 
 # Async
 tokio = { workspace = true, features = ["process", "fs"] }
