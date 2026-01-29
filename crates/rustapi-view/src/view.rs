@@ -143,7 +143,9 @@ impl<T> ResponseModifier for View<T> {
                     map.insert(
                         "text/html".to_string(),
                         MediaType {
-                            schema: Some(SchemaRef::Inline(serde_json::json!({ "type": "string" }))),
+                            schema: Some(SchemaRef::Inline(
+                                serde_json::json!({ "type": "string" }),
+                            )),
                             example: None,
                         },
                     );

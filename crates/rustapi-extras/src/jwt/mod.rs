@@ -29,6 +29,7 @@ use rustapi_core::{ApiError, FromRequestParts, Request, Response, ResponseBody, 
 use rustapi_openapi::{Operation, OperationModifier};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+use std::collections::BTreeMap;
 use std::future::Future;
 use std::marker::PhantomData;
 use std::pin::Pin;
@@ -335,24 +336,25 @@ impl<T> OperationModifier for AuthUser<T> {
     fn update_operation(op: &mut Operation) {
         // Add 401 Unauthorized response to OpenAPI spec
         use rustapi_openapi::{MediaType, ResponseSpec, SchemaRef};
-        use std::collections::HashMap;
 
         op.responses.insert(
             "401".to_string(),
             ResponseSpec {
                 description: "Unauthorized - Invalid or missing JWT token".to_string(),
                 content: {
-                    let mut map = HashMap::new();
+                    let mut map = BTreeMap::new();
                     map.insert(
                         "application/json".to_string(),
                         MediaType {
-                            schema: SchemaRef::Ref {
+                            schema: Some(SchemaRef::Ref {
                                 reference: "#/components/schemas/ErrorSchema".to_string(),
-                            },
+                            }),
+                            example: None,
                         },
                     );
-                    Some(map)
+                    map
                 },
+                headers: BTreeMap::new(),
             },
         );
     }
