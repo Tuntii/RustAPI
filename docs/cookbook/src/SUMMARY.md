@@ -27,6 +27,7 @@
     - [cargo-rustapi: The Architect](crates/cargo_rustapi.md)
 
 - [Part IV: Recipes](recipes/README.md)
+    - [Zero-Config OpenAPI](recipes/zero_config_openapi.md)
     - [Creating Resources](recipes/crud_resource.md)
     - [JWT Authentication](recipes/jwt_auth.md)
     - [CSRF Protection](recipes/csrf_protection.md)

@@ -969,11 +969,33 @@ use std::collections::HashMap;
 // ValidatedJson - Adds request body
 impl<T: ToSchema> OperationModifier for ValidatedJson<T> {
     fn update_operation(op: &mut Operation) {
-        let (name, _) = T::schema();
+        let (name, ref_or_schema) = T::schema();
 
-        let schema_ref = SchemaRef::Ref(rustapi_openapi::schema::Reference {
-            ref_path: format!("#/components/schemas/{}", name),
-        });
+        let schema_ref = match ref_or_schema {
+            SchemaRef::Ref(r) => SchemaRef::Ref(r),
+            SchemaRef::T(s) => {
+                let should_inline = match s.schema_type {
+                    Some(rustapi_openapi::schema::SchemaType::Array)
+                    | Some(rustapi_openapi::schema::SchemaType::Boolean)
+                    | Some(rustapi_openapi::schema::SchemaType::Integer)
+                    | Some(rustapi_openapi::schema::SchemaType::Number)
+                    | Some(rustapi_openapi::schema::SchemaType::String) => true,
+                    Some(rustapi_openapi::schema::SchemaType::Object) => {
+                        s.properties.as_ref().map_or(true, |p| p.is_empty())
+                            && s.enum_values.as_ref().map_or(true, |e| e.is_empty())
+                    }
+                    None => true,
+                };
+
+                if should_inline {
+                    SchemaRef::T(s)
+                } else {
+                    SchemaRef::Ref(rustapi_openapi::schema::Reference {
+                        ref_path: format!("#/components/schemas/{}", name),
+                    })
+                }
+            }
+        };
 
         let mut content = HashMap::new();
         content.insert(
@@ -1011,11 +1033,33 @@ impl<T: ToSchema> OperationModifier for ValidatedJson<T> {
 // Json - Adds request body (Same as ValidatedJson)
 impl<T: ToSchema> OperationModifier for Json<T> {
     fn update_operation(op: &mut Operation) {
-        let (name, _) = T::schema();
+        let (name, ref_or_schema) = T::schema();
 
-        let schema_ref = SchemaRef::Ref(rustapi_openapi::schema::Reference {
-            ref_path: format!("#/components/schemas/{}", name),
-        });
+        let schema_ref = match ref_or_schema {
+            SchemaRef::Ref(r) => SchemaRef::Ref(r),
+            SchemaRef::T(s) => {
+                let should_inline = match s.schema_type {
+                    Some(rustapi_openapi::schema::SchemaType::Array)
+                    | Some(rustapi_openapi::schema::SchemaType::Boolean)
+                    | Some(rustapi_openapi::schema::SchemaType::Integer)
+                    | Some(rustapi_openapi::schema::SchemaType::Number)
+                    | Some(rustapi_openapi::schema::SchemaType::String) => true,
+                    Some(rustapi_openapi::schema::SchemaType::Object) => {
+                        s.properties.as_ref().map_or(true, |p| p.is_empty())
+                            && s.enum_values.as_ref().map_or(true, |e| e.is_empty())
+                    }
+                    None => true,
+                };
+
+                if should_inline {
+                    SchemaRef::T(s)
+                } else {
+                    SchemaRef::Ref(rustapi_openapi::schema::Reference {
+                        ref_path: format!("#/components/schemas/{}", name),
+                    })
+                }
+            }
+        };
 
         let mut content = HashMap::new();
         content.insert(
@@ -1117,11 +1161,33 @@ impl OperationModifier for BodyStream {
 // Json<T> - 200 OK with schema T
 impl<T: ToSchema> ResponseModifier for Json<T> {
     fn update_response(op: &mut Operation) {
-        let (name, _) = T::schema();
+        let (name, ref_or_schema) = T::schema();
 
-        let schema_ref = SchemaRef::Ref(rustapi_openapi::schema::Reference {
-            ref_path: format!("#/components/schemas/{}", name),
-        });
+        let schema_ref = match ref_or_schema {
+            SchemaRef::Ref(r) => SchemaRef::Ref(r),
+            SchemaRef::T(s) => {
+                let should_inline = match s.schema_type {
+                    Some(rustapi_openapi::schema::SchemaType::Array)
+                    | Some(rustapi_openapi::schema::SchemaType::Boolean)
+                    | Some(rustapi_openapi::schema::SchemaType::Integer)
+                    | Some(rustapi_openapi::schema::SchemaType::Number)
+                    | Some(rustapi_openapi::schema::SchemaType::String) => true,
+                    Some(rustapi_openapi::schema::SchemaType::Object) => {
+                        s.properties.as_ref().map_or(true, |p| p.is_empty())
+                            && s.enum_values.as_ref().map_or(true, |e| e.is_empty())
+                    }
+                    None => true,
+                };
+
+                if should_inline {
+                    SchemaRef::T(s)
+                } else {
+                    SchemaRef::Ref(rustapi_openapi::schema::Reference {
+                        ref_path: format!("#/components/schemas/{}", name),
+                    })
+                }
+            }
+        };
 
         op.responses.insert(
             "200".to_string(),

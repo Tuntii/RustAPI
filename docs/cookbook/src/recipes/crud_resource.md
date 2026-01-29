@@ -35,9 +35,11 @@ pub async fn create(Json(payload): Json<CreateUser>) -> impl IntoResponse {
 Then register it in `main.rs`:
 
 ```rust
-RustApi::new()
-    .mount(handlers::users::list)
-    .mount(handlers::users::create)
+// In main.rs
+RustApi::auto() // Automatic registration!
+    .run("127.0.0.1:8080")
+    .await?
+
 ```
 
 ## Discussion

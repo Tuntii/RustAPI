@@ -357,11 +357,33 @@ impl<T: Serialize> IntoResponse for Created<T> {
 
 impl<T: ToSchema> ResponseModifier for Created<T> {
     fn update_response(op: &mut Operation) {
-        let (name, _) = T::schema();
+        let (name, ref_or_schema) = T::schema();
 
-        let schema_ref = SchemaRef::Ref(rustapi_openapi::schema::Reference {
-            ref_path: format!("#/components/schemas/{}", name),
-        });
+        let schema_ref = match ref_or_schema {
+            SchemaRef::Ref(r) => SchemaRef::Ref(r),
+            SchemaRef::T(s) => {
+                let should_inline = match s.schema_type {
+                    Some(rustapi_openapi::schema::SchemaType::Array)
+                    | Some(rustapi_openapi::schema::SchemaType::Boolean)
+                    | Some(rustapi_openapi::schema::SchemaType::Integer)
+                    | Some(rustapi_openapi::schema::SchemaType::Number)
+                    | Some(rustapi_openapi::schema::SchemaType::String) => true,
+                    Some(rustapi_openapi::schema::SchemaType::Object) => {
+                        s.properties.as_ref().map_or(true, |p| p.is_empty())
+                            && s.enum_values.as_ref().map_or(true, |e| e.is_empty())
+                    }
+                    None => true,
+                };
+
+                if should_inline {
+                    SchemaRef::T(s)
+                } else {
+                    SchemaRef::Ref(rustapi_openapi::schema::Reference {
+                        ref_path: format!("#/components/schemas/{}", name),
+                    })
+                }
+            }
+        };
 
         op.responses.insert(
             "201".to_string(),

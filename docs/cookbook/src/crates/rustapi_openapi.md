@@ -4,8 +4,11 @@
 **Philosophy**: "Documentation as Code."
 
 ## Automatic Spec Generation
-
+ 
 We believe that if documentation is manual, it is wrong. RustAPI uses `utoipa` to generate an OpenAPI 3.0 specification directly from your code.
+
+> [!TIP]
+> See the [Zero-Config OpenAPI](../recipes/zero_config_openapi.md) recipe for the modern, macro-based approach.
 
 ## The `Schema` Trait
 
