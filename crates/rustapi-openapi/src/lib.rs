@@ -59,16 +59,19 @@
 //!     .await
 //! ```
 
+// Needed for proc-macro to refer to this crate
+extern crate self as rustapi_openapi;
+
 mod config;
 #[cfg(feature = "redoc")]
 mod redoc;
+pub mod schema;
 mod schemas;
 mod spec;
 #[cfg(feature = "swagger-ui")]
 mod swagger;
-
-// OpenAPI 3.1 support
-pub mod v31;
+#[cfg(test)]
+mod tests;
 
 // API versioning support
 pub mod versioning;
@@ -83,15 +86,8 @@ pub use spec::{
     RequestBody, ResponseModifier, ResponseSpec, SchemaRef,
 };
 
-// Re-export utoipa's ToSchema derive macro as Schema
-pub use utoipa::ToSchema as Schema;
-// Re-export utoipa's IntoParams derive macro
-pub use utoipa::IntoParams;
-
-// Re-export utoipa types for advanced usage
-pub mod utoipa_types {
-    pub use utoipa::{openapi, IntoParams, Modify, OpenApi, ToSchema};
-}
+// Re-export Schema derive macro
+pub use rustapi_macros::Schema;
 
 use bytes::Bytes;
 use http::{header, Response, StatusCode};
@@ -160,19 +156,3 @@ pub fn redoc_html_with_config(
 #[cfg(feature = "redoc")]
 pub use redoc::{RedocConfig, RedocTheme};
 
-/// Generate OpenAPI 3.1 JSON response
-pub fn openapi_31_json(spec: &v31::OpenApi31Spec) -> Response<Full<Bytes>> {
-    match serde_json::to_string_pretty(&spec) {
-        Ok(json) => Response::builder()
-            .status(StatusCode::OK)
-            .header(header::CONTENT_TYPE, "application/json")
-            .body(Full::new(Bytes::from(json)))
-            .unwrap(),
-        Err(_) => Response::builder()
-            .status(StatusCode::INTERNAL_SERVER_ERROR)
-            .body(Full::new(Bytes::from(
-                "Failed to serialize OpenAPI 3.1 spec",
-            )))
-            .unwrap(),
-    }
-}

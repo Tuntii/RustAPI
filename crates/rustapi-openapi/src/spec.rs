@@ -1,122 +1,84 @@
-//! OpenAPI specification types
+//! OpenAPI 3.1 specification types
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
-/// API information for OpenAPI spec
+use crate::schema::{JsonSchema2020, SchemaTransformer};
+pub use crate::schema::SchemaRef;
+
+/// OpenAPI 3.1.0 specification
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ApiInfo {
-    pub title: String,
-    pub version: String,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
-}
-
-/// OpenAPI specification builder
-#[derive(Debug, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct OpenApiSpec {
+    /// OpenAPI version (always "3.1.0")
+    pub openapi: String,
+
+    /// API information
     pub info: ApiInfo,
-    pub paths: HashMap<String, PathItem>,
-    pub schemas: HashMap<String, serde_json::Value>,
-}
 
-/// Path item in OpenAPI spec
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct PathItem {
+    /// JSON Schema dialect (optional, defaults to JSON Schema 2020-12)
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub get: Option<Operation>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub post: Option<Operation>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub put: Option<Operation>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub patch: Option<Operation>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub delete: Option<Operation>,
-}
+    pub json_schema_dialect: Option<String>,
 
-/// Operation (endpoint) in OpenAPI spec
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Operation {
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub summary: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub tags: Option<Vec<String>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub parameters: Option<Vec<Parameter>>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(rename = "requestBody")]
-    pub request_body: Option<RequestBody>,
-    pub responses: HashMap<String, ResponseSpec>,
-}
+    /// Server list
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub servers: Vec<Server>,
 
-/// Parameter in OpenAPI spec
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Parameter {
-    pub name: String,
-    #[serde(rename = "in")]
-    pub location: String,
-    pub required: bool,
+    /// API paths
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub paths: BTreeMap<String, PathItem>,
+
+    /// Webhooks
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub webhooks: BTreeMap<String, PathItem>,
+
+    /// Components
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
-    pub schema: SchemaRef,
-}
+    pub components: Option<Components>,
 
-/// Request body in OpenAPI spec
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RequestBody {
-    pub required: bool,
-    pub content: HashMap<String, MediaType>,
-}
+    /// Security requirements
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub security: Vec<BTreeMap<String, Vec<String>>>,
 
-/// Media type in OpenAPI spec
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct MediaType {
-    pub schema: SchemaRef,
-}
+    /// Tags
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub tags: Vec<Tag>,
 
-/// Response specification
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct ResponseSpec {
-    pub description: String,
+    /// External documentation
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub content: Option<HashMap<String, MediaType>>,
-}
-
-/// Schema reference or inline schema
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum SchemaRef {
-    Ref {
-        #[serde(rename = "$ref")]
-        reference: String,
-    },
-    Inline(serde_json::Value),
+    pub external_docs: Option<ExternalDocs>,
 }
 
 impl OpenApiSpec {
-    /// Create a new OpenAPI specification
     pub fn new(title: impl Into<String>, version: impl Into<String>) -> Self {
         Self {
+            openapi: "3.1.0".to_string(),
             info: ApiInfo {
                 title: title.into(),
                 version: version.into(),
-                description: None,
+                ..Default::default()
             },
-            paths: HashMap::new(),
-            schemas: HashMap::new(),
+            json_schema_dialect: Some("https://json-schema.org/draft/2020-12/schema".to_string()),
+            servers: Vec::new(),
+            paths: BTreeMap::new(),
+            webhooks: BTreeMap::new(),
+            components: None,
+            security: Vec::new(),
+            tags: Vec::new(),
+            external_docs: None,
         }
     }
 
-    /// Set description
     pub fn description(mut self, desc: impl Into<String>) -> Self {
         self.info.description = Some(desc.into());
         self
     }
 
-    /// Add a path operation
+    pub fn summary(mut self, summary: impl Into<String>) -> Self {
+        self.info.summary = Some(summary.into());
+        self
+    }
+
     pub fn path(mut self, path: &str, method: &str, operation: Operation) -> Self {
         let item = self.paths.entry(path.to_string()).or_default();
         match method.to_uppercase().as_str() {
@@ -125,127 +87,359 @@ impl OpenApiSpec {
             "PUT" => item.put = Some(operation),
             "PATCH" => item.patch = Some(operation),
             "DELETE" => item.delete = Some(operation),
+            "HEAD" => item.head = Some(operation),
+            "OPTIONS" => item.options = Some(operation),
+            "TRACE" => item.trace = Some(operation),
             _ => {}
         }
         self
     }
 
-    /// Add a schema definition
-    pub fn schema(mut self, name: &str, schema: serde_json::Value) -> Self {
-        self.schemas.insert(name.to_string(), schema);
-        self
-    }
-
-    /// Register a type that implements Schema (utoipa::ToSchema)
-    pub fn register<T: for<'a> utoipa::ToSchema<'a>>(mut self) -> Self {
-        let (name, schema) = T::schema();
-        if let Ok(json_schema) = serde_json::to_value(schema) {
-            self.schemas.insert(name.to_string(), json_schema);
-        }
+    /// Register a type that implements RustApiSchema
+    pub fn register<T: crate::schema::RustApiSchema>(mut self) -> Self {
+        self.register_in_place::<T>();
         self
     }
 
     /// Register a type into this spec in-place.
-    ///
-    /// This is useful for zero-config registration paths where the spec is stored
-    /// by value in another struct (e.g., the application builder).
-    pub fn register_in_place<T: for<'a> utoipa::ToSchema<'a>>(&mut self) {
-        let (name, schema) = T::schema();
-        if let Ok(json_schema) = serde_json::to_value(schema) {
-            self.schemas.insert(name.to_string(), json_schema);
+    pub fn register_in_place<T: crate::schema::RustApiSchema>(&mut self) {
+        let mut ctx = crate::schema::SchemaCtx::new();
+
+        // Pre-load existing schemas to avoid re-generating or to handle deduplication correctly
+        if let Some(c) = &self.components {
+            ctx.components = c.schemas.clone();
         }
+
+        // Generate schema for T (and dependencies)
+        let _ = T::schema(&mut ctx);
+
+        // Merge back into components
+        let components = self.components.get_or_insert_with(Components::default);
+        components.schemas.extend(ctx.components);
     }
 
-    /// Convert to JSON value
+    pub fn server(mut self, server: Server) -> Self {
+        self.servers.push(server);
+        self
+    }
+
+    pub fn security_scheme(mut self, name: impl Into<String>, scheme: SecurityScheme) -> Self {
+        let components = self.components.get_or_insert_with(Components::default);
+        components
+            .security_schemes
+            .entry(name.into())
+            .or_insert(scheme);
+        self
+    }
+
     pub fn to_json(&self) -> serde_json::Value {
-        let mut spec = serde_json::json!({
-            "openapi": "3.0.3",
-            "info": self.info,
-            "paths": self.paths,
-        });
-
-        if !self.schemas.is_empty() {
-            spec["components"] = serde_json::json!({
-                "schemas": self.schemas
-            });
-        }
-
-        spec
+        serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct ApiInfo {
+    pub title: String,
+    pub version: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub summary: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub terms_of_service: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub contact: Option<Contact>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub license: Option<License>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct Contact {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub email: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct License {
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub identifier: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub url: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Server {
+    pub url: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub variables: BTreeMap<String, ServerVariable>,
+}
+
+impl Server {
+    pub fn new(url: impl Into<String>) -> Self {
+        Self {
+            url: url.into(),
+            description: None,
+            variables: BTreeMap::new(),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ServerVariable {
+    #[serde(rename = "enum", skip_serializing_if = "Vec::is_empty")]
+    pub enum_values: Vec<String>,
+    pub default: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct PathItem {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub summary: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub get: Option<Operation>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub put: Option<Operation>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub post: Option<Operation>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub delete: Option<Operation>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub options: Option<Operation>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub head: Option<Operation>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub patch: Option<Operation>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub trace: Option<Operation>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub servers: Vec<Server>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub parameters: Vec<Parameter>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct Operation {
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub tags: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub summary: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub external_docs: Option<ExternalDocs>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub operation_id: Option<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub parameters: Vec<Parameter>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub request_body: Option<RequestBody>,
+    pub responses: BTreeMap<String, ResponseSpec>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub security: Vec<BTreeMap<String, Vec<String>>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub deprecated: Option<bool>,
 }
 
 impl Operation {
-    /// Create a new operation
     pub fn new() -> Self {
         Self {
-            summary: None,
-            description: None,
-            tags: None,
-            parameters: None,
-            request_body: None,
-            responses: HashMap::from([(
-                "200".to_string(),
-                ResponseSpec {
-                    description: "Successful response".to_string(),
-                    content: None,
-                },
-            )]),
+             responses: BTreeMap::from([("200".to_string(), ResponseSpec::default())]),
+             ..Default::default()
         }
     }
 
-    /// Set summary
-    pub fn summary(mut self, summary: impl Into<String>) -> Self {
-        self.summary = Some(summary.into());
+    pub fn summary(mut self, s: impl Into<String>) -> Self {
+        self.summary = Some(s.into());
         self
     }
 
-    /// Set description
-    pub fn description(mut self, desc: impl Into<String>) -> Self {
-        self.description = Some(desc.into());
-        self
-    }
-
-    /// Add tags
-    pub fn tags(mut self, tags: Vec<String>) -> Self {
-        self.tags = Some(tags);
+    pub fn description(mut self, d: impl Into<String>) -> Self {
+        self.description = Some(d.into());
         self
     }
 }
 
-impl Default for Operation {
-    fn default() -> Self {
-        Self::new()
-    }
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Parameter {
+    pub name: String,
+    #[serde(rename = "in")]
+    pub location: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    pub required: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub deprecated: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub schema: Option<SchemaRef>,
 }
 
-/// Trait for types that can modify an OpenAPI operation
-///
-/// This is used by extractors to automatically update the operation
-/// documentation (e.g. adding request body schema, parameters, etc.)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RequestBody {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    pub content: BTreeMap<String, MediaType>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub required: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct ResponseSpec {
+    pub description: String,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub content: BTreeMap<String, MediaType>,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub headers: BTreeMap<String, Header>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MediaType {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub schema: Option<SchemaRef>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub example: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Header {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub schema: Option<SchemaRef>,
+}
+
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct Components {
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub schemas: BTreeMap<String, JsonSchema2020>,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub responses: BTreeMap<String, ResponseSpec>,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub parameters: BTreeMap<String, Parameter>,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub examples: BTreeMap<String, serde_json::Value>,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub request_bodies: BTreeMap<String, RequestBody>,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub headers: BTreeMap<String, Header>,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub security_schemes: BTreeMap<String, SecurityScheme>,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub links: BTreeMap<String, serde_json::Value>,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    pub callbacks: BTreeMap<String, BTreeMap<String, PathItem>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(tag = "type", rename_all = "camelCase")]
+pub enum SecurityScheme {
+    ApiKey {
+        name: String,
+        #[serde(rename = "in")]
+        location: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        description: Option<String>,
+    },
+    Http {
+        scheme: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        bearer_format: Option<String>,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        description: Option<String>,
+    },
+    Oauth2 {
+        flows: OAuthFlows,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        description: Option<String>,
+    },
+    OpenIdConnect {
+        open_id_connect_url: String,
+        #[serde(skip_serializing_if = "Option::is_none")]
+        description: Option<String>,
+    },
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct OAuthFlows {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub implicit: Option<OAuthFlow>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub password: Option<OAuthFlow>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub client_credentials: Option<OAuthFlow>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub authorization_code: Option<OAuthFlow>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OAuthFlow {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub authorization_url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub token_url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub refresh_url: Option<String>,
+    pub scopes: BTreeMap<String, String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Tag {
+    pub name: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub external_docs: Option<ExternalDocs>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ExternalDocs {
+    pub url: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+}
+
+// Re-exports/Traits needed for backwards compatibility or easy migration
 pub trait OperationModifier {
-    /// Update the operation
     fn update_operation(op: &mut Operation);
 }
 
-// Implement for Option<T>
+pub trait ResponseModifier {
+    fn update_response(op: &mut Operation);
+}
+
+// Helper implementations for OperationModifier/ResponseModifier
 impl<T: OperationModifier> OperationModifier for Option<T> {
     fn update_operation(op: &mut Operation) {
         T::update_operation(op);
-        // If request body was added, make it optional
         if let Some(body) = &mut op.request_body {
-            body.required = false;
+            body.required = Some(false);
         }
     }
 }
 
-// Implement for Result<T, E>
-impl<T: OperationModifier, E> OperationModifier for std::result::Result<T, E> {
+impl<T: OperationModifier, E> OperationModifier for Result<T, E> {
     fn update_operation(op: &mut Operation) {
         T::update_operation(op);
     }
 }
 
-// Implement for primitives (no-op)
 macro_rules! impl_op_modifier_for_primitives {
     ($($ty:ty),*) => {
         $(
@@ -255,74 +449,43 @@ macro_rules! impl_op_modifier_for_primitives {
         )*
     };
 }
-
 impl_op_modifier_for_primitives!(
     i8, i16, i32, i64, i128, isize, u8, u16, u32, u64, u128, usize, f32, f64, bool, String
 );
 
-// ResponseModifier trait
-pub trait ResponseModifier {
-    /// Update the operation with response information
-    fn update_response(op: &mut Operation);
-}
-
-// Implement for () - 200 OK (empty)
 impl ResponseModifier for () {
     fn update_response(op: &mut Operation) {
-        let response = ResponseSpec {
-            description: "Successful response".to_string(),
-            ..Default::default()
-        };
-        op.responses.insert("200".to_string(), response);
+        op.responses.insert("200".to_string(), ResponseSpec { description: "Successful response".into(), ..Default::default() });
     }
 }
 
-// Implement for String - 200 OK (text/plain)
 impl ResponseModifier for String {
     fn update_response(op: &mut Operation) {
-        let mut content = std::collections::HashMap::new();
-        content.insert(
-            "text/plain".to_string(),
-            MediaType {
-                schema: SchemaRef::Inline(serde_json::json!({ "type": "string" })),
-            },
-        );
-
-        let response = ResponseSpec {
-            description: "Successful response".to_string(),
-            content: Some(content),
-        };
-        op.responses.insert("200".to_string(), response);
+        let mut content = BTreeMap::new();
+        content.insert("text/plain".to_string(), MediaType {
+            schema: Some(SchemaRef::Inline(serde_json::json!({"type": "string"}))),
+            example: None
+        });
+        op.responses.insert("200".to_string(), ResponseSpec {
+            description: "Successful response".into(),
+            content,
+            ..Default::default()
+        });
     }
 }
 
-// Implement for &'static str - 200 OK (text/plain)
 impl ResponseModifier for &'static str {
     fn update_response(op: &mut Operation) {
-        let mut content = std::collections::HashMap::new();
-        content.insert(
-            "text/plain".to_string(),
-            MediaType {
-                schema: SchemaRef::Inline(serde_json::json!({ "type": "string" })),
-            },
-        );
-
-        let response = ResponseSpec {
-            description: "Successful response".to_string(),
-            content: Some(content),
-        };
-        op.responses.insert("200".to_string(), response);
+        String::update_response(op);
     }
 }
 
-// Implement for Option<T> - Delegates to T
 impl<T: ResponseModifier> ResponseModifier for Option<T> {
     fn update_response(op: &mut Operation) {
         T::update_response(op);
     }
 }
 
-// Implement for Result<T, E> - Delegates to T (success) and E (error)
 impl<T: ResponseModifier, E: ResponseModifier> ResponseModifier for Result<T, E> {
     fn update_response(op: &mut Operation) {
         T::update_response(op);
@@ -330,15 +493,11 @@ impl<T: ResponseModifier, E: ResponseModifier> ResponseModifier for Result<T, E>
     }
 }
 
-// Implement for http::Response<T> - Generic 200 OK
 impl<T> ResponseModifier for http::Response<T> {
     fn update_response(op: &mut Operation) {
-        op.responses.insert(
-            "200".to_string(),
-            ResponseSpec {
-                description: "Successful response".to_string(),
-                ..Default::default()
-            },
-        );
+        op.responses.insert("200".to_string(), ResponseSpec {
+            description: "Successful response".into(),
+            ..Default::default()
+        });
     }
 }

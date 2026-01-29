@@ -51,6 +51,7 @@ use http::{header, StatusCode};
 
 use pin_project_lite::pin_project;
 use rustapi_openapi::{MediaType, Operation, ResponseModifier, ResponseSpec, SchemaRef};
+use std::collections::BTreeMap;
 use std::fmt::Write;
 use std::pin::Pin;
 use std::task::{Context, Poll};
@@ -392,21 +393,22 @@ where
 // OpenAPI support: ResponseModifier for SSE streams
 impl<S> ResponseModifier for Sse<S> {
     fn update_response(op: &mut Operation) {
-        let mut content = std::collections::HashMap::new();
+        let mut content = BTreeMap::new();
         content.insert(
             "text/event-stream".to_string(),
             MediaType {
-                schema: SchemaRef::Inline(serde_json::json!({
+                schema: Some(SchemaRef::Inline(serde_json::json!({
                     "type": "string",
                     "description": "Server-Sent Events stream. Events follow the SSE format: 'event: <type>\\ndata: <json>\\n\\n'",
-                    "example": "event: message\ndata: {\"id\": 1, \"text\": \"Hello\"}\n\n"
-                })),
+                }))),
+                example: Some(serde_json::json!("event: message\ndata: {\"id\": 1, \"text\": \"Hello\"}\n\n")),
             },
         );
 
         let response = ResponseSpec {
             description: "Server-Sent Events stream for real-time updates".to_string(),
-            content: Some(content),
+            content,
+            headers: BTreeMap::new(),
         };
         op.responses.insert("200".to_string(), response);
     }

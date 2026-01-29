@@ -1,6 +1,6 @@
 [package]
 name = "rustapi-openapi"
-description = "Automated OpenAPI 3.0 specification generator for RustAPI. Integrates Swagger UI."
+description = "Native OpenAPI 3.1 specification generator for RustAPI. Integrates Swagger UI."
 documentation = "https://docs.rs/rustapi-openapi"
 version.workspace = true
 edition.workspace = true 
@@ -19,10 +19,8 @@ bytes = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 
-# OpenAPI schema generation
-utoipa = { workspace = true }
-
-
+# Macros
+rustapi-macros = { path = "../rustapi-macros", version = "0.1.188" }
 
 [features]
 default = ["swagger-ui"]

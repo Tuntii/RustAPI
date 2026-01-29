@@ -23,6 +23,23 @@ use syn::{
 };
 
 mod api_error;
+mod derive_schema;
+
+/// Derive macro for OpenAPI Schema trait
+///
+/// # Example
+///
+/// ```rust,ignore
+/// #[derive(Schema)]
+/// struct User {
+///     id: i64,
+///     name: String,
+/// }
+/// ```
+#[proc_macro_derive(Schema, attributes(schema))]
+pub fn derive_schema(input: TokenStream) -> TokenStream {
+    derive_schema::expand_derive_schema(parse_macro_input!(input as DeriveInput)).into()
+}
 
 /// Auto-register a schema type for zero-config OpenAPI.
 ///

@@ -16,6 +16,7 @@ proc-macro = true
 syn = { workspace = true }
 quote = { workspace = true }
 proc-macro2 = { workspace = true }
+serde_json = { workspace = true }
 
 # Note: async-trait is used in generated code, not in the macro itself
 # Users need to have async-trait available when using the Validate derive

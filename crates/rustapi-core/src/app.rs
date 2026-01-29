@@ -6,7 +6,7 @@ use crate::middleware::{BodyLimitLayer, LayerStack, MiddlewareLayer, DEFAULT_BOD
 use crate::response::IntoResponse;
 use crate::router::{MethodRouter, Router};
 use crate::server::Server;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 /// Main application builder for RustAPI
@@ -309,7 +309,7 @@ impl RustApi {
     /// RustApi::new()
     ///     .register_schema::<User>()
     /// ```
-    pub fn register_schema<T: for<'a> rustapi_openapi::Schema<'a>>(mut self) -> Self {
+    pub fn register_schema<T: rustapi_openapi::schema::RustApiSchema>(mut self) -> Self {
         self.openapi_spec = self.openapi_spec.register::<T>();
         self
     }
@@ -388,7 +388,7 @@ impl RustApi {
         // Register operations in OpenAPI spec
         for (method, op) in &method_router.operations {
             let mut op = op.clone();
-            add_path_params_to_operation(path, &mut op, &std::collections::HashMap::new());
+            add_path_params_to_operation(path, &mut op, &BTreeMap::new());
             self.openapi_spec = self.openapi_spec.path(path, method.as_str(), op);
         }
 
@@ -523,7 +523,7 @@ impl RustApi {
                 add_path_params_to_operation(
                     &prefixed_path,
                     &mut op,
-                    &std::collections::HashMap::new(),
+                    &BTreeMap::new(),
                 );
                 self.openapi_spec = self.openapi_spec.path(&prefixed_path, method.as_str(), op);
             }
@@ -1124,7 +1124,7 @@ impl RustApi {
 fn add_path_params_to_operation(
     path: &str,
     op: &mut rustapi_openapi::Operation,
-    param_schemas: &std::collections::HashMap<String, String>,
+    param_schemas: &BTreeMap<String, String>,
 ) {
     let mut params: Vec<String> = Vec::new();
     let mut in_brace = false;
@@ -1156,7 +1156,7 @@ fn add_path_params_to_operation(
         return;
     }
 
-    let op_params = op.parameters.get_or_insert_with(Vec::new);
+    let op_params = &mut op.parameters;
 
     for name in params {
         let already = op_params
@@ -1178,7 +1178,8 @@ fn add_path_params_to_operation(
             location: "path".to_string(),
             required: true,
             description: None,
-            schema,
+            deprecated: None,
+            schema: Some(schema),
         });
     }
 }
@@ -1647,12 +1648,12 @@ mod tests {
             let get_op = path_item.get.as_ref().unwrap();
 
             prop_assert!(
-                get_op.parameters.is_some(),
+                !get_op.parameters.is_empty(),
                 "Operation should have parameters for path '{}'",
                 expected_openapi_path
             );
 
-            let params = get_op.parameters.as_ref().unwrap();
+            let params = &get_op.parameters;
             let has_param = params.iter().any(|p| p.name == param_name && p.location == "path");
             prop_assert!(
                 has_param,
@@ -1915,8 +1916,8 @@ mod tests {
 
         // Verify path parameter is added
         let get_user_op = user_path.get.as_ref().unwrap();
-        assert!(get_user_op.parameters.is_some(), "Should have parameters");
-        let params = get_user_op.parameters.as_ref().unwrap();
+        assert!(!get_user_op.parameters.is_empty(), "Should have parameters");
+        let params = &get_user_op.parameters;
         assert!(
             params
                 .iter()
@@ -2068,8 +2069,8 @@ mod tests {
 
         // Verify path parameter is added
         let get_op = get_path.get.as_ref().unwrap();
-        assert!(get_op.parameters.is_some(), "Should have parameters");
-        let params = get_op.parameters.as_ref().unwrap();
+        assert!(!get_op.parameters.is_empty(), "Should have parameters");
+        let params = &get_op.parameters;
         assert!(
             params
                 .iter()

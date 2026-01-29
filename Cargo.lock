@@ -3648,6 +3648,7 @@ version = "0.1.207"
 dependencies = [
  "proc-macro2",
  "quote",
+ "serde_json",
  "syn 2.0.111",
 ]
 
@@ -3658,9 +3659,9 @@ dependencies = [
  "bytes",
  "http 1.4.0",
  "http-body-util",
+ "rustapi-macros",
  "serde",
  "serde_json",
- "utoipa",
 ]
 
 [[package]]
