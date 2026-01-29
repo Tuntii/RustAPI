@@ -62,13 +62,13 @@ pub enum ParameterIn {
     Cookie,
 }
 
-impl ToString for ParameterIn {
-    fn to_string(&self) -> String {
+impl std::fmt::Display for ParameterIn {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Query => "query".to_string(),
-            Self::Header => "header".to_string(),
-            Self::Path => "path".to_string(),
-            Self::Cookie => "cookie".to_string(),
+            Self::Query => write!(f, "query"),
+            Self::Header => write!(f, "header"),
+            Self::Path => write!(f, "path"),
+            Self::Cookie => write!(f, "cookie"),
         }
     }
 }
