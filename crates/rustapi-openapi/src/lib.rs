@@ -1,18 +1,41 @@
 //! OpenAPI documentation for RustAPI
 //!
 //! This crate provides OpenAPI specification generation and Swagger UI serving
-//! for RustAPI applications. It wraps `utoipa` internally while providing a
-//! clean public API.
+//! for RustAPI applications. It supports both native schema generation and
+//! optional `utoipa` integration for backward compatibility.
 //!
 //! # Features
 //!
 //! - **OpenAPI 3.0.3** and **OpenAPI 3.1.0** specification support
+//! - **Native schema generation** without external dependencies
 //! - Swagger UI serving at `/docs`
 //! - JSON spec at `/openapi.json`
-//! - Schema derivation via `#[derive(Schema)]`
+//! - Schema derivation via native `ToOpenApiSchema` trait
 //! - **API versioning** with multiple strategies (path, header, query, accept)
 //! - **JSON Schema 2020-12** support for OpenAPI 3.1
 //! - **Webhook definitions** support
+//! - Optional `utoipa` support for backward compatibility
+//!
+//! # Native Schema Generation (Recommended)
+//!
+//! ```rust,ignore
+//! use rustapi_openapi::native::{ToOpenApiSchema, NativeSchema, ObjectSchemaBuilder};
+//!
+//! // Use the builder API for schemas
+//! let user_schema = ObjectSchemaBuilder::new()
+//!     .title("User")
+//!     .required_integer("id")
+//!     .required_string("name")
+//!     .optional_string("email")
+//!     .build();
+//!
+//! // Or implement ToOpenApiSchema for your types
+//! impl ToOpenApiSchema for User {
+//!     fn schema() -> (std::borrow::Cow<'static, str>, serde_json::Value) {
+//!         ("User".into(), user_schema)
+//!     }
+//! }
+//! ```
 //!
 //! # OpenAPI 3.1 Usage
 //!
@@ -41,7 +64,7 @@
 //!     .version(ApiVersion::v2(), VersionedRouteConfig::version(ApiVersion::v2()));
 //! ```
 //!
-//! # Legacy Usage (OpenAPI 3.0)
+//! # Legacy Usage with utoipa (requires "utoipa" feature)
 //!
 //! ```rust,ignore
 //! use rustapi_rs::prelude::*;
@@ -67,6 +90,9 @@ mod spec;
 #[cfg(feature = "swagger-ui")]
 mod swagger;
 
+// Native OpenAPI schema generation (no external dependencies)
+pub mod native;
+
 // OpenAPI 3.1 support
 pub mod v31;
 
@@ -83,12 +109,21 @@ pub use spec::{
     RequestBody, ResponseModifier, ResponseSpec, SchemaRef,
 };
 
-// Re-export utoipa's ToSchema derive macro as Schema
+// Re-export native schema types at crate root for convenience
+pub use native::{
+    IntoOpenApiParams, NativeSchema, NativeSchemaBuilder, ObjectSchemaBuilder, ParamInfo,
+    ParamLocation, PropertyInfo, SchemaFormat, SchemaType, ToOpenApiSchema,
+};
+
+// Re-export utoipa's ToSchema derive macro as Schema (for backward compatibility)
+#[cfg(feature = "utoipa")]
 pub use utoipa::ToSchema as Schema;
-// Re-export utoipa's IntoParams derive macro
+// Re-export utoipa's IntoParams derive macro (for backward compatibility)
+#[cfg(feature = "utoipa")]
 pub use utoipa::IntoParams;
 
-// Re-export utoipa types for advanced usage
+// Re-export utoipa types for advanced usage (only when utoipa feature is enabled)
+#[cfg(feature = "utoipa")]
 pub mod utoipa_types {
     pub use utoipa::{openapi, IntoParams, Modify, OpenApi, ToSchema};
 }

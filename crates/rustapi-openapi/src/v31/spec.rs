@@ -159,9 +159,26 @@ impl OpenApi31Spec {
         self
     }
 
+    /// Register a type that implements the native ToOpenApiSchema trait
+    ///
+    /// The schema will be automatically transformed to OpenAPI 3.1 format
+    pub fn register_native<T: crate::native::ToOpenApiSchema>(mut self) -> Self {
+        let (name, json_schema) = T::schema();
+        let transformed = SchemaTransformer::transform_30_to_31(json_schema);
+        if let Ok(schema31) = serde_json::from_value::<JsonSchema2020>(transformed) {
+            let components = self.components.get_or_insert_with(Components31::default);
+            components
+                .schemas
+                .get_or_insert_with(HashMap::new)
+                .insert(name.to_string(), schema31);
+        }
+        self
+    }
+
     /// Register a type that implements utoipa::ToSchema
     ///
     /// The schema will be automatically transformed to OpenAPI 3.1 format
+    #[cfg(feature = "utoipa")]
     pub fn register<T: for<'a> utoipa::ToSchema<'a>>(mut self) -> Self {
         let (name, schema) = T::schema();
         if let Ok(json_schema) = serde_json::to_value(schema) {

@@ -1,6 +1,6 @@
 [package]
 name = "rustapi-openapi"
-description = "Automated OpenAPI 3.0 specification generator for RustAPI. Integrates Swagger UI."
+description = "Automated OpenAPI 3.0/3.1 specification generator for RustAPI with native schema generation. Optional Swagger UI and utoipa integration."
 documentation = "https://docs.rs/rustapi-openapi"
 version.workspace = true
 edition.workspace = true 
@@ -19,12 +19,12 @@ bytes = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 
-# OpenAPI schema generation
-utoipa = { workspace = true }
-
-
+# OpenAPI schema generation (optional - for backward compatibility)
+utoipa = { workspace = true, optional = true }
 
 [features]
-default = ["swagger-ui"]
+default = ["swagger-ui", "utoipa"]
 swagger-ui = []
 redoc = []
+# Enable utoipa integration for backward compatibility with #[derive(Schema)]
+utoipa = ["dep:utoipa"]

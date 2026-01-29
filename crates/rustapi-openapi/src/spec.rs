@@ -136,7 +136,21 @@ impl OpenApiSpec {
         self
     }
 
+    /// Register a type that implements the native ToOpenApiSchema trait
+    pub fn register_native<T: crate::native::ToOpenApiSchema>(mut self) -> Self {
+        let (name, schema) = T::schema();
+        self.schemas.insert(name.to_string(), schema);
+        self
+    }
+
+    /// Register a type that implements the native ToOpenApiSchema trait in-place
+    pub fn register_native_in_place<T: crate::native::ToOpenApiSchema>(&mut self) {
+        let (name, schema) = T::schema();
+        self.schemas.insert(name.to_string(), schema);
+    }
+
     /// Register a type that implements Schema (utoipa::ToSchema)
+    #[cfg(feature = "utoipa")]
     pub fn register<T: for<'a> utoipa::ToSchema<'a>>(mut self) -> Self {
         let (name, schema) = T::schema();
         if let Ok(json_schema) = serde_json::to_value(schema) {
@@ -149,6 +163,7 @@ impl OpenApiSpec {
     ///
     /// This is useful for zero-config registration paths where the spec is stored
     /// by value in another struct (e.g., the application builder).
+    #[cfg(feature = "utoipa")]
     pub fn register_in_place<T: for<'a> utoipa::ToSchema<'a>>(&mut self) {
         let (name, schema) = T::schema();
         if let Ok(json_schema) = serde_json::to_value(schema) {
