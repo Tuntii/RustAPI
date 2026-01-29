@@ -8,7 +8,7 @@ Welcome to the RustAPI learning resources! This section provides structured lear
 
 We maintain a comprehensive examples repository with **18 real-world projects** demonstrating RustAPI's full capabilities:
 
-🔗 **[rustapi-rs-examples](https://github.com/Tuntii/rustapi-rs-examples)** - Complete examples from hello-world to production microservices
+🔗 **[RustAPI-examples](https://github.com/Tuntii/RustAPI-examples)** - Complete examples from hello-world to production microservices
 
 ### Why Use the Examples Repository?
 
@@ -162,8 +162,8 @@ Find examples by the RustAPI features they demonstrate:
 ### Clone the Repository
 
 ```bash
-git clone https://github.com/Tuntii/rustapi-rs-examples.git
-cd rustapi-rs-examples
+git clone https://github.com/Tuntii/RustAPI-examples.git
+cd RustAPI-examples
 ```
 
 ### Run an Example
@@ -215,7 +215,7 @@ Each example includes:
 
 Have a great example to share? We welcome contributions!
 
-1. Fork the [rustapi-rs-examples](https://github.com/Tuntii/rustapi-rs-examples) repository
+1. Fork the [RustAPI-examples](https://github.com/Tuntii/RustAPI-examples) repository
 2. Create your example following our structure guidelines
 3. Add comprehensive documentation in README.md
 4. Submit a pull request
