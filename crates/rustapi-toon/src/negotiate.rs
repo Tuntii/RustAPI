@@ -286,10 +286,11 @@ impl<T: Serialize> ResponseModifier for Negotiate<T> {
         content.insert(
             JSON_CONTENT_TYPE.to_string(),
             MediaType {
-                schema: SchemaRef::Inline(serde_json::json!({
-                    "type": "object",
-                    "description": "JSON formatted response"
-                })),
+                schema: SchemaRef::T(rustapi_openapi::schema::Schema {
+                    schema_type: Some(rustapi_openapi::schema::SchemaType::Object),
+                    description: Some("JSON formatted response".to_string()),
+                    ..Default::default()
+                }),
             },
         );
 
@@ -297,10 +298,13 @@ impl<T: Serialize> ResponseModifier for Negotiate<T> {
         content.insert(
             TOON_CONTENT_TYPE.to_string(),
             MediaType {
-                schema: SchemaRef::Inline(serde_json::json!({
-                    "type": "string",
-                    "description": "TOON (Token-Oriented Object Notation) formatted response"
-                })),
+                schema: SchemaRef::T(rustapi_openapi::schema::Schema {
+                    schema_type: Some(rustapi_openapi::schema::SchemaType::String),
+                    description: Some(
+                        "TOON (Token-Oriented Object Notation) formatted response".to_string(),
+                    ),
+                    ..Default::default()
+                }),
             },
         );
 

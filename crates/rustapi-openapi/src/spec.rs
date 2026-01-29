@@ -17,7 +17,7 @@ pub struct ApiInfo {
 pub struct OpenApiSpec {
     pub info: ApiInfo,
     pub paths: HashMap<String, PathItem>,
-    pub schemas: HashMap<String, serde_json::Value>,
+    pub schemas: HashMap<String, crate::schema::RefOr<crate::schema::Schema>>,
 }
 
 /// Path item in OpenAPI spec
@@ -50,6 +50,32 @@ pub struct Operation {
     #[serde(rename = "requestBody")]
     pub request_body: Option<RequestBody>,
     pub responses: HashMap<String, ResponseSpec>,
+}
+
+/// Parameter location
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum ParameterIn {
+    Query,
+    Header,
+    Path,
+    Cookie,
+}
+
+impl ToString for ParameterIn {
+    fn to_string(&self) -> String {
+        match self {
+            Self::Query => "query".to_string(),
+            Self::Header => "header".to_string(),
+            Self::Path => "path".to_string(),
+            Self::Cookie => "cookie".to_string(),
+        }
+    }
+}
+
+/// Trait for types that can populate OpenAPI parameters
+pub trait IntoParams {
+    fn into_params(parameter_in_provider: impl Fn() -> Option<ParameterIn>) -> Vec<Parameter>;
 }
 
 /// Parameter in OpenAPI spec
@@ -86,15 +112,10 @@ pub struct ResponseSpec {
 }
 
 /// Schema reference or inline schema
-#[derive(Debug, Clone, Serialize, Deserialize)]
-#[serde(untagged)]
-pub enum SchemaRef {
-    Ref {
-        #[serde(rename = "$ref")]
-        reference: String,
-    },
-    Inline(serde_json::Value),
-}
+///
+/// Legacy type alias to bridge old and new code if needed.
+/// In new code, prefer crate::schema::RefOr<crate::schema::Schema>
+pub type SchemaRef = crate::schema::RefOr<crate::schema::Schema>;
 
 impl OpenApiSpec {
     /// Create a new OpenAPI specification
@@ -131,17 +152,19 @@ impl OpenApiSpec {
     }
 
     /// Add a schema definition
-    pub fn schema(mut self, name: &str, schema: serde_json::Value) -> Self {
+    pub fn schema(
+        mut self,
+        name: &str,
+        schema: crate::schema::RefOr<crate::schema::Schema>,
+    ) -> Self {
         self.schemas.insert(name.to_string(), schema);
         self
     }
 
-    /// Register a type that implements Schema (utoipa::ToSchema)
-    pub fn register<T: for<'a> utoipa::ToSchema<'a>>(mut self) -> Self {
+    /// Register a type that implements Schema (crate::ToSchema)
+    pub fn register<T: crate::ToSchema>(mut self) -> Self {
         let (name, schema) = T::schema();
-        if let Ok(json_schema) = serde_json::to_value(schema) {
-            self.schemas.insert(name.to_string(), json_schema);
-        }
+        self.schemas.insert(name, schema);
         self
     }
 
@@ -149,11 +172,9 @@ impl OpenApiSpec {
     ///
     /// This is useful for zero-config registration paths where the spec is stored
     /// by value in another struct (e.g., the application builder).
-    pub fn register_in_place<T: for<'a> utoipa::ToSchema<'a>>(&mut self) {
+    pub fn register_in_place<T: crate::ToSchema>(&mut self) {
         let (name, schema) = T::schema();
-        if let Ok(json_schema) = serde_json::to_value(schema) {
-            self.schemas.insert(name.to_string(), json_schema);
-        }
+        self.schemas.insert(name, schema);
     }
 
     /// Convert to JSON value
@@ -284,7 +305,10 @@ impl ResponseModifier for String {
         content.insert(
             "text/plain".to_string(),
             MediaType {
-                schema: SchemaRef::Inline(serde_json::json!({ "type": "string" })),
+                schema: crate::schema::RefOr::T(crate::schema::Schema {
+                    schema_type: Some(crate::schema::SchemaType::String),
+                    ..Default::default()
+                }),
             },
         );
 
@@ -303,7 +327,10 @@ impl ResponseModifier for &'static str {
         content.insert(
             "text/plain".to_string(),
             MediaType {
-                schema: SchemaRef::Inline(serde_json::json!({ "type": "string" })),
+                schema: crate::schema::RefOr::T(crate::schema::Schema {
+                    schema_type: Some(crate::schema::SchemaType::String),
+                    ..Default::default()
+                }),
             },
         );
 

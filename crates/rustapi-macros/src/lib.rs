@@ -23,6 +23,43 @@ use syn::{
 };
 
 mod api_error;
+mod schema;
+
+/// Derive macro for OpenAPI Schema generation
+///
+/// # Example
+///
+/// ```rust,ignore
+/// #[derive(ToSchema)]
+/// struct User {
+///     id: i32,
+///     name: String,
+/// }
+/// ```
+#[proc_macro_derive(ToSchema, attributes(schema, serde))]
+pub fn derive_to_schema(input: TokenStream) -> TokenStream {
+    schema::derive_to_schema(input)
+}
+
+mod params;
+
+/// Derive macro for OpenAPI Parameters generation (IntoParams)
+///
+/// Use this on query parameter structs.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// #[derive(IntoParams, Deserialize)]
+/// struct Pagination {
+///     page: Option<usize>,
+///     limit: Option<usize>,
+/// }
+/// ```
+#[proc_macro_derive(IntoParams, attributes(serde))]
+pub fn derive_into_params(input: TokenStream) -> TokenStream {
+    params::derive_into_params(input)
+}
 
 /// Auto-register a schema type for zero-config OpenAPI.
 ///

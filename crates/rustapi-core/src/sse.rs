@@ -396,11 +396,12 @@ impl<S> ResponseModifier for Sse<S> {
         content.insert(
             "text/event-stream".to_string(),
             MediaType {
-                schema: SchemaRef::Inline(serde_json::json!({
-                    "type": "string",
-                    "description": "Server-Sent Events stream. Events follow the SSE format: 'event: <type>\\ndata: <json>\\n\\n'",
-                    "example": "event: message\ndata: {\"id\": 1, \"text\": \"Hello\"}\n\n"
-                })),
+                schema: SchemaRef::T(rustapi_openapi::schema::Schema {
+                    schema_type: Some(rustapi_openapi::schema::SchemaType::String),
+                    description: Some("Server-Sent Events stream. Events follow the SSE format: 'event: <type>\\ndata: <json>\\n\\n'".to_string()),
+                    example: Some(serde_json::json!("event: message\ndata: {\"id\": 1, \"text\": \"Hello\"}\n\n")),
+                    ..Default::default()
+                }),
             },
         );
 

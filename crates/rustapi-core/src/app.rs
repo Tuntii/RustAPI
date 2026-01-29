@@ -309,7 +309,7 @@ impl RustApi {
     /// RustApi::new()
     ///     .register_schema::<User>()
     /// ```
-    pub fn register_schema<T: for<'a> rustapi_openapi::Schema<'a>>(mut self) -> Self {
+    pub fn register_schema<T: rustapi_openapi::ToSchema>(mut self) -> Self {
         self.openapi_spec = self.openapi_spec.register::<T>();
         self
     }
@@ -1184,33 +1184,38 @@ fn add_path_params_to_operation(
 }
 
 /// Convert a schema type string to an OpenAPI schema reference
+/// Convert a schema type string to an OpenAPI schema reference
 fn schema_type_to_openapi_schema(schema_type: &str) -> rustapi_openapi::SchemaRef {
+    use rustapi_openapi::schema::{Schema, SchemaType};
+
     match schema_type.to_lowercase().as_str() {
-        "uuid" => rustapi_openapi::SchemaRef::Inline(serde_json::json!({
-            "type": "string",
-            "format": "uuid"
-        })),
-        "integer" | "int" | "int64" | "i64" => {
-            rustapi_openapi::SchemaRef::Inline(serde_json::json!({
-                "type": "integer",
-                "format": "int64"
-            }))
-        }
-        "int32" | "i32" => rustapi_openapi::SchemaRef::Inline(serde_json::json!({
-            "type": "integer",
-            "format": "int32"
-        })),
-        "number" | "float" | "f64" | "f32" => {
-            rustapi_openapi::SchemaRef::Inline(serde_json::json!({
-                "type": "number"
-            }))
-        }
-        "boolean" | "bool" => rustapi_openapi::SchemaRef::Inline(serde_json::json!({
-            "type": "boolean"
-        })),
-        _ => rustapi_openapi::SchemaRef::Inline(serde_json::json!({
-            "type": "string"
-        })),
+        "uuid" => rustapi_openapi::SchemaRef::T(Schema {
+            schema_type: Some(SchemaType::String),
+            format: Some("uuid".to_string()),
+            ..Default::default()
+        }),
+        "integer" | "int" | "int64" | "i64" => rustapi_openapi::SchemaRef::T(Schema {
+            schema_type: Some(SchemaType::Integer),
+            format: Some("int64".to_string()),
+            ..Default::default()
+        }),
+        "int32" | "i32" => rustapi_openapi::SchemaRef::T(Schema {
+            schema_type: Some(SchemaType::Integer),
+            format: Some("int32".to_string()),
+            ..Default::default()
+        }),
+        "number" | "float" | "f64" | "f32" => rustapi_openapi::SchemaRef::T(Schema {
+            schema_type: Some(SchemaType::Number),
+            ..Default::default()
+        }),
+        "boolean" | "bool" => rustapi_openapi::SchemaRef::T(Schema {
+            schema_type: Some(SchemaType::Boolean),
+            ..Default::default()
+        }),
+        _ => rustapi_openapi::SchemaRef::T(Schema {
+            schema_type: Some(SchemaType::String),
+            ..Default::default()
+        }),
     }
 }
 
@@ -1223,16 +1228,19 @@ fn schema_type_to_openapi_schema(schema_type: &str) -> rustapi_openapi::SchemaRe
 /// - `year`, `month`, `day` → integer
 /// - Everything else → string
 fn infer_path_param_schema(name: &str) -> rustapi_openapi::SchemaRef {
+    use rustapi_openapi::schema::{Schema, SchemaType};
+
     let lower = name.to_lowercase();
 
     // UUID patterns (check first to avoid false positive from "id" suffix)
     let is_uuid = lower == "uuid" || lower.ends_with("_uuid") || lower.ends_with("uuid");
 
     if is_uuid {
-        return rustapi_openapi::SchemaRef::Inline(serde_json::json!({
-            "type": "string",
-            "format": "uuid"
-        }));
+        return rustapi_openapi::SchemaRef::T(Schema {
+            schema_type: Some(SchemaType::String),
+            format: Some("uuid".to_string()),
+            ..Default::default()
+        });
     }
 
     // Integer patterns
@@ -1250,12 +1258,16 @@ fn infer_path_param_schema(name: &str) -> rustapi_openapi::SchemaRef {
         || lower == "position";
 
     if is_integer {
-        rustapi_openapi::SchemaRef::Inline(serde_json::json!({
-            "type": "integer",
-            "format": "int64"
-        }))
+        rustapi_openapi::SchemaRef::T(Schema {
+            schema_type: Some(SchemaType::Integer),
+            format: Some("int64".to_string()),
+            ..Default::default()
+        })
     } else {
-        rustapi_openapi::SchemaRef::Inline(serde_json::json!({ "type": "string" }))
+        rustapi_openapi::SchemaRef::T(Schema {
+            schema_type: Some(SchemaType::String),
+            ..Default::default()
+        })
     }
 }
 
@@ -1331,6 +1343,7 @@ mod tests {
     #[test]
     fn test_path_param_type_inference_integer() {
         use super::infer_path_param_schema;
+        use rustapi_openapi::schema::SchemaType;
 
         // Test common integer patterns
         let int_params = [
@@ -1349,10 +1362,10 @@ mod tests {
         for name in int_params {
             let schema = infer_path_param_schema(name);
             match schema {
-                rustapi_openapi::SchemaRef::Inline(v) => {
+                rustapi_openapi::SchemaRef::T(s) => {
                     assert_eq!(
-                        v.get("type").and_then(|v| v.as_str()),
-                        Some("integer"),
+                        s.schema_type,
+                        Some(SchemaType::Integer),
                         "Expected '{}' to be inferred as integer",
                         name
                     );
@@ -1365,6 +1378,7 @@ mod tests {
     #[test]
     fn test_path_param_type_inference_uuid() {
         use super::infer_path_param_schema;
+        use rustapi_openapi::schema::SchemaType;
 
         // Test UUID patterns
         let uuid_params = ["uuid", "user_uuid", "sessionUuid"];
@@ -1372,16 +1386,16 @@ mod tests {
         for name in uuid_params {
             let schema = infer_path_param_schema(name);
             match schema {
-                rustapi_openapi::SchemaRef::Inline(v) => {
+                rustapi_openapi::SchemaRef::T(s) => {
                     assert_eq!(
-                        v.get("type").and_then(|v| v.as_str()),
-                        Some("string"),
+                        s.schema_type,
+                        Some(SchemaType::String),
                         "Expected '{}' to be inferred as string",
                         name
                     );
                     assert_eq!(
-                        v.get("format").and_then(|v| v.as_str()),
-                        Some("uuid"),
+                        s.format,
+                        Some("uuid".to_string()),
                         "Expected '{}' to have uuid format",
                         name
                     );
@@ -1394,6 +1408,7 @@ mod tests {
     #[test]
     fn test_path_param_type_inference_string() {
         use super::infer_path_param_schema;
+        use rustapi_openapi::schema::SchemaType;
 
         // Test string (default) patterns
         let string_params = [
@@ -1403,16 +1418,15 @@ mod tests {
         for name in string_params {
             let schema = infer_path_param_schema(name);
             match schema {
-                rustapi_openapi::SchemaRef::Inline(v) => {
+                rustapi_openapi::SchemaRef::T(s) => {
                     assert_eq!(
-                        v.get("type").and_then(|v| v.as_str()),
-                        Some("string"),
+                        s.schema_type,
+                        Some(SchemaType::String),
                         "Expected '{}' to be inferred as string",
                         name
                     );
                     assert!(
-                        v.get("format").is_none()
-                            || v.get("format").and_then(|v| v.as_str()) != Some("uuid"),
+                        s.format.is_none() || s.format.as_deref() != Some("uuid"),
                         "Expected '{}' to NOT have uuid format",
                         name
                     );
@@ -1425,13 +1439,14 @@ mod tests {
     #[test]
     fn test_schema_type_to_openapi_schema() {
         use super::schema_type_to_openapi_schema;
+        use rustapi_openapi::schema::SchemaType;
 
         // Test UUID schema
         let uuid_schema = schema_type_to_openapi_schema("uuid");
         match uuid_schema {
-            rustapi_openapi::SchemaRef::Inline(v) => {
-                assert_eq!(v.get("type").and_then(|v| v.as_str()), Some("string"));
-                assert_eq!(v.get("format").and_then(|v| v.as_str()), Some("uuid"));
+            rustapi_openapi::SchemaRef::T(s) => {
+                assert_eq!(s.schema_type, Some(SchemaType::String));
+                assert_eq!(s.format, Some("uuid".to_string()));
             }
             _ => panic!("Expected inline schema for uuid"),
         }
@@ -1440,9 +1455,9 @@ mod tests {
         for schema_type in ["integer", "int", "int64", "i64"] {
             let schema = schema_type_to_openapi_schema(schema_type);
             match schema {
-                rustapi_openapi::SchemaRef::Inline(v) => {
-                    assert_eq!(v.get("type").and_then(|v| v.as_str()), Some("integer"));
-                    assert_eq!(v.get("format").and_then(|v| v.as_str()), Some("int64"));
+                rustapi_openapi::SchemaRef::T(s) => {
+                    assert_eq!(s.schema_type, Some(SchemaType::Integer));
+                    assert_eq!(s.format, Some("int64".to_string()));
                 }
                 _ => panic!("Expected inline schema for {}", schema_type),
             }
@@ -1451,9 +1466,9 @@ mod tests {
         // Test int32 schema
         let int32_schema = schema_type_to_openapi_schema("int32");
         match int32_schema {
-            rustapi_openapi::SchemaRef::Inline(v) => {
-                assert_eq!(v.get("type").and_then(|v| v.as_str()), Some("integer"));
-                assert_eq!(v.get("format").and_then(|v| v.as_str()), Some("int32"));
+            rustapi_openapi::SchemaRef::T(s) => {
+                assert_eq!(s.schema_type, Some(SchemaType::Integer));
+                assert_eq!(s.format, Some("int32".to_string()));
             }
             _ => panic!("Expected inline schema for int32"),
         }
@@ -1462,8 +1477,8 @@ mod tests {
         for schema_type in ["number", "float"] {
             let schema = schema_type_to_openapi_schema(schema_type);
             match schema {
-                rustapi_openapi::SchemaRef::Inline(v) => {
-                    assert_eq!(v.get("type").and_then(|v| v.as_str()), Some("number"));
+                rustapi_openapi::SchemaRef::T(s) => {
+                    assert_eq!(s.schema_type, Some(SchemaType::Number));
                 }
                 _ => panic!("Expected inline schema for {}", schema_type),
             }
@@ -1473,8 +1488,8 @@ mod tests {
         for schema_type in ["boolean", "bool"] {
             let schema = schema_type_to_openapi_schema(schema_type);
             match schema {
-                rustapi_openapi::SchemaRef::Inline(v) => {
-                    assert_eq!(v.get("type").and_then(|v| v.as_str()), Some("boolean"));
+                rustapi_openapi::SchemaRef::T(s) => {
+                    assert_eq!(s.schema_type, Some(SchemaType::Boolean));
                 }
                 _ => panic!("Expected inline schema for {}", schema_type),
             }
@@ -1483,8 +1498,8 @@ mod tests {
         // Test string schema (default)
         let string_schema = schema_type_to_openapi_schema("string");
         match string_schema {
-            rustapi_openapi::SchemaRef::Inline(v) => {
-                assert_eq!(v.get("type").and_then(|v| v.as_str()), Some("string"));
+            rustapi_openapi::SchemaRef::T(s) => {
+                assert_eq!(s.schema_type, Some(SchemaType::String));
             }
             _ => panic!("Expected inline schema for string"),
         }

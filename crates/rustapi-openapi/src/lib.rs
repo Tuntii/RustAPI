@@ -62,8 +62,9 @@
 mod config;
 #[cfg(feature = "redoc")]
 mod redoc;
-mod schemas;
-mod spec;
+pub mod schema;
+pub mod schemas;
+pub mod spec;
 #[cfg(feature = "swagger-ui")]
 mod swagger;
 
@@ -74,24 +75,15 @@ pub mod v31;
 pub mod versioning;
 
 pub use config::OpenApiConfig;
+pub use schema::{Schema, ToSchema};
 pub use schemas::{
     ErrorBodySchema, ErrorSchema, FieldErrorSchema, ValidationErrorBodySchema,
     ValidationErrorSchema,
 };
 pub use spec::{
-    ApiInfo, MediaType, OpenApiSpec, Operation, OperationModifier, Parameter, PathItem,
-    RequestBody, ResponseModifier, ResponseSpec, SchemaRef,
+    ApiInfo, IntoParams, MediaType, OpenApiSpec, Operation, OperationModifier, Parameter,
+    ParameterIn, PathItem, RequestBody, ResponseModifier, ResponseSpec, SchemaRef,
 };
-
-// Re-export utoipa's ToSchema derive macro as Schema
-pub use utoipa::ToSchema as Schema;
-// Re-export utoipa's IntoParams derive macro
-pub use utoipa::IntoParams;
-
-// Re-export utoipa types for advanced usage
-pub mod utoipa_types {
-    pub use utoipa::{openapi, IntoParams, Modify, OpenApi, ToSchema};
-}
 
 use bytes::Bytes;
 use http::{header, Response, StatusCode};

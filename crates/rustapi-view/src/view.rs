@@ -143,7 +143,10 @@ impl<T> ResponseModifier for View<T> {
                     map.insert(
                         "text/html".to_string(),
                         MediaType {
-                            schema: SchemaRef::Inline(serde_json::json!({ "type": "string" })),
+                            schema: SchemaRef::T(rustapi_openapi::schema::Schema {
+                                schema_type: Some(rustapi_openapi::schema::SchemaType::String),
+                                ..Default::default()
+                            }),
                         },
                     );
                     Some(map)

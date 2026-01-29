@@ -62,6 +62,10 @@ use crate::stream::{StreamingBody, StreamingConfig};
 use crate::validation::Validatable;
 use bytes::Bytes;
 use http::{header, StatusCode};
+use rustapi_openapi::{
+    IntoParams, MediaType, Operation, OperationModifier, ParameterIn, RequestBody,
+    ResponseModifier, ResponseSpec, SchemaRef, ToSchema,
+};
 use rustapi_validate::v2::{AsyncValidate, ValidationContext};
 
 use serde::de::DeserializeOwned;
@@ -960,21 +964,16 @@ impl_from_request_parts_for_primitives!(
 
 // OperationModifier implementations for extractors
 
-use rustapi_openapi::utoipa_types::openapi;
-use rustapi_openapi::{
-    IntoParams, MediaType, Operation, OperationModifier, Parameter, RequestBody, ResponseModifier,
-    ResponseSpec, Schema, SchemaRef,
-};
 use std::collections::HashMap;
 
 // ValidatedJson - Adds request body
-impl<T: for<'a> Schema<'a>> OperationModifier for ValidatedJson<T> {
+impl<T: ToSchema> OperationModifier for ValidatedJson<T> {
     fn update_operation(op: &mut Operation) {
         let (name, _) = T::schema();
 
-        let schema_ref = SchemaRef::Ref {
-            reference: format!("#/components/schemas/{}", name),
-        };
+        let schema_ref = SchemaRef::Ref(rustapi_openapi::schema::Reference {
+            ref_path: format!("#/components/schemas/{}", name),
+        });
 
         let mut content = HashMap::new();
         content.insert(
@@ -997,9 +996,9 @@ impl<T: for<'a> Schema<'a>> OperationModifier for ValidatedJson<T> {
                     map.insert(
                         "application/json".to_string(),
                         MediaType {
-                            schema: SchemaRef::Ref {
-                                reference: "#/components/schemas/ValidationErrorSchema".to_string(),
-                            },
+                            schema: SchemaRef::Ref(rustapi_openapi::schema::Reference {
+                                ref_path: "#/components/schemas/ValidationErrorSchema".to_string(),
+                            }),
                         },
                     );
                     Some(map)
@@ -1010,13 +1009,13 @@ impl<T: for<'a> Schema<'a>> OperationModifier for ValidatedJson<T> {
 }
 
 // Json - Adds request body (Same as ValidatedJson)
-impl<T: for<'a> Schema<'a>> OperationModifier for Json<T> {
+impl<T: ToSchema> OperationModifier for Json<T> {
     fn update_operation(op: &mut Operation) {
         let (name, _) = T::schema();
 
-        let schema_ref = SchemaRef::Ref {
-            reference: format!("#/components/schemas/{}", name),
-        };
+        let schema_ref = SchemaRef::Ref(rustapi_openapi::schema::Reference {
+            ref_path: format!("#/components/schemas/{}", name),
+        });
 
         let mut content = HashMap::new();
         content.insert(
@@ -1055,43 +1054,11 @@ impl<T> OperationModifier for Typed<T> {
 // Query - Extracts query params using IntoParams
 impl<T: IntoParams> OperationModifier for Query<T> {
     fn update_operation(op: &mut Operation) {
-        let params = T::into_params(|| Some(openapi::path::ParameterIn::Query));
-
-        let new_params: Vec<Parameter> = params
-            .into_iter()
-            .map(|p| {
-                let schema = match p.schema {
-                    Some(schema) => match schema {
-                        openapi::RefOr::Ref(r) => SchemaRef::Ref {
-                            reference: r.ref_location,
-                        },
-                        openapi::RefOr::T(s) => {
-                            let value = serde_json::to_value(s).unwrap_or(serde_json::Value::Null);
-                            SchemaRef::Inline(value)
-                        }
-                    },
-                    None => SchemaRef::Inline(serde_json::Value::Null),
-                };
-
-                let required = match p.required {
-                    openapi::Required::True => true,
-                    openapi::Required::False => false,
-                };
-
-                Parameter {
-                    name: p.name,
-                    location: "query".to_string(), // explicitly query
-                    required,
-                    description: p.description,
-                    schema,
-                }
-            })
-            .collect();
-
+        let params = T::into_params(|| Some(ParameterIn::Query));
         if let Some(existing) = &mut op.parameters {
-            existing.extend(new_params);
+            existing.extend(params);
         } else {
-            op.parameters = Some(new_params);
+            op.parameters = Some(params);
         }
     }
 }
@@ -1108,9 +1075,11 @@ impl OperationModifier for Body {
         content.insert(
             "application/octet-stream".to_string(),
             MediaType {
-                schema: SchemaRef::Inline(
-                    serde_json::json!({ "type": "string", "format": "binary" }),
-                ),
+                schema: SchemaRef::T(rustapi_openapi::schema::Schema {
+                    schema_type: Some(rustapi_openapi::schema::SchemaType::String),
+                    format: Some("binary".to_string()),
+                    ..Default::default()
+                }),
             },
         );
 
@@ -1128,9 +1097,11 @@ impl OperationModifier for BodyStream {
         content.insert(
             "application/octet-stream".to_string(),
             MediaType {
-                schema: SchemaRef::Inline(
-                    serde_json::json!({ "type": "string", "format": "binary" }),
-                ),
+                schema: SchemaRef::T(rustapi_openapi::schema::Schema {
+                    schema_type: Some(rustapi_openapi::schema::SchemaType::String),
+                    format: Some("binary".to_string()),
+                    ..Default::default()
+                }),
             },
         );
 
@@ -1144,13 +1115,13 @@ impl OperationModifier for BodyStream {
 // ResponseModifier implementations for extractors
 
 // Json<T> - 200 OK with schema T
-impl<T: for<'a> Schema<'a>> ResponseModifier for Json<T> {
+impl<T: ToSchema> ResponseModifier for Json<T> {
     fn update_response(op: &mut Operation) {
         let (name, _) = T::schema();
 
-        let schema_ref = SchemaRef::Ref {
-            reference: format!("#/components/schemas/{}", name),
-        };
+        let schema_ref = SchemaRef::Ref(rustapi_openapi::schema::Reference {
+            ref_path: format!("#/components/schemas/{}", name),
+        });
 
         op.responses.insert(
             "200".to_string(),

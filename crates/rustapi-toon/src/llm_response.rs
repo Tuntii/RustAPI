@@ -233,10 +233,13 @@ impl<T: Serialize> ResponseModifier for LlmResponse<T> {
         content.insert(
             JSON_CONTENT_TYPE.to_string(),
             MediaType {
-                schema: SchemaRef::Inline(serde_json::json!({
-                    "type": "object",
-                    "description": "JSON formatted response with token counting headers"
-                })),
+                schema: SchemaRef::T(rustapi_openapi::schema::Schema {
+                    schema_type: Some(rustapi_openapi::schema::SchemaType::Object),
+                    description: Some(
+                        "JSON formatted response with token counting headers".to_string(),
+                    ),
+                    ..Default::default()
+                }),
             },
         );
 
@@ -244,10 +247,11 @@ impl<T: Serialize> ResponseModifier for LlmResponse<T> {
         content.insert(
             TOON_CONTENT_TYPE.to_string(),
             MediaType {
-                schema: SchemaRef::Inline(serde_json::json!({
-                    "type": "string",
-                    "description": "TOON (Token-Oriented Object Notation) formatted response with token counting headers"
-                })),
+                schema: SchemaRef::T(rustapi_openapi::schema::Schema {
+                    schema_type: Some(rustapi_openapi::schema::SchemaType::String),
+                    description: Some("TOON (Token-Oriented Object Notation) formatted response with token counting headers".to_string()),
+                    ..Default::default()
+                }),
             },
         );
 

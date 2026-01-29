@@ -14,13 +14,14 @@ homepage.workspace = true
 http = { workspace = true }
 http-body-util = { workspace = true }
 bytes = { workspace = true }
+uuid = { workspace = true, optional = true }
 
 # Serialization
 serde = { workspace = true }
 serde_json = { workspace = true }
 
 # OpenAPI schema generation
-utoipa = { workspace = true }
+
 
 
 
@@ -28,3 +29,4 @@ utoipa = { workspace = true }
 default = ["swagger-ui"]
 swagger-ui = []
 redoc = []
+uuid = ["dep:uuid"]

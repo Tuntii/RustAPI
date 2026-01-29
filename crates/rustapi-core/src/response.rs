@@ -75,7 +75,7 @@ use bytes::Bytes;
 use futures_util::StreamExt;
 use http::{header, HeaderMap, HeaderValue, StatusCode};
 use http_body_util::Full;
-use rustapi_openapi::{MediaType, Operation, ResponseModifier, ResponseSpec, Schema, SchemaRef};
+use rustapi_openapi::{MediaType, Operation, ResponseModifier, ResponseSpec, SchemaRef, ToSchema};
 use serde::Serialize;
 use std::collections::HashMap;
 use std::pin::Pin;
@@ -293,9 +293,9 @@ impl ResponseModifier for ApiError {
                     map.insert(
                         "application/json".to_string(),
                         MediaType {
-                            schema: SchemaRef::Ref {
-                                reference: "#/components/schemas/ErrorSchema".to_string(),
-                            },
+                            schema: SchemaRef::Ref(rustapi_openapi::schema::Reference {
+                                ref_path: "#/components/schemas/ErrorSchema".to_string(),
+                            }),
                         },
                     );
                     Some(map)
@@ -313,9 +313,9 @@ impl ResponseModifier for ApiError {
                     map.insert(
                         "application/json".to_string(),
                         MediaType {
-                            schema: SchemaRef::Ref {
-                                reference: "#/components/schemas/ErrorSchema".to_string(),
-                            },
+                            schema: SchemaRef::Ref(rustapi_openapi::schema::Reference {
+                                ref_path: "#/components/schemas/ErrorSchema".to_string(),
+                            }),
                         },
                     );
                     Some(map)
@@ -355,13 +355,13 @@ impl<T: Serialize> IntoResponse for Created<T> {
     }
 }
 
-impl<T: for<'a> Schema<'a>> ResponseModifier for Created<T> {
+impl<T: ToSchema> ResponseModifier for Created<T> {
     fn update_response(op: &mut Operation) {
         let (name, _) = T::schema();
 
-        let schema_ref = SchemaRef::Ref {
-            reference: format!("#/components/schemas/{}", name),
-        };
+        let schema_ref = SchemaRef::Ref(rustapi_openapi::schema::Reference {
+            ref_path: format!("#/components/schemas/{}", name),
+        });
 
         op.responses.insert(
             "201".to_string(),
@@ -441,7 +441,10 @@ impl<T> ResponseModifier for Html<T> {
                     map.insert(
                         "text/html".to_string(),
                         MediaType {
-                            schema: SchemaRef::Inline(serde_json::json!({ "type": "string" })),
+                            schema: SchemaRef::T(rustapi_openapi::schema::Schema {
+                                schema_type: Some(rustapi_openapi::schema::SchemaType::String),
+                                ..Default::default()
+                            }),
                         },
                     );
                     Some(map)
@@ -539,13 +542,13 @@ impl<T: IntoResponse, const CODE: u16> IntoResponse for WithStatus<T, CODE> {
     }
 }
 
-impl<T: for<'a> Schema<'a>, const CODE: u16> ResponseModifier for WithStatus<T, CODE> {
+impl<T: ToSchema, const CODE: u16> ResponseModifier for WithStatus<T, CODE> {
     fn update_response(op: &mut Operation) {
         let (name, _) = T::schema();
 
-        let schema_ref = SchemaRef::Ref {
-            reference: format!("#/components/schemas/{}", name),
-        };
+        let schema_ref = SchemaRef::Ref(rustapi_openapi::schema::Reference {
+            ref_path: format!("#/components/schemas/{}", name),
+        });
 
         op.responses.insert(
             CODE.to_string(),
