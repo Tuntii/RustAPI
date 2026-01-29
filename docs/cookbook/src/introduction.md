@@ -14,7 +14,7 @@ This is not just API documentation. This is a collection of:
 
 ## 🚀 New: Examples Repository
 
-Looking for hands-on learning? Check out our **[Examples Repository](https://github.com/Tuntii/rustapi-rs-examples)** with 18 complete projects:
+Looking for hands-on learning? Check out our **[Examples Repository](https://github.com/Tuntii/RustAPI-examples)** with 18 complete projects:
 
 | Category | Examples |
 |----------|----------|
