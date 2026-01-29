@@ -334,6 +334,7 @@ impl<T: Clone + Send + Sync + 'static> FromRequestParts for AuthUser<T> {
 impl<T> OperationModifier for AuthUser<T> {
     fn update_operation(op: &mut Operation) {
         // Add 401 Unauthorized response to OpenAPI spec
+        use rustapi_openapi::schema::Reference;
         use rustapi_openapi::{MediaType, ResponseSpec, SchemaRef};
         use std::collections::HashMap;
 
@@ -346,9 +347,9 @@ impl<T> OperationModifier for AuthUser<T> {
                     map.insert(
                         "application/json".to_string(),
                         MediaType {
-                            schema: SchemaRef::Ref {
-                                reference: "#/components/schemas/ErrorSchema".to_string(),
-                            },
+                            schema: SchemaRef::Ref(Reference {
+                                ref_path: "#/components/schemas/ErrorSchema".to_string(),
+                            }),
                         },
                     );
                     Some(map)
