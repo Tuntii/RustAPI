@@ -481,9 +481,8 @@ impl<T: ToOpenApiSchema> ToOpenApiSchema for BTreeSet<T> {
 
 impl<K: ToOpenApiSchema, V: ToOpenApiSchema> ToOpenApiSchema for HashMap<K, V> {
     fn schema() -> (Cow<'static, str>, Value) {
-        let (_, value_schema) = V::schema();
         let (key_name, _) = K::schema();
-        let (value_name, _) = V::schema();
+        let (value_name, value_schema) = V::schema();
         let name = Cow::Owned(format!("HashMap_{}_{}", key_name, value_name));
 
         (
@@ -498,9 +497,8 @@ impl<K: ToOpenApiSchema, V: ToOpenApiSchema> ToOpenApiSchema for HashMap<K, V> {
 
 impl<K: ToOpenApiSchema, V: ToOpenApiSchema> ToOpenApiSchema for BTreeMap<K, V> {
     fn schema() -> (Cow<'static, str>, Value) {
-        let (_, value_schema) = V::schema();
         let (key_name, _) = K::schema();
-        let (value_name, _) = V::schema();
+        let (value_name, value_schema) = V::schema();
         let name = Cow::Owned(format!("BTreeMap_{}_{}", key_name, value_name));
 
         (

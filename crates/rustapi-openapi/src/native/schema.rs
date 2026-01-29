@@ -621,35 +621,31 @@ impl NativeSchema {
         }
 
         // Number constraints
+        // Note: NaN and Infinity values are skipped as they cannot be represented in JSON
         if let Some(min) = self.minimum {
-            obj.insert(
-                "minimum".into(),
-                Value::Number(serde_json::Number::from_f64(min).unwrap_or(0.into())),
-            );
+            if let Some(num) = serde_json::Number::from_f64(min) {
+                obj.insert("minimum".into(), Value::Number(num));
+            }
         }
         if let Some(max) = self.maximum {
-            obj.insert(
-                "maximum".into(),
-                Value::Number(serde_json::Number::from_f64(max).unwrap_or(0.into())),
-            );
+            if let Some(num) = serde_json::Number::from_f64(max) {
+                obj.insert("maximum".into(), Value::Number(num));
+            }
         }
         if let Some(min) = self.exclusive_minimum {
-            obj.insert(
-                "exclusiveMinimum".into(),
-                Value::Number(serde_json::Number::from_f64(min).unwrap_or(0.into())),
-            );
+            if let Some(num) = serde_json::Number::from_f64(min) {
+                obj.insert("exclusiveMinimum".into(), Value::Number(num));
+            }
         }
         if let Some(max) = self.exclusive_maximum {
-            obj.insert(
-                "exclusiveMaximum".into(),
-                Value::Number(serde_json::Number::from_f64(max).unwrap_or(0.into())),
-            );
+            if let Some(num) = serde_json::Number::from_f64(max) {
+                obj.insert("exclusiveMaximum".into(), Value::Number(num));
+            }
         }
         if let Some(mult) = self.multiple_of {
-            obj.insert(
-                "multipleOf".into(),
-                Value::Number(serde_json::Number::from_f64(mult).unwrap_or(0.into())),
-            );
+            if let Some(num) = serde_json::Number::from_f64(mult) {
+                obj.insert("multipleOf".into(), Value::Number(num));
+            }
         }
 
         // Array constraints

@@ -495,4 +495,141 @@ mod tests {
         assert_eq!(json["discriminator"]["propertyName"], "animalType");
         assert!(json["discriminator"]["mapping"].is_object());
     }
+
+    // ========================================================================
+    // OpenApiSpec integration tests
+    // ========================================================================
+
+    #[test]
+    fn test_openapi_spec_register_native() {
+        use crate::OpenApiSpec;
+
+        // Create a simple type for testing
+        struct TestUser;
+
+        impl ToOpenApiSchema for TestUser {
+            fn schema() -> (std::borrow::Cow<'static, str>, serde_json::Value) {
+                (
+                    "TestUser".into(),
+                    serde_json::json!({
+                        "type": "object",
+                        "properties": {
+                            "id": { "type": "integer" },
+                            "name": { "type": "string" }
+                        },
+                        "required": ["id", "name"]
+                    }),
+                )
+            }
+        }
+
+        let spec = OpenApiSpec::new("Test API", "1.0.0")
+            .description("Test API description")
+            .register_native::<TestUser>();
+
+        let json = spec.to_json();
+
+        // Verify the schema was registered
+        assert_eq!(json["openapi"], "3.0.3");
+        assert_eq!(json["info"]["title"], "Test API");
+        assert!(json["components"]["schemas"]["TestUser"].is_object());
+        assert_eq!(json["components"]["schemas"]["TestUser"]["type"], "object");
+    }
+
+    #[test]
+    fn test_openapi_spec_register_native_in_place() {
+        use crate::OpenApiSpec;
+
+        struct TestProduct;
+
+        impl ToOpenApiSchema for TestProduct {
+            fn schema() -> (std::borrow::Cow<'static, str>, serde_json::Value) {
+                (
+                    "TestProduct".into(),
+                    serde_json::json!({
+                        "type": "object",
+                        "properties": {
+                            "sku": { "type": "string" },
+                            "price": { "type": "number" }
+                        }
+                    }),
+                )
+            }
+        }
+
+        let mut spec = OpenApiSpec::new("Test API", "1.0.0");
+        spec.register_native_in_place::<TestProduct>();
+
+        let json = spec.to_json();
+
+        // Verify the schema was registered
+        assert!(json["components"]["schemas"]["TestProduct"].is_object());
+        assert!(json["components"]["schemas"]["TestProduct"]["properties"]["sku"].is_object());
+    }
+
+    #[test]
+    fn test_openapi_31_spec_register_native() {
+        use crate::v31::OpenApi31Spec;
+
+        struct TestOrder;
+
+        impl ToOpenApiSchema for TestOrder {
+            fn schema() -> (std::borrow::Cow<'static, str>, serde_json::Value) {
+                (
+                    "TestOrder".into(),
+                    serde_json::json!({
+                        "type": "object",
+                        "properties": {
+                            "orderId": { "type": "string", "format": "uuid" },
+                            "amount": { "type": "number" },
+                            "status": { "type": "string", "nullable": true }
+                        },
+                        "required": ["orderId", "amount"]
+                    }),
+                )
+            }
+        }
+
+        let spec = OpenApi31Spec::new("Test API", "1.0.0")
+            .description("Test API for OpenAPI 3.1")
+            .register_native::<TestOrder>();
+
+        let json = spec.to_json();
+
+        // Verify OpenAPI 3.1 version
+        assert_eq!(json["openapi"], "3.1.0");
+        assert!(json["components"]["schemas"]["TestOrder"].is_object());
+    }
+
+    #[test]
+    fn test_openapi_spec_multiple_native_schemas() {
+        use crate::OpenApiSpec;
+
+        struct SchemaA;
+        struct SchemaB;
+
+        impl ToOpenApiSchema for SchemaA {
+            fn schema() -> (std::borrow::Cow<'static, str>, serde_json::Value) {
+                ("SchemaA".into(), serde_json::json!({ "type": "string" }))
+            }
+        }
+
+        impl ToOpenApiSchema for SchemaB {
+            fn schema() -> (std::borrow::Cow<'static, str>, serde_json::Value) {
+                ("SchemaB".into(), serde_json::json!({ "type": "integer" }))
+            }
+        }
+
+        let spec = OpenApiSpec::new("Test API", "1.0.0")
+            .register_native::<SchemaA>()
+            .register_native::<SchemaB>();
+
+        let json = spec.to_json();
+
+        // Verify both schemas were registered
+        assert!(json["components"]["schemas"]["SchemaA"].is_object());
+        assert!(json["components"]["schemas"]["SchemaB"].is_object());
+        assert_eq!(json["components"]["schemas"]["SchemaA"]["type"], "string");
+        assert_eq!(json["components"]["schemas"]["SchemaB"]["type"], "integer");
+    }
 }

@@ -94,7 +94,7 @@ struct User {
 }
 ```
 
-## Features Flags
+## Feature Flags
 
 - `default` = `["swagger-ui", "utoipa"]`
 - `swagger-ui` - Enable Swagger UI serving
