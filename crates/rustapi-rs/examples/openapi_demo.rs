@@ -21,10 +21,11 @@
 //! ## Cookbook
 //! <https://tuntii.github.io/RustAPI/>
 
+use rustapi_macros as rustapi;
 use rustapi_rs::prelude::*;
 use serde::Serialize;
 
-#[derive(Serialize, utoipa::ToSchema)]
+#[derive(Serialize, rustapi::ToSchema)]
 struct Message {
     greeting: String,
 }
