@@ -23,7 +23,7 @@ http-body-util = { workspace = true }
 bytes = { workspace = true }
 
 # Socket options
-socket2 = { version = "0.5", features = ["all"] }
+socket2 = { version = "0.6", features = ["all"] }
 
 # Router
 matchit = { workspace = true }
