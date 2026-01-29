@@ -1,0 +1,25 @@
+[package]
+name = "rustapi-bench"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[[bench]]
+name = "middleware_bench"
+harness = false
+
+[[bench]]
+name = "extractor_bench"
+harness = false
+
+[[bench]]
+name = "websocket_bench"
+harness = false
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+criterion.workspace = true
+serde_urlencoded = "0.7"

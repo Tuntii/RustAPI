@@ -5,7 +5,7 @@ use http::{header, Response, StatusCode};
 use rustapi_core::{IntoResponse, ResponseBody};
 use rustapi_openapi::{MediaType, Operation, ResponseModifier, ResponseSpec, SchemaRef};
 use serde::Serialize;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::marker::PhantomData;
 
 /// A response that renders a template with a context
@@ -139,15 +139,17 @@ impl<T> ResponseModifier for View<T> {
             ResponseSpec {
                 description: "HTML Content".to_string(),
                 content: {
-                    let mut map = HashMap::new();
+                    let mut map = BTreeMap::new();
                     map.insert(
                         "text/html".to_string(),
                         MediaType {
-                            schema: SchemaRef::Inline(serde_json::json!({ "type": "string" })),
+                            schema: Some(SchemaRef::Inline(serde_json::json!({ "type": "string" }))),
+                            example: None,
                         },
                     );
-                    Some(map)
+                    map
                 },
+                headers: BTreeMap::new(),
             },
         );
     }

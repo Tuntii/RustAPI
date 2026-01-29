@@ -10,7 +10,7 @@ use rustapi_openapi::{
     MediaType, Operation, OperationModifier, ResponseModifier, ResponseSpec, SchemaRef,
 };
 use serde::Serialize;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 /// JSON Content-Type
 pub const JSON_CONTENT_TYPE: &str = "application/json";
@@ -280,16 +280,17 @@ impl<T: Send> OperationModifier for Negotiate<T> {
 
 impl<T: Serialize> ResponseModifier for Negotiate<T> {
     fn update_response(op: &mut Operation) {
-        let mut content = HashMap::new();
+        let mut content = BTreeMap::new();
 
         // JSON response
         content.insert(
             JSON_CONTENT_TYPE.to_string(),
             MediaType {
-                schema: SchemaRef::Inline(serde_json::json!({
+                schema: Some(SchemaRef::Inline(serde_json::json!({
                     "type": "object",
                     "description": "JSON formatted response"
-                })),
+                }))),
+                example: None,
             },
         );
 
@@ -297,17 +298,19 @@ impl<T: Serialize> ResponseModifier for Negotiate<T> {
         content.insert(
             TOON_CONTENT_TYPE.to_string(),
             MediaType {
-                schema: SchemaRef::Inline(serde_json::json!({
+                schema: Some(SchemaRef::Inline(serde_json::json!({
                     "type": "string",
                     "description": "TOON (Token-Oriented Object Notation) formatted response"
-                })),
+                }))),
+                example: None,
             },
         );
 
         let response = ResponseSpec {
             description: "Content-negotiated response (JSON or TOON based on Accept header)"
                 .to_string(),
-            content: Some(content),
+            content,
+            headers: BTreeMap::new(),
         };
         op.responses.insert("200".to_string(), response);
     }

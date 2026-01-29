@@ -6,6 +6,7 @@ use hyper::upgrade::OnUpgrade;
 use hyper_util::rt::TokioIo;
 use rustapi_core::{IntoResponse, ResponseBody};
 use rustapi_openapi::{Operation, ResponseModifier, ResponseSpec};
+use std::collections::BTreeMap;
 use std::future::Future;
 use std::pin::Pin;
 use tokio_tungstenite::tungstenite::protocol::Role;
@@ -210,7 +211,8 @@ impl ResponseModifier for WebSocketUpgrade {
             "101".to_string(),
             ResponseSpec {
                 description: "WebSocket upgrade successful".to_string(),
-                content: None,
+                content: BTreeMap::new(),
+                headers: BTreeMap::new(),
             },
         );
     }

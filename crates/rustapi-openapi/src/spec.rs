@@ -3,8 +3,8 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-pub use crate::schema::SchemaRef;
 use crate::schema::JsonSchema2020;
+pub use crate::schema::SchemaRef;
 
 /// OpenAPI 3.1.0 specification
 #[derive(Debug, Clone, Serialize, Deserialize)]

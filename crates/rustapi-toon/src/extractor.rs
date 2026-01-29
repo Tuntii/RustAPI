@@ -9,7 +9,7 @@ use rustapi_openapi::{
 };
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::ops::{Deref, DerefMut};
 
 /// TOON body extractor and response type
@@ -136,19 +136,21 @@ impl<T: Serialize> IntoResponse for Toon<T> {
 // OpenAPI support: OperationModifier for Toon extractor
 impl<T: Send> OperationModifier for Toon<T> {
     fn update_operation(op: &mut Operation) {
-        let mut content = HashMap::new();
+        let mut content = BTreeMap::new();
         content.insert(
             TOON_CONTENT_TYPE.to_string(),
             MediaType {
-                schema: SchemaRef::Inline(serde_json::json!({
+                schema: Some(SchemaRef::Inline(serde_json::json!({
                     "type": "string",
                     "description": "TOON (Token-Oriented Object Notation) formatted request body"
-                })),
+                }))),
+                example: None,
             },
         );
 
         op.request_body = Some(rustapi_openapi::RequestBody {
-            required: true,
+            description: None,
+            required: Some(true),
             content,
         });
     }
@@ -157,20 +159,22 @@ impl<T: Send> OperationModifier for Toon<T> {
 // OpenAPI support: ResponseModifier for Toon response
 impl<T: Serialize> ResponseModifier for Toon<T> {
     fn update_response(op: &mut Operation) {
-        let mut content = HashMap::new();
+        let mut content = BTreeMap::new();
         content.insert(
             TOON_CONTENT_TYPE.to_string(),
             MediaType {
-                schema: SchemaRef::Inline(serde_json::json!({
+                schema: Some(SchemaRef::Inline(serde_json::json!({
                     "type": "string",
                     "description": "TOON (Token-Oriented Object Notation) formatted response"
-                })),
+                }))),
+                example: None,
             },
         );
 
         let response = ResponseSpec {
             description: "TOON formatted response - token-optimized for LLMs".to_string(),
-            content: Some(content),
+            content,
+            headers: BTreeMap::new(),
         };
         op.responses.insert("200".to_string(), response);
     }
