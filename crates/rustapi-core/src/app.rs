@@ -520,11 +520,7 @@ impl RustApi {
             // Register each operation in the OpenAPI spec
             for (method, op) in &method_router.operations {
                 let mut op = op.clone();
-                add_path_params_to_operation(
-                    &prefixed_path,
-                    &mut op,
-                    &BTreeMap::new(),
-                );
+                add_path_params_to_operation(&prefixed_path, &mut op, &BTreeMap::new());
                 self.openapi_spec = self.openapi_spec.path(&prefixed_path, method.as_str(), op);
             }
         }

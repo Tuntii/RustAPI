@@ -64,7 +64,7 @@ use bytes::Bytes;
 use http::{header, StatusCode};
 use rustapi_validate::v2::{AsyncValidate, ValidationContext};
 
-use rustapi_openapi::schema::{JsonSchema2020, RustApiSchema, SchemaCtx, SchemaRef, TypeArray};
+use rustapi_openapi::schema::{RustApiSchema, SchemaCtx, SchemaRef};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::collections::BTreeMap;
@@ -962,7 +962,9 @@ impl_from_request_parts_for_primitives!(
 
 // OperationModifier implementations for extractors
 
-use rustapi_openapi::{MediaType, Operation, OperationModifier, Parameter, RequestBody, ResponseModifier, ResponseSpec};
+use rustapi_openapi::{
+    MediaType, Operation, OperationModifier, Parameter, RequestBody, ResponseModifier, ResponseSpec,
+};
 
 // ValidatedJson - Adds request body
 impl<T: RustApiSchema> OperationModifier for ValidatedJson<T> {
@@ -973,7 +975,10 @@ impl<T: RustApiSchema> OperationModifier for ValidatedJson<T> {
         let mut content = BTreeMap::new();
         content.insert(
             "application/json".to_string(),
-            MediaType { schema: Some(schema_ref), example: None },
+            MediaType {
+                schema: Some(schema_ref),
+                example: None,
+            },
         );
 
         op.request_body = Some(RequestBody {
@@ -985,13 +990,13 @@ impl<T: RustApiSchema> OperationModifier for ValidatedJson<T> {
         // Add 422 Validation Error response
         let mut responses_content = BTreeMap::new();
         responses_content.insert(
-             "application/json".to_string(),
-             MediaType {
-                 schema: Some(SchemaRef::Ref {
-                     reference: "#/components/schemas/ValidationErrorSchema".to_string(),
-                 }),
-                 example: None,
-             },
+            "application/json".to_string(),
+            MediaType {
+                schema: Some(SchemaRef::Ref {
+                    reference: "#/components/schemas/ValidationErrorSchema".to_string(),
+                }),
+                example: None,
+            },
         );
 
         op.responses.insert(
@@ -1014,7 +1019,10 @@ impl<T: RustApiSchema> OperationModifier for Json<T> {
         let mut content = BTreeMap::new();
         content.insert(
             "application/json".to_string(),
-            MediaType { schema: Some(schema_ref), example: None },
+            MediaType {
+                schema: Some(schema_ref),
+                example: None,
+            },
         );
 
         op.request_body = Some(RequestBody {
@@ -1040,16 +1048,19 @@ impl<T: RustApiSchema> OperationModifier for Query<T> {
     fn update_operation(op: &mut Operation) {
         let mut ctx = SchemaCtx::new();
         if let Some(fields) = T::field_schemas(&mut ctx) {
-            let new_params: Vec<Parameter> = fields.into_iter().map(|(name, schema)| {
-                Parameter {
-                    name,
-                    location: "query".to_string(),
-                    required: false, // Assume optional
-                    deprecated: None,
-                    description: None,
-                    schema: Some(schema),
-                }
-            }).collect();
+            let new_params: Vec<Parameter> = fields
+                .into_iter()
+                .map(|(name, schema)| {
+                    Parameter {
+                        name,
+                        location: "query".to_string(),
+                        required: false, // Assume optional
+                        deprecated: None,
+                        description: None,
+                        schema: Some(schema),
+                    }
+                })
+                .collect();
 
             op.parameters.extend(new_params);
         }
@@ -1116,7 +1127,10 @@ impl<T: RustApiSchema> ResponseModifier for Json<T> {
         let mut content = BTreeMap::new();
         content.insert(
             "application/json".to_string(),
-            MediaType { schema: Some(schema_ref), example: None },
+            MediaType {
+                schema: Some(schema_ref),
+                example: None,
+            },
         );
 
         op.responses.insert(

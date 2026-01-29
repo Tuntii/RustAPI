@@ -155,4 +155,3 @@ pub fn redoc_html_with_config(
 
 #[cfg(feature = "redoc")]
 pub use redoc::{RedocConfig, RedocTheme};
-

@@ -433,11 +433,11 @@ checksum = "0e050f626429857a27ddccb31e0aca21356bfa709c04041aefddac081a8f068a"
 name = "bench-server"
 version = "0.1.207"
 dependencies = [
+ "rustapi-openapi",
  "rustapi-rs",
  "serde",
  "serde_json",
  "tokio",
- "utoipa",
  "validator",
 ]
 

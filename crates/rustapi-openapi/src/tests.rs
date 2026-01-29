@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::schema::{RustApiSchema, SchemaCtx, SchemaRef, JsonSchema2020};
+    use crate::schema::{JsonSchema2020, RustApiSchema, SchemaCtx, SchemaRef};
     use crate::spec::OpenApiSpec;
     use rustapi_macros::Schema;
 
@@ -11,7 +11,10 @@ mod tests {
 
         match schema {
             SchemaRef::Schema(s) => {
-                assert_eq!(s.schema_type, Some(crate::schema::TypeArray::Single("string".to_string())));
+                assert_eq!(
+                    s.schema_type,
+                    Some(crate::schema::TypeArray::Single("string".to_string()))
+                );
             }
             _ => panic!("Expected Schema"),
         }
@@ -77,7 +80,10 @@ mod tests {
         let _ = Status::schema(&mut ctx);
 
         let schema = ctx.components.get("Status").unwrap();
-        assert_eq!(schema.schema_type, Some(crate::schema::TypeArray::Single("string".to_string())));
+        assert_eq!(
+            schema.schema_type,
+            Some(crate::schema::TypeArray::Single("string".to_string()))
+        );
         assert!(schema.enum_values.is_some());
         let enums = schema.enum_values.as_ref().unwrap();
         assert_eq!(enums.len(), 2);

@@ -2,7 +2,8 @@
 
 /// Generate Swagger UI HTML page using CDN assets
 pub fn generate_swagger_html(openapi_url: &str) -> String {
-    format!(r#"<!DOCTYPE html>
+    format!(
+        r#"<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -34,5 +35,7 @@ pub fn generate_swagger_html(openapi_url: &str) -> String {
     }};
     </script>
 </body>
-</html>"#, openapi_url)
+</html>"#,
+        openapi_url
+    )
 }

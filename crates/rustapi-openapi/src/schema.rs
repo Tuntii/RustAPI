@@ -120,7 +120,10 @@ pub enum AdditionalProperties {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum SchemaRef {
-    Ref { #[serde(rename = "$ref")] reference: String },
+    Ref {
+        #[serde(rename = "$ref")]
+        reference: String,
+    },
     Schema(JsonSchema2020),
     Inline(serde_json::Value),
 }
@@ -139,10 +142,14 @@ impl SchemaCtx {
 
 pub trait RustApiSchema {
     fn schema(ctx: &mut SchemaCtx) -> SchemaRef;
-    fn component_name() -> Option<&'static str> { None }
+    fn component_name() -> Option<&'static str> {
+        None
+    }
 
     /// Get field schemas if this type is a struct (for Query params extraction)
-    fn field_schemas(_ctx: &mut SchemaCtx) -> Option<BTreeMap<String, SchemaRef>> { None }
+    fn field_schemas(_ctx: &mut SchemaCtx) -> Option<BTreeMap<String, SchemaRef>> {
+        None
+    }
 }
 
 // Primitives
@@ -190,6 +197,63 @@ impl RustApiSchema for f32 {
     }
 }
 
+impl RustApiSchema for i8 {
+    fn schema(_: &mut SchemaCtx) -> SchemaRef {
+        let mut s = JsonSchema2020::integer();
+        s.format = Some("int8".to_string());
+        SchemaRef::Schema(s)
+    }
+}
+impl RustApiSchema for i16 {
+    fn schema(_: &mut SchemaCtx) -> SchemaRef {
+        let mut s = JsonSchema2020::integer();
+        s.format = Some("int16".to_string());
+        SchemaRef::Schema(s)
+    }
+}
+impl RustApiSchema for isize {
+    fn schema(_: &mut SchemaCtx) -> SchemaRef {
+        let mut s = JsonSchema2020::integer();
+        s.format = Some("int64".to_string());
+        SchemaRef::Schema(s)
+    }
+}
+impl RustApiSchema for u8 {
+    fn schema(_: &mut SchemaCtx) -> SchemaRef {
+        let mut s = JsonSchema2020::integer();
+        s.format = Some("uint8".to_string());
+        SchemaRef::Schema(s)
+    }
+}
+impl RustApiSchema for u16 {
+    fn schema(_: &mut SchemaCtx) -> SchemaRef {
+        let mut s = JsonSchema2020::integer();
+        s.format = Some("uint16".to_string());
+        SchemaRef::Schema(s)
+    }
+}
+impl RustApiSchema for u32 {
+    fn schema(_: &mut SchemaCtx) -> SchemaRef {
+        let mut s = JsonSchema2020::integer();
+        s.format = Some("uint32".to_string());
+        SchemaRef::Schema(s)
+    }
+}
+impl RustApiSchema for u64 {
+    fn schema(_: &mut SchemaCtx) -> SchemaRef {
+        let mut s = JsonSchema2020::integer();
+        s.format = Some("uint64".to_string());
+        SchemaRef::Schema(s)
+    }
+}
+impl RustApiSchema for usize {
+    fn schema(_: &mut SchemaCtx) -> SchemaRef {
+        let mut s = JsonSchema2020::integer();
+        s.format = Some("uint64".to_string());
+        SchemaRef::Schema(s)
+    }
+}
+
 // Vec
 impl<T: RustApiSchema> RustApiSchema for Vec<T> {
     fn schema(ctx: &mut SchemaCtx) -> SchemaRef {
@@ -229,14 +293,14 @@ impl<T: RustApiSchema> RustApiSchema for Option<T> {
                 SchemaRef::Schema(s)
             }
             SchemaRef::Ref { reference } => {
-                 // oneOf [{$ref}, {type: null}]
-                 let mut s = JsonSchema2020::new();
-                 let mut ref_s = JsonSchema2020::new();
-                 ref_s.reference = Some(reference);
-                 let mut null_s = JsonSchema2020::new();
-                 null_s.schema_type = Some(TypeArray::single("null"));
-                 s.one_of = Some(vec![ref_s, null_s]);
-                 SchemaRef::Schema(s)
+                // oneOf [{$ref}, {type: null}]
+                let mut s = JsonSchema2020::new();
+                let mut ref_s = JsonSchema2020::new();
+                ref_s.reference = Some(reference);
+                let mut null_s = JsonSchema2020::new();
+                null_s.schema_type = Some(TypeArray::single("null"));
+                s.one_of = Some(vec![ref_s, null_s]);
+                SchemaRef::Schema(s)
             }
             _ => inner,
         }

@@ -11,8 +11,7 @@ pub fn expand_derive_schema(input: syn::DeriveInput) -> TokenStream {
         Data::Struct(data) => impl_struct_schema_bodies(&name, data),
         Data::Enum(data) => (impl_enum_schema(&name, data), quote! { None }),
         Data::Union(_) => {
-            return syn::Error::new_spanned(name, "Unions not supported")
-                .to_compile_error();
+            return syn::Error::new_spanned(name, "Unions not supported").to_compile_error();
         }
     };
 
@@ -47,7 +46,11 @@ fn impl_struct_schema_bodies(name: &Ident, data: DataStruct) -> (TokenStream, To
                 let field_type = field.ty;
 
                 let is_option = if let syn::Type::Path(tp) = &field_type {
-                    tp.path.segments.last().map(|s| s.ident == "Option").unwrap_or(false)
+                    tp.path
+                        .segments
+                        .last()
+                        .map(|s| s.ident == "Option")
+                        .unwrap_or(false)
                 } else {
                     false
                 };
@@ -68,8 +71,7 @@ fn impl_struct_schema_bodies(name: &Ident, data: DataStruct) -> (TokenStream, To
                             s
                         },
                         ::rustapi_openapi::schema::SchemaRef::Inline(v) => {
-                            let mut s = ::rustapi_openapi::schema::JsonSchema2020::new();
-                            s
+                            ::serde_json::from_value(v).unwrap_or_default()
                         }
                     };
                     properties.insert(#field_name_str.to_string(), field_schema);
@@ -125,7 +127,10 @@ fn impl_struct_schema_bodies(name: &Ident, data: DataStruct) -> (TokenStream, To
 fn impl_enum_schema(name: &Ident, data: DataEnum) -> TokenStream {
     let name_str = name.to_string();
 
-    let is_string_enum = data.variants.iter().all(|v| matches!(v.fields, Fields::Unit));
+    let is_string_enum = data
+        .variants
+        .iter()
+        .all(|v| matches!(v.fields, Fields::Unit));
 
     if is_string_enum {
         let variants: Vec<String> = data.variants.iter().map(|v| v.ident.to_string()).collect();
@@ -167,7 +172,9 @@ fn impl_enum_schema(name: &Ident, data: DataEnum) -> TokenStream {
                                 s.reference = Some(reference);
                                 s
                             },
-                            _ => ::rustapi_openapi::schema::JsonSchema2020::new(),
+                            ::rustapi_openapi::schema::SchemaRef::Inline(v) => {
+                                ::serde_json::from_value(v).unwrap_or_default()
+                            },
                         };
                         v_props.insert(#fname.to_string(), fs);
                         v_req.push(#fname.to_string());
@@ -207,7 +214,9 @@ fn impl_enum_schema(name: &Ident, data: DataEnum) -> TokenStream {
                                     s.reference = Some(reference);
                                     s
                                 },
-                                _ => ::rustapi_openapi::schema::JsonSchema2020::new(),
+                                ::rustapi_openapi::schema::SchemaRef::Inline(v) => {
+                                    ::serde_json::from_value(v).unwrap_or_default()
+                                },
                             };
 
                             let mut outer_props = ::std::collections::BTreeMap::new();
@@ -219,9 +228,9 @@ fn impl_enum_schema(name: &Ident, data: DataEnum) -> TokenStream {
                         }
                     });
                 } else {
-                     one_of_logic.push(quote! {
-                         ::rustapi_openapi::schema::JsonSchema2020::object()
-                     });
+                    one_of_logic.push(quote! {
+                        ::rustapi_openapi::schema::JsonSchema2020::object()
+                    });
                 }
             }
             Fields::Unit => {

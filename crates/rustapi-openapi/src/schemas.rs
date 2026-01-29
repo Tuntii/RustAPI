@@ -2,8 +2,8 @@
 //!
 //! These schemas match the error response format used by RustAPI.
 
-use serde::{Deserialize, Serialize};
 use rustapi_macros::Schema;
+use serde::{Deserialize, Serialize};
 
 /// Standard error response body
 #[derive(Debug, Clone, Serialize, Deserialize, Schema)]

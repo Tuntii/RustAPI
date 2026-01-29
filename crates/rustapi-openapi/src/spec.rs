@@ -3,8 +3,8 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-use crate::schema::{JsonSchema2020, SchemaTransformer};
 pub use crate::schema::SchemaRef;
+use crate::schema::JsonSchema2020;
 
 /// OpenAPI 3.1.0 specification
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -257,8 +257,8 @@ pub struct Operation {
 impl Operation {
     pub fn new() -> Self {
         Self {
-             responses: BTreeMap::from([("200".to_string(), ResponseSpec::default())]),
-             ..Default::default()
+            responses: BTreeMap::from([("200".to_string(), ResponseSpec::default())]),
+            ..Default::default()
         }
     }
 
@@ -320,7 +320,6 @@ pub struct Header {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub schema: Option<SchemaRef>,
 }
-
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
@@ -455,22 +454,34 @@ impl_op_modifier_for_primitives!(
 
 impl ResponseModifier for () {
     fn update_response(op: &mut Operation) {
-        op.responses.insert("200".to_string(), ResponseSpec { description: "Successful response".into(), ..Default::default() });
+        op.responses.insert(
+            "200".to_string(),
+            ResponseSpec {
+                description: "Successful response".into(),
+                ..Default::default()
+            },
+        );
     }
 }
 
 impl ResponseModifier for String {
     fn update_response(op: &mut Operation) {
         let mut content = BTreeMap::new();
-        content.insert("text/plain".to_string(), MediaType {
-            schema: Some(SchemaRef::Inline(serde_json::json!({"type": "string"}))),
-            example: None
-        });
-        op.responses.insert("200".to_string(), ResponseSpec {
-            description: "Successful response".into(),
-            content,
-            ..Default::default()
-        });
+        content.insert(
+            "text/plain".to_string(),
+            MediaType {
+                schema: Some(SchemaRef::Inline(serde_json::json!({"type": "string"}))),
+                example: None,
+            },
+        );
+        op.responses.insert(
+            "200".to_string(),
+            ResponseSpec {
+                description: "Successful response".into(),
+                content,
+                ..Default::default()
+            },
+        );
     }
 }
 
@@ -495,9 +506,12 @@ impl<T: ResponseModifier, E: ResponseModifier> ResponseModifier for Result<T, E>
 
 impl<T> ResponseModifier for http::Response<T> {
     fn update_response(op: &mut Operation) {
-        op.responses.insert("200".to_string(), ResponseSpec {
-            description: "Successful response".into(),
-            ..Default::default()
-        });
+        op.responses.insert(
+            "200".to_string(),
+            ResponseSpec {
+                description: "Successful response".into(),
+                ..Default::default()
+            },
+        );
     }
 }

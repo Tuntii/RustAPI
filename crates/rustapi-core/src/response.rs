@@ -373,7 +373,10 @@ impl<T: RustApiSchema> ResponseModifier for Created<T> {
                     let mut map = BTreeMap::new();
                     map.insert(
                         "application/json".to_string(),
-                        MediaType { schema: Some(schema_ref), example: None },
+                        MediaType {
+                            schema: Some(schema_ref),
+                            example: None,
+                        },
                     );
                     map
                 },
@@ -445,7 +448,9 @@ impl<T> ResponseModifier for Html<T> {
                     map.insert(
                         "text/html".to_string(),
                         MediaType {
-                            schema: Some(SchemaRef::Inline(serde_json::json!({ "type": "string" }))),
+                            schema: Some(SchemaRef::Inline(
+                                serde_json::json!({ "type": "string" }),
+                            )),
                             example: None,
                         },
                     );
@@ -559,7 +564,10 @@ impl<T: RustApiSchema, const CODE: u16> ResponseModifier for WithStatus<T, CODE>
                     let mut map = BTreeMap::new();
                     map.insert(
                         "application/json".to_string(),
-                        MediaType { schema: Some(schema_ref), example: None },
+                        MediaType {
+                            schema: Some(schema_ref),
+                            example: None,
+                        },
                     );
                     map
                 },
