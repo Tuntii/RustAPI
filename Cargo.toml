@@ -13,12 +13,6 @@ members = [
     "crates/rustapi-testing",
     "crates/rustapi-jobs",
     "crates/cargo-rustapi",
-
-    # Benchmark servers
-    "benches/bench_server",
-    "benches/actix_bench_server",
-    "benches/toon_bench",
-    "benches/rustapi_bench",
 ]
 
 [workspace.package]
@@ -143,8 +137,3 @@ codegen-units = 1
 inherits = "release"
 debug = true
 strip = false
-
-
-
-
-
