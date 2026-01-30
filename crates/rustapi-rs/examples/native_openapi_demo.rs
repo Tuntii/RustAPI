@@ -141,7 +141,10 @@ async fn list_users(Query(query): Query<ListUsersQuery>) -> Json<UserListRespons
             profile: Some(UserProfile {
                 bio: Some("Software developer".to_string()),
                 avatar_url: None,
-                social_links: HashMap::from([("github".to_string(), "https://github.com/alice".to_string())]),
+                social_links: HashMap::from([(
+                    "github".to_string(),
+                    "https://github.com/alice".to_string(),
+                )]),
             }),
         },
         User {
@@ -288,7 +291,10 @@ mod tests {
         let _ = User::schema(&mut ctx);
 
         // Get the User schema from components
-        let user_schema = ctx.components.get("User").expect("User schema should exist");
+        let user_schema = ctx
+            .components
+            .get("User")
+            .expect("User schema should exist");
 
         // Check properties exist
         assert!(user_schema.properties.is_some());
@@ -311,6 +317,9 @@ mod tests {
     fn test_component_name() {
         assert_eq!(User::component_name(), Some("User"));
         assert_eq!(UserProfile::component_name(), Some("UserProfile"));
-        assert_eq!(CreateUserRequest::component_name(), Some("CreateUserRequest"));
+        assert_eq!(
+            CreateUserRequest::component_name(),
+            Some("CreateUserRequest")
+        );
     }
 }

@@ -59,9 +59,7 @@ impl OpenApiSpec {
                 ..Default::default()
             },
             // Use OpenAPI 3.1 default dialect for maximum Swagger UI compatibility
-            json_schema_dialect: Some(
-                "https://spec.openapis.org/oas/3.1/dialect/base".to_string(),
-            ),
+            json_schema_dialect: Some("https://spec.openapis.org/oas/3.1/dialect/base".to_string()),
             servers: Vec::new(),
             paths: BTreeMap::new(),
             webhooks: BTreeMap::new(),
