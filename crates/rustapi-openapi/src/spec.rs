@@ -3,8 +3,8 @@
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-use crate::schema::JsonSchema2020;
 pub use crate::schema::SchemaRef;
+use crate::schema::JsonSchema2020;
 
 /// OpenAPI 3.1.0 specification
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -362,7 +362,7 @@ pub enum SecurityScheme {
         description: Option<String>,
     },
     Oauth2 {
-        flows: OAuthFlows,
+        flows: Box<OAuthFlows>,
         #[serde(skip_serializing_if = "Option::is_none")]
         description: Option<String>,
     },

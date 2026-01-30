@@ -64,7 +64,7 @@ fn impl_struct_schema_bodies(name: &Ident, data: DataStruct) -> (TokenStream, To
                 field_logic.push(quote! {
                     let field_schema_ref = <#field_type as ::rustapi_openapi::schema::RustApiSchema>::schema(ctx);
                     let field_schema = match field_schema_ref {
-                        ::rustapi_openapi::schema::SchemaRef::Schema(s) => s,
+                        ::rustapi_openapi::schema::SchemaRef::Schema(s) => *s,
                         ::rustapi_openapi::schema::SchemaRef::Ref { reference } => {
                             let mut s = ::rustapi_openapi::schema::JsonSchema2020::new();
                             s.reference = Some(reference);
@@ -166,7 +166,7 @@ fn impl_enum_schema(name: &Ident, data: DataEnum) -> TokenStream {
                     props_logic.push(quote! {
                         let fs_ref = <#fty as ::rustapi_openapi::schema::RustApiSchema>::schema(ctx);
                         let fs = match fs_ref {
-                            ::rustapi_openapi::schema::SchemaRef::Schema(s) => s,
+                            ::rustapi_openapi::schema::SchemaRef::Schema(s) => *s,
                             ::rustapi_openapi::schema::SchemaRef::Ref { reference } => {
                                 let mut s = ::rustapi_openapi::schema::JsonSchema2020::new();
                                 s.reference = Some(reference);
@@ -208,7 +208,7 @@ fn impl_enum_schema(name: &Ident, data: DataEnum) -> TokenStream {
                         {
                             let fs_ref = <#fty as ::rustapi_openapi::schema::RustApiSchema>::schema(ctx);
                             let fs = match fs_ref {
-                                ::rustapi_openapi::schema::SchemaRef::Schema(s) => s,
+                                ::rustapi_openapi::schema::SchemaRef::Schema(s) => *s,
                                 ::rustapi_openapi::schema::SchemaRef::Ref { reference } => {
                                     let mut s = ::rustapi_openapi::schema::JsonSchema2020::new();
                                     s.reference = Some(reference);
