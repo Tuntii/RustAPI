@@ -429,11 +429,17 @@ Validation failures return 422 Unprocessable Entity:
 
 ## OpenAPI & Swagger
 
-Automatic API documentation generation.
+Automatic API documentation generation using RustAPI's **native OpenAPI 3.1 generator**.
+
+> **v0.1.203**: RustAPI now generates OpenAPI specs natively, without external dependencies like `utoipa`. This provides faster compile times, smaller binaries, and full OpenAPI 3.1 / JSON Schema 2020-12 support.
 
 ### Schema Derivation
 
+Use `#[derive(Schema)]` to generate OpenAPI schemas at compile-time:
+
 ```rust
+use rustapi_rs::prelude::*;
+
 #[derive(Serialize, Schema)]
 struct User {
     /// The user's unique identifier
@@ -442,21 +448,36 @@ struct User {
     /// The user's display name
     name: String,
     
-    #[schema(format = "email")]
+    /// User's email address
     email: String,
     
-    #[schema(example = "2024-01-01T00:00:00Z")]
-    created_at: String,
+    /// Optional profile bio
+    bio: Option<String>,  // Generates type: ["string", "null"]
+    
+    /// User's roles
+    roles: Vec<String>,   // Generates array schema
 }
 ```
+
+### Supported Types
+
+| Rust Type | OpenAPI Schema |
+|-----------|---------------|
+| `String`, `&str` | `{ "type": "string" }` |
+| `i32`, `i64`, etc. | `{ "type": "integer", "format": "int32/int64" }` |
+| `f32`, `f64` | `{ "type": "number", "format": "float/double" }` |
+| `bool` | `{ "type": "boolean" }` |
+| `Option<T>` | `{ "type": ["<T>", "null"] }` |
+| `Vec<T>` | `{ "type": "array", "items": <T> }` |
+| `HashMap<String, T>` | `{ "type": "object", "additionalProperties": <T> }` |
 
 ### Route Documentation
 
 ```rust
 #[rustapi_rs::get("/users/{id}")]
-#[doc = "Get a user by ID"]
+#[rustapi_rs::tag("Users")]
+#[rustapi_rs::summary("Get a user by ID")]
 async fn get_user(
-    /// The user ID to fetch
     Path(id): Path<u64>,
 ) -> Json<User> {
     // ...
@@ -467,6 +488,8 @@ async fn get_user(
 
 - **Swagger UI:** `http://localhost:8080/docs`
 - **OpenAPI JSON:** `http://localhost:8080/openapi.json`
+
+> **Note**: Swagger UI is now loaded from CDN (unpkg) instead of bundled assets.
 
 ### Custom OpenAPI Info
 

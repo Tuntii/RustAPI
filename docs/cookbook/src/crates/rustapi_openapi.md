@@ -3,25 +3,51 @@
 **Lens**: "The Cartographer"
 **Philosophy**: "Documentation as Code."
 
+> **v0.1.203 Update**: RustAPI now uses a **native OpenAPI 3.1 generator**, removing the `utoipa` dependency entirely. This provides faster compile times, smaller binaries, and full JSON Schema 2020-12 support.
+
 ## Automatic Spec Generation
 
-We believe that if documentation is manual, it is wrong. RustAPI uses `utoipa` to generate an OpenAPI 3.0 specification directly from your code.
+We believe that if documentation is manual, it is wrong. RustAPI generates an **OpenAPI 3.1.0** specification directly from your code at compile-time using the `RustApiSchema` trait.
 
-## The `Schema` Trait
+## The `RustApiSchema` Trait
 
-Any type that is part of your API (request or response) must implement `Schema`.
+Any type that is part of your API (request or response) must implement `RustApiSchema`. Use the `#[derive(Schema)]` macro:
 
 ```rust
+use rustapi_rs::prelude::*;
+
 #[derive(Schema)]
 struct Metric {
     /// The name of the metric
     name: String,
     
     /// Value (0-100)
-    #[schema(minimum = 0, maximum = 100)]
     value: i32,
+    
+    /// Optional description
+    description: Option<String>,
 }
 ```
+
+The derive macro generates:
+- `impl RustApiSchema for Metric` with proper schema generation
+- Automatic `$ref` to `#/components/schemas/Metric`
+- Field optionality detection (`Option<T>` fields are non-required)
+- Recursive schema generation for nested types
+
+### Supported Types
+
+| Rust Type | JSON Schema Output |
+|-----------|-------------------|
+| `String`, `&str` | `{ "type": "string" }` |
+| `i32` | `{ "type": "integer", "format": "int32" }` |
+| `i64` | `{ "type": "integer", "format": "int64" }` |
+| `f32` | `{ "type": "number", "format": "float" }` |
+| `f64` | `{ "type": "number", "format": "double" }` |
+| `bool` | `{ "type": "boolean" }` |
+| `Vec<T>` | `{ "type": "array", "items": <T schema> }` |
+| `Option<T>` | `{ "type": ["<T type>", "null"] }` (OpenAPI 3.1 native) |
+| `HashMap<String, T>` | `{ "type": "object", "additionalProperties": <T schema> }` |
 
 ## Operation Metadata
 
@@ -31,7 +57,6 @@ Use macros to enrich endpoints:
 #[rustapi::get("/metrics")]
 #[rustapi::tag("Metrics")]
 #[rustapi::summary("List all metrics")]
-#[rustapi::response(200, Json<Vec<Metric>>)]
 async fn list_metrics() -> Json<Vec<Metric>> { ... }
 ```
 
@@ -41,8 +66,21 @@ The `RustApi` builder automatically mounts a Swagger UI at the path you specify:
 
 ```rust
 RustApi::new()
-    .docs("/docs") // Mounts Swagger UI at /docs
+    .docs("/docs") // Mounts Swagger UI at /docs (served from CDN)
     // ...
+```
+
+> **Note**: Swagger UI assets are now loaded from unpkg CDN instead of being bundled, significantly reducing binary size.
+
+## Manual Schema Registration
+
+For advanced use cases, you can manually register schemas:
+
+```rust
+let spec = OpenApiSpec::new("My API", "1.0.0")
+    .register::<User>()        // Registers User schema
+    .register::<CreateUser>()  // Registers CreateUser schema
+    .description("My awesome API");
 ```
 
 ## Path Parameter Schema Types
@@ -105,4 +143,26 @@ let route = get_route("/items/{id}", get_item)
 
 app.mount_route(route);
 ```
+
+## Migration from v0.1.202
+
+If upgrading from an earlier version that used `utoipa`:
+
+```rust
+// Before (utoipa-based)
+use utoipa::ToSchema;
+#[derive(ToSchema)]
+struct User { ... }
+
+// After (native RustApiSchema)
+use rustapi_rs::prelude::*;
+#[derive(Schema)]  // Generates RustApiSchema impl
+struct User { ... }
+```
+
+Key changes:
+- Remove `utoipa` from your `Cargo.toml`
+- Replace `use utoipa::ToSchema` with `use rustapi_rs::prelude::*`
+- `#[derive(ToSchema)]` becomes `#[derive(Schema)]`
+- OpenAPI output is now 3.1.0 (was 3.0.3)
 

@@ -5,6 +5,9 @@ Welcome to the **RustAPI Architecture Cookbook**. This documentation is designed
 > [!NOTE]
 > This is a living document. As our architecture evolves, so will this cookbook.
 
+> [!TIP]
+> **v0.1.203**: RustAPI now uses a **native OpenAPI 3.1 generator**, removing the `utoipa` dependency. See the [Migration Guide](recipes/openapi_migration.md) for details.
+
 ## What is this?
 This is not just API documentation. This is a collection of:
 - **Keynotes**: High-level architectural decisions and "why" we made them.
@@ -35,4 +38,5 @@ This cookbook is styled with the **RustAPI Premium Dark** theme, focusing on rea
 - Want to understand performance? Read [Performance Philosophy](architecture/performance.md).
 - Need to check code quality? See [Maintenance](recipes/maintenance.md).
 - **New to RustAPI?** Follow our [Learning Paths](learning/README.md).
+- **Upgrading from v0.1.202?** Read the [OpenAPI Migration Guide](recipes/openapi_migration.md).
 
