@@ -13,7 +13,6 @@ members = [
     "crates/rustapi-testing",
     "crates/rustapi-jobs",
     "crates/cargo-rustapi",
-
 ]
 
 [workspace.package]
