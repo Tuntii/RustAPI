@@ -75,9 +75,10 @@ use bytes::Bytes;
 use futures_util::StreamExt;
 use http::{header, HeaderMap, HeaderValue, StatusCode};
 use http_body_util::Full;
-use rustapi_openapi::{MediaType, Operation, ResponseModifier, ResponseSpec, Schema, SchemaRef};
+use rustapi_openapi::schema::{RustApiSchema, SchemaCtx};
+use rustapi_openapi::{MediaType, Operation, ResponseModifier, ResponseSpec, SchemaRef};
 use serde::Serialize;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
@@ -289,17 +290,19 @@ impl ResponseModifier for ApiError {
             ResponseSpec {
                 description: "Bad Request".to_string(),
                 content: {
-                    let mut map = HashMap::new();
+                    let mut map = BTreeMap::new();
                     map.insert(
                         "application/json".to_string(),
                         MediaType {
-                            schema: SchemaRef::Ref {
+                            schema: Some(SchemaRef::Ref {
                                 reference: "#/components/schemas/ErrorSchema".to_string(),
-                            },
+                            }),
+                            example: None,
                         },
                     );
-                    Some(map)
+                    map
                 },
+                headers: BTreeMap::new(),
             },
         );
 
@@ -309,17 +312,19 @@ impl ResponseModifier for ApiError {
             ResponseSpec {
                 description: "Internal Server Error".to_string(),
                 content: {
-                    let mut map = HashMap::new();
+                    let mut map = BTreeMap::new();
                     map.insert(
                         "application/json".to_string(),
                         MediaType {
-                            schema: SchemaRef::Ref {
+                            schema: Some(SchemaRef::Ref {
                                 reference: "#/components/schemas/ErrorSchema".to_string(),
-                            },
+                            }),
+                            example: None,
                         },
                     );
-                    Some(map)
+                    map
                 },
+                headers: BTreeMap::new(),
             },
         );
     }
@@ -355,26 +360,27 @@ impl<T: Serialize> IntoResponse for Created<T> {
     }
 }
 
-impl<T: for<'a> Schema<'a>> ResponseModifier for Created<T> {
+impl<T: RustApiSchema> ResponseModifier for Created<T> {
     fn update_response(op: &mut Operation) {
-        let (name, _) = T::schema();
-
-        let schema_ref = SchemaRef::Ref {
-            reference: format!("#/components/schemas/{}", name),
-        };
+        let mut ctx = SchemaCtx::new();
+        let schema_ref = T::schema(&mut ctx);
 
         op.responses.insert(
             "201".to_string(),
             ResponseSpec {
                 description: "Created".to_string(),
                 content: {
-                    let mut map = HashMap::new();
+                    let mut map = BTreeMap::new();
                     map.insert(
                         "application/json".to_string(),
-                        MediaType { schema: schema_ref },
+                        MediaType {
+                            schema: Some(schema_ref),
+                            example: None,
+                        },
                     );
-                    Some(map)
+                    map
                 },
+                headers: BTreeMap::new(),
             },
         );
     }
@@ -410,7 +416,8 @@ impl ResponseModifier for NoContent {
             "204".to_string(),
             ResponseSpec {
                 description: "No Content".to_string(),
-                content: None,
+                content: BTreeMap::new(),
+                headers: BTreeMap::new(),
             },
         );
     }
@@ -437,15 +444,19 @@ impl<T> ResponseModifier for Html<T> {
             ResponseSpec {
                 description: "HTML Content".to_string(),
                 content: {
-                    let mut map = HashMap::new();
+                    let mut map = BTreeMap::new();
                     map.insert(
                         "text/html".to_string(),
                         MediaType {
-                            schema: SchemaRef::Inline(serde_json::json!({ "type": "string" })),
+                            schema: Some(SchemaRef::Inline(
+                                serde_json::json!({ "type": "string" }),
+                            )),
+                            example: None,
                         },
                     );
-                    Some(map)
+                    map
                 },
+                headers: BTreeMap::new(),
             },
         );
     }
@@ -502,7 +513,8 @@ impl ResponseModifier for Redirect {
             "3xx".to_string(),
             ResponseSpec {
                 description: "Redirection".to_string(),
-                content: None,
+                content: BTreeMap::new(),
+                headers: BTreeMap::new(),
             },
         );
     }
@@ -539,26 +551,27 @@ impl<T: IntoResponse, const CODE: u16> IntoResponse for WithStatus<T, CODE> {
     }
 }
 
-impl<T: for<'a> Schema<'a>, const CODE: u16> ResponseModifier for WithStatus<T, CODE> {
+impl<T: RustApiSchema, const CODE: u16> ResponseModifier for WithStatus<T, CODE> {
     fn update_response(op: &mut Operation) {
-        let (name, _) = T::schema();
-
-        let schema_ref = SchemaRef::Ref {
-            reference: format!("#/components/schemas/{}", name),
-        };
+        let mut ctx = SchemaCtx::new();
+        let schema_ref = T::schema(&mut ctx);
 
         op.responses.insert(
             CODE.to_string(),
             ResponseSpec {
                 description: format!("Response with status {}", CODE),
                 content: {
-                    let mut map = HashMap::new();
+                    let mut map = BTreeMap::new();
                     map.insert(
                         "application/json".to_string(),
-                        MediaType { schema: schema_ref },
+                        MediaType {
+                            schema: Some(schema_ref),
+                            example: None,
+                        },
                     );
-                    Some(map)
+                    map
                 },
+                headers: BTreeMap::new(),
             },
         );
     }

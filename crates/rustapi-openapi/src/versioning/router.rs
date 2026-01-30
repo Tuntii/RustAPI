@@ -4,7 +4,6 @@
 
 use super::strategy::{VersionExtractor, VersionStrategy};
 use super::version::{ApiVersion, VersionRange};
-use crate::v31::OpenApi31Spec;
 use crate::OpenApiSpec;
 use std::collections::HashMap;
 
@@ -91,8 +90,8 @@ struct VersionInfo {
     /// Route configuration
     config: VersionedRouteConfig,
     /// OpenAPI spec for this version (3.1)
-    spec_31: Option<OpenApi31Spec>,
-    /// OpenAPI spec for this version (3.0)
+    spec_31: Option<OpenApiSpec>,
+    /// OpenAPI spec for this version (3.0 legacy field, now uses 3.1 type)
     spec_30: Option<OpenApiSpec>,
 }
 
@@ -162,7 +161,7 @@ impl VersionRouter {
         mut self,
         version: ApiVersion,
         config: VersionedRouteConfig,
-        spec: OpenApi31Spec,
+        spec: OpenApiSpec,
     ) -> Self {
         self.versions.insert(
             version,
@@ -307,7 +306,7 @@ impl VersionRouter {
     }
 
     /// Get OpenAPI 3.1 spec for a version
-    pub fn get_spec_31(&self, version: &ApiVersion) -> Option<&OpenApi31Spec> {
+    pub fn get_spec_31(&self, version: &ApiVersion) -> Option<&OpenApiSpec> {
         self.versions.get(version).and_then(|v| v.spec_31.as_ref())
     }
 
@@ -432,11 +431,11 @@ impl VersionedSpecBuilder {
     }
 
     /// Build OpenAPI 3.1 specs for all versions
-    pub fn build_31(&self) -> HashMap<ApiVersion, OpenApi31Spec> {
+    pub fn build_31(&self) -> HashMap<ApiVersion, OpenApiSpec> {
         let mut specs = HashMap::new();
 
         for (version, config) in &self.versions {
-            let mut spec = OpenApi31Spec::new(
+            let mut spec = OpenApiSpec::new(
                 format!("{} {}", self.title, version.as_path_segment()),
                 version.to_string(),
             );

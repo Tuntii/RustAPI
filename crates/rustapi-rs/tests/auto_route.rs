@@ -59,7 +59,7 @@ async fn get_user(Path(_id): Path<i64>) -> &'static str {
     "ok"
 }
 
-#[derive(Debug, Clone, Deserialize, IntoParams)]
+#[derive(Debug, Clone, Deserialize, Schema)]
 struct Pagination {
     page: Option<u32>,
     page_size: Option<u32>,
@@ -96,11 +96,12 @@ fn test_auto_registers_schemas() {
     let app = RustApi::auto();
     let spec = app.openapi_spec();
 
-    let (name, _) = <AutoSchemaType as utoipa::ToSchema>::schema();
-    let name = name.to_string();
+    use rustapi_openapi::schema::RustApiSchema;
+    let name = <AutoSchemaType as RustApiSchema>::component_name().unwrap();
 
+    let components = spec.components.as_ref().expect("Components should exist");
     assert!(
-        spec.schemas.contains_key(&name),
+        components.schemas.contains_key(name),
         "AutoSchemaType should be registered into OpenAPI components"
     );
 }
@@ -116,10 +117,7 @@ fn test_openapi_includes_path_params() {
         .expect("OpenAPI should contain /users/{id}");
 
     let op = path_item.get.as_ref().expect("GET operation should exist");
-    let params = op
-        .parameters
-        .as_ref()
-        .expect("Path params should be present");
+    let params = &op.parameters;
 
     assert!(
         params
@@ -140,10 +138,7 @@ fn test_openapi_includes_query_params() {
         .expect("OpenAPI should contain /query");
 
     let op = path_item.get.as_ref().expect("GET operation should exist");
-    let params = op
-        .parameters
-        .as_ref()
-        .expect("Query params should be present");
+    let params = &op.parameters;
 
     assert!(
         params

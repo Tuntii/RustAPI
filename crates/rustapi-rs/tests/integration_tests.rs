@@ -232,8 +232,8 @@ mod error_tests {
 // ============================================================================
 
 mod openapi_tests {
+    use rustapi_openapi::schema::RustApiSchema;
     use rustapi_rs::prelude::*;
-    use utoipa::ToSchema;
 
     #[derive(Debug, Clone, Serialize, Schema)]
     struct IntegApiResponse {
@@ -244,7 +244,7 @@ mod openapi_tests {
 
     #[test]
     fn test_schema_generation() {
-        let (name, _schema) = <IntegApiResponse as ToSchema>::schema();
+        let name = <IntegApiResponse as RustApiSchema>::component_name().unwrap();
 
         assert_eq!(
             name, "IntegApiResponse",
@@ -258,7 +258,11 @@ mod openapi_tests {
         let spec = app.openapi_spec();
 
         // Should have schemas section
-        assert!(!spec.schemas.is_empty(), "OpenAPI spec should have schemas");
+        let components = spec.components.as_ref().expect("Components should exist");
+        assert!(
+            !components.schemas.is_empty(),
+            "OpenAPI spec should have schemas"
+        );
     }
 }
 

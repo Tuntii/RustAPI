@@ -2,11 +2,11 @@
 //!
 //! These schemas match the error response format used by RustAPI.
 
+use rustapi_macros::Schema;
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
 
 /// Standard error response body
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, Schema)]
 pub struct ErrorSchema {
     /// The error details
     pub error: ErrorBodySchema,
@@ -16,7 +16,7 @@ pub struct ErrorSchema {
 }
 
 /// Error body details
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, Schema)]
 pub struct ErrorBodySchema {
     /// Error type identifier (e.g., "validation_error", "not_found")
     #[serde(rename = "type")]
@@ -29,7 +29,7 @@ pub struct ErrorBodySchema {
 }
 
 /// Field-level validation error
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, Schema)]
 pub struct FieldErrorSchema {
     /// Field name (supports nested paths like "address.city")
     pub field: String,
@@ -40,14 +40,14 @@ pub struct FieldErrorSchema {
 }
 
 /// Validation error response (422)
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, Schema)]
 pub struct ValidationErrorSchema {
     /// Error wrapper
     pub error: ValidationErrorBodySchema,
 }
 
 /// Validation error body
-#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, Schema)]
 pub struct ValidationErrorBodySchema {
     /// Always "validation_error" for validation errors
     #[serde(rename = "type")]

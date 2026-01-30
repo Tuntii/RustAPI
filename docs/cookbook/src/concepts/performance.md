@@ -94,7 +94,7 @@ Performance is not a guessing game. Below are results from our internal benchmar
 - **Scenario**: JSON serialization of 100 user objects
 - **Build**: `cargo build --release`
 
-Results may vary based on hardware and workload. You can view our [Benchmark Repository](https://github.com/Tuntii/RustAPI-benchmark) or run your own:
+Results may vary based on hardware and workload. Run your own benchmarks:
 ```bash
 cd benches
 ./run_benchmarks.ps1

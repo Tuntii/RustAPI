@@ -64,8 +64,10 @@ use bytes::Bytes;
 use http::{header, StatusCode};
 use rustapi_validate::v2::{AsyncValidate, ValidationContext};
 
+use rustapi_openapi::schema::{RustApiSchema, SchemaCtx, SchemaRef};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+use std::collections::BTreeMap;
 use std::future::Future;
 use std::ops::{Deref, DerefMut};
 use std::str::FromStr;
@@ -960,138 +962,107 @@ impl_from_request_parts_for_primitives!(
 
 // OperationModifier implementations for extractors
 
-use rustapi_openapi::utoipa_types::openapi;
 use rustapi_openapi::{
-    IntoParams, MediaType, Operation, OperationModifier, Parameter, RequestBody, ResponseModifier,
-    ResponseSpec, Schema, SchemaRef,
+    MediaType, Operation, OperationModifier, Parameter, RequestBody, ResponseModifier, ResponseSpec,
 };
-use std::collections::HashMap;
 
 // ValidatedJson - Adds request body
-impl<T: for<'a> Schema<'a>> OperationModifier for ValidatedJson<T> {
+impl<T: RustApiSchema> OperationModifier for ValidatedJson<T> {
     fn update_operation(op: &mut Operation) {
-        let (name, _) = T::schema();
+        let mut ctx = SchemaCtx::new();
+        let schema_ref = T::schema(&mut ctx);
 
-        let schema_ref = SchemaRef::Ref {
-            reference: format!("#/components/schemas/{}", name),
-        };
-
-        let mut content = HashMap::new();
+        let mut content = BTreeMap::new();
         content.insert(
             "application/json".to_string(),
-            MediaType { schema: schema_ref },
+            MediaType {
+                schema: Some(schema_ref),
+                example: None,
+            },
         );
 
         op.request_body = Some(RequestBody {
-            required: true,
+            description: None,
+            required: Some(true),
             content,
         });
 
         // Add 422 Validation Error response
+        let mut responses_content = BTreeMap::new();
+        responses_content.insert(
+            "application/json".to_string(),
+            MediaType {
+                schema: Some(SchemaRef::Ref {
+                    reference: "#/components/schemas/ValidationErrorSchema".to_string(),
+                }),
+                example: None,
+            },
+        );
+
         op.responses.insert(
             "422".to_string(),
             ResponseSpec {
                 description: "Validation Error".to_string(),
-                content: {
-                    let mut map = HashMap::new();
-                    map.insert(
-                        "application/json".to_string(),
-                        MediaType {
-                            schema: SchemaRef::Ref {
-                                reference: "#/components/schemas/ValidationErrorSchema".to_string(),
-                            },
-                        },
-                    );
-                    Some(map)
-                },
+                content: responses_content,
+                headers: BTreeMap::new(),
             },
         );
     }
 }
 
 // Json - Adds request body (Same as ValidatedJson)
-impl<T: for<'a> Schema<'a>> OperationModifier for Json<T> {
+impl<T: RustApiSchema> OperationModifier for Json<T> {
     fn update_operation(op: &mut Operation) {
-        let (name, _) = T::schema();
+        let mut ctx = SchemaCtx::new();
+        let schema_ref = T::schema(&mut ctx);
 
-        let schema_ref = SchemaRef::Ref {
-            reference: format!("#/components/schemas/{}", name),
-        };
-
-        let mut content = HashMap::new();
+        let mut content = BTreeMap::new();
         content.insert(
             "application/json".to_string(),
-            MediaType { schema: schema_ref },
+            MediaType {
+                schema: Some(schema_ref),
+                example: None,
+            },
         );
 
         op.request_body = Some(RequestBody {
-            required: true,
+            description: None,
+            required: Some(true),
             content,
         });
     }
 }
 
-// Path - Path parameters are automatically extracted from route patterns
-// The add_path_params_to_operation function in app.rs handles OpenAPI documentation
-// based on the {param} syntax in route paths (e.g., "/users/{id}")
+// Path - No op (handled by app routing)
 impl<T> OperationModifier for Path<T> {
-    fn update_operation(_op: &mut Operation) {
-        // Path parameters are automatically documented by add_path_params_to_operation
-        // in app.rs based on the route pattern. No additional implementation needed here.
-        //
-        // For typed path params, the schema type defaults to "string" but will be
-        // inferred from the actual type T when more sophisticated type introspection
-        // is implemented.
-    }
+    fn update_operation(_op: &mut Operation) {}
 }
 
-// Typed - Same as Path, parameters are documented by route pattern
+// Typed - No op
 impl<T> OperationModifier for Typed<T> {
-    fn update_operation(_op: &mut Operation) {
-        // No-op, managed by route registration
-    }
+    fn update_operation(_op: &mut Operation) {}
 }
 
-// Query - Extracts query params using IntoParams
-impl<T: IntoParams> OperationModifier for Query<T> {
+// Query - Extracts query params using field_schemas
+impl<T: RustApiSchema> OperationModifier for Query<T> {
     fn update_operation(op: &mut Operation) {
-        let params = T::into_params(|| Some(openapi::path::ParameterIn::Query));
+        let mut ctx = SchemaCtx::new();
+        if let Some(fields) = T::field_schemas(&mut ctx) {
+            let new_params: Vec<Parameter> = fields
+                .into_iter()
+                .map(|(name, schema)| {
+                    Parameter {
+                        name,
+                        location: "query".to_string(),
+                        required: false, // Assume optional
+                        deprecated: None,
+                        description: None,
+                        schema: Some(schema),
+                    }
+                })
+                .collect();
 
-        let new_params: Vec<Parameter> = params
-            .into_iter()
-            .map(|p| {
-                let schema = match p.schema {
-                    Some(schema) => match schema {
-                        openapi::RefOr::Ref(r) => SchemaRef::Ref {
-                            reference: r.ref_location,
-                        },
-                        openapi::RefOr::T(s) => {
-                            let value = serde_json::to_value(s).unwrap_or(serde_json::Value::Null);
-                            SchemaRef::Inline(value)
-                        }
-                    },
-                    None => SchemaRef::Inline(serde_json::Value::Null),
-                };
-
-                let required = match p.required {
-                    openapi::Required::True => true,
-                    openapi::Required::False => false,
-                };
-
-                Parameter {
-                    name: p.name,
-                    location: "query".to_string(), // explicitly query
-                    required,
-                    description: p.description,
-                    schema,
-                }
-            })
-            .collect();
-
-        if let Some(existing) = &mut op.parameters {
-            existing.extend(new_params);
-        } else {
-            op.parameters = Some(new_params);
+            op.parameters.extend(new_params);
         }
     }
 }
@@ -1104,38 +1075,42 @@ impl<T> OperationModifier for State<T> {
 // Body - Generic binary body
 impl OperationModifier for Body {
     fn update_operation(op: &mut Operation) {
-        let mut content = HashMap::new();
+        let mut content = BTreeMap::new();
         content.insert(
             "application/octet-stream".to_string(),
             MediaType {
-                schema: SchemaRef::Inline(
+                schema: Some(SchemaRef::Inline(
                     serde_json::json!({ "type": "string", "format": "binary" }),
-                ),
+                )),
+                example: None,
             },
         );
 
         op.request_body = Some(RequestBody {
-            required: true,
+            description: None,
+            required: Some(true),
             content,
         });
     }
 }
 
-// BodyStream - Generic binary stream (Same as Body)
+// BodyStream - Generic binary stream
 impl OperationModifier for BodyStream {
     fn update_operation(op: &mut Operation) {
-        let mut content = HashMap::new();
+        let mut content = BTreeMap::new();
         content.insert(
             "application/octet-stream".to_string(),
             MediaType {
-                schema: SchemaRef::Inline(
+                schema: Some(SchemaRef::Inline(
                     serde_json::json!({ "type": "string", "format": "binary" }),
-                ),
+                )),
+                example: None,
             },
         );
 
         op.request_body = Some(RequestBody {
-            required: true,
+            description: None,
+            required: Some(true),
             content,
         });
     }
@@ -1144,28 +1119,57 @@ impl OperationModifier for BodyStream {
 // ResponseModifier implementations for extractors
 
 // Json<T> - 200 OK with schema T
-impl<T: for<'a> Schema<'a>> ResponseModifier for Json<T> {
+impl<T: RustApiSchema> ResponseModifier for Json<T> {
     fn update_response(op: &mut Operation) {
-        let (name, _) = T::schema();
+        let mut ctx = SchemaCtx::new();
+        let schema_ref = T::schema(&mut ctx);
 
-        let schema_ref = SchemaRef::Ref {
-            reference: format!("#/components/schemas/{}", name),
-        };
+        let mut content = BTreeMap::new();
+        content.insert(
+            "application/json".to_string(),
+            MediaType {
+                schema: Some(schema_ref),
+                example: None,
+            },
+        );
 
         op.responses.insert(
             "200".to_string(),
             ResponseSpec {
                 description: "Successful response".to_string(),
-                content: {
-                    let mut map = HashMap::new();
-                    map.insert(
-                        "application/json".to_string(),
-                        MediaType { schema: schema_ref },
-                    );
-                    Some(map)
-                },
+                content,
+                headers: BTreeMap::new(),
             },
         );
+    }
+}
+
+// RustApiSchema implementations
+
+impl<T: RustApiSchema> RustApiSchema for Json<T> {
+    fn schema(ctx: &mut SchemaCtx) -> SchemaRef {
+        T::schema(ctx)
+    }
+}
+
+impl<T: RustApiSchema> RustApiSchema for ValidatedJson<T> {
+    fn schema(ctx: &mut SchemaCtx) -> SchemaRef {
+        T::schema(ctx)
+    }
+}
+
+impl<T: RustApiSchema> RustApiSchema for AsyncValidatedJson<T> {
+    fn schema(ctx: &mut SchemaCtx) -> SchemaRef {
+        T::schema(ctx)
+    }
+}
+
+impl<T: RustApiSchema> RustApiSchema for Query<T> {
+    fn schema(ctx: &mut SchemaCtx) -> SchemaRef {
+        T::schema(ctx)
+    }
+    fn field_schemas(ctx: &mut SchemaCtx) -> Option<BTreeMap<String, SchemaRef>> {
+        T::field_schemas(ctx)
     }
 }
 

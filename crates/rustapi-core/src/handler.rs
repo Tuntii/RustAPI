@@ -343,7 +343,7 @@ pub struct Route {
     pub(crate) operation: Operation,
     /// Custom parameter schemas for OpenAPI (param_name -> schema_type)
     /// Supported types: "uuid", "integer", "string", "boolean", "number"
-    pub(crate) param_schemas: std::collections::HashMap<String, String>,
+    pub(crate) param_schemas: std::collections::BTreeMap<String, String>,
 }
 
 impl Route {
@@ -361,7 +361,7 @@ impl Route {
             method,
             handler: into_boxed_handler(handler),
             operation,
-            param_schemas: std::collections::HashMap::new(),
+            param_schemas: std::collections::BTreeMap::new(),
         }
     }
     /// Set the operation summary
@@ -378,10 +378,7 @@ impl Route {
 
     /// Add a tag to the operation
     pub fn tag(mut self, tag: impl Into<String>) -> Self {
-        let tag = tag.into();
-        let mut tags = self.operation.tags.take().unwrap_or_default();
-        tags.push(tag);
-        self.operation.tags = Some(tags);
+        self.operation.tags.push(tag.into());
         self
     }
 
@@ -424,7 +421,7 @@ impl Route {
     }
 
     /// Get the custom parameter schemas
-    pub fn param_schemas(&self) -> &std::collections::HashMap<String, String> {
+    pub fn param_schemas(&self) -> &std::collections::BTreeMap<String, String> {
         &self.param_schemas
     }
 }

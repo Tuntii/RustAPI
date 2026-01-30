@@ -41,7 +41,7 @@ use rustapi_openapi::{
     MediaType, Operation, OperationModifier, ResponseModifier, ResponseSpec, SchemaRef,
 };
 use serde::Serialize;
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 /// Header name for JSON token count
 pub const X_TOKEN_COUNT_JSON: &str = "x-token-count-json";
@@ -227,16 +227,17 @@ impl<T: Send> OperationModifier for LlmResponse<T> {
 
 impl<T: Serialize> ResponseModifier for LlmResponse<T> {
     fn update_response(op: &mut Operation) {
-        let mut content = HashMap::new();
+        let mut content = BTreeMap::new();
 
         // JSON response
         content.insert(
             JSON_CONTENT_TYPE.to_string(),
             MediaType {
-                schema: SchemaRef::Inline(serde_json::json!({
+                schema: Some(SchemaRef::Inline(serde_json::json!({
                     "type": "object",
                     "description": "JSON formatted response with token counting headers"
-                })),
+                }))),
+                example: None,
             },
         );
 
@@ -244,16 +245,18 @@ impl<T: Serialize> ResponseModifier for LlmResponse<T> {
         content.insert(
             TOON_CONTENT_TYPE.to_string(),
             MediaType {
-                schema: SchemaRef::Inline(serde_json::json!({
+                schema: Some(SchemaRef::Inline(serde_json::json!({
                     "type": "string",
                     "description": "TOON (Token-Oriented Object Notation) formatted response with token counting headers"
-                })),
+                }))),
+                example: None,
             },
         );
 
         let response = ResponseSpec {
             description: "LLM-optimized response with token counting headers (X-Token-Count-JSON, X-Token-Count-TOON, X-Token-Savings)".to_string(),
-            content: Some(content),
+            content,
+            headers: BTreeMap::new(),
         };
         op.responses.insert("200".to_string(), response);
     }
