@@ -38,7 +38,6 @@
     - [Deployment](recipes/deployment.md)
     - [HTTP/3 (QUIC)](recipes/http3_quic.md)
     - [Automatic Status Page](recipes/status_page.md)
-    - [OpenAPI Migration Guide](recipes/openapi_migration.md)
 
 - [Part V: Learning & Examples](learning/README.md)
 
