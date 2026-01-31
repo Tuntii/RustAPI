@@ -124,7 +124,12 @@ impl InsightStore for InMemoryInsightStore {
 
     async fn get_recent(&self, limit: usize) -> Vec<InsightData> {
         let buffer = self.buffer.read().await;
-        buffer.iter().rev().take(limit).map(|i| i.as_ref().clone()).collect()
+        buffer
+            .iter()
+            .rev()
+            .take(limit)
+            .map(|i| i.as_ref().clone())
+            .collect()
     }
 
     async fn get_all(&self) -> Vec<InsightData> {
@@ -263,9 +268,15 @@ mod tests {
     async fn test_filter_by_path() {
         let store = InMemoryInsightStore::new(10);
 
-        store.store(create_test_insight("1", "/users/123", 200)).await;
-        store.store(create_test_insight("2", "/items/456", 200)).await;
-        store.store(create_test_insight("3", "/users/789", 200)).await;
+        store
+            .store(create_test_insight("1", "/users/123", 200))
+            .await;
+        store
+            .store(create_test_insight("2", "/items/456", 200))
+            .await;
+        store
+            .store(create_test_insight("3", "/users/789", 200))
+            .await;
 
         let user_insights = store.get_by_path("/users").await;
         assert_eq!(user_insights.len(), 2);
