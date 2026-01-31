@@ -158,10 +158,8 @@ impl OpenApiSpec {
 
         // Helper to check a single ref
         let mut check_ref = |r: &str| {
-            if r.starts_with("#/components/schemas/") {
-                if !defined_schemas.contains(r) {
-                    missing_refs.push(r.to_string());
-                }
+            if r.starts_with("#/components/schemas/") && !defined_schemas.contains(r) {
+                missing_refs.push(r.to_string());
             }
             // Ignore other refs for now (e.g. external or non-schema refs)
         };
