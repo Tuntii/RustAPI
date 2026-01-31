@@ -53,7 +53,7 @@ pub fn expand_derive_schema(input: syn::DeriveInput) -> TokenStream {
     }
 }
 
-fn impl_struct_schema_bodies(name: &Ident, data: DataStruct) -> (TokenStream, TokenStream) {
+fn impl_struct_schema_bodies(_name: &Ident, data: DataStruct) -> (TokenStream, TokenStream) {
     let mut field_logic = Vec::new();
     let mut field_schemas_logic = Vec::new();
 
@@ -145,7 +145,7 @@ fn impl_struct_schema_bodies(name: &Ident, data: DataStruct) -> (TokenStream, To
     (schema_body, field_schemas_body)
 }
 
-fn impl_enum_schema(name: &Ident, data: DataEnum) -> TokenStream {
+fn impl_enum_schema(_name: &Ident, data: DataEnum) -> TokenStream {
     let is_string_enum = data
         .variants
         .iter()
