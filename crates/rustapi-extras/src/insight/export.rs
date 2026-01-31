@@ -222,73 +222,89 @@ pub struct WebhookExporter {
     config: WebhookConfig,
     buffer: Arc<Mutex<Vec<InsightData>>>,
     #[cfg(feature = "webhook")]
-    client: reqwest::Client,
+    sender: tokio::sync::mpsc::Sender<Vec<InsightData>>,
+    #[cfg(not(feature = "webhook"))]
+    _marker: std::marker::PhantomData<()>,
 }
 
 impl WebhookExporter {
     /// Create a new webhook exporter.
     pub fn new(config: WebhookConfig) -> Self {
         #[cfg(feature = "webhook")]
-        let client = reqwest::Client::builder()
-            .timeout(std::time::Duration::from_secs(config.timeout_secs))
-            .build()
-            .expect("Failed to build HTTP client");
+        {
+            // Allow buffering up to 100 batches before dropping
+            let (tx, mut rx) = tokio::sync::mpsc::channel::<Vec<InsightData>>(100);
+            let config_clone = config.clone();
 
+            std::thread::spawn(move || {
+                let rt = tokio::runtime::Builder::new_current_thread()
+                    .enable_all()
+                    .build()
+                    .unwrap();
+
+                let client = reqwest::Client::builder()
+                    .timeout(std::time::Duration::from_secs(config_clone.timeout_secs))
+                    .build()
+                    .expect("Failed to build HTTP client");
+
+                rt.block_on(async move {
+                    while let Some(insights) = rx.recv().await {
+                        let mut request = client.post(&config_clone.url).json(&insights);
+
+                        if let Some(ref auth_value) = config_clone.auth_header {
+                            request = request.header("Authorization", auth_value);
+                        }
+
+                        // Add custom headers
+                        for (k, v) in &config_clone.headers {
+                            request = request.header(k, v);
+                        }
+
+                        match request.send().await {
+                            Ok(response) => {
+                                if !response.status().is_success() {
+                                    tracing::error!(
+                                        "Webhook returned status {}",
+                                        response.status()
+                                    );
+                                }
+                            }
+                            Err(e) => {
+                                tracing::error!("Webhook error: {}", e);
+                            }
+                        }
+                    }
+                });
+            });
+
+            Self {
+                config,
+                buffer: Arc::new(Mutex::new(Vec::new())),
+                sender: tx,
+            }
+        }
+
+        #[cfg(not(feature = "webhook"))]
         Self {
             config,
             buffer: Arc::new(Mutex::new(Vec::new())),
-            #[cfg(feature = "webhook")]
-            client,
+            _marker: std::marker::PhantomData,
         }
     }
 
     /// Send insights to the webhook.
     #[cfg(feature = "webhook")]
     fn send_insights(&self, insights: &[InsightData]) -> ExportResult<()> {
-        use std::sync::mpsc;
-
-        // Use a channel to get the result from the async context
-        let (tx, rx) = mpsc::channel();
-        let client = self.client.clone();
-        let url = self.config.url.clone();
-        let auth = self.config.auth_header.clone();
-        let insights = insights.to_vec();
-
-        // Spawn a blocking task to run the async request
-        std::thread::spawn(move || {
-            let rt = tokio::runtime::Builder::new_current_thread()
-                .enable_all()
-                .build()
-                .unwrap();
-
-            let result = rt.block_on(async {
-                let mut request = client.post(&url).json(&insights);
-
-                if let Some(auth_value) = auth {
-                    request = request.header("Authorization", auth_value);
-                }
-
-                match request.send().await {
-                    Ok(response) => {
-                        if response.status().is_success() {
-                            Ok(())
-                        } else {
-                            Err(ExportError::Unavailable(format!(
-                                "Webhook returned status {}",
-                                response.status()
-                            )))
-                        }
-                    }
-                    Err(e) => Err(ExportError::Unavailable(e.to_string())),
-                }
-            });
-
-            let _ = tx.send(result);
-        });
-
-        // Wait for the result with timeout
-        rx.recv_timeout(std::time::Duration::from_secs(self.config.timeout_secs + 1))
-            .map_err(|_| ExportError::Unavailable("Webhook request timed out".to_string()))?
+        match self.sender.try_send(insights.to_vec()) {
+            Ok(_) => Ok(()),
+            Err(tokio::sync::mpsc::error::TrySendError::Full(_)) => {
+                tracing::warn!("Webhook exporter channel full, dropping batch");
+                Ok(())
+            }
+            Err(tokio::sync::mpsc::error::TrySendError::Closed(_)) => Err(
+                ExportError::Unavailable("Webhook worker channel closed".to_string()),
+            ),
+        }
     }
 
     /// Send insights to the webhook (stub when webhook feature is disabled).
