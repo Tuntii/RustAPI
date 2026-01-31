@@ -301,9 +301,9 @@ impl WebhookExporter {
                 tracing::warn!("Webhook exporter channel full, dropping batch");
                 Ok(())
             }
-            Err(tokio::sync::mpsc::error::TrySendError::Closed(_)) => {
-                Err(ExportError::Unavailable("Webhook worker channel closed".to_string()))
-            }
+            Err(tokio::sync::mpsc::error::TrySendError::Closed(_)) => Err(
+                ExportError::Unavailable("Webhook worker channel closed".to_string()),
+            ),
         }
     }
 

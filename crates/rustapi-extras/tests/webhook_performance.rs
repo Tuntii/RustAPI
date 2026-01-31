@@ -1,4 +1,6 @@
-use rustapi_extras::insight::export::{WebhookConfig, WebhookExporter, InsightExporter};
+#![cfg(feature = "webhook")]
+
+use rustapi_extras::insight::export::{InsightExporter, WebhookConfig, WebhookExporter};
 use rustapi_extras::insight::InsightData;
 use std::time::{Duration, Instant};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -45,6 +47,9 @@ async fn test_webhook_blocking_behavior() {
 
     // If it blocks, it should take at least 500ms (due to 500ms server sleep or timeout)
     if duration.as_millis() >= 400 {
-        panic!("Performance regression: Export blocked for {:?}. Expected non-blocking behavior.", duration);
+        panic!(
+            "Performance regression: Export blocked for {:?}. Expected non-blocking behavior.",
+            duration
+        );
     }
 }
