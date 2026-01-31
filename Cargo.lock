@@ -3084,6 +3084,7 @@ dependencies = [
 name = "rustapi-extras"
 version = "0.1.233"
 dependencies = [
+ "async-trait",
  "base64 0.22.1",
  "bytes",
  "cookie",

@@ -17,6 +17,7 @@ rustapi-openapi = { workspace = true }
 # Async
 tokio = { workspace = true }
 futures-util = { workspace = true }
+async-trait = { workspace = true }
 
 # HTTP
 http = { workspace = true }

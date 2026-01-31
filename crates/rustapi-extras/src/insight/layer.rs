@@ -185,12 +185,12 @@ impl InsightLayer {
     }
 
     /// Create dashboard response with recent insights.
-    fn create_dashboard_response(store: &dyn InsightStore, limit: usize) -> Response {
-        let insights = store.get_recent(limit);
+    async fn create_dashboard_response(store: &dyn InsightStore, limit: usize) -> Response {
+        let insights = store.get_recent(limit).await;
         let body = json!({
             "insights": insights,
             "count": insights.len(),
-            "total": store.count()
+            "total": store.count().await
         });
 
         let body_bytes = serde_json::to_vec(&body).unwrap_or_default();
@@ -202,8 +202,8 @@ impl InsightLayer {
     }
 
     /// Create stats response.
-    fn create_stats_response(store: &dyn InsightStore) -> Response {
-        let stats = store.get_stats();
+    async fn create_stats_response(store: &dyn InsightStore) -> Response {
+        let stats = store.get_stats().await;
         let body_bytes = serde_json::to_vec(&stats).unwrap_or_default();
         http::Response::builder()
             .status(StatusCode::OK)
@@ -240,13 +240,13 @@ impl MiddlewareLayer for InsightLayer {
                         .get("limit")
                         .and_then(|v| v.parse().ok())
                         .unwrap_or(100);
-                    return InsightLayer::create_dashboard_response(store.as_ref(), limit);
+                    return InsightLayer::create_dashboard_response(store.as_ref(), limit).await;
                 }
             }
 
             if let Some(ref stats_path) = config.stats_path {
                 if path == *stats_path && method == "GET" {
-                    return InsightLayer::create_stats_response(store.as_ref());
+                    return InsightLayer::create_stats_response(store.as_ref()).await;
                 }
             }
 
@@ -359,7 +359,7 @@ impl MiddlewareLayer for InsightLayer {
             }
 
             // Store the insight
-            store.store(insight);
+            store.store(insight).await;
 
             // Reconstruct response
             http::Response::from_parts(resp_parts, ResponseBody::Full(Full::new(resp_body_bytes)))
