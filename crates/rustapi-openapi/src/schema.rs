@@ -152,6 +152,12 @@ pub trait RustApiSchema {
         None
     }
 
+    /// Get a unique name for this type, including generic parameters.
+    /// Used for preventing name collisions in schema registry.
+    fn name() -> std::borrow::Cow<'static, str> {
+        std::borrow::Cow::Borrowed("Unknown")
+    }
+
     /// Get field schemas if this type is a struct (for Query params extraction)
     fn field_schemas(_ctx: &mut SchemaCtx) -> Option<BTreeMap<String, SchemaRef>> {
         None
@@ -163,15 +169,24 @@ impl RustApiSchema for String {
     fn schema(_: &mut SchemaCtx) -> SchemaRef {
         SchemaRef::Schema(Box::new(JsonSchema2020::string()))
     }
+    fn name() -> std::borrow::Cow<'static, str> {
+        std::borrow::Cow::Borrowed("String")
+    }
 }
 impl RustApiSchema for &str {
     fn schema(_: &mut SchemaCtx) -> SchemaRef {
         SchemaRef::Schema(Box::new(JsonSchema2020::string()))
     }
+    fn name() -> std::borrow::Cow<'static, str> {
+        std::borrow::Cow::Borrowed("String")
+    }
 }
 impl RustApiSchema for bool {
     fn schema(_: &mut SchemaCtx) -> SchemaRef {
         SchemaRef::Schema(Box::new(JsonSchema2020::boolean()))
+    }
+    fn name() -> std::borrow::Cow<'static, str> {
+        std::borrow::Cow::Borrowed("Boolean")
     }
 }
 impl RustApiSchema for i32 {
@@ -180,12 +195,18 @@ impl RustApiSchema for i32 {
         s.format = Some("int32".to_string());
         SchemaRef::Schema(Box::new(s))
     }
+    fn name() -> std::borrow::Cow<'static, str> {
+        std::borrow::Cow::Borrowed("Int32")
+    }
 }
 impl RustApiSchema for i64 {
     fn schema(_: &mut SchemaCtx) -> SchemaRef {
         let mut s = JsonSchema2020::integer();
         s.format = Some("int64".to_string());
         SchemaRef::Schema(Box::new(s))
+    }
+    fn name() -> std::borrow::Cow<'static, str> {
+        std::borrow::Cow::Borrowed("Int64")
     }
 }
 impl RustApiSchema for f64 {
@@ -194,12 +215,18 @@ impl RustApiSchema for f64 {
         s.format = Some("double".to_string());
         SchemaRef::Schema(Box::new(s))
     }
+    fn name() -> std::borrow::Cow<'static, str> {
+        std::borrow::Cow::Borrowed("Float64")
+    }
 }
 impl RustApiSchema for f32 {
     fn schema(_: &mut SchemaCtx) -> SchemaRef {
         let mut s = JsonSchema2020::number();
         s.format = Some("float".to_string());
         SchemaRef::Schema(Box::new(s))
+    }
+    fn name() -> std::borrow::Cow<'static, str> {
+        std::borrow::Cow::Borrowed("Float32")
     }
 }
 
@@ -209,12 +236,18 @@ impl RustApiSchema for i8 {
         s.format = Some("int8".to_string());
         SchemaRef::Schema(Box::new(s))
     }
+    fn name() -> std::borrow::Cow<'static, str> {
+        std::borrow::Cow::Borrowed("Int8")
+    }
 }
 impl RustApiSchema for i16 {
     fn schema(_: &mut SchemaCtx) -> SchemaRef {
         let mut s = JsonSchema2020::integer();
         s.format = Some("int16".to_string());
         SchemaRef::Schema(Box::new(s))
+    }
+    fn name() -> std::borrow::Cow<'static, str> {
+        std::borrow::Cow::Borrowed("Int16")
     }
 }
 impl RustApiSchema for isize {
@@ -223,12 +256,18 @@ impl RustApiSchema for isize {
         s.format = Some("int64".to_string());
         SchemaRef::Schema(Box::new(s))
     }
+    fn name() -> std::borrow::Cow<'static, str> {
+        std::borrow::Cow::Borrowed("Int64")
+    }
 }
 impl RustApiSchema for u8 {
     fn schema(_: &mut SchemaCtx) -> SchemaRef {
         let mut s = JsonSchema2020::integer();
         s.format = Some("uint8".to_string());
         SchemaRef::Schema(Box::new(s))
+    }
+    fn name() -> std::borrow::Cow<'static, str> {
+        std::borrow::Cow::Borrowed("Uint8")
     }
 }
 impl RustApiSchema for u16 {
@@ -237,12 +276,18 @@ impl RustApiSchema for u16 {
         s.format = Some("uint16".to_string());
         SchemaRef::Schema(Box::new(s))
     }
+    fn name() -> std::borrow::Cow<'static, str> {
+        std::borrow::Cow::Borrowed("Uint16")
+    }
 }
 impl RustApiSchema for u32 {
     fn schema(_: &mut SchemaCtx) -> SchemaRef {
         let mut s = JsonSchema2020::integer();
         s.format = Some("uint32".to_string());
         SchemaRef::Schema(Box::new(s))
+    }
+    fn name() -> std::borrow::Cow<'static, str> {
+        std::borrow::Cow::Borrowed("Uint32")
     }
 }
 impl RustApiSchema for u64 {
@@ -251,12 +296,18 @@ impl RustApiSchema for u64 {
         s.format = Some("uint64".to_string());
         SchemaRef::Schema(Box::new(s))
     }
+    fn name() -> std::borrow::Cow<'static, str> {
+        std::borrow::Cow::Borrowed("Uint64")
+    }
 }
 impl RustApiSchema for usize {
     fn schema(_: &mut SchemaCtx) -> SchemaRef {
         let mut s = JsonSchema2020::integer();
         s.format = Some("uint64".to_string());
         SchemaRef::Schema(Box::new(s))
+    }
+    fn name() -> std::borrow::Cow<'static, str> {
+        std::borrow::Cow::Borrowed("Uint64")
     }
 }
 
@@ -281,6 +332,9 @@ impl<T: RustApiSchema> RustApiSchema for Vec<T> {
                 ..Default::default()
             })),
         }
+    }
+    fn name() -> std::borrow::Cow<'static, str> {
+        format!("Array_{}", T::name()).into()
     }
 }
 
@@ -311,6 +365,9 @@ impl<T: RustApiSchema> RustApiSchema for Option<T> {
             _ => inner,
         }
     }
+    fn name() -> std::borrow::Cow<'static, str> {
+        format!("Option_{}", T::name()).into()
+    }
 }
 
 // HashMap
@@ -331,6 +388,9 @@ impl<T: RustApiSchema> RustApiSchema for std::collections::HashMap<String, T> {
 
         s.additional_properties = Some(Box::new(add_prop));
         SchemaRef::Schema(Box::new(s))
+    }
+    fn name() -> std::borrow::Cow<'static, str> {
+        format!("Map_{}", T::name()).into()
     }
 }
 
