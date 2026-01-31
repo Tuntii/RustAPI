@@ -1,7 +1,7 @@
 //! OpenAPI 3.1 specification types
 
 use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashSet};
 
 use crate::schema::JsonSchema2020;
 pub use crate::schema::SchemaRef;
@@ -115,7 +115,15 @@ impl OpenApiSpec {
 
         // Merge back into components
         let components = self.components.get_or_insert_with(Components::default);
-        components.schemas.extend(ctx.components);
+        for (name, schema) in ctx.components {
+            if let Some(existing) = components.schemas.get(&name) {
+                if existing != &schema {
+                    panic!("Schema collision detected for component '{}'. Existing schema differs from new schema. This usually means two different types are mapped to the same component name. Please implement `RustApiSchema::name()` or alias the type.", name);
+                }
+            } else {
+                components.schemas.insert(name, schema);
+            }
+        }
     }
 
     pub fn server(mut self, server: Server) -> Self {
@@ -134,6 +142,175 @@ impl OpenApiSpec {
 
     pub fn to_json(&self) -> serde_json::Value {
         serde_json::to_value(self).unwrap_or(serde_json::Value::Null)
+    }
+
+    /// Validate that all $ref references point to existing components.
+    /// Returns Ok(()) if valid, or a list of missing references.
+    pub fn validate_integrity(&self) -> Result<(), Vec<String>> {
+        let mut defined_schemas = HashSet::new();
+        if let Some(components) = &self.components {
+            for key in components.schemas.keys() {
+                defined_schemas.insert(format!("#/components/schemas/{}", key));
+            }
+        }
+
+        let mut missing_refs = Vec::new();
+
+        // Helper to check a single ref
+        let mut check_ref = |r: &str| {
+            if r.starts_with("#/components/schemas/") {
+                if !defined_schemas.contains(r) {
+                    missing_refs.push(r.to_string());
+                }
+            }
+            // Ignore other refs for now (e.g. external or non-schema refs)
+        };
+
+        // Visitor pattern to traverse the spec
+        let mut visit_schema = |schema: &SchemaRef| {
+            visit_schema_ref(schema, &mut check_ref);
+        };
+
+        // 1. Visit Paths
+        for path_item in self.paths.values() {
+            visit_path_item(path_item, &mut visit_schema);
+        }
+
+        // 2. Visit Webhooks
+        for path_item in self.webhooks.values() {
+            visit_path_item(path_item, &mut visit_schema);
+        }
+
+        // 3. Visit Components (including schemas referencing other schemas)
+        if let Some(components) = &self.components {
+            for schema in components.schemas.values() {
+                visit_json_schema(schema, &mut check_ref);
+            }
+            // TODO: Visit other components like parameters, headers, etc. if they can contain refs
+        }
+
+        if missing_refs.is_empty() {
+            Ok(())
+        } else {
+            // Deduplicate
+            missing_refs.sort();
+            missing_refs.dedup();
+            Err(missing_refs)
+        }
+    }
+}
+
+fn visit_path_item<F>(item: &PathItem, visit: &mut F)
+where
+    F: FnMut(&SchemaRef),
+{
+    if let Some(op) = &item.get {
+        visit_operation(op, visit);
+    }
+    if let Some(op) = &item.put {
+        visit_operation(op, visit);
+    }
+    if let Some(op) = &item.post {
+        visit_operation(op, visit);
+    }
+    if let Some(op) = &item.delete {
+        visit_operation(op, visit);
+    }
+    if let Some(op) = &item.options {
+        visit_operation(op, visit);
+    }
+    if let Some(op) = &item.head {
+        visit_operation(op, visit);
+    }
+    if let Some(op) = &item.patch {
+        visit_operation(op, visit);
+    }
+    if let Some(op) = &item.trace {
+        visit_operation(op, visit);
+    }
+
+    for param in &item.parameters {
+        if let Some(s) = &param.schema {
+            visit(s);
+        }
+    }
+}
+
+fn visit_operation<F>(op: &Operation, visit: &mut F)
+where
+    F: FnMut(&SchemaRef),
+{
+    for param in &op.parameters {
+        if let Some(s) = &param.schema {
+            visit(s);
+        }
+    }
+    if let Some(body) = &op.request_body {
+        for media in body.content.values() {
+            if let Some(s) = &media.schema {
+                visit(s);
+            }
+        }
+    }
+    for resp in op.responses.values() {
+        for media in resp.content.values() {
+            if let Some(s) = &media.schema {
+                visit(s);
+            }
+        }
+        for header in resp.headers.values() {
+            if let Some(s) = &header.schema {
+                visit(s);
+            }
+        }
+    }
+}
+
+fn visit_schema_ref<F>(s: &SchemaRef, check: &mut F)
+where
+    F: FnMut(&str),
+{
+    match s {
+        SchemaRef::Ref { reference } => check(reference),
+        SchemaRef::Schema(boxed) => visit_json_schema(boxed, check),
+        SchemaRef::Inline(_) => {} // Inline JSON value, assume safe or valid
+    }
+}
+
+fn visit_json_schema<F>(s: &JsonSchema2020, check: &mut F)
+where
+    F: FnMut(&str),
+{
+    if let Some(r) = &s.reference {
+        check(r);
+    }
+    if let Some(items) = &s.items {
+        visit_json_schema(items, check);
+    }
+    if let Some(props) = &s.properties {
+        for p in props.values() {
+            visit_json_schema(p, check);
+        }
+    }
+    if let Some(crate::schema::AdditionalProperties::Schema(p)) =
+        &s.additional_properties.as_deref()
+    {
+        visit_json_schema(p, check);
+    }
+    if let Some(one_of) = &s.one_of {
+        for p in one_of {
+            visit_json_schema(p, check);
+        }
+    }
+    if let Some(any_of) = &s.any_of {
+        for p in any_of {
+            visit_json_schema(p, check);
+        }
+    }
+    if let Some(all_of) = &s.all_of {
+        for p in all_of {
+            visit_json_schema(p, check);
+        }
     }
 }
 

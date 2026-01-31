@@ -6,6 +6,22 @@ pub fn expand_derive_schema(input: syn::DeriveInput) -> TokenStream {
     let name = input.ident;
     let generics = input.generics;
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
+    let name_str = name.to_string();
+
+    // Generate name() impl body
+    let type_params: Vec<Ident> = generics.type_params().map(|p| p.ident.clone()).collect();
+    let name_impl_body = if type_params.is_empty() {
+        quote! { std::borrow::Cow::Borrowed(#name_str) }
+    } else {
+        quote! {
+            let mut n = String::from(#name_str);
+            #(
+                n.push('_');
+                n.push_str(&<#type_params as ::rustapi_openapi::schema::RustApiSchema>::name());
+            )*
+            std::borrow::Cow::Owned(n)
+        }
+    };
 
     let (schema_impl, field_schemas_impl) = match input.data {
         Data::Struct(data) => impl_struct_schema_bodies(&name, data),
@@ -22,7 +38,12 @@ pub fn expand_derive_schema(input: syn::DeriveInput) -> TokenStream {
             }
 
             fn component_name() -> Option<&'static str> {
+                // Keep backward compatibility, but this is less useful for generics now
                 Some(stringify!(#name))
+            }
+
+            fn name() -> std::borrow::Cow<'static, str> {
+                #name_impl_body
             }
 
             fn field_schemas(ctx: &mut ::rustapi_openapi::schema::SchemaCtx) -> Option<::std::collections::BTreeMap<String, ::rustapi_openapi::schema::SchemaRef>> {
@@ -33,8 +54,6 @@ pub fn expand_derive_schema(input: syn::DeriveInput) -> TokenStream {
 }
 
 fn impl_struct_schema_bodies(name: &Ident, data: DataStruct) -> (TokenStream, TokenStream) {
-    let name_str = name.to_string();
-
     let mut field_logic = Vec::new();
     let mut field_schemas_logic = Vec::new();
 
@@ -88,7 +107,9 @@ fn impl_struct_schema_bodies(name: &Ident, data: DataStruct) -> (TokenStream, To
     }
 
     let schema_body = quote! {
-        let name = #name_str;
+        let name_cow = <Self as ::rustapi_openapi::schema::RustApiSchema>::name();
+        let name = name_cow.as_ref();
+
         if let Some(_) = ctx.components.get(name) {
             return ::rustapi_openapi::schema::SchemaRef::Ref { reference: format!("#/components/schemas/{}", name) };
         }
@@ -125,8 +146,6 @@ fn impl_struct_schema_bodies(name: &Ident, data: DataStruct) -> (TokenStream, To
 }
 
 fn impl_enum_schema(name: &Ident, data: DataEnum) -> TokenStream {
-    let name_str = name.to_string();
-
     let is_string_enum = data
         .variants
         .iter()
@@ -137,7 +156,9 @@ fn impl_enum_schema(name: &Ident, data: DataEnum) -> TokenStream {
         let push_variants = variants.iter().map(|v| quote! { #v.into() });
 
         return quote! {
-            let name = #name_str;
+            let name_cow = <Self as ::rustapi_openapi::schema::RustApiSchema>::name();
+            let name = name_cow.as_ref();
+
             if let Some(_) = ctx.components.get(name) {
                 return ::rustapi_openapi::schema::SchemaRef::Ref { reference: format!("#/components/schemas/{}", name) };
             }
@@ -246,7 +267,9 @@ fn impl_enum_schema(name: &Ident, data: DataEnum) -> TokenStream {
     }
 
     quote! {
-        let name = #name_str;
+        let name_cow = <Self as ::rustapi_openapi::schema::RustApiSchema>::name();
+        let name = name_cow.as_ref();
+
         if let Some(_) = ctx.components.get(name) {
             return ::rustapi_openapi::schema::SchemaRef::Ref { reference: format!("#/components/schemas/{}", name) };
         }

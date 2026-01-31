@@ -6,7 +6,7 @@ use crate::middleware::{BodyLimitLayer, LayerStack, MiddlewareLayer, DEFAULT_BOD
 use crate::response::IntoResponse;
 use crate::router::{MethodRouter, Router};
 use crate::server::Server;
-use std::collections::{BTreeMap, HashMap};
+use std::collections::BTreeMap;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 /// Main application builder for RustAPI
@@ -331,7 +331,8 @@ impl RustApi {
 
     fn mount_auto_routes_grouped(mut self) -> Self {
         let routes = crate::auto_route::collect_auto_routes();
-        let mut by_path: HashMap<String, MethodRouter> = HashMap::new();
+        // Use BTreeMap for deterministic route registration order
+        let mut by_path: BTreeMap<String, MethodRouter> = BTreeMap::new();
 
         for route in routes {
             let method_enum = match route.method {
@@ -710,8 +711,12 @@ impl RustApi {
         let openapi_path = format!("{}/openapi.json", path);
 
         // Clone values for closures
-        let spec_json =
-            serde_json::to_string_pretty(&self.openapi_spec.to_json()).unwrap_or_default();
+        let spec_value = self.openapi_spec.to_json();
+        let spec_json = serde_json::to_string_pretty(&spec_value).unwrap_or_else(|e| {
+            // Safe fallback if JSON serialization fails (though unlikely for Value)
+            tracing::error!("Failed to serialize OpenAPI spec: {}", e);
+            "{}".to_string()
+        });
         let openapi_url = openapi_path.clone();
 
         // Add OpenAPI JSON endpoint
@@ -722,7 +727,13 @@ impl RustApi {
                     .status(http::StatusCode::OK)
                     .header(http::header::CONTENT_TYPE, "application/json")
                     .body(crate::response::Body::from(json))
-                    .unwrap()
+                    .unwrap_or_else(|e| {
+                        tracing::error!("Failed to build response: {}", e);
+                        http::Response::builder()
+                            .status(http::StatusCode::INTERNAL_SERVER_ERROR)
+                            .body(crate::response::Body::from("Internal Server Error"))
+                            .unwrap()
+                    })
             }
         };
 
@@ -815,8 +826,11 @@ impl RustApi {
         let expected_auth = format!("Basic {}", encoded);
 
         // Clone values for closures
-        let spec_json =
-            serde_json::to_string_pretty(&self.openapi_spec.to_json()).unwrap_or_default();
+        let spec_value = self.openapi_spec.to_json();
+        let spec_json = serde_json::to_string_pretty(&spec_value).unwrap_or_else(|e| {
+            tracing::error!("Failed to serialize OpenAPI spec: {}", e);
+            "{}".to_string()
+        });
         let openapi_url = openapi_path.clone();
         let expected_auth_spec = expected_auth.clone();
         let expected_auth_docs = expected_auth;
@@ -834,7 +848,13 @@ impl RustApi {
                         .status(http::StatusCode::OK)
                         .header(http::header::CONTENT_TYPE, "application/json")
                         .body(crate::response::Body::from(json))
-                        .unwrap()
+                        .unwrap_or_else(|e| {
+                            tracing::error!("Failed to build response: {}", e);
+                            http::Response::builder()
+                                .status(http::StatusCode::INTERNAL_SERVER_ERROR)
+                                .body(crate::response::Body::from("Internal Server Error"))
+                                .unwrap()
+                        })
                 })
                     as std::pin::Pin<Box<dyn std::future::Future<Output = crate::Response> + Send>>
             });

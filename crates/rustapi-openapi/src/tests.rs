@@ -29,6 +29,7 @@ mod tests {
     }
 
     #[derive(Schema)]
+    #[allow(dead_code)]
     struct TestUser {
         id: i64,
         name: String,
@@ -69,6 +70,7 @@ mod tests {
     }
 
     #[derive(Schema)]
+    #[allow(dead_code)]
     enum Status {
         Active,
         Inactive,
@@ -90,6 +92,7 @@ mod tests {
     }
 
     #[derive(Schema)]
+    #[allow(dead_code)]
     enum Event {
         Created { id: i64 },
         Deleted,
@@ -103,5 +106,135 @@ mod tests {
         let schema = ctx.components.get("Event").unwrap();
         // Should be oneOf
         assert!(schema.one_of.is_some());
+    }
+
+    #[derive(Schema)]
+    #[allow(dead_code)]
+    struct Wrapper<T: RustApiSchema> {
+        value: T,
+    }
+
+    #[test]
+    fn test_generic_collision() {
+        let mut spec = OpenApiSpec::new("Test", "1.0");
+
+        // Register Wrapper<String>
+        spec.register_in_place::<Wrapper<String>>();
+
+        // Register Wrapper<i32>
+        spec.register_in_place::<Wrapper<i32>>();
+
+        // Check components
+        let components = spec.components.as_ref().unwrap();
+
+        let has_string = components
+            .schemas
+            .keys()
+            .any(|k| k.contains("Wrapper") && k.contains("String"));
+        // Int32 because i32::name() returns "Int32"
+        let has_int32 = components
+            .schemas
+            .keys()
+            .any(|k| k.contains("Wrapper") && k.contains("Int32"));
+
+        // If we only have "Wrapper", this will fail.
+        assert!(has_string, "Missing Wrapper_String component");
+        assert!(has_int32, "Missing Wrapper_Int32 component");
+    }
+
+    struct CollisionA;
+    impl RustApiSchema for CollisionA {
+        fn schema(ctx: &mut SchemaCtx) -> SchemaRef {
+            ctx.components
+                .insert("Collision".to_string(), JsonSchema2020::string());
+            SchemaRef::Ref {
+                reference: "#/components/schemas/Collision".to_string(),
+            }
+        }
+        fn name() -> std::borrow::Cow<'static, str> {
+            "Collision".into()
+        }
+    }
+
+    struct CollisionB;
+    impl RustApiSchema for CollisionB {
+        fn schema(ctx: &mut SchemaCtx) -> SchemaRef {
+            ctx.components
+                .insert("Collision".to_string(), JsonSchema2020::integer());
+            SchemaRef::Ref {
+                reference: "#/components/schemas/Collision".to_string(),
+            }
+        }
+        fn name() -> std::borrow::Cow<'static, str> {
+            "Collision".into()
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "Schema collision detected")]
+    fn test_collision_detection() {
+        let mut spec = OpenApiSpec::new("Test", "1.0");
+        spec.register_in_place::<CollisionA>();
+        spec.register_in_place::<CollisionB>();
+    }
+
+    #[test]
+    fn test_ref_integrity_valid() {
+        let mut spec = OpenApiSpec::new("Test", "1.0");
+        spec.register_in_place::<TestUser>();
+
+        // TestUser references primitive types which are inline, and itself (registered)
+        // Let's add a manual ref to ensure it works
+        use crate::spec::Operation;
+        use crate::spec::ResponseSpec;
+
+        let mut op = Operation::new();
+        op.responses
+            .insert("200".to_string(), ResponseSpec::default());
+
+        // This is valid because TestUser is registered
+        let param = crate::spec::Parameter {
+            name: "user".to_string(),
+            location: "query".to_string(),
+            required: false,
+            description: None,
+            deprecated: None,
+            schema: Some(SchemaRef::Ref {
+                reference: "#/components/schemas/TestUser".to_string(),
+            }),
+        };
+        op.parameters.push(param);
+
+        spec = spec.path("/user", "GET", op);
+
+        assert!(spec.validate_integrity().is_ok());
+    }
+
+    #[test]
+    fn test_ref_integrity_invalid() {
+        let mut spec = OpenApiSpec::new("Test", "1.0");
+
+        use crate::spec::Operation;
+
+        let mut op = Operation::new();
+        let param = crate::spec::Parameter {
+            name: "user".to_string(),
+            location: "query".to_string(),
+            required: false,
+            description: None,
+            deprecated: None,
+            schema: Some(SchemaRef::Ref {
+                reference: "#/components/schemas/NonExistent".to_string(),
+            }),
+        };
+        op.parameters.push(param);
+
+        spec = spec.path("/user", "GET", op);
+
+        let result = spec.validate_integrity();
+        assert!(result.is_err());
+        let missing = result.unwrap_err();
+        assert_eq!(missing.len(), 1);
+        assert_eq!(missing[0], "#/components/schemas/NonExistent");
     }
 }
