@@ -97,7 +97,7 @@ impl JwtValidation {
 #[derive(Clone)]
 pub struct JwtLayer<T> {
     secret: Arc<String>,
-    validation: JwtValidation,
+    validation: Arc<JwtValidation>,
     skip_paths: Arc<Vec<String>>,
     _claims: PhantomData<T>,
 }
@@ -107,7 +107,7 @@ impl<T: DeserializeOwned + Clone + Send + Sync + 'static> JwtLayer<T> {
     pub fn new(secret: impl Into<String>) -> Self {
         Self {
             secret: Arc::new(secret.into()),
-            validation: JwtValidation::default(),
+            validation: Arc::new(JwtValidation::default()),
             skip_paths: Arc::new(Vec::new()),
             _claims: PhantomData,
         }
@@ -115,7 +115,7 @@ impl<T: DeserializeOwned + Clone + Send + Sync + 'static> JwtLayer<T> {
 
     /// Configure custom validation options.
     pub fn with_validation(mut self, validation: JwtValidation) -> Self {
-        self.validation = validation;
+        self.validation = Arc::new(validation);
         self
     }
 
