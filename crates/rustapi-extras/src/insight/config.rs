@@ -4,6 +4,7 @@
 //! traffic insight collection behavior.
 
 use super::data::InsightData;
+use std::borrow::Cow;
 use std::collections::HashSet;
 use std::sync::Arc;
 
@@ -322,7 +323,9 @@ impl InsightConfig {
         if self.header_whitelist.contains("*") {
             return true;
         }
-        self.header_whitelist.contains(&name.to_lowercase())
+
+        self.header_whitelist
+            .contains(Self::to_lowercase_cow(name).as_ref())
     }
 
     /// Check if a response header should be captured.
@@ -333,13 +336,23 @@ impl InsightConfig {
         if self.response_header_whitelist.contains("*") {
             return true;
         }
+
         self.response_header_whitelist
-            .contains(&name.to_lowercase())
+            .contains(Self::to_lowercase_cow(name).as_ref())
     }
 
     /// Check if a header is sensitive.
     pub(crate) fn is_sensitive_header(&self, name: &str) -> bool {
-        self.sensitive_headers.contains(&name.to_lowercase())
+        self.sensitive_headers
+            .contains(Self::to_lowercase_cow(name).as_ref())
+    }
+
+    fn to_lowercase_cow(s: &str) -> Cow<'_, str> {
+        if s.chars().any(|c| c.is_uppercase()) {
+            Cow::Owned(s.to_lowercase())
+        } else {
+            Cow::Borrowed(s)
+        }
     }
 
     /// Check if content type is capturable.
