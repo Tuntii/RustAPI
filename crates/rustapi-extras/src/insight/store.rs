@@ -4,37 +4,40 @@
 //! for storing and retrieving insight data.
 
 use super::data::{InsightData, InsightStats};
+use async_trait::async_trait;
 use dashmap::DashMap;
 use std::collections::VecDeque;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 /// Trait for storing and retrieving insight data.
 ///
 /// Implement this trait to create custom storage backends (e.g., database, Redis).
+#[async_trait]
 pub trait InsightStore: Send + Sync + 'static {
     /// Store a new insight entry.
-    fn store(&self, insight: InsightData);
+    async fn store(&self, insight: InsightData);
 
     /// Get recent insights (up to `limit` entries).
-    fn get_recent(&self, limit: usize) -> Vec<InsightData>;
+    async fn get_recent(&self, limit: usize) -> Vec<InsightData>;
 
     /// Get all stored insights.
-    fn get_all(&self) -> Vec<InsightData>;
+    async fn get_all(&self) -> Vec<InsightData>;
 
     /// Get insights filtered by path pattern.
-    fn get_by_path(&self, path_pattern: &str) -> Vec<InsightData>;
+    async fn get_by_path(&self, path_pattern: &str) -> Vec<InsightData>;
 
     /// Get insights filtered by status code range.
-    fn get_by_status(&self, min_status: u16, max_status: u16) -> Vec<InsightData>;
+    async fn get_by_status(&self, min_status: u16, max_status: u16) -> Vec<InsightData>;
 
     /// Get aggregated statistics.
-    fn get_stats(&self) -> InsightStats;
+    async fn get_stats(&self) -> InsightStats;
 
     /// Clear all stored insights.
-    fn clear(&self);
+    async fn clear(&self);
 
     /// Get the current count of stored insights.
-    fn count(&self) -> usize;
+    async fn count(&self) -> usize;
 
     /// Clone this store into a boxed trait object.
     fn clone_store(&self) -> Box<dyn InsightStore>;
@@ -54,12 +57,12 @@ pub trait InsightStore: Send + Sync + 'static {
 /// ```
 #[derive(Clone)]
 pub struct InMemoryInsightStore {
-    /// Ring buffer holding insights
-    buffer: Arc<RwLock<VecDeque<InsightData>>>,
+    /// Ring buffer holding insights (in order)
+    buffer: Arc<RwLock<VecDeque<Arc<InsightData>>>>,
     /// Maximum capacity of the buffer
     capacity: usize,
     /// Index for quick lookup by request_id
-    index: Arc<DashMap<String, usize>>,
+    index: Arc<DashMap<String, Arc<InsightData>>>,
 }
 
 impl InMemoryInsightStore {
@@ -88,9 +91,8 @@ impl InMemoryInsightStore {
 
     /// Get an insight by request ID.
     pub fn get_by_request_id(&self, request_id: &str) -> Option<InsightData> {
-        let idx = self.index.get(request_id)?;
-        let buffer = self.buffer.read().ok()?;
-        buffer.get(*idx).cloned()
+        // Look up directly in index (O(1))
+        self.index.get(request_id).map(|r| r.as_ref().clone())
     }
 }
 
@@ -100,89 +102,72 @@ impl Default for InMemoryInsightStore {
     }
 }
 
+#[async_trait]
 impl InsightStore for InMemoryInsightStore {
-    fn store(&self, insight: InsightData) {
-        let mut buffer = match self.buffer.write() {
-            Ok(b) => b,
-            Err(_) => return, // Poisoned lock, skip storage
-        };
+    async fn store(&self, insight: InsightData) {
+        let insight_arc = Arc::new(insight);
+        let request_id = insight_arc.request_id.clone();
+
+        let mut buffer = self.buffer.write().await;
 
         // If at capacity, remove oldest entry
         if buffer.len() >= self.capacity {
             if let Some(old) = buffer.pop_front() {
                 self.index.remove(&old.request_id);
             }
-            // Rebuild indices after removal (indices shift)
-            self.index.clear();
-            for (i, item) in buffer.iter().enumerate() {
-                self.index.insert(item.request_id.clone(), i);
-            }
         }
 
         // Add new insight
-        let idx = buffer.len();
-        self.index.insert(insight.request_id.clone(), idx);
-        buffer.push_back(insight);
+        buffer.push_back(insight_arc.clone());
+        self.index.insert(request_id, insight_arc);
     }
 
-    fn get_recent(&self, limit: usize) -> Vec<InsightData> {
-        let buffer = match self.buffer.read() {
-            Ok(b) => b,
-            Err(_) => return Vec::new(),
-        };
-
-        buffer.iter().rev().take(limit).cloned().collect()
+    async fn get_recent(&self, limit: usize) -> Vec<InsightData> {
+        let buffer = self.buffer.read().await;
+        buffer
+            .iter()
+            .rev()
+            .take(limit)
+            .map(|i| i.as_ref().clone())
+            .collect()
     }
 
-    fn get_all(&self) -> Vec<InsightData> {
-        let buffer = match self.buffer.read() {
-            Ok(b) => b,
-            Err(_) => return Vec::new(),
-        };
-
-        buffer.iter().cloned().collect()
+    async fn get_all(&self) -> Vec<InsightData> {
+        let buffer = self.buffer.read().await;
+        buffer.iter().map(|i| i.as_ref().clone()).collect()
     }
 
-    fn get_by_path(&self, path_pattern: &str) -> Vec<InsightData> {
-        let buffer = match self.buffer.read() {
-            Ok(b) => b,
-            Err(_) => return Vec::new(),
-        };
-
+    async fn get_by_path(&self, path_pattern: &str) -> Vec<InsightData> {
+        let buffer = self.buffer.read().await;
         buffer
             .iter()
             .filter(|i| i.path.contains(path_pattern))
-            .cloned()
+            .map(|i| i.as_ref().clone())
             .collect()
     }
 
-    fn get_by_status(&self, min_status: u16, max_status: u16) -> Vec<InsightData> {
-        let buffer = match self.buffer.read() {
-            Ok(b) => b,
-            Err(_) => return Vec::new(),
-        };
-
+    async fn get_by_status(&self, min_status: u16, max_status: u16) -> Vec<InsightData> {
+        let buffer = self.buffer.read().await;
         buffer
             .iter()
             .filter(|i| i.status >= min_status && i.status <= max_status)
-            .cloned()
+            .map(|i| i.as_ref().clone())
             .collect()
     }
 
-    fn get_stats(&self) -> InsightStats {
-        let all = self.get_all();
+    async fn get_stats(&self) -> InsightStats {
+        let all = self.get_all().await;
         InsightStats::from_insights(&all)
     }
 
-    fn clear(&self) {
-        if let Ok(mut buffer) = self.buffer.write() {
-            buffer.clear();
-        }
+    async fn clear(&self) {
+        let mut buffer = self.buffer.write().await;
+        buffer.clear();
         self.index.clear();
     }
 
-    fn count(&self) -> usize {
-        self.buffer.read().map(|b| b.len()).unwrap_or(0)
+    async fn count(&self) -> usize {
+        self.buffer.read().await.len()
     }
 
     fn clone_store(&self) -> Box<dyn InsightStore> {
@@ -196,34 +181,35 @@ impl InsightStore for InMemoryInsightStore {
 #[derive(Clone, Copy, Default)]
 pub struct NullInsightStore;
 
+#[async_trait]
 impl InsightStore for NullInsightStore {
-    fn store(&self, _insight: InsightData) {
+    async fn store(&self, _insight: InsightData) {
         // Discard
     }
 
-    fn get_recent(&self, _limit: usize) -> Vec<InsightData> {
+    async fn get_recent(&self, _limit: usize) -> Vec<InsightData> {
         Vec::new()
     }
 
-    fn get_all(&self) -> Vec<InsightData> {
+    async fn get_all(&self) -> Vec<InsightData> {
         Vec::new()
     }
 
-    fn get_by_path(&self, _path_pattern: &str) -> Vec<InsightData> {
+    async fn get_by_path(&self, _path_pattern: &str) -> Vec<InsightData> {
         Vec::new()
     }
 
-    fn get_by_status(&self, _min_status: u16, _max_status: u16) -> Vec<InsightData> {
+    async fn get_by_status(&self, _min_status: u16, _max_status: u16) -> Vec<InsightData> {
         Vec::new()
     }
 
-    fn get_stats(&self) -> InsightStats {
+    async fn get_stats(&self) -> InsightStats {
         InsightStats::default()
     }
 
-    fn clear(&self) {}
+    async fn clear(&self) {}
 
-    fn count(&self) -> usize {
+    async fn count(&self) -> usize {
         0
     }
 
@@ -243,34 +229,34 @@ mod tests {
             .with_duration(Duration::from_millis(10))
     }
 
-    #[test]
-    fn test_in_memory_store_basic() {
+    #[tokio::test]
+    async fn test_in_memory_store_basic() {
         let store = InMemoryInsightStore::new(10);
 
-        store.store(create_test_insight("1", "/users", 200));
-        store.store(create_test_insight("2", "/items", 201));
+        store.store(create_test_insight("1", "/users", 200)).await;
+        store.store(create_test_insight("2", "/items", 201)).await;
 
-        assert_eq!(store.count(), 2);
+        assert_eq!(store.count().await, 2);
 
-        let recent = store.get_recent(10);
+        let recent = store.get_recent(10).await;
         assert_eq!(recent.len(), 2);
         // Most recent first
         assert_eq!(recent[0].request_id, "2");
         assert_eq!(recent[1].request_id, "1");
     }
 
-    #[test]
-    fn test_ring_buffer_eviction() {
+    #[tokio::test]
+    async fn test_ring_buffer_eviction() {
         let store = InMemoryInsightStore::new(3);
 
-        store.store(create_test_insight("1", "/a", 200));
-        store.store(create_test_insight("2", "/b", 200));
-        store.store(create_test_insight("3", "/c", 200));
-        store.store(create_test_insight("4", "/d", 200)); // Should evict "1"
+        store.store(create_test_insight("1", "/a", 200)).await;
+        store.store(create_test_insight("2", "/b", 200)).await;
+        store.store(create_test_insight("3", "/c", 200)).await;
+        store.store(create_test_insight("4", "/d", 200)).await; // Should evict "1"
 
-        assert_eq!(store.count(), 3);
+        assert_eq!(store.count().await, 3);
 
-        let all = store.get_all();
+        let all = store.get_all().await;
         let ids: Vec<_> = all.iter().map(|i| i.request_id.as_str()).collect();
         assert!(!ids.contains(&"1"));
         assert!(ids.contains(&"2"));
@@ -278,71 +264,77 @@ mod tests {
         assert!(ids.contains(&"4"));
     }
 
-    #[test]
-    fn test_filter_by_path() {
+    #[tokio::test]
+    async fn test_filter_by_path() {
         let store = InMemoryInsightStore::new(10);
 
-        store.store(create_test_insight("1", "/users/123", 200));
-        store.store(create_test_insight("2", "/items/456", 200));
-        store.store(create_test_insight("3", "/users/789", 200));
+        store
+            .store(create_test_insight("1", "/users/123", 200))
+            .await;
+        store
+            .store(create_test_insight("2", "/items/456", 200))
+            .await;
+        store
+            .store(create_test_insight("3", "/users/789", 200))
+            .await;
 
-        let user_insights = store.get_by_path("/users");
+        let user_insights = store.get_by_path("/users").await;
         assert_eq!(user_insights.len(), 2);
     }
 
-    #[test]
-    fn test_filter_by_status() {
+    #[tokio::test]
+    async fn test_filter_by_status() {
         let store = InMemoryInsightStore::new(10);
 
-        store.store(create_test_insight("1", "/a", 200));
-        store.store(create_test_insight("2", "/b", 404));
-        store.store(create_test_insight("3", "/c", 500));
-        store.store(create_test_insight("4", "/d", 201));
+        store.store(create_test_insight("1", "/a", 200)).await;
+        store.store(create_test_insight("2", "/b", 404)).await;
+        store.store(create_test_insight("3", "/c", 500)).await;
+        store.store(create_test_insight("4", "/d", 201)).await;
 
-        let errors = store.get_by_status(400, 599);
+        let errors = store.get_by_status(400, 599).await;
         assert_eq!(errors.len(), 2);
 
-        let success = store.get_by_status(200, 299);
+        let success = store.get_by_status(200, 299).await;
         assert_eq!(success.len(), 2);
     }
 
-    #[test]
-    fn test_clear() {
+    #[tokio::test]
+    async fn test_clear() {
         let store = InMemoryInsightStore::new(10);
 
-        store.store(create_test_insight("1", "/a", 200));
-        store.store(create_test_insight("2", "/b", 200));
+        store.store(create_test_insight("1", "/a", 200)).await;
+        store.store(create_test_insight("2", "/b", 200)).await;
 
-        assert_eq!(store.count(), 2);
+        assert_eq!(store.count().await, 2);
 
-        store.clear();
+        store.clear().await;
 
-        assert_eq!(store.count(), 0);
-        assert!(store.get_all().is_empty());
+        assert_eq!(store.count().await, 0);
+        assert!(store.get_all().await.is_empty());
     }
 
-    #[test]
-    fn test_stats() {
+    #[tokio::test]
+    async fn test_stats() {
         let store = InMemoryInsightStore::new(10);
 
-        store.store(create_test_insight("1", "/users", 200));
-        store.store(create_test_insight("2", "/users", 201));
-        store.store(create_test_insight("3", "/items", 404));
+        store.store(create_test_insight("1", "/users", 200)).await;
+        store.store(create_test_insight("2", "/users", 201)).await;
+        store.store(create_test_insight("3", "/items", 404)).await;
 
-        let stats = store.get_stats();
+        let stats = store.get_stats().await;
 
         assert_eq!(stats.total_requests, 3);
         assert_eq!(stats.successful_requests, 2);
         assert_eq!(stats.client_errors, 1);
     }
 
-    #[test]
-    fn test_null_store() {
+    #[tokio::test]
+    async fn test_null_store() {
         let store = NullInsightStore;
 
-        store.store(create_test_insight("1", "/a", 200));
+        store.store(create_test_insight("1", "/a", 200)).await;
 
-        assert_eq!(store.count(), 0);
-        assert!(store.get_all().is_empty());
+        assert_eq!(store.count().await, 0);
+        assert!(store.get_all().await.is_empty());
     }
 }
