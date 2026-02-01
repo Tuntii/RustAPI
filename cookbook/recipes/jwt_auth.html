@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-99173fb5.js";
+            window.path_to_searchindex_js = "../searchindex-b23b5a13.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-5ece1d58.js"></script>
@@ -182,141 +182,110 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="jwt-authentication"><a class="header" href="#jwt-authentication">JWT Authentication</a></h1>
-<p>Authentication is critical for almost every API. This recipe demonstrates how to implement JSON Web Token (JWT) authentication using the <code>jsonwebtoken</code> crate and RustAPI’s extractor pattern.</p>
+<p>Authentication is critical for almost every API. RustAPI provides a built-in, production-ready JWT authentication system via the <code>jwt</code> feature.</p>
 <h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
-<p>Add <code>jsonwebtoken</code> and <code>serde</code> to your <code>Cargo.toml</code>:</p>
+<p>Enable the <code>jwt</code> feature in your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-jsonwebtoken = "9"
+rustapi-rs = { version = "0.1", features = ["jwt"] }
 serde = { version = "1", features = ["derive"] }
 </code></pre>
 <h2 id="1-define-claims"><a class="header" href="#1-define-claims">1. Define Claims</a></h2>
-<p>The standard JWT claims. You can add custom fields here (like <code>role</code>).</p>
+<p>Define your custom claims struct. It must be serializable and deserializable.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
-    pub sub: String,  // Subject (User ID)
-    pub exp: usize,   // Expiration time
-    pub role: String, // Custom claim: "admin", "user"
+    pub sub: String,   // Subject (User ID)
+    pub role: String,  // Custom claim: "admin", "user"
+    pub exp: usize,    // Required for JWT expiration validation
 }
 <span class="boring">}</span></code></pre>
-<h2 id="2-configuration-state"><a class="header" href="#2-configuration-state">2. Configuration State</a></h2>
-<p>Store your keys in the application state.</p>
+<h2 id="2-shared-state"><a class="header" href="#2-shared-state">2. Shared State</a></h2>
+<p>To avoid hardcoding secrets in multiple places, we’ll store our secret key in the application state.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use std::sync::Arc;
-use jsonwebtoken::{EncodingKey, DecodingKey};
-
-#[derive(Clone)]
-pub struct AuthState {
-    pub encoder: EncodingKey,
-    pub decoder: DecodingKey,
-}
-
-impl AuthState {
-    pub fn new(secret: &amp;str) -&gt; Self {
-        Self {
-            encoder: EncodingKey::from_secret(secret.as_bytes()),
-            decoder: DecodingKey::from_secret(secret.as_bytes()),
-        }
-    }
+</span>#[derive(Clone)]
+pub struct AppState {
+    pub secret: String,
 }
 <span class="boring">}</span></code></pre>
-<h2 id="3-the-authuser-extractor"><a class="header" href="#3-the-authuser-extractor">3. The <code>AuthUser</code> Extractor</a></h2>
-<p>This is where the magic happens. We create a custom extractor that:</p>
-<ol>
-<li>Checks the <code>Authorization</code> header.</li>
-<li>Decodes the token.</li>
-<li>Validates expiration.</li>
-<li>Returns the claims or rejects the request.</li>
-</ol>
+<h2 id="3-the-handlers"><a class="header" href="#3-the-handlers">3. The Handlers</a></h2>
+<p>We use the <code>AuthUser&lt;T&gt;</code> extractor to protect routes, and <code>State&lt;T&gt;</code> to access the secret for signing tokens during login.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use rustapi::prelude::*;
-use jsonwebtoken::{decode, Validation, Algorithm};
+</span>use rustapi_rs::prelude::*;
+use std::time::{SystemTime, UNIX_EPOCH};
 
-pub struct AuthUser(pub Claims);
-
-#[async_trait]
-impl FromRequestParts&lt;Arc&lt;AuthState&gt;&gt; for AuthUser {
-    type Rejection = (StatusCode, Json&lt;serde_json::Value&gt;);
-
-    async fn from_request_parts(
-        parts: &amp;mut Parts, 
-        state: &amp;Arc&lt;AuthState&gt;
-    ) -&gt; Result&lt;Self, Self::Rejection&gt; {
-        // 1. Get header
-        let auth_header = parts.headers.get("Authorization")
-            .ok_or((StatusCode::UNAUTHORIZED, Json(json!({"error": "Missing token"}))))?;
-            
-        let token = auth_header.to_str()
-            .map_err(|_| (StatusCode::UNAUTHORIZED, Json(json!({"error": "Invalid token format"}))))?
-            .strip_prefix("Bearer ")
-            .ok_or((StatusCode::UNAUTHORIZED, Json(json!({"error": "Invalid token type"}))))?;
-
-        // 2. Decode
-        let token_data = decode::&lt;Claims&gt;(
-            token, 
-            &amp;state.decoder, 
-            &amp;Validation::new(Algorithm::HS256)
-        ).map_err(|e| (StatusCode::UNAUTHORIZED, Json(json!({"error": e.to_string()}))))?;
-
-        Ok(AuthUser(token_data.claims))
-    }
-}
-<span class="boring">}</span></code></pre>
-<h2 id="4-usage-in-handlers"><a class="header" href="#4-usage-in-handlers">4. Usage in Handlers</a></h2>
-<p>Now, securing an endpoint is as simple as adding an argument.</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>async fn protected_profile(
-    AuthUser(claims): AuthUser
+#[rustapi::get("/profile")]
+async fn protected_profile(
+    // This handler will only be called if a valid token is present
+    AuthUser(claims): AuthUser&lt;Claims&gt;
 ) -&gt; Json&lt;String&gt; {
     Json(format!("Welcome back, {}! You are a {}.", claims.sub, claims.role))
 }
 
-async fn login(State(state): State&lt;Arc&lt;AuthState&gt;&gt;) -&gt; Json&lt;String&gt; {
+#[rustapi::post("/login")]
+async fn login(State(state): State&lt;AppState&gt;) -&gt; Result&lt;Json&lt;String&gt;&gt; {
     // In a real app, validate credentials first!
+    use std::time::{SystemTime, UNIX_EPOCH};
+    
+    let expiration = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs() + 3600; // Token expires in 1 hour (3600 seconds)
+    
     let claims = Claims {
         sub: "user_123".to_owned(),
         role: "admin".to_owned(),
-        exp: 10000000000, // Future timestamp
+        exp: expiration as usize,
     };
 
-    let token = jsonwebtoken::encode(
-        &amp;jsonwebtoken::Header::default(), 
-        &amp;claims, 
-        &amp;state.encoder
-    ).unwrap();
+    // We use the secret from our shared state
+    let token = create_token(&amp;claims, &amp;state.secret)?;
 
-    Json(token)
+    Ok(Json(token))
 }
 <span class="boring">}</span></code></pre>
-<h2 id="5-wiring-it-up"><a class="header" href="#5-wiring-it-up">5. Wiring it Up</a></h2>
-<pre class="playground"><code class="language-rust">#[tokio::main]
-async fn main() {
-    let auth_state = Arc::new(AuthState::new("my_secret_key"));
+<h2 id="4-wiring-it-up"><a class="header" href="#4-wiring-it-up">4. Wiring it Up</a></h2>
+<p>Register the <code>JwtLayer</code> and the state in your application.</p>
+<pre class="playground"><code class="language-rust">#[rustapi::main]
+async fn main() -&gt; Result&lt;()&gt; {
+    // In production, load this from an environment variable!
+    let secret = "my_secret_key".to_string();
 
-    let app = RustApi::new()
-        .route("/login", post(login))
-        .route("/profile", get(protected_profile))
-        .with_state(auth_state); // Inject state
+    let state = AppState {
+        secret: secret.clone(),
+    };
 
-    RustApi::serve("127.0.0.1:3000", app).await.unwrap();
+    // Configure JWT validation with the same secret
+    let jwt_layer = JwtLayer::&lt;Claims&gt;::new(secret);
+
+    RustApi::auto()
+        .state(state)     // Register the shared state
+        .layer(jwt_layer) // Add the middleware
+        .run("127.0.0.1:8080")
+        .await
 }</code></pre>
 <h2 id="bonus-role-based-access-control-rbac"><a class="header" href="#bonus-role-based-access-control-rbac">Bonus: Role-Based Access Control (RBAC)</a></h2>
-<p>Since we have the <code>role</code> in our claims, we can enforce permissions easily.</p>
+<p>Since we have the <code>role</code> in our claims, we can enforce permissions easily within the handler:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>async fn admin_only(AuthUser(claims): AuthUser) -&gt; Result&lt;String, StatusCode&gt; {
+</span>#[rustapi::get("/admin")]
+async fn admin_only(AuthUser(claims): AuthUser&lt;Claims&gt;) -&gt; Result&lt;String, StatusCode&gt; {
     if claims.role != "admin" {
         return Err(StatusCode::FORBIDDEN);
     }
     Ok("Sensitive Admin Data".to_string())
 }
 <span class="boring">}</span></code></pre>
+<h2 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h2>
+<ol>
+<li><strong><code>JwtLayer</code> Middleware</strong>: Intercepts requests, looks for <code>Authorization: Bearer &lt;token&gt;</code>, validates the signature, and stores the decoded claims in the request extensions.</li>
+<li><strong><code>AuthUser</code> Extractor</strong>: Retrieves the claims from the request extensions. If the middleware failed or didn’t run, or if the token was missing/invalid, the extractor returns a <code>401 Unauthorized</code> error.</li>
+</ol>
+<p>This separation allows you to have some public routes (where <code>JwtLayer</code> might just pass through) and some protected routes (where <code>AuthUser</code> enforces presence). Note that <code>JwtLayer</code> by default does <em>not</em> reject requests without tokens; it just doesn’t attach claims. The <em>extractor</em> does the rejection.</p>
 
                     </main>
 

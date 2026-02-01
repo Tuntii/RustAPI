@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-99173fb5.js";
+            window.path_to_searchindex_js = "../searchindex-b23b5a13.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-5ece1d58.js"></script>
@@ -191,18 +191,34 @@
 <pre><code class="language-bash">cargo rustapi new my-api
 cd my-api
 </code></pre>
-<p>This commands sets up a complete project structure with handling, models, and tests ready to go.</p>
+<p>This command sets up a complete project structure with handling, models, and tests ready to go.</p>
+<h2 id="the-code"><a class="header" href="#the-code">The Code</a></h2>
+<p>Open <code>src/main.rs</code>. You’ll see how simple it is:</p>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+
+#[rustapi::get("/hello")]
+async fn hello() -&gt; Json&lt;String&gt; {
+    Json("Hello from RustAPI!".to_string())
+}
+
+#[rustapi::main]
+async fn main() -&gt; Result&lt;()&gt; {
+    // Auto-discovery magic ✨
+    RustApi::auto()
+        .run("127.0.0.1:8080")
+        .await
+}</code></pre>
 <h2 id="run-the-server"><a class="header" href="#run-the-server">Run the Server</a></h2>
 <p>Start your API server:</p>
 <pre><code class="language-bash">cargo run
 </code></pre>
 <p>You should see output similar to:</p>
-<pre><code>INFO 🚀 Server running at http://127.0.0.1:8080
-INFO 📚 API docs at http://127.0.0.1:8080/docs
+<pre><code>INFO rustapi: 🚀 Server running at http://127.0.0.1:8080
+INFO rustapi: 📚 API docs at http://127.0.0.1:8080/docs
 </code></pre>
 <h2 id="test-it-out"><a class="header" href="#test-it-out">Test It Out</a></h2>
 <p>Open your browser to <a href="http://127.0.0.1:8080/docs">http://127.0.0.1:8080/docs</a>.</p>
-<p>You’ll see the <strong>Swagger UI</strong> automatically generated from your code. Try out the <code>/health</code> endpoint or create a new Item in the <code>Items</code> API.</p>
+<p>You’ll see the <strong>Swagger UI</strong> automatically generated from your code. Try out the endpoint directly from the browser!</p>
 <h2 id="what-just-happened"><a class="header" href="#what-just-happened">What Just Happened?</a></h2>
 <p>You just launched a high-performance, async Rust web server with:</p>
 <ul>

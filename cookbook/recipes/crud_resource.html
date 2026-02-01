@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-99173fb5.js";
+            window.path_to_searchindex_js = "../searchindex-b23b5a13.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-5ece1d58.js"></script>
@@ -211,15 +211,21 @@ pub async fn create(Json(payload): Json&lt;CreateUser&gt;) -&gt; impl IntoRespon
     (StatusCode::CREATED, Json(user))
 }
 <span class="boring">}</span></code></pre>
-<p>Then register it in <code>main.rs</code>:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>RustApi::new()
-    .mount(handlers::users::list)
-    .mount(handlers::users::create)
-<span class="boring">}</span></code></pre>
+<p>Then in <code>main.rs</code>, simply use <code>RustApi::auto()</code>:</p>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+
+mod handlers; // Make sure the module is part of the compilation unit!
+
+#[rustapi::main]
+async fn main() -&gt; Result&lt;()&gt; {
+    // RustAPI automatically discovers all routes decorated with macros
+    RustApi::auto()
+        .run("127.0.0.1:8080")
+        .await
+}</code></pre>
 <h2 id="discussion"><a class="header" href="#discussion">Discussion</a></h2>
-<p>Using <code>#[rustapi::mount]</code> (if available) or manual routing keeps your <code>main.rs</code> clean. Organizing handlers by resource (domain-driven design) scales better than organizing by HTTP method.</p>
+<p>RustAPI uses <strong>distributed slices</strong> (via <code>linkme</code>) to automatically register routes decorated with <code>#[rustapi::get]</code>, <code>#[rustapi::post]</code>, etc. This means you don’t need to manually import or mount every single handler in your <code>main</code> function.</p>
+<p>Just ensure your handler modules are reachable (e.g., via <code>mod handlers;</code>), and the framework handles the rest. This encourages a clean, Domain-Driven Design (DDD) structure where resources are self-contained.</p>
 
                     </main>
 
