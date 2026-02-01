@@ -12,7 +12,7 @@ cargo rustapi new my-api
 cd my-api
 ```
 
-This commands sets up a complete project structure with handling, models, and tests ready to go.
+This command sets up a complete project structure with handling, models, and tests ready to go.
 
 ## The Code
 
