@@ -56,7 +56,7 @@ use tokio::sync::RwLock;
 
 pub type AppState = Arc<RwLock<models::Store>>;
 
-#[rustapi::main]
+#[rustapi_rs::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // Load environment variables
     load_dotenv();
@@ -162,9 +162,9 @@ pub struct UserClaims {
 }
 
 /// Login and get a JWT token
-#[rustapi::post("/auth/login")]
-#[rustapi::tag("Authentication")]
-#[rustapi::summary("Login with username and password")]
+#[rustapi_rs::post("/auth/login")]
+#[rustapi_rs::tag("Authentication")]
+#[rustapi_rs::summary("Login with username and password")]
 pub async fn login(Json(body): Json<LoginRequest>) -> Result<Json<LoginResponse>> {
     // TODO: Validate credentials against your database
     if body.username == "admin" && body.password == "password" {
@@ -189,9 +189,9 @@ pub async fn login(Json(body): Json<LoginRequest>) -> Result<Json<LoginResponse>
 }
 
 /// Get current user info
-#[rustapi::get("/auth/me")]
-#[rustapi::tag("Authentication")]
-#[rustapi::summary("Get current authenticated user")]
+#[rustapi_rs::get("/auth/me")]
+#[rustapi_rs::tag("Authentication")]
+#[rustapi_rs::summary("Get current authenticated user")]
 pub async fn me(auth: AuthUser<UserClaims>) -> Json<UserClaims> {
     Json(auth.claims)
 }
@@ -214,9 +214,9 @@ use crate::AppState;
 use rustapi_rs::prelude::*;
 
 /// List all items
-#[rustapi::get("/items")]
-#[rustapi::tag("Items")]
-#[rustapi::summary("List all items")]
+#[rustapi_rs::get("/items")]
+#[rustapi_rs::tag("Items")]
+#[rustapi_rs::summary("List all items")]
 pub async fn list(
     _auth: AuthUser<UserClaims>,
     State(state): State<AppState>,
@@ -226,9 +226,9 @@ pub async fn list(
 }
 
 /// Get an item by ID
-#[rustapi::get("/items/{id}")]
-#[rustapi::tag("Items")]
-#[rustapi::summary("Get item by ID")]
+#[rustapi_rs::get("/items/{id}")]
+#[rustapi_rs::tag("Items")]
+#[rustapi_rs::summary("Get item by ID")]
 pub async fn get(
     _auth: AuthUser<UserClaims>,
     Path(id): Path<String>,
@@ -243,9 +243,9 @@ pub async fn get(
 }
 
 /// Create a new item
-#[rustapi::post("/items")]
-#[rustapi::tag("Items")]
-#[rustapi::summary("Create a new item")]
+#[rustapi_rs::post("/items")]
+#[rustapi_rs::tag("Items")]
+#[rustapi_rs::summary("Create a new item")]
 pub async fn create(
     auth: AuthUser<UserClaims>,
     State(state): State<AppState>,
@@ -262,9 +262,9 @@ pub async fn create(
 }
 
 /// Update an item
-#[rustapi::put("/items/{id}")]
-#[rustapi::tag("Items")]
-#[rustapi::summary("Update an item")]
+#[rustapi_rs::put("/items/{id}")]
+#[rustapi_rs::tag("Items")]
+#[rustapi_rs::summary("Update an item")]
 pub async fn update(
     _auth: AuthUser<UserClaims>,
     Path(id): Path<String>,
@@ -289,9 +289,9 @@ pub async fn update(
 }
 
 /// Delete an item
-#[rustapi::delete("/items/{id}")]
-#[rustapi::tag("Items")]
-#[rustapi::summary("Delete an item")]
+#[rustapi_rs::delete("/items/{id}")]
+#[rustapi_rs::tag("Items")]
+#[rustapi_rs::summary("Delete an item")]
 pub async fn delete(
     auth: AuthUser<UserClaims>,
     Path(id): Path<String>,
@@ -321,7 +321,7 @@ fn chrono_now() -> String {
     let models_mod = r#"//! Data models
 
 use serde::{Deserialize, Serialize};
-use rustapi_rs::Schema;
+use rustapi_rs::prelude::Schema;
 use std::collections::HashMap;
 
 pub struct Store {

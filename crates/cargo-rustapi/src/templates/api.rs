@@ -40,7 +40,7 @@ use tokio::sync::RwLock;
 
 pub type AppState = Arc<RwLock<models::Store>>;
 
-#[rustapi::main]
+#[rustapi_rs::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // Initialize tracing
     tracing_subscriber::fmt()
@@ -133,18 +133,18 @@ use crate::AppState;
 use rustapi_rs::prelude::*;
 
 /// List all items
-#[rustapi::get("/items")]
-#[rustapi::tag("Items")]
-#[rustapi::summary("List all items")]
+#[rustapi_rs::get("/items")]
+#[rustapi_rs::tag("Items")]
+#[rustapi_rs::summary("List all items")]
 pub async fn list(State(state): State<AppState>) -> Json<Vec<Item>> {
     let store = state.read().await;
     Json(store.items.values().cloned().collect())
 }
 
 /// Get an item by ID
-#[rustapi::get("/items/{id}")]
-#[rustapi::tag("Items")]
-#[rustapi::summary("Get item by ID")]
+#[rustapi_rs::get("/items/{id}")]
+#[rustapi_rs::tag("Items")]
+#[rustapi_rs::summary("Get item by ID")]
 pub async fn get(
     Path(id): Path<String>,
     State(state): State<AppState>,
@@ -158,9 +158,9 @@ pub async fn get(
 }
 
 /// Create a new item
-#[rustapi::post("/items")]
-#[rustapi::tag("Items")]
-#[rustapi::summary("Create a new item")]
+#[rustapi_rs::post("/items")]
+#[rustapi_rs::tag("Items")]
+#[rustapi_rs::summary("Create a new item")]
 pub async fn create(
     State(state): State<AppState>,
     Json(body): Json<CreateItem>,
@@ -174,9 +174,9 @@ pub async fn create(
 }
 
 /// Update an item
-#[rustapi::put("/items/{id}")]
-#[rustapi::tag("Items")]
-#[rustapi::summary("Update an item")]
+#[rustapi_rs::put("/items/{id}")]
+#[rustapi_rs::tag("Items")]
+#[rustapi_rs::summary("Update an item")]
 pub async fn update(
     Path(id): Path<String>,
     State(state): State<AppState>,
@@ -200,9 +200,9 @@ pub async fn update(
 }
 
 /// Delete an item
-#[rustapi::delete("/items/{id}")]
-#[rustapi::tag("Items")]
-#[rustapi::summary("Delete an item")]
+#[rustapi_rs::delete("/items/{id}")]
+#[rustapi_rs::tag("Items")]
+#[rustapi_rs::summary("Delete an item")]
 pub async fn delete(
     Path(id): Path<String>,
     State(state): State<AppState>,
@@ -230,7 +230,7 @@ fn chrono_now() -> String {
     let models_mod = r#"//! Data models
 
 use serde::{Deserialize, Serialize};
-use rustapi_rs::Schema;
+use rustapi_rs::prelude::Schema;
 use std::collections::HashMap;
 
 /// In-memory data store

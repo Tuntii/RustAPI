@@ -37,7 +37,7 @@ async fn hello() -> Json<Hello> {
     })
 }
 
-#[rustapi::main]
+#[rustapi_rs::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     tracing_subscriber::fmt::init();
 

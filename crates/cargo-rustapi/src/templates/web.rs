@@ -42,7 +42,7 @@ tracing-subscriber = {{ version = "0.3", features = ["env-filter"] }}
 use rustapi_rs::prelude::*;
 use rustapi_view::Templates;
 
-#[rustapi::main]
+#[rustapi_rs::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // Initialize tracing
     tracing_subscriber::fmt()
