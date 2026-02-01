@@ -44,6 +44,7 @@ We use the `AuthUser<T>` extractor to protect routes, and `State<T>` to access t
 
 ```rust
 use rustapi_rs::prelude::*;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[rustapi::get("/profile")]
 async fn protected_profile(
