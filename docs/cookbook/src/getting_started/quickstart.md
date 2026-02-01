@@ -12,7 +12,28 @@ cargo rustapi new my-api
 cd my-api
 ```
 
-This commands sets up a complete project structure with handling, models, and tests ready to go.
+This command sets up a complete project structure with handling, models, and tests ready to go.
+
+## The Code
+
+Open `src/main.rs`. You'll see how simple it is:
+
+```rust
+use rustapi_rs::prelude::*;
+
+#[rustapi::get("/hello")]
+async fn hello() -> Json<String> {
+    Json("Hello from RustAPI!".to_string())
+}
+
+#[rustapi::main]
+async fn main() -> Result<()> {
+    // Auto-discovery magic ✨
+    RustApi::auto()
+        .run("127.0.0.1:8080")
+        .await
+}
+```
 
 ## Run the Server
 
@@ -25,15 +46,15 @@ cargo run
 You should see output similar to:
 
 ```
-INFO 🚀 Server running at http://127.0.0.1:8080
-INFO 📚 API docs at http://127.0.0.1:8080/docs
+INFO rustapi: 🚀 Server running at http://127.0.0.1:8080
+INFO rustapi: 📚 API docs at http://127.0.0.1:8080/docs
 ```
 
 ## Test It Out
 
 Open your browser to [http://127.0.0.1:8080/docs](http://127.0.0.1:8080/docs).
 
-You'll see the **Swagger UI** automatically generated from your code. Try out the `/health` endpoint or create a new Item in the `Items` API.
+You'll see the **Swagger UI** automatically generated from your code. Try out the endpoint directly from the browser!
 
 ## What Just Happened?
 
