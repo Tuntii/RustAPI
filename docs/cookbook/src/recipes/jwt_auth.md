@@ -21,9 +21,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
-    pub sub: String,  // Subject (User ID)
-    pub role: String, // Custom claim: "admin", "user"
-    pub exp: usize,   // Expiration time (required for validation)
+    pub sub: String,   // Subject (User ID)
+    pub role: String,  // Custom claim: "admin", "user"
+    pub exp: usize,    // Required for JWT expiration validation
 }
 ```
 
@@ -57,20 +57,20 @@ async fn protected_profile(
 #[rustapi::post("/login")]
 async fn login(State(state): State<AppState>) -> Result<Json<String>> {
     // In a real app, validate credentials first!
-
-    // Calculate expiration (1 hour from now)
-    let exp = SystemTime::now()
+    use std::time::{SystemTime, UNIX_EPOCH};
+    
+    let expiration = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap()
-        .as_secs() as usize + 3600;
-
+        .as_secs() + 3600; // Token expires in 1 hour (3600 seconds)
+    
     let claims = Claims {
         sub: "user_123".to_owned(),
         role: "admin".to_owned(),
-        exp,
+        exp: expiration as usize,
     };
 
-    // Create the token using the secret from our shared state
+    // We use the secret from our shared state
     let token = create_token(&claims, &state.secret)?;
 
     Ok(Json(token))
@@ -92,7 +92,7 @@ async fn main() -> Result<()> {
     };
 
     // Configure JWT validation with the same secret
-    let jwt_layer = JwtLayer::new(secret);
+    let jwt_layer = JwtLayer::<Claims>::new(secret);
 
     RustApi::auto()
         .state(state)     // Register the shared state
