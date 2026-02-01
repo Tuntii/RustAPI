@@ -93,11 +93,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .route("/auth/login", post(handlers::auth::login))
         .route("/auth/me", get(handlers::auth::me))
         // Protected items endpoints (require JWT)
-        .mount(handlers::items::list)
-        .mount(handlers::items::get)
-        .mount(handlers::items::create)
-        .mount(handlers::items::update)
-        .mount(handlers::items::delete)
+        .mount_route(handlers::items::list_route())
+        .mount_route(handlers::items::get_route())
+        .mount_route(handlers::items::create_route())
+        .mount_route(handlers::items::update_route())
+        .mount_route(handlers::items::delete_route())
         // Documentation
         .docs_with_info("/docs", ApiInfo {
             title: env!("CARGO_PKG_NAME").to_string(),
@@ -250,7 +250,7 @@ pub async fn create(
     auth: AuthUser<UserClaims>,
     State(state): State<AppState>,
     Json(body): Json<CreateItem>,
-) -> Result<Created<Json<Item>>> {
+) -> Json<Item> {
     let item = Item::new(body.name, body.description, auth.claims.sub.clone());
     
     let mut store = state.write().await;
@@ -258,7 +258,7 @@ pub async fn create(
     
     tracing::info!("User {} created item {}", auth.claims.username, item.id);
     
-    Ok(Created(Json(item)))
+    Json(item)
 }
 
 /// Update an item
@@ -281,7 +281,7 @@ pub async fn update(
         item.name = name;
     }
     if let Some(description) = body.description {
-        item.description = description;
+        item.description = Some(description);
     }
     item.updated_at = chrono_now();
     

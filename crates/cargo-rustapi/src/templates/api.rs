@@ -64,11 +64,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         // Health check
         .route("/health", get(handlers::health))
         // Items CRUD
-        .mount(handlers::items::list)
-        .mount(handlers::items::get)
-        .mount(handlers::items::create)
-        .mount(handlers::items::update)
-        .mount(handlers::items::delete)
+        .mount_route(handlers::items::list_route())
+        .mount_route(handlers::items::get_route())
+        .mount_route(handlers::items::create_route())
+        .mount_route(handlers::items::update_route())
+        .mount_route(handlers::items::delete_route())
         // Documentation
         .docs("/docs")
         .run(&addr)
@@ -164,13 +164,13 @@ pub async fn get(
 pub async fn create(
     State(state): State<AppState>,
     Json(body): Json<CreateItem>,
-) -> Result<Created<Json<Item>>> {
+) -> Json<Item> {
     let item = Item::new(body.name, body.description);
     
     let mut store = state.write().await;
     store.items.insert(item.id.clone(), item.clone());
     
-    Ok(Created(Json(item)))
+    Json(item)
 }
 
 /// Update an item
@@ -192,7 +192,7 @@ pub async fn update(
         item.name = name;
     }
     if let Some(description) = body.description {
-        item.description = description;
+        item.description = Some(description);
     }
     item.updated_at = chrono_now();
     

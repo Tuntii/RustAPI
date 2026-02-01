@@ -303,6 +303,11 @@ pub mod prelude {
     // Re-export OpenAPI schema derive
     pub use rustapi_openapi::Schema;
 
+    // Re-export crates needed by Schema derive macro
+    // These are required for the macro-generated code to compile
+    pub use rustapi_openapi;
+    pub use serde_json;
+
     // Re-export commonly used external types
     pub use serde::{Deserialize, Serialize};
     pub use tracing::{debug, error, info, trace, warn};
