@@ -23,7 +23,7 @@ use serde::{Deserialize, Serialize};
 pub struct Claims {
     pub sub: String,  // Subject (User ID)
     pub role: String, // Custom claim: "admin", "user"
-    // 'exp' is handled automatically by the framework if not present
+    pub exp: usize,   // Expiration time (required for validation)
 }
 ```
 
@@ -44,6 +44,7 @@ We use the `AuthUser<T>` extractor to protect routes, and `State<T>` to access t
 
 ```rust
 use rustapi_rs::prelude::*;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 #[rustapi::get("/profile")]
 async fn protected_profile(
@@ -56,14 +57,21 @@ async fn protected_profile(
 #[rustapi::post("/login")]
 async fn login(State(state): State<AppState>) -> Result<Json<String>> {
     // In a real app, validate credentials first!
+
+    // Calculate expiration (1 hour from now)
+    let exp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as usize + 3600;
+
     let claims = Claims {
         sub: "user_123".to_owned(),
         role: "admin".to_owned(),
+        exp,
     };
 
-    // Create a token that expires in 1 hour (3600 seconds)
-    // We use the secret from our shared state
-    let token = create_token(&claims, &state.secret, 3600)?;
+    // Create the token using the secret from our shared state
+    let token = create_token(&claims, &state.secret)?;
 
     Ok(Json(token))
 }
@@ -74,7 +82,7 @@ async fn login(State(state): State<AppState>) -> Result<Json<String>> {
 Register the `JwtLayer` and the state in your application.
 
 ```rust
-#[tokio::main]
+#[rustapi::main]
 async fn main() -> Result<()> {
     // In production, load this from an environment variable!
     let secret = "my_secret_key".to_string();
@@ -84,8 +92,7 @@ async fn main() -> Result<()> {
     };
 
     // Configure JWT validation with the same secret
-    let jwt_layer = JwtLayer::new(secret)
-        .with_algorithm(jsonwebtoken::Algorithm::HS256);
+    let jwt_layer = JwtLayer::new(secret);
 
     RustApi::auto()
         .state(state)     // Register the shared state
