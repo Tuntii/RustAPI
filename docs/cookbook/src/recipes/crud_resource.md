@@ -32,14 +32,24 @@ pub async fn create(Json(payload): Json<CreateUser>) -> impl IntoResponse {
 }
 ```
 
-Then register it in `main.rs`:
+Then in `main.rs`, simply use `RustApi::auto()`:
 
 ```rust
-RustApi::new()
-    .mount(handlers::users::list)
-    .mount(handlers::users::create)
+use rustapi_rs::prelude::*;
+
+mod handlers; // Make sure the module is part of the compilation unit!
+
+#[rustapi::main]
+async fn main() -> Result<()> {
+    // RustAPI automatically discovers all routes decorated with macros
+    RustApi::auto()
+        .run("127.0.0.1:8080")
+        .await
+}
 ```
 
 ## Discussion
 
-Using `#[rustapi::mount]` (if available) or manual routing keeps your `main.rs` clean. Organizing handlers by resource (domain-driven design) scales better than organizing by HTTP method.
+RustAPI uses **distributed slices** (via `linkme`) to automatically register routes decorated with `#[rustapi::get]`, `#[rustapi::post]`, etc. This means you don't need to manually import or mount every single handler in your `main` function.
+
+Just ensure your handler modules are reachable (e.g., via `mod handlers;`), and the framework handles the rest. This encourages a clean, Domain-Driven Design (DDD) structure where resources are self-contained.

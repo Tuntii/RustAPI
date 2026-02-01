@@ -1,153 +1,117 @@
 # JWT Authentication
 
-Authentication is critical for almost every API. This recipe demonstrates how to implement JSON Web Token (JWT) authentication using the `jsonwebtoken` crate and RustAPI's extractor pattern.
+Authentication is critical for almost every API. RustAPI provides a built-in, production-ready JWT authentication system via the `jwt` feature.
 
 ## Dependencies
 
-Add `jsonwebtoken` and `serde` to your `Cargo.toml`:
+Enable the `jwt` feature in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-jsonwebtoken = "9"
+rustapi-rs = { version = "0.1", features = ["jwt"] }
 serde = { version = "1", features = ["derive"] }
 ```
 
 ## 1. Define Claims
 
-The standard JWT claims. You can add custom fields here (like `role`).
+Define your custom claims struct. It must be serializable and deserializable.
 
 ```rust
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Claims {
     pub sub: String,  // Subject (User ID)
-    pub exp: usize,   // Expiration time
     pub role: String, // Custom claim: "admin", "user"
+    // 'exp' is handled automatically by the framework if not present
 }
 ```
 
-## 2. Configuration State
+## 2. Shared State
 
-Store your keys in the application state.
+To avoid hardcoding secrets in multiple places, we'll store our secret key in the application state.
 
 ```rust
-use std::sync::Arc;
-use jsonwebtoken::{EncodingKey, DecodingKey};
-
 #[derive(Clone)]
-pub struct AuthState {
-    pub encoder: EncodingKey,
-    pub decoder: DecodingKey,
-}
-
-impl AuthState {
-    pub fn new(secret: &str) -> Self {
-        Self {
-            encoder: EncodingKey::from_secret(secret.as_bytes()),
-            decoder: DecodingKey::from_secret(secret.as_bytes()),
-        }
-    }
+pub struct AppState {
+    pub secret: String,
 }
 ```
 
-## 3. The `AuthUser` Extractor
+## 3. The Handlers
 
-This is where the magic happens. We create a custom extractor that:
-1. Checks the `Authorization` header.
-2. Decodes the token.
-3. Validates expiration.
-4. Returns the claims or rejects the request.
+We use the `AuthUser<T>` extractor to protect routes, and `State<T>` to access the secret for signing tokens during login.
 
 ```rust
-use rustapi::prelude::*;
-use jsonwebtoken::{decode, Validation, Algorithm};
+use rustapi_rs::prelude::*;
 
-pub struct AuthUser(pub Claims);
-
-#[async_trait]
-impl FromRequestParts<Arc<AuthState>> for AuthUser {
-    type Rejection = (StatusCode, Json<serde_json::Value>);
-
-    async fn from_request_parts(
-        parts: &mut Parts, 
-        state: &Arc<AuthState>
-    ) -> Result<Self, Self::Rejection> {
-        // 1. Get header
-        let auth_header = parts.headers.get("Authorization")
-            .ok_or((StatusCode::UNAUTHORIZED, Json(json!({"error": "Missing token"}))))?;
-            
-        let token = auth_header.to_str()
-            .map_err(|_| (StatusCode::UNAUTHORIZED, Json(json!({"error": "Invalid token format"}))))?
-            .strip_prefix("Bearer ")
-            .ok_or((StatusCode::UNAUTHORIZED, Json(json!({"error": "Invalid token type"}))))?;
-
-        // 2. Decode
-        let token_data = decode::<Claims>(
-            token, 
-            &state.decoder, 
-            &Validation::new(Algorithm::HS256)
-        ).map_err(|e| (StatusCode::UNAUTHORIZED, Json(json!({"error": e.to_string()}))))?;
-
-        Ok(AuthUser(token_data.claims))
-    }
-}
-```
-
-## 4. Usage in Handlers
-
-Now, securing an endpoint is as simple as adding an argument.
-
-```rust
+#[rustapi::get("/profile")]
 async fn protected_profile(
-    AuthUser(claims): AuthUser
+    // This handler will only be called if a valid token is present
+    AuthUser(claims): AuthUser<Claims>
 ) -> Json<String> {
     Json(format!("Welcome back, {}! You are a {}.", claims.sub, claims.role))
 }
 
-async fn login(State(state): State<Arc<AuthState>>) -> Json<String> {
+#[rustapi::post("/login")]
+async fn login(State(state): State<AppState>) -> Result<Json<String>> {
     // In a real app, validate credentials first!
     let claims = Claims {
         sub: "user_123".to_owned(),
         role: "admin".to_owned(),
-        exp: 10000000000, // Future timestamp
     };
 
-    let token = jsonwebtoken::encode(
-        &jsonwebtoken::Header::default(), 
-        &claims, 
-        &state.encoder
-    ).unwrap();
+    // Create a token that expires in 1 hour (3600 seconds)
+    // We use the secret from our shared state
+    let token = create_token(&claims, &state.secret, 3600)?;
 
-    Json(token)
+    Ok(Json(token))
 }
 ```
 
-## 5. Wiring it Up
+## 4. Wiring it Up
+
+Register the `JwtLayer` and the state in your application.
 
 ```rust
 #[tokio::main]
-async fn main() {
-    let auth_state = Arc::new(AuthState::new("my_secret_key"));
+async fn main() -> Result<()> {
+    // In production, load this from an environment variable!
+    let secret = "my_secret_key".to_string();
 
-    let app = RustApi::new()
-        .route("/login", post(login))
-        .route("/profile", get(protected_profile))
-        .with_state(auth_state); // Inject state
+    let state = AppState {
+        secret: secret.clone(),
+    };
 
-    RustApi::serve("127.0.0.1:3000", app).await.unwrap();
+    // Configure JWT validation with the same secret
+    let jwt_layer = JwtLayer::new(secret)
+        .with_algorithm(jsonwebtoken::Algorithm::HS256);
+
+    RustApi::auto()
+        .state(state)     // Register the shared state
+        .layer(jwt_layer) // Add the middleware
+        .run("127.0.0.1:8080")
+        .await
 }
 ```
 
 ## Bonus: Role-Based Access Control (RBAC)
 
-Since we have the `role` in our claims, we can enforce permissions easily.
+Since we have the `role` in our claims, we can enforce permissions easily within the handler:
 
 ```rust
-async fn admin_only(AuthUser(claims): AuthUser) -> Result<String, StatusCode> {
+#[rustapi::get("/admin")]
+async fn admin_only(AuthUser(claims): AuthUser<Claims>) -> Result<String, StatusCode> {
     if claims.role != "admin" {
         return Err(StatusCode::FORBIDDEN);
     }
     Ok("Sensitive Admin Data".to_string())
 }
 ```
+
+## How It Works
+
+1. **`JwtLayer` Middleware**: Intercepts requests, looks for `Authorization: Bearer <token>`, validates the signature, and stores the decoded claims in the request extensions.
+2. **`AuthUser` Extractor**: Retrieves the claims from the request extensions. If the middleware failed or didn't run, or if the token was missing/invalid, the extractor returns a `401 Unauthorized` error.
+
+This separation allows you to have some public routes (where `JwtLayer` might just pass through) and some protected routes (where `AuthUser` enforces presence). Note that `JwtLayer` by default does *not* reject requests without tokens; it just doesn't attach claims. The *extractor* does the rejection.
