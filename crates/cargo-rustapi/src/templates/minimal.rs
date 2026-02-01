@@ -16,6 +16,7 @@ edition = "2021"
 rustapi-rs = {{ version = "0.1"{features} }}
 tokio = {{ version = "1", features = ["full"] }}
 serde = {{ version = "1", features = ["derive"] }}
+tracing-subscriber = "0.3"
 "#,
         name = name,
         features = common::features_to_cargo(features),
