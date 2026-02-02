@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-af852796.js";
+            window.path_to_searchindex_js = "../searchindex-b8492182.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-5ece1d58.js"></script>
@@ -185,27 +185,79 @@
 <p><strong>Lens</strong>: “The Workhorse”
 <strong>Philosophy</strong>: “Fire and forget, with reliability guarantees.”</p>
 <h2 id="background-processing"><a class="header" href="#background-processing">Background Processing</a></h2>
-<p>Long-running tasks shouldn’t block HTTP requests. <code>rustapi-jobs</code> provides a robust queue system.</p>
+<p>Long-running tasks shouldn’t block HTTP requests. <code>rustapi-jobs</code> provides a robust queue system that can run in-memory or be backed by Redis/Postgres.</p>
+<h2 id="usage-example"><a class="header" href="#usage-example">Usage Example</a></h2>
+<p>Here is how to set up a simple background job queue using the in-memory backend.</p>
+<h3 id="1-define-the-job"><a class="header" href="#1-define-the-job">1. Define the Job</a></h3>
+<p>Jobs are simple structs that implement <code>Serialize</code> and <code>Deserialize</code>.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// Define a job
-#[derive(Serialize, Deserialize)]
-struct EmailJob { to: String }
+</span>use serde::{Deserialize, Serialize};
+use rustapi_jobs::{Job, JobContext, Result};
+use std::sync::Arc;
 
-// Enqueue it
-queue.push(EmailJob { to: "alice@example.com" }).await;
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct EmailJob {
+    to: String,
+    subject: String,
+    body: String,
+}
+
+// Implement the Job trait to define how to process it
+#[async_trait::async_trait]
+impl Job for EmailJob {
+    const NAME: &amp;'static str = "email_job";
+
+    async fn run(&amp;self, _ctx: JobContext) -&gt; Result&lt;()&gt; {
+        println!("Sending email to {} with subject: {}", self.to, self.subject);
+        // Simulate work
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        Ok(())
+    }
+}
 <span class="boring">}</span></code></pre>
+<h3 id="2-configure-the-queue"><a class="header" href="#2-configure-the-queue">2. Configure the Queue</a></h3>
+<p>In your <code>main</code> function, initialize the queue and start the worker.</p>
+<pre class="playground"><code class="language-rust">use rustapi_jobs::{JobQueue, InMemoryBackend, EnqueueOptions};
+
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    // 1. Create the backend
+    let backend = InMemoryBackend::new();
+
+    // 2. Create the queue
+    let queue = JobQueue::new(backend);
+
+    // 3. Register the job type
+    queue.register_job::&lt;EmailJob&gt;();
+
+    // 4. Start the worker in the background
+    let worker_queue = queue.clone();
+    tokio::spawn(async move {
+        worker_queue.start_workers().await;
+    });
+
+    // 5. Enqueue a job
+    queue.enqueue(EmailJob {
+        to: "user@example.com".into(),
+        subject: "Welcome!".into(),
+        body: "Thanks for joining.".into(),
+    }).await?;
+
+    Ok(())
+}</code></pre>
 <h2 id="backends"><a class="header" href="#backends">Backends</a></h2>
 <ul>
-<li><strong>Memory</strong>: Great for development and testing.</li>
-<li><strong>Redis</strong>: High throughput persistence.</li>
-<li><strong>Postgres</strong>: Transactional reliability (acid).</li>
+<li><strong>Memory</strong>: Great for development and testing. Zero infrastructure required.</li>
+<li><strong>Redis</strong>: High throughput persistence. Recommended for production.</li>
+<li><strong>Postgres</strong>: Transactional reliability (ACID). Best if you cannot lose jobs.</li>
 </ul>
-<h2 id="reliability"><a class="header" href="#reliability">Reliability</a></h2>
-<p>The worker system features:</p>
+<h2 id="reliability-features"><a class="header" href="#reliability-features">Reliability Features</a></h2>
+<p>The worker system includes built-in reliability features:</p>
 <ul>
-<li><strong>Exponential Backoff</strong>: Automatic retries for failing jobs.</li>
-<li><strong>Dead Letter Queue</strong>: Poison jobs are isolated for manual inspection.</li>
+<li><strong>Exponential Backoff</strong>: Automatically retries failing jobs with increasing delays.</li>
+<li><strong>Dead Letter Queue (DLQ)</strong>: “Poison” jobs that fail repeatedly are isolated for manual inspection.</li>
+<li><strong>Concurrency Control</strong>: Limit the number of concurrent workers to prevent overloading your system.</li>
 </ul>
 
                     </main>

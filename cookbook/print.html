@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-af852796.js";
+            window.path_to_searchindex_js = "searchindex-b8492182.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-5ece1d58.js"></script>
@@ -239,6 +239,14 @@
 </code></pre>
 <p>Verify your installation:</p>
 <pre><code class="language-bash">cargo-rustapi --version
+</code></pre>
+<h2 id="adding-to-an-existing-project"><a class="header" href="#adding-to-an-existing-project">Adding to an Existing Project</a></h2>
+<p>If you prefer not to use the CLI, you can add RustAPI to your <code>Cargo.toml</code> manually:</p>
+<pre><code class="language-bash">cargo add rustapi-rs@0.1.233
+</code></pre>
+<p>Or add this to your <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[dependencies]
+rustapi-rs = "0.1.233"
 </code></pre>
 <h2 id="editor-setup"><a class="header" href="#editor-setup">Editor Setup</a></h2>
 <p>For the best experience, we recommend <strong>VS Code</strong> with the <strong>rust-analyzer</strong> extension. This provides:</p>
@@ -1262,6 +1270,7 @@ app.mount_route(route);
 <tr><td><code>cors</code></td><td><code>CorsLayer</code></td></tr>
 <tr><td><code>csrf</code></td><td><code>CsrfLayer</code>, <code>CsrfToken</code> extractor</td></tr>
 <tr><td><code>audit</code></td><td><code>AuditStore</code>, <code>AuditLogger</code></td></tr>
+<tr><td><code>insight</code></td><td><code>InsightLayer</code>, <code>InsightStore</code></td></tr>
 <tr><td><code>rate-limit</code></td><td><code>RateLimitLayer</code></td></tr>
 </tbody>
 </table>
@@ -1324,6 +1333,34 @@ async fn show_form(token: CsrfToken) -&gt; Html&lt;String&gt; {
     );
 }
 <span class="boring">}</span></code></pre>
+<h2 id="traffic-insight"><a class="header" href="#traffic-insight">Traffic Insight</a></h2>
+<p>The <code>insight</code> feature provides powerful real-time traffic analysis and debugging capabilities without external dependencies. It is designed to be low-overhead and privacy-conscious.</p>
+<pre><code class="language-toml">[dependencies]
+rustapi-extras = { version = "0.1", features = ["insight"] }
+</code></pre>
+<h3 id="setup-1"><a class="header" href="#setup-1">Setup</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_extras::insight::{InsightLayer, InMemoryInsightStore, InsightConfig};
+use std::sync::Arc;
+
+let store = Arc::new(InMemoryInsightStore::new());
+let config = InsightConfig::default();
+
+let app = RustApi::new()
+    .layer(InsightLayer::new(config, store.clone()));
+<span class="boring">}</span></code></pre>
+<h3 id="accessing-data"><a class="header" href="#accessing-data">Accessing Data</a></h3>
+<p>You can inspect the collected data (e.g., via an admin dashboard):</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi_rs::get("/admin/insights")]
+async fn get_insights(State(store): State&lt;Arc&lt;InMemoryInsightStore&gt;&gt;) -&gt; Json&lt;InsightStats&gt; {
+    // Returns aggregated stats like req/sec, error rates, p99 latency
+    Json(store.get_stats().await)
+}
+<span class="boring">}</span></code></pre>
+<p>The <code>InsightStore</code> trait allows you to implement custom backends (e.g., ClickHouse or Elasticsearch) if you need long-term retention.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="rustapi-toon-the-diplomat"><a class="header" href="#rustapi-toon-the-diplomat">rustapi-toon: The Diplomat</a></h1>
 <p><strong>Lens</strong>: “The Diplomat”
@@ -1386,27 +1423,79 @@ async fn show_form(token: CsrfToken) -&gt; Html&lt;String&gt; {
 <p><strong>Lens</strong>: “The Workhorse”
 <strong>Philosophy</strong>: “Fire and forget, with reliability guarantees.”</p>
 <h2 id="background-processing"><a class="header" href="#background-processing">Background Processing</a></h2>
-<p>Long-running tasks shouldn’t block HTTP requests. <code>rustapi-jobs</code> provides a robust queue system.</p>
+<p>Long-running tasks shouldn’t block HTTP requests. <code>rustapi-jobs</code> provides a robust queue system that can run in-memory or be backed by Redis/Postgres.</p>
+<h2 id="usage-example"><a class="header" href="#usage-example">Usage Example</a></h2>
+<p>Here is how to set up a simple background job queue using the in-memory backend.</p>
+<h3 id="1-define-the-job"><a class="header" href="#1-define-the-job">1. Define the Job</a></h3>
+<p>Jobs are simple structs that implement <code>Serialize</code> and <code>Deserialize</code>.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// Define a job
-#[derive(Serialize, Deserialize)]
-struct EmailJob { to: String }
+</span>use serde::{Deserialize, Serialize};
+use rustapi_jobs::{Job, JobContext, Result};
+use std::sync::Arc;
 
-// Enqueue it
-queue.push(EmailJob { to: "alice@example.com" }).await;
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct EmailJob {
+    to: String,
+    subject: String,
+    body: String,
+}
+
+// Implement the Job trait to define how to process it
+#[async_trait::async_trait]
+impl Job for EmailJob {
+    const NAME: &amp;'static str = "email_job";
+
+    async fn run(&amp;self, _ctx: JobContext) -&gt; Result&lt;()&gt; {
+        println!("Sending email to {} with subject: {}", self.to, self.subject);
+        // Simulate work
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        Ok(())
+    }
+}
 <span class="boring">}</span></code></pre>
+<h3 id="2-configure-the-queue"><a class="header" href="#2-configure-the-queue">2. Configure the Queue</a></h3>
+<p>In your <code>main</code> function, initialize the queue and start the worker.</p>
+<pre class="playground"><code class="language-rust">use rustapi_jobs::{JobQueue, InMemoryBackend, EnqueueOptions};
+
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
+    // 1. Create the backend
+    let backend = InMemoryBackend::new();
+
+    // 2. Create the queue
+    let queue = JobQueue::new(backend);
+
+    // 3. Register the job type
+    queue.register_job::&lt;EmailJob&gt;();
+
+    // 4. Start the worker in the background
+    let worker_queue = queue.clone();
+    tokio::spawn(async move {
+        worker_queue.start_workers().await;
+    });
+
+    // 5. Enqueue a job
+    queue.enqueue(EmailJob {
+        to: "user@example.com".into(),
+        subject: "Welcome!".into(),
+        body: "Thanks for joining.".into(),
+    }).await?;
+
+    Ok(())
+}</code></pre>
 <h2 id="backends"><a class="header" href="#backends">Backends</a></h2>
 <ul>
-<li><strong>Memory</strong>: Great for development and testing.</li>
-<li><strong>Redis</strong>: High throughput persistence.</li>
-<li><strong>Postgres</strong>: Transactional reliability (acid).</li>
+<li><strong>Memory</strong>: Great for development and testing. Zero infrastructure required.</li>
+<li><strong>Redis</strong>: High throughput persistence. Recommended for production.</li>
+<li><strong>Postgres</strong>: Transactional reliability (ACID). Best if you cannot lose jobs.</li>
 </ul>
-<h2 id="reliability"><a class="header" href="#reliability">Reliability</a></h2>
-<p>The worker system features:</p>
+<h2 id="reliability-features"><a class="header" href="#reliability-features">Reliability Features</a></h2>
+<p>The worker system includes built-in reliability features:</p>
 <ul>
-<li><strong>Exponential Backoff</strong>: Automatic retries for failing jobs.</li>
-<li><strong>Dead Letter Queue</strong>: Poison jobs are isolated for manual inspection.</li>
+<li><strong>Exponential Backoff</strong>: Automatically retries failing jobs with increasing delays.</li>
+<li><strong>Dead Letter Queue (DLQ)</strong>: “Poison” jobs that fail repeatedly are isolated for manual inspection.</li>
+<li><strong>Concurrency Control</strong>: Limit the number of concurrent workers to prevent overloading your system.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="rustapi-testing-the-auditor"><a class="header" href="#rustapi-testing-the-auditor">rustapi-testing: The Auditor</a></h1>
@@ -2564,6 +2653,15 @@ async fn main() -&gt; Result&lt;()&gt; {
 <h3 id="official-examples-repository"><a class="header" href="#official-examples-repository">Official Examples Repository</a></h3>
 <p>We maintain a comprehensive examples repository with <strong>18 real-world projects</strong> demonstrating RustAPI’s full capabilities:</p>
 <p>🔗 <strong><a href="https://github.com/Tuntii/rustapi-rs-examples">rustapi-rs-examples</a></strong> - Complete examples from hello-world to production microservices</p>
+<h3 id="cookbook-internal-path"><a class="header" href="#cookbook-internal-path">Cookbook Internal Path</a></h3>
+<p>If you prefer reading through documentation first, follow this path through the cookbook:</p>
+<ol>
+<li><strong>Foundations</strong>: Start with <a href="#handlers--extractors">Handlers &amp; Extractors</a> and <a href="#system-architecture">System Overview</a>.</li>
+<li><strong>Core Crates</strong>: Read about <a href="#rustapi-core-the-engine">rustapi-core</a> and <a href="#rustapi-macros-the-magic">rustapi-macros</a>.</li>
+<li><strong>Building Blocks</strong>: Try the <a href="#creating-resources">Creating Resources</a> recipe.</li>
+<li><strong>Security</strong>: Implement <a href="#jwt-authentication">JWT Authentication</a> and <a href="#csrf-protection-1">CSRF Protection</a>.</li>
+<li><strong>Advanced</strong>: Explore <a href="#production-tuning">Performance Tuning</a> and <a href="#http3-quic-support">HTTP/3</a>.</li>
+</ol>
 <h3 id="why-use-the-examples-repository"><a class="header" href="#why-use-the-examples-repository">Why Use the Examples Repository?</a></h3>
 <div class="table-wrapper">
 <table>

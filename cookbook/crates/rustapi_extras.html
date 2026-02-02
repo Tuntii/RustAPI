@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-af852796.js";
+            window.path_to_searchindex_js = "../searchindex-b8492182.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-5ece1d58.js"></script>
@@ -196,6 +196,7 @@
 <tr><td><code>cors</code></td><td><code>CorsLayer</code></td></tr>
 <tr><td><code>csrf</code></td><td><code>CsrfLayer</code>, <code>CsrfToken</code> extractor</td></tr>
 <tr><td><code>audit</code></td><td><code>AuditStore</code>, <code>AuditLogger</code></td></tr>
+<tr><td><code>insight</code></td><td><code>InsightLayer</code>, <code>InsightStore</code></td></tr>
 <tr><td><code>rate-limit</code></td><td><code>RateLimitLayer</code></td></tr>
 </tbody>
 </table>
@@ -258,6 +259,34 @@ async fn show_form(token: CsrfToken) -&gt; Html&lt;String&gt; {
     );
 }
 <span class="boring">}</span></code></pre>
+<h2 id="traffic-insight"><a class="header" href="#traffic-insight">Traffic Insight</a></h2>
+<p>The <code>insight</code> feature provides powerful real-time traffic analysis and debugging capabilities without external dependencies. It is designed to be low-overhead and privacy-conscious.</p>
+<pre><code class="language-toml">[dependencies]
+rustapi-extras = { version = "0.1", features = ["insight"] }
+</code></pre>
+<h3 id="setup"><a class="header" href="#setup">Setup</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_extras::insight::{InsightLayer, InMemoryInsightStore, InsightConfig};
+use std::sync::Arc;
+
+let store = Arc::new(InMemoryInsightStore::new());
+let config = InsightConfig::default();
+
+let app = RustApi::new()
+    .layer(InsightLayer::new(config, store.clone()));
+<span class="boring">}</span></code></pre>
+<h3 id="accessing-data"><a class="header" href="#accessing-data">Accessing Data</a></h3>
+<p>You can inspect the collected data (e.g., via an admin dashboard):</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi_rs::get("/admin/insights")]
+async fn get_insights(State(store): State&lt;Arc&lt;InMemoryInsightStore&gt;&gt;) -&gt; Json&lt;InsightStats&gt; {
+    // Returns aggregated stats like req/sec, error rates, p99 latency
+    Json(store.get_stats().await)
+}
+<span class="boring">}</span></code></pre>
+<p>The <code>InsightStore</code> trait allows you to implement custom backends (e.g., ClickHouse or Elasticsearch) if you need long-term retention.</p>
 
                     </main>
 
