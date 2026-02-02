@@ -13,19 +13,25 @@ use syn::{Data, DataEnum, DataStruct, Fields, Ident};
 /// - Internal crates (like rustapi-openapi itself)
 /// - User projects that depend on rustapi-rs
 fn get_openapi_path() -> TokenStream {
-    // First try rustapi-rs (the umbrella crate most users will have)
-    if let Ok(found) = crate_name("rustapi-rs") {
+    // Try both hyphenated and underscored versions for rustapi-rs
+    // Cargo normalizes crate names but proc-macro-crate looks at Cargo.toml
+    let rustapi_rs_found = crate_name("rustapi-rs")
+        .or_else(|_| crate_name("rustapi_rs"));
+    
+    if let Ok(found) = rustapi_rs_found {
         match found {
             FoundCrate::Itself => {
                 // We're in rustapi-rs itself
-                quote! { ::rustapi_rs::prelude::rustapi_openapi }
+                quote! { crate::prelude::rustapi_openapi }
             }
             FoundCrate::Name(name) => {
-                let ident = syn::Ident::new(&name, proc_macro2::Span::call_site());
+                // Normalize to underscore for use in code
+                let normalized = name.replace('-', "_");
+                let ident = syn::Ident::new(&normalized, proc_macro2::Span::call_site());
                 quote! { ::#ident::prelude::rustapi_openapi }
             }
         }
-    } else if let Ok(found) = crate_name("rustapi-openapi") {
+    } else if let Ok(found) = crate_name("rustapi-openapi").or_else(|_| crate_name("rustapi_openapi")) {
         // Fallback to rustapi-openapi directly
         match found {
             FoundCrate::Itself => {
@@ -33,26 +39,31 @@ fn get_openapi_path() -> TokenStream {
                 quote! { crate }
             }
             FoundCrate::Name(name) => {
-                let ident = syn::Ident::new(&name, proc_macro2::Span::call_site());
+                let normalized = name.replace('-', "_");
+                let ident = syn::Ident::new(&normalized, proc_macro2::Span::call_site());
                 quote! { ::#ident }
             }
         }
     } else {
-        // Default fallback - assume rustapi_rs is available
+        // Default fallback - assume rustapi_rs is available (most common case)
         quote! { ::rustapi_rs::prelude::rustapi_openapi }
     }
 }
 
 /// Get serde_json path - either from rustapi_rs::prelude or directly
 fn get_serde_json_path() -> TokenStream {
-    // First try rustapi-rs (the umbrella crate most users will have)
-    if let Ok(found) = crate_name("rustapi-rs") {
+    // Try both hyphenated and underscored versions
+    let rustapi_rs_found = crate_name("rustapi-rs")
+        .or_else(|_| crate_name("rustapi_rs"));
+    
+    if let Ok(found) = rustapi_rs_found {
         match found {
             FoundCrate::Itself => {
-                quote! { ::rustapi_rs::prelude::serde_json }
+                quote! { crate::prelude::serde_json }
             }
             FoundCrate::Name(name) => {
-                let ident = syn::Ident::new(&name, proc_macro2::Span::call_site());
+                let normalized = name.replace('-', "_");
+                let ident = syn::Ident::new(&normalized, proc_macro2::Span::call_site());
                 quote! { ::#ident::prelude::serde_json }
             }
         }

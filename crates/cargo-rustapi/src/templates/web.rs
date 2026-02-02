@@ -11,7 +11,7 @@ pub async fn generate(name: &str, features: &[String]) -> Result<()> {
         all_features.push("view".to_string());
     }
 
-    // Cargo.toml
+    // Cargo.toml - rustapi-view is accessed through rustapi-rs when "view" feature is enabled
     let cargo_toml = format!(
         r#"[package]
 name = "{name}"
@@ -20,7 +20,6 @@ edition = "2021"
 
 [dependencies]
 rustapi-rs = {{ version = "0.1"{features} }}
-rustapi-view = "0.1"
 tokio = {{ version = "1", features = ["full"] }}
 serde = {{ version = "1", features = ["derive"] }}
 tracing = "0.1"
@@ -40,7 +39,7 @@ tracing-subscriber = {{ version = "0.3", features = ["env-filter"] }}
     let main_rs = r#"mod handlers;
 
 use rustapi_rs::prelude::*;
-use rustapi_view::Templates;
+use rustapi_rs::view::Templates;
 
 #[rustapi_rs::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -77,7 +76,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let handlers_mod = r#"//! Page handlers
 
 use rustapi_rs::prelude::*;
-use rustapi_view::{Templates, View};
+use rustapi_rs::view::{Templates, View};
 use serde::Serialize;
 
 #[derive(Serialize)]

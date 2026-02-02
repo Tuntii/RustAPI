@@ -70,7 +70,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .init();
 
     // Get configuration
-    let env = Environment::from_env();
+    let env = Environment::current();
     let host = env_or("HOST", "127.0.0.1");
     let port = env_or("PORT", "8080");
     let addr = format!("{}:{}", host, port);
@@ -99,11 +99,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .mount_route(handlers::items::update_route())
         .mount_route(handlers::items::delete_route())
         // Documentation
-        .docs_with_info("/docs", ApiInfo {
-            title: env!("CARGO_PKG_NAME").to_string(),
-            version: env!("CARGO_PKG_VERSION").to_string(),
-            description: Some("Full-featured RustAPI application".to_string()),
-        })
+        .docs_with_info(
+            "/docs",
+            env!("CARGO_PKG_NAME"),
+            env!("CARGO_PKG_VERSION"),
+            Some("Full-featured RustAPI application"),
+        )
         .run(&addr)
         .await
 }
@@ -154,7 +155,7 @@ pub struct LoginResponse {
     pub token_type: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Schema)]
 pub struct UserClaims {
     pub sub: String,
     pub username: String,
@@ -177,7 +178,8 @@ pub async fn login(Json(body): Json<LoginRequest>) -> Result<Json<LoginResponse>
             exp: (chrono_now() + 86400) as usize, // 24 hours
         };
         
-        let token = create_token(&claims, &jwt_secret)?;
+        let token = create_token(&claims, &jwt_secret)
+            .map_err(|e| ApiError::internal(format!("Failed to create token: {}", e)))?;
         
         Ok(Json(LoginResponse {
             token,
@@ -193,7 +195,7 @@ pub async fn login(Json(body): Json<LoginRequest>) -> Result<Json<LoginResponse>
 #[rustapi_rs::tag("Authentication")]
 #[rustapi_rs::summary("Get current authenticated user")]
 pub async fn me(auth: AuthUser<UserClaims>) -> Json<UserClaims> {
-    Json(auth.claims)
+    Json(auth.0)
 }
 
 fn chrono_now() -> u64 {
@@ -251,12 +253,12 @@ pub async fn create(
     State(state): State<AppState>,
     Json(body): Json<CreateItem>,
 ) -> Json<Item> {
-    let item = Item::new(body.name, body.description, auth.claims.sub.clone());
+    let item = Item::new(body.name, body.description, auth.0.sub.clone());
     
     let mut store = state.write().await;
     store.items.insert(item.id.clone(), item.clone());
     
-    tracing::info!("User {} created item {}", auth.claims.username, item.id);
+    tracing::info!("User {} created item {}", auth.0.username, item.id);
     
     Json(item)
 }
@@ -303,7 +305,7 @@ pub async fn delete(
         .remove(&id)
         .ok_or_else(|| ApiError::not_found(format!("Item {} not found", id)))?;
     
-    tracing::info!("User {} deleted item {}", auth.claims.username, id);
+    tracing::info!("User {} deleted item {}", auth.0.username, id);
     
     Ok(NoContent)
 }

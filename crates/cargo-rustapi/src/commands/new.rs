@@ -15,6 +15,7 @@ use crate::templates::{self, ProjectTemplate};
 #[derive(Args, Debug)]
 pub struct NewArgs {
     /// Project name
+    #[arg(short, long)]
     pub name: Option<String>,
 
     /// Project template
