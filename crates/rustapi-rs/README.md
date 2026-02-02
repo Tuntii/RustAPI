@@ -58,9 +58,9 @@ struct HelloResponse {
 }
 
 /// Define an endpoint
-#[rustapi::get("/")]
-#[rustapi::tag("General")]
-#[rustapi::summary("Hello World Endpoint")]
+#[rustapi_rs::get("/")]
+#[rustapi_rs::tag("General")]
+#[rustapi_rs::summary("Hello World Endpoint")]
 async fn hello() -> Json<HelloResponse> {
     Json(HelloResponse {
         message: "Hello from RustAPI!".to_string(),
@@ -68,7 +68,7 @@ async fn hello() -> Json<HelloResponse> {
 }
 
 /// Run the server
-#[rustapi::main]
+#[rustapi_rs::main]
 async fn main() -> Result<()> {
     RustApi::new()
         .api_name("My Awesome API")

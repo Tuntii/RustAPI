@@ -31,12 +31,12 @@ Open `src/main.rs`. You'll see how simple it is:
 ```rust
 use rustapi_rs::prelude::*;
 
-#[rustapi::get("/hello")]
+#[rustapi_rs::get("/hello")]
 async fn hello() -> Json<String> {
     Json("Hello from RustAPI!".to_string())
 }
 
-#[rustapi::main]
+#[rustapi_rs::main]
 async fn main() -> Result<()> {
     // Auto-discovery magic ✨
     RustApi::auto()

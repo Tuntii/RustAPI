@@ -1,12 +1,17 @@
-# RustAPI TOON
+# rustapi-toon
 
-**Token-Oriented Object Notation (TOON) support.**
+**Lens**: "The Diplomat"  
+**Philosophy**: "Optimizing for Silicon Intelligence."
 
-## 🤖 What is TOON?
+Token-Oriented Object Notation (TOON) support for RustAPI.
 
-TOON is an experimental, density-optimized data format designed for **High-Volume LLM Interactions**.
+## What is TOON?
 
-When building agents or APIs that consume massive amounts of structured data via LLMs (GPT-4, Claude), standard JSON is token-expensive due to repeated keys and syntax overhead. TOON eliminates this redundancy.
+**T**oken-**O**riented **O**bject **N**otation is a format designed to be consumed by Large Language Models (LLMs). It reduces token usage by stripping unnecessary syntax (braces, quotes) while maintaining semantic structure.
+
+## Token Savings
+
+TOON often reduces token count by 30-50% compared to JSON, saving significant costs and context window space when communicating with models like GPT-4 or Gemini.
 
 ## Comparison
 
@@ -27,6 +32,17 @@ users[3]{id,role,active}:
   3,user,false
 ```
 
+## Content Negotiation
+
+The `LlmResponse<T>` type automatically negotiates the response format based on the `Accept` header.
+
+```rust
+async fn agent_data() -> LlmResponse<Data> {
+    // Returns JSON for browsers
+    // Returns TOON for AI Agents (using fewer tokens)
+}
+```
+
 ## Usage
 
 RustAPI handles this transparently via content negotiation.
@@ -35,8 +51,8 @@ RustAPI handles this transparently via content negotiation.
 use rustapi_toon::Toon;
 
 // Accepts explicit TOON or JSON automatically based on Content-Type
-#[post("/ingest")]
-async fn ingest(Toon(data): Toon<Vec<User>>) -> impl Responder {
+#[rustapi_rs::post("/ingest")]
+async fn ingest(Toon(data): Toon<Vec<User>>) -> impl IntoResponse {
     // ...
 }
 ```

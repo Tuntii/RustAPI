@@ -46,7 +46,7 @@ We use the `AuthUser<T>` extractor to protect routes, and `State<T>` to access t
 use rustapi_rs::prelude::*;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-#[rustapi::get("/profile")]
+#[rustapi_rs::get("/profile")]
 async fn protected_profile(
     // This handler will only be called if a valid token is present
     AuthUser(claims): AuthUser<Claims>
@@ -54,7 +54,7 @@ async fn protected_profile(
     Json(format!("Welcome back, {}! You are a {}.", claims.sub, claims.role))
 }
 
-#[rustapi::post("/login")]
+#[rustapi_rs::post("/login")]
 async fn login(State(state): State<AppState>) -> Result<Json<String>> {
     // In a real app, validate credentials first!
     use std::time::{SystemTime, UNIX_EPOCH};
@@ -82,7 +82,7 @@ async fn login(State(state): State<AppState>) -> Result<Json<String>> {
 Register the `JwtLayer` and the state in your application.
 
 ```rust
-#[rustapi::main]
+#[rustapi_rs::main]
 async fn main() -> Result<()> {
     // In production, load this from an environment variable!
     let secret = "my_secret_key".to_string();
@@ -107,7 +107,7 @@ async fn main() -> Result<()> {
 Since we have the `role` in our claims, we can enforce permissions easily within the handler:
 
 ```rust
-#[rustapi::get("/admin")]
+#[rustapi_rs::get("/admin")]
 async fn admin_only(AuthUser(claims): AuthUser<Claims>) -> Result<String, StatusCode> {
     if claims.role != "admin" {
         return Err(StatusCode::FORBIDDEN);

@@ -1,17 +1,37 @@
-# RustAPI Jobs
+# rustapi-jobs
 
-**Background job processing for RustAPI.**
+**Lens**: "The Workhorse"  
+**Philosophy**: "Fire and forget, with reliability guarantees."
 
-Offload heavy tasks (emails, report generation, webhooks) to background workers.
-
-## Key Features
-
-- **Backend Agnostic**: Drivers for **Redis** (recommended for speed) and **PostgreSQL** (for transactional reliability).
-- **At-Least-Once Delivery**: Jobs are not lost if a worker crashes.
-- **Retries**: Configurable exponential backoff policies.
-- **Scheduling**: Cron-like recurring tasks.
+Background job processing for RustAPI. Long-running tasks shouldn't block HTTP requests.
 
 ## Quick Start
+
+```rust
+// Define a job
+#[derive(Serialize, Deserialize)]
+struct EmailJob { to: String }
+
+// Enqueue it
+queue.push(EmailJob { to: "alice@example.com" }).await;
+```
+
+## Backends
+
+| Backend | Use Case |
+|---------|----------|
+| **Memory** | Development and testing |
+| **Redis** | High throughput persistence |
+| **Postgres** | Transactional reliability (ACID) |
+
+## Reliability Features
+
+- **Exponential Backoff**: Automatic retries for failing jobs
+- **Dead Letter Queue**: Poison jobs are isolated for manual inspection
+- **At-Least-Once Delivery**: Jobs are not lost if a worker crashes
+- **Scheduling**: Cron-like recurring tasks
+
+## Full Example
 
 ```rust
 use rustapi_jobs::{Job, JobContext};

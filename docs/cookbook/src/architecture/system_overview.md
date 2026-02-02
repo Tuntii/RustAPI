@@ -15,7 +15,7 @@ graph TB
     subgraph Public["📦 rustapi-rs (Public Facade)"]
         direction TB
         Prelude[prelude::*]
-        Macros["#[rustapi::get/post]<br>#[rustapi::main]"]
+        Macros["#[rustapi_rs::get/post]<br>#[rustapi_rs::main]"]
         Types[Json, Query, Path, Form]
     end
 
@@ -166,7 +166,7 @@ graph BT
 |-------|------|
 | `rustapi-rs` | Public facade — single `use` for everything |
 | `rustapi-core` | HTTP engine, routing, extractors, response handling |
-| `rustapi-macros` | Procedural macros: `#[rustapi::get]`, `#[rustapi::main]` |
+| `rustapi-macros` | Procedural macros: `#[rustapi_rs::get]`, `#[rustapi_rs::main]` |
 | `rustapi-openapi` | Swagger UI generation, OpenAPI 3.0 spec |
 | `rustapi-validate` | Request body/query validation via `#[validate]` |
 | `rustapi-toon` | TOON format serializer, content negotiation, LLM headers |

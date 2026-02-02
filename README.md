@@ -55,12 +55,12 @@ use rustapi_rs::prelude::*;
 #[derive(Serialize, Schema)]
 struct Message { text: String }
 
-#[rustapi::get("/hello/{name}")]
+#[rustapi_rs::get("/hello/{name}")]
 async fn hello(Path(name): Path<String>) -> Json<Message> {
     Json(Message { text: format!("Hello, {}!", name) })
 }
 
-#[rustapi::main]
+#[rustapi_rs::main]
 async fn main() {
     // 1 line to rule them all: Auto-discovery, OpenAPI, Validation
     RustApi::auto().run("127.0.0.1:8080").await

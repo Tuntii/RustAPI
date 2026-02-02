@@ -28,10 +28,10 @@ struct Metric {
 Use macros to enrich endpoints:
 
 ```rust
-#[rustapi::get("/metrics")]
-#[rustapi::tag("Metrics")]
-#[rustapi::summary("List all metrics")]
-#[rustapi::response(200, Json<Vec<Metric>>)]
+#[rustapi_rs::get("/metrics")]
+#[rustapi_rs::tag("Metrics")]
+#[rustapi_rs::summary("List all metrics")]
+#[rustapi_rs::response(200, Json<Vec<Metric>>)]
 async fn list_metrics() -> Json<Vec<Metric>> { ... }
 ```
 
@@ -52,14 +52,14 @@ By default, RustAPI infers the OpenAPI schema type for path parameters based on 
 - Parameters named `uuid`, `user_uuid`, etc. → `string` with `uuid` format
 - Other parameters → `string`
 
-However, sometimes auto-inference is incorrect. For example, you might have a parameter named `id` that is actually a UUID. Use the `#[rustapi::param]` attribute to override the inferred type:
+However, sometimes auto-inference is incorrect. For example, you might have a parameter named `id` that is actually a UUID. Use the `#[rustapi_rs::param]` attribute to override the inferred type:
 
 ```rust
 use uuid::Uuid;
 
-#[rustapi::get("/users/{id}")]
-#[rustapi::param(id, schema = "uuid")]
-#[rustapi::tag("Users")]
+#[rustapi_rs::get("/users/{id}")]
+#[rustapi_rs::param(id, schema = "uuid")]
+#[rustapi_rs::tag("Users")]
 async fn get_user(Path(id): Path<Uuid>) -> Json<User> {
     // The OpenAPI spec will now correctly show:
     // { "type": "string", "format": "uuid" }
@@ -85,8 +85,8 @@ You can also use a shorter syntax:
 
 ```rust
 // Shorter syntax: param_name = "schema_type"
-#[rustapi::get("/posts/{post_id}")]
-#[rustapi::param(post_id = "uuid")]
+#[rustapi_rs::get("/posts/{post_id}")]
+#[rustapi_rs::param(post_id = "uuid")]
 async fn get_post(Path(post_id): Path<Uuid>) -> Json<Post> { ... }
 ```
 

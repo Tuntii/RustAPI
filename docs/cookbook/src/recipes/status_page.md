@@ -9,7 +9,7 @@ To enable the status page, simply call `.status_page()` on your `RustApi` builde
 ```rust
 use rustapi_rs::prelude::*;
 
-#[rustapi::main]
+#[rustapi_rs::main]
 async fn main() -> Result<()> {
     RustApi::auto()
         .status_page() // <--- Enable Status Page
@@ -121,7 +121,7 @@ If you need more control, you can customize the path and title of the status pag
 use rustapi_rs::prelude::*;
 use rustapi_rs::status::StatusConfig;
 
-#[rustapi::main]
+#[rustapi_rs::main]
 async fn main() -> Result<()> {
     // Configure the status page
     let config = StatusConfig::new()

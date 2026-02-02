@@ -20,12 +20,12 @@ pub struct CreateUser {
     pub name: String,
 }
 
-#[rustapi::get("/users")]
+#[rustapi_rs::get("/users")]
 pub async fn list() -> Json<Vec<User>> {
     Json(vec![]) // Fetch from DB in real app
 }
 
-#[rustapi::post("/users")]
+#[rustapi_rs::post("/users")]
 pub async fn create(Json(payload): Json<CreateUser>) -> impl IntoResponse {
     let user = User { id: 1, name: payload.name };
     (StatusCode::CREATED, Json(user))
@@ -39,7 +39,7 @@ use rustapi_rs::prelude::*;
 
 mod handlers; // Make sure the module is part of the compilation unit!
 
-#[rustapi::main]
+#[rustapi_rs::main]
 async fn main() -> Result<()> {
     // RustAPI automatically discovers all routes decorated with macros
     RustApi::auto()
@@ -50,6 +50,6 @@ async fn main() -> Result<()> {
 
 ## Discussion
 
-RustAPI uses **distributed slices** (via `linkme`) to automatically register routes decorated with `#[rustapi::get]`, `#[rustapi::post]`, etc. This means you don't need to manually import or mount every single handler in your `main` function.
+RustAPI uses **distributed slices** (via `linkme`) to automatically register routes decorated with `#[rustapi_rs::get]`, `#[rustapi_rs::post]`, etc. This means you don't need to manually import or mount every single handler in your `main` function.
 
 Just ensure your handler modules are reachable (e.g., via `mod handlers;`), and the framework handles the rest. This encourages a clean, Domain-Driven Design (DDD) structure where resources are self-contained.

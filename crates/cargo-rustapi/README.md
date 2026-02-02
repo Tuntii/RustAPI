@@ -1,8 +1,9 @@
 # cargo-rustapi
 
-**The official CLI tool for the RustAPI framework.**
+**Lens**: "The Architect"  
+**Philosophy**: "Scaffolding best practices from day one."
 
-Use this tool to scaffold new projects, generate code, and fast-track your development workflow.
+The RustAPI CLI isn't just a project generator; it's a productivity multiplier.
 
 ## 📦 Installation
 
@@ -10,52 +11,38 @@ Use this tool to scaffold new projects, generate code, and fast-track your devel
 cargo install cargo-rustapi
 ```
 
-## 🛠️ Usage
+## 🛠️ Commands
 
-### Creating a New Project
+| Command | Description |
+|---------|-------------|
+| `cargo rustapi new <name>` | Create a new project with the perfect directory structure |
+| `cargo rustapi run` | Run the development server |
+| `cargo rustapi run --reload` | Run with hot-reload (auto-rebuild on file changes) |
+| `cargo rustapi generate resource <name>` | Scaffold a new API resource (Model + Handlers + Tests) |
+| `cargo rustapi client --spec <path> --language <lang>` | Generate a client library (Rust, TS, Python) from OpenAPI spec |
+| `cargo rustapi deploy <platform>` | Generate deployment configs for Docker, Fly.io, Railway, or Shuttle |
+| `cargo rustapi migrate <action>` | Database migration commands (create, run, revert, status, reset) |
 
-Use the `new` command to generate a project structure.
+## 🚀 Quick Start
 
 ```bash
-# Interactive mode (Recommended)
-cargo rustapi new my-app
-
-# Quick start with specific template
+# Create a new project
 cargo rustapi new my-app --template api
+
+# Run with auto-reload
+cd my-app
+cargo rustapi run --reload
 ```
+
+## 📁 Templates
+
+The templates used by the CLI are opinionated but flexible. They enforce:
+- Modular folder structure
+- Implementation of `State` pattern
+- Separation of `Error` types
 
 **Available Templates:**
-- `minimal`: Basic `main.rs` and `Cargo.toml`.
-- `api`: REST API structure with separated `handlers` and `models`.
-- `web`: Web application with HTML templates (`rustapi-view`).
-- `full`: Complete example with Database, Auth, and Docker support.
-
-### Running Development Server
-
-Run your application with hot-reloading (requires `cargo-watch`).
-
-```bash
-cargo rustapi run
-```
-
-### Code Generation
-
-Save time by generating boilerplate.
-
-```bash
-# Generate a handler function and register it
-cargo rustapi generate handler users
-
-# Generate a database model
-cargo rustapi generate model User
-
-# Generate a full CRUD resource (Model + Handlers + Tests)
-cargo rustapi generate crud product
-```
-
-### Managing Migrations (Planned)
-
-```bash
-cargo rustapi migrate run
-cargo rustapi migrate revert
-```
+- `minimal`: Basic `main.rs` and `Cargo.toml`
+- `api`: REST API structure with separated `handlers` and `models`
+- `web`: Web application with HTML templates (`rustapi-view`)
+- `full`: Complete example with Database, Auth, and Docker support

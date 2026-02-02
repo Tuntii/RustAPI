@@ -1,16 +1,36 @@
-# RustAPI Testing
+# rustapi-testing
 
-**A fluid, ergonomic test harness for RustAPI applications.**
+**Lens**: "The Auditor"  
+**Philosophy**: "Trust, but verify."
 
-Don't just test your logic; test your endpoints.
+A fluid, ergonomic test harness for RustAPI applications. Don't just test your logic; test your endpoints.
 
-## Features
+## The `TestClient`
 
-- **`TestClient`**: Spawns your application directly (no port binding needed) and sends requests.
-- **Fluid Assertions**: `res.assert_status(200).assert_json(&expected)`.
-- **Mocking**: Utilities to swap out state/databases during tests.
+Integration testing is often painful. We make it easy. `TestClient` spawns your `RustApi` application without binding to a real TCP port, communicating directly with the service layer.
 
-## Example
+```rust
+let client = TestClient::new(app);
+```
+
+## Fluent Assertions
+
+The client provides a fluent API for making requests and asserting responses.
+
+```rust
+client.post("/login")
+    .json(&credentials)
+    .send()
+    .await
+    .assert_status(200)
+    .assert_header("Set-Cookie", "session=...");
+```
+
+## Mocking Services
+
+Because `rustapi-rs` relies heavily on Dependency Injection via `State<T>`, you can easily inject mock implementations of your database or downstream services when creating the `RustApi` instance for your test.
+
+## Full Example
 
 ```rust
 #[cfg(test)]

@@ -45,28 +45,28 @@ This is heavily used to group multiple extractors into a single struct (often ca
 
 RustAPI provides several attribute macros for enriching OpenAPI documentation:
 
-### `#[rustapi::tag]`
+### `#[rustapi_rs::tag]`
 
 Groups endpoints under a common tag in Swagger UI:
 
 ```rust
-#[rustapi::get("/users")]
-#[rustapi::tag("Users")]
+#[rustapi_rs::get("/users")]
+#[rustapi_rs::tag("Users")]
 async fn list_users() -> Json<Vec<User>> { ... }
 ```
 
-### `#[rustapi::summary]` & `#[rustapi::description]`
+### `#[rustapi_rs::summary]` & `#[rustapi_rs::description]`
 
 Adds human-readable documentation:
 
 ```rust
-#[rustapi::get("/users/{id}")]
-#[rustapi::summary("Get user by ID")]
-#[rustapi::description("Returns a single user by their unique identifier.")]
+#[rustapi_rs::get("/users/{id}")]
+#[rustapi_rs::summary("Get user by ID")]
+#[rustapi_rs::description("Returns a single user by their unique identifier.")]
 async fn get_user(Path(id): Path<i64>) -> Json<User> { ... }
 ```
 
-### `#[rustapi::param]`
+### `#[rustapi_rs::param]`
 
 Customizes the OpenAPI schema type for path parameters. This is essential when the auto-inferred type is incorrect:
 
@@ -75,8 +75,8 @@ use uuid::Uuid;
 
 // Without #[param], the `id` parameter would be documented as "integer"
 // because of the naming convention. With #[param], it's correctly documented as UUID.
-#[rustapi::get("/items/{id}")]
-#[rustapi::param(id, schema = "uuid")]
+#[rustapi_rs::get("/items/{id}")]
+#[rustapi_rs::param(id, schema = "uuid")]
 async fn get_item(Path(id): Path<Uuid>) -> Json<Item> {
     find_item(id).await
 }
@@ -86,6 +86,6 @@ async fn get_item(Path(id): Path<Uuid>) -> Json<Item> {
 
 **Alternative syntax:**
 ```rust
-#[rustapi::param(id = "uuid")]  // Shorter form
+#[rustapi_rs::param(id = "uuid")]  // Shorter form
 ```
 

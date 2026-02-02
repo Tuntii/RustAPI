@@ -13,7 +13,7 @@ RustAPI is moving to a native OpenAPI 3.1 generator to reduce external dependenc
 
 ### 1. Capture (Macros)
 Endpoint metadata is captured at compile-time using procedural macros:
-- `#[rustapi::get("/path")]`: Captures method, path, handler function, and doc comments.
+- `#[rustapi_rs::get("/path")]`: Captures method, path, handler function, and doc comments.
 - `#[derive(Schema)]`: Generates `impl RustApiSchema` for data types.
 - `#[derive(TypedPath)]`: Captures path parameter structure.
 

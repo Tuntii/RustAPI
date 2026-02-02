@@ -6,26 +6,26 @@
 
 ## Attribute Macros
 
-### `#[rustapi::main]`
+### `#[rustapi_rs::main]`
 Replaces `#[tokio::main]`. Sets up the runtime, tracing subscriber, and other framework essentials.
 
 ### HTTP Method Handlers
 Registers a function as a route handler.
 
-- `#[rustapi::get("/users/{id}")]`
-- `#[rustapi::post("/users")]`
-- `#[rustapi::put("/users/{id}")]`
-- `#[rustapi::delete("/users/{id}")]`
-- `#[rustapi::patch("/users/{id}")]`
-- `#[rustapi::head("/health")]`
-- `#[rustapi::options("/cors")]`
+- `#[rustapi_rs::get("/users/{id}")]`
+- `#[rustapi_rs::post("/users")]`
+- `#[rustapi_rs::put("/users/{id}")]`
+- `#[rustapi_rs::delete("/users/{id}")]`
+- `#[rustapi_rs::patch("/users/{id}")]`
+- `#[rustapi_rs::head("/health")]`
+- `#[rustapi_rs::options("/cors")]`
 
 ### OpenAPI Metadata
 Enrich your auto-generated documentation.
 
-- `#[rustapi::tag("Auth")]`: Groups endpoints.
-- `#[rustapi::summary("Logs in a user")]`: Brief summary.
-- `#[rustapi::description("Full markdown description...")]`: Detailed docs.
+- `#[rustapi_rs::tag("Auth")]`: Groups endpoints.
+- `#[rustapi_rs::summary("Logs in a user")]`: Brief summary.
+- `#[rustapi_rs::description("Full markdown description...")]`: Detailed docs.
 
 ## Derive Macros
 

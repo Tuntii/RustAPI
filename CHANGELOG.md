@@ -54,7 +54,7 @@ This release delivers a **12x performance improvement**, bringing RustAPI from ~
 - **Unified Response Body**: Refactored `rustapi-core` to use a unified `Body`/`ResponseBody` abstraction for full and streaming responses. Standardized middleware and cache layers.
 - **Streaming Behavior**: Clarified flow behavior for streaming responses (e.g., explicit `Transfer-Encoding: chunked`).
 - **Server Lifecycle**: Added graceful shutdown signal method for better lifecycle control.
-- **OpenAPI Path Params**: Added support for custom schema type overrides for path parameters via `#[rustapi::param]` and `.param()`.
+- **OpenAPI Path Params**: Added support for custom schema type overrides for path parameters via `#[rustapi_rs::param]` and `.param()`.
 
 ### Fixed
 - **Validation Groups**: Fixed logic for default group application and context boundaries.
@@ -228,8 +228,8 @@ This release delivers a **12x performance improvement**, bringing RustAPI from ~
 - Response types with automatic serialization
 - Async handler support
 - Basic error handling with `ApiError`
-- `#[rustapi::get]`, `#[rustapi::post]` route macros
-- `#[rustapi::main]` async main macro
+- `#[rustapi_rs::get]`, `#[rustapi_rs::post]` route macros
+- `#[rustapi_rs::main]` async main macro
 
 #### Phase 2: Validation & OpenAPI
 - Automatic OpenAPI spec generation
@@ -237,7 +237,7 @@ This release delivers a **12x performance improvement**, bringing RustAPI from ~
 - Request validation with validator crate
 - `#[validate]` attribute support
 - 422 Unprocessable Entity for validation errors
-- `#[rustapi::tag]` and `#[rustapi::summary]` macros
+- `#[rustapi_rs::tag]` and `#[rustapi_rs::summary]` macros
 - Schema derivation for request/response types
 
 #### Phase 3: Batteries Included
