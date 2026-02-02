@@ -5,25 +5,87 @@
 
 ## Background Processing
 
-Long-running tasks shouldn't block HTTP requests. `rustapi-jobs` provides a robust queue system.
+Long-running tasks shouldn't block HTTP requests. `rustapi-jobs` provides a robust queue system that can run in-memory or be backed by Redis/Postgres.
+
+## Usage Example
+
+Here is how to set up a simple background job queue using the in-memory backend.
+
+### 1. Define the Job
+
+Jobs are simple structs that implement `Serialize` and `Deserialize`.
 
 ```rust
-// Define a job
-#[derive(Serialize, Deserialize)]
-struct EmailJob { to: String }
+use serde::{Deserialize, Serialize};
+use rustapi_jobs::{Job, JobContext, Result};
+use std::sync::Arc;
 
-// Enqueue it
-queue.push(EmailJob { to: "alice@example.com" }).await;
+#[derive(Serialize, Deserialize, Debug, Clone)]
+struct EmailJob {
+    to: String,
+    subject: String,
+    body: String,
+}
+
+// Implement the Job trait to define how to process it
+#[async_trait::async_trait]
+impl Job for EmailJob {
+    const NAME: &'static str = "email_job";
+
+    async fn run(&self, _ctx: JobContext) -> Result<()> {
+        println!("Sending email to {} with subject: {}", self.to, self.subject);
+        // Simulate work
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+        Ok(())
+    }
+}
+```
+
+### 2. Configure the Queue
+
+In your `main` function, initialize the queue and start the worker.
+
+```rust
+use rustapi_jobs::{JobQueue, InMemoryBackend, EnqueueOptions};
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // 1. Create the backend
+    let backend = InMemoryBackend::new();
+
+    // 2. Create the queue
+    let queue = JobQueue::new(backend);
+
+    // 3. Register the job type
+    queue.register_job::<EmailJob>();
+
+    // 4. Start the worker in the background
+    let worker_queue = queue.clone();
+    tokio::spawn(async move {
+        worker_queue.start_workers().await;
+    });
+
+    // 5. Enqueue a job
+    queue.enqueue(EmailJob {
+        to: "user@example.com".into(),
+        subject: "Welcome!".into(),
+        body: "Thanks for joining.".into(),
+    }).await?;
+
+    Ok(())
+}
 ```
 
 ## Backends
 
-- **Memory**: Great for development and testing.
-- **Redis**: High throughput persistence.
-- **Postgres**: Transactional reliability (acid).
+- **Memory**: Great for development and testing. Zero infrastructure required.
+- **Redis**: High throughput persistence. Recommended for production.
+- **Postgres**: Transactional reliability (ACID). Best if you cannot lose jobs.
 
-## Reliability
+## Reliability Features
 
-The worker system features:
-- **Exponential Backoff**: Automatic retries for failing jobs.
-- **Dead Letter Queue**: Poison jobs are isolated for manual inspection.
+The worker system includes built-in reliability features:
+
+- **Exponential Backoff**: Automatically retries failing jobs with increasing delays.
+- **Dead Letter Queue (DLQ)**: "Poison" jobs that fail repeatedly are isolated for manual inspection.
+- **Concurrency Control**: Limit the number of concurrent workers to prevent overloading your system.

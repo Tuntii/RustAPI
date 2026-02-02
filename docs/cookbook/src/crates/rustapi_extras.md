@@ -13,6 +13,7 @@ This crate is a collection of production-ready middleware. Everything is behind 
 | `cors` | `CorsLayer` |
 | `csrf` | `CsrfLayer`, `CsrfToken` extractor |
 | `audit` | `AuditStore`, `AuditLogger` |
+| `insight` | `InsightLayer`, `InsightStore` |
 | `rate-limit` | `RateLimitLayer` |
 
 ## Middleware Usage
@@ -82,3 +83,38 @@ async fn delete_user(
 }
 ```
 
+## Traffic Insight
+
+The `insight` feature provides powerful real-time traffic analysis and debugging capabilities without external dependencies. It is designed to be low-overhead and privacy-conscious.
+
+```toml
+[dependencies]
+rustapi-extras = { version = "0.1", features = ["insight"] }
+```
+
+### Setup
+
+```rust
+use rustapi_extras::insight::{InsightLayer, InMemoryInsightStore, InsightConfig};
+use std::sync::Arc;
+
+let store = Arc::new(InMemoryInsightStore::new());
+let config = InsightConfig::default();
+
+let app = RustApi::new()
+    .layer(InsightLayer::new(config, store.clone()));
+```
+
+### Accessing Data
+
+You can inspect the collected data (e.g., via an admin dashboard):
+
+```rust
+#[rustapi_rs::get("/admin/insights")]
+async fn get_insights(State(store): State<Arc<InMemoryInsightStore>>) -> Json<InsightStats> {
+    // Returns aggregated stats like req/sec, error rates, p99 latency
+    Json(store.get_stats().await)
+}
+```
+
+The `InsightStore` trait allows you to implement custom backends (e.g., ClickHouse or Elasticsearch) if you need long-term retention.
