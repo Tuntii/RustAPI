@@ -62,7 +62,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 4. Start the worker in the background
     let worker_queue = queue.clone();
     tokio::spawn(async move {
-        worker_queue.start_workers().await;
+        if let Err(err) = worker_queue.start_worker().await {
+            eprintln!("Job worker exited with error: {err}");
+        }
     });
 
     // 5. Enqueue a job
