@@ -14,8 +14,7 @@ use crate::templates::{self, ProjectTemplate};
 /// Arguments for the `new` command
 #[derive(Args, Debug)]
 pub struct NewArgs {
-    /// Project name
-    #[arg(short, long)]
+    /// Project name (positional argument)
     pub name: Option<String>,
 
     /// Project template
