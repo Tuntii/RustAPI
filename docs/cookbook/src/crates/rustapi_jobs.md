@@ -31,9 +31,10 @@ struct EmailJob {
 #[async_trait::async_trait]
 impl Job for EmailJob {
     const NAME: &'static str = "email_job";
+    type Data = EmailJob;
 
-    async fn run(&self, _ctx: JobContext) -> Result<()> {
-        println!("Sending email to {} with subject: {}", self.to, self.subject);
+    async fn execute(_ctx: JobContext, data: Self::Data) -> Result<()> {
+        println!("Sending email to {} with subject: {}", data.to, data.subject);
         // Simulate work
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
         Ok(())
