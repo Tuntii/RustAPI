@@ -31,10 +31,9 @@ struct EmailJob {
 #[async_trait::async_trait]
 impl Job for EmailJob {
     const NAME: &'static str = "email_job";
-    type Data = EmailJob;
 
-    async fn execute(_ctx: JobContext, data: Self::Data) -> Result<()> {
-        println!("Sending email to {} with subject: {}", data.to, data.subject);
+    async fn run(&self, _ctx: JobContext) -> Result<()> {
+        println!("Sending email to {} with subject: {}", self.to, self.subject);
         // Simulate work
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
         Ok(())
@@ -58,15 +57,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let queue = JobQueue::new(backend);
 
     // 3. Register the job type
-    // `register_job` is async and expects a job handler instance, not a type parameter.
-    queue.register_job(EmailJobHandler::new()).await?;
+    queue.register_job::<EmailJob>();
 
     // 4. Start the worker in the background
     let worker_queue = queue.clone();
     tokio::spawn(async move {
-        if let Err(err) = worker_queue.start_worker().await {
-            eprintln!("Job worker exited with error: {err}");
-        }
+        worker_queue.start_workers().await;
     });
 
     // 5. Enqueue a job

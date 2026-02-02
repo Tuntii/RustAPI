@@ -89,7 +89,7 @@ The `insight` feature provides powerful real-time traffic analysis and debugging
 
 ```toml
 [dependencies]
-rustapi-extras = { version = "0.1.233", features = ["insight"] }
+rustapi-extras = { version = "0.1", features = ["insight"] }
 ```
 
 ### Setup
@@ -98,12 +98,11 @@ rustapi-extras = { version = "0.1.233", features = ["insight"] }
 use rustapi_extras::insight::{InsightLayer, InMemoryInsightStore, InsightConfig};
 use std::sync::Arc;
 
-let store = Arc::new(InMemoryInsightStore::new(InMemoryInsightStore::default_capacity()));
+let store = Arc::new(InMemoryInsightStore::new());
 let config = InsightConfig::default();
 
 let app = RustApi::new()
-    .state(store.clone())
-    .layer(InsightLayer::with_config(config).with_store(store.clone()));
+    .layer(InsightLayer::new(config, store.clone()));
 ```
 
 ### Accessing Data
