@@ -117,15 +117,24 @@ pub struct MigrateResetArgs {
 
 /// Execute migration commands
 pub async fn migrate(args: MigrateArgs) -> Result<()> {
-    // Check if sqlx-cli is installed
-    ensure_sqlx_installed().await?;
-
     match args {
-        MigrateArgs::Run(args) => run_migrations(args).await,
-        MigrateArgs::Revert(args) => revert_migrations(args).await,
-        MigrateArgs::Status(args) => show_status(args).await,
-        MigrateArgs::Create(args) => create_migration(args).await,
-        MigrateArgs::Reset(args) => reset_database(args).await,
+        MigrateArgs::Run(args) => {
+            ensure_sqlx_installed().await?;
+            run_migrations(args).await
+        }
+        MigrateArgs::Revert(args) => {
+            ensure_sqlx_installed().await?;
+            revert_migrations(args).await
+        }
+        MigrateArgs::Status(args) => {
+            ensure_sqlx_installed().await?;
+            show_status(args).await
+        }
+        MigrateArgs::Create(args) => create_migration(args).await, // No sqlx needed
+        MigrateArgs::Reset(args) => {
+            ensure_sqlx_installed().await?;
+            reset_database(args).await
+        }
     }
 }
 
