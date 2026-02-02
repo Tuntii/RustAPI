@@ -40,7 +40,7 @@ use tokio::sync::RwLock;
 
 pub type AppState = Arc<RwLock<models::Store>>;
 
-#[rustapi::main]
+#[rustapi_rs::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // Initialize tracing
     tracing_subscriber::fmt()
@@ -64,11 +64,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         // Health check
         .route("/health", get(handlers::health))
         // Items CRUD
-        .mount(handlers::items::list)
-        .mount(handlers::items::get)
-        .mount(handlers::items::create)
-        .mount(handlers::items::update)
-        .mount(handlers::items::delete)
+        .mount_route(handlers::items::list_route())
+        .mount_route(handlers::items::get_route())
+        .mount_route(handlers::items::create_route())
+        .mount_route(handlers::items::update_route())
+        .mount_route(handlers::items::delete_route())
         // Documentation
         .docs("/docs")
         .run(&addr)
@@ -133,18 +133,18 @@ use crate::AppState;
 use rustapi_rs::prelude::*;
 
 /// List all items
-#[rustapi::get("/items")]
-#[rustapi::tag("Items")]
-#[rustapi::summary("List all items")]
+#[rustapi_rs::get("/items")]
+#[rustapi_rs::tag("Items")]
+#[rustapi_rs::summary("List all items")]
 pub async fn list(State(state): State<AppState>) -> Json<Vec<Item>> {
     let store = state.read().await;
     Json(store.items.values().cloned().collect())
 }
 
 /// Get an item by ID
-#[rustapi::get("/items/{id}")]
-#[rustapi::tag("Items")]
-#[rustapi::summary("Get item by ID")]
+#[rustapi_rs::get("/items/{id}")]
+#[rustapi_rs::tag("Items")]
+#[rustapi_rs::summary("Get item by ID")]
 pub async fn get(
     Path(id): Path<String>,
     State(state): State<AppState>,
@@ -158,25 +158,25 @@ pub async fn get(
 }
 
 /// Create a new item
-#[rustapi::post("/items")]
-#[rustapi::tag("Items")]
-#[rustapi::summary("Create a new item")]
+#[rustapi_rs::post("/items")]
+#[rustapi_rs::tag("Items")]
+#[rustapi_rs::summary("Create a new item")]
 pub async fn create(
     State(state): State<AppState>,
     Json(body): Json<CreateItem>,
-) -> Result<Created<Json<Item>>> {
+) -> Json<Item> {
     let item = Item::new(body.name, body.description);
     
     let mut store = state.write().await;
     store.items.insert(item.id.clone(), item.clone());
     
-    Ok(Created(Json(item)))
+    Json(item)
 }
 
 /// Update an item
-#[rustapi::put("/items/{id}")]
-#[rustapi::tag("Items")]
-#[rustapi::summary("Update an item")]
+#[rustapi_rs::put("/items/{id}")]
+#[rustapi_rs::tag("Items")]
+#[rustapi_rs::summary("Update an item")]
 pub async fn update(
     Path(id): Path<String>,
     State(state): State<AppState>,
@@ -192,7 +192,7 @@ pub async fn update(
         item.name = name;
     }
     if let Some(description) = body.description {
-        item.description = description;
+        item.description = Some(description);
     }
     item.updated_at = chrono_now();
     
@@ -200,9 +200,9 @@ pub async fn update(
 }
 
 /// Delete an item
-#[rustapi::delete("/items/{id}")]
-#[rustapi::tag("Items")]
-#[rustapi::summary("Delete an item")]
+#[rustapi_rs::delete("/items/{id}")]
+#[rustapi_rs::tag("Items")]
+#[rustapi_rs::summary("Delete an item")]
 pub async fn delete(
     Path(id): Path<String>,
     State(state): State<AppState>,
@@ -230,7 +230,7 @@ fn chrono_now() -> String {
     let models_mod = r#"//! Data models
 
 use serde::{Deserialize, Serialize};
-use rustapi_rs::Schema;
+use rustapi_rs::prelude::Schema;
 use std::collections::HashMap;
 
 /// In-memory data store

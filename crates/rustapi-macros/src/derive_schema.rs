@@ -1,12 +1,87 @@
 use proc_macro2::TokenStream;
+use proc_macro_crate::{crate_name, FoundCrate};
 use quote::quote;
 use syn::{Data, DataEnum, DataStruct, Fields, Ident};
+
+/// Determine the path to rustapi_openapi module based on the user's dependencies.
+///
+/// This function checks if the user's Cargo.toml has:
+/// 1. `rustapi-rs` - use `::rustapi_rs::prelude::rustapi_openapi`
+/// 2. `rustapi-openapi` - use `::rustapi_openapi` directly
+///
+/// This allows the Schema derive macro to work in both:
+/// - Internal crates (like rustapi-openapi itself)
+/// - User projects that depend on rustapi-rs
+fn get_openapi_path() -> TokenStream {
+    // Try both hyphenated and underscored versions for rustapi-rs
+    // Cargo normalizes crate names but proc-macro-crate looks at Cargo.toml
+    let rustapi_rs_found = crate_name("rustapi-rs").or_else(|_| crate_name("rustapi_rs"));
+
+    if let Ok(found) = rustapi_rs_found {
+        match found {
+            FoundCrate::Itself => {
+                // We're in rustapi-rs itself
+                quote! { crate::prelude::rustapi_openapi }
+            }
+            FoundCrate::Name(name) => {
+                // Normalize to underscore for use in code
+                let normalized = name.replace('-', "_");
+                let ident = syn::Ident::new(&normalized, proc_macro2::Span::call_site());
+                quote! { ::#ident::prelude::rustapi_openapi }
+            }
+        }
+    } else if let Ok(found) =
+        crate_name("rustapi-openapi").or_else(|_| crate_name("rustapi_openapi"))
+    {
+        // Fallback to rustapi-openapi directly
+        match found {
+            FoundCrate::Itself => {
+                // We're inside rustapi-openapi itself, use crate::
+                quote! { crate }
+            }
+            FoundCrate::Name(name) => {
+                let normalized = name.replace('-', "_");
+                let ident = syn::Ident::new(&normalized, proc_macro2::Span::call_site());
+                quote! { ::#ident }
+            }
+        }
+    } else {
+        // Default fallback - assume rustapi_rs is available (most common case)
+        quote! { ::rustapi_rs::prelude::rustapi_openapi }
+    }
+}
+
+/// Get serde_json path - either from rustapi_rs::prelude or directly
+fn get_serde_json_path() -> TokenStream {
+    // Try both hyphenated and underscored versions
+    let rustapi_rs_found = crate_name("rustapi-rs").or_else(|_| crate_name("rustapi_rs"));
+
+    if let Ok(found) = rustapi_rs_found {
+        match found {
+            FoundCrate::Itself => {
+                quote! { crate::prelude::serde_json }
+            }
+            FoundCrate::Name(name) => {
+                let normalized = name.replace('-', "_");
+                let ident = syn::Ident::new(&normalized, proc_macro2::Span::call_site());
+                quote! { ::#ident::prelude::serde_json }
+            }
+        }
+    } else {
+        // Fallback to serde_json directly (internal crates should have it)
+        quote! { ::serde_json }
+    }
+}
 
 pub fn expand_derive_schema(input: syn::DeriveInput) -> TokenStream {
     let name = input.ident;
     let generics = input.generics;
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
     let name_str = name.to_string();
+
+    // Get the correct paths based on available crates
+    let openapi_path = get_openapi_path();
+    let serde_json_path = get_serde_json_path();
 
     // Generate name() impl body
     let type_params: Vec<Ident> = generics.type_params().map(|p| p.ident.clone()).collect();
@@ -17,23 +92,26 @@ pub fn expand_derive_schema(input: syn::DeriveInput) -> TokenStream {
             let mut n = String::from(#name_str);
             #(
                 n.push('_');
-                n.push_str(&<#type_params as ::rustapi_openapi::schema::RustApiSchema>::name());
+                n.push_str(&<#type_params as #openapi_path::schema::RustApiSchema>::name());
             )*
             std::borrow::Cow::Owned(n)
         }
     };
 
     let (schema_impl, field_schemas_impl) = match input.data {
-        Data::Struct(data) => impl_struct_schema_bodies(&name, data),
-        Data::Enum(data) => (impl_enum_schema(&name, data), quote! { None }),
+        Data::Struct(data) => impl_struct_schema_bodies(&openapi_path, &serde_json_path, data),
+        Data::Enum(data) => (
+            impl_enum_schema(&openapi_path, &serde_json_path, data),
+            quote! { None },
+        ),
         Data::Union(_) => {
             return syn::Error::new_spanned(name, "Unions not supported").to_compile_error();
         }
     };
 
     quote! {
-        impl #impl_generics ::rustapi_openapi::schema::RustApiSchema for #name #ty_generics #where_clause {
-            fn schema(ctx: &mut ::rustapi_openapi::schema::SchemaCtx) -> ::rustapi_openapi::schema::SchemaRef {
+        impl #impl_generics #openapi_path::schema::RustApiSchema for #name #ty_generics #where_clause {
+            fn schema(ctx: &mut #openapi_path::schema::SchemaCtx) -> #openapi_path::schema::SchemaRef {
                 #schema_impl
             }
 
@@ -46,14 +124,18 @@ pub fn expand_derive_schema(input: syn::DeriveInput) -> TokenStream {
                 #name_impl_body
             }
 
-            fn field_schemas(ctx: &mut ::rustapi_openapi::schema::SchemaCtx) -> Option<::std::collections::BTreeMap<String, ::rustapi_openapi::schema::SchemaRef>> {
+            fn field_schemas(ctx: &mut #openapi_path::schema::SchemaCtx) -> Option<::std::collections::BTreeMap<String, #openapi_path::schema::SchemaRef>> {
                 #field_schemas_impl
             }
         }
     }
 }
 
-fn impl_struct_schema_bodies(_name: &Ident, data: DataStruct) -> (TokenStream, TokenStream) {
+fn impl_struct_schema_bodies(
+    openapi_path: &TokenStream,
+    serde_json_path: &TokenStream,
+    data: DataStruct,
+) -> (TokenStream, TokenStream) {
     let mut field_logic = Vec::new();
     let mut field_schemas_logic = Vec::new();
 
@@ -81,16 +163,16 @@ fn impl_struct_schema_bodies(_name: &Ident, data: DataStruct) -> (TokenStream, T
                 };
 
                 field_logic.push(quote! {
-                    let field_schema_ref = <#field_type as ::rustapi_openapi::schema::RustApiSchema>::schema(ctx);
+                    let field_schema_ref = <#field_type as #openapi_path::schema::RustApiSchema>::schema(ctx);
                     let field_schema = match field_schema_ref {
-                        ::rustapi_openapi::schema::SchemaRef::Schema(s) => *s,
-                        ::rustapi_openapi::schema::SchemaRef::Ref { reference } => {
-                            let mut s = ::rustapi_openapi::schema::JsonSchema2020::new();
+                        #openapi_path::schema::SchemaRef::Schema(s) => *s,
+                        #openapi_path::schema::SchemaRef::Ref { reference } => {
+                            let mut s = #openapi_path::schema::JsonSchema2020::new();
                             s.reference = Some(reference);
                             s
                         },
-                        ::rustapi_openapi::schema::SchemaRef::Inline(v) => {
-                            ::serde_json::from_value(v).unwrap_or_default()
+                        #openapi_path::schema::SchemaRef::Inline(v) => {
+                            #serde_json_path::from_value(v).unwrap_or_default()
                         }
                     };
                     properties.insert(#field_name_str.to_string(), field_schema);
@@ -98,7 +180,7 @@ fn impl_struct_schema_bodies(_name: &Ident, data: DataStruct) -> (TokenStream, T
                 });
 
                 field_schemas_logic.push(quote! {
-                    let field_schema_ref = <#field_type as ::rustapi_openapi::schema::RustApiSchema>::schema(ctx);
+                    let field_schema_ref = <#field_type as #openapi_path::schema::RustApiSchema>::schema(ctx);
                     map.insert(#field_name_str.to_string(), field_schema_ref);
                 });
             }
@@ -107,21 +189,21 @@ fn impl_struct_schema_bodies(_name: &Ident, data: DataStruct) -> (TokenStream, T
     }
 
     let schema_body = quote! {
-        let name_cow = <Self as ::rustapi_openapi::schema::RustApiSchema>::name();
+        let name_cow = <Self as #openapi_path::schema::RustApiSchema>::name();
         let name = name_cow.as_ref();
 
         if let Some(_) = ctx.components.get(name) {
-            return ::rustapi_openapi::schema::SchemaRef::Ref { reference: format!("#/components/schemas/{}", name) };
+            return #openapi_path::schema::SchemaRef::Ref { reference: format!("#/components/schemas/{}", name) };
         }
 
-        ctx.components.insert(name.to_string(), ::rustapi_openapi::schema::JsonSchema2020::new());
+        ctx.components.insert(name.to_string(), #openapi_path::schema::JsonSchema2020::new());
 
         let mut properties = ::std::collections::BTreeMap::new();
         let mut required = Vec::new();
 
         #(#field_logic)*
 
-        let mut schema = ::rustapi_openapi::schema::JsonSchema2020::object();
+        let mut schema = #openapi_path::schema::JsonSchema2020::object();
         schema.properties = Some(properties);
         if !required.is_empty() {
             schema.required = Some(required);
@@ -129,7 +211,7 @@ fn impl_struct_schema_bodies(_name: &Ident, data: DataStruct) -> (TokenStream, T
 
         ctx.components.insert(name.to_string(), schema);
 
-        ::rustapi_openapi::schema::SchemaRef::Ref { reference: format!("#/components/schemas/{}", name) }
+        #openapi_path::schema::SchemaRef::Ref { reference: format!("#/components/schemas/{}", name) }
     };
 
     let field_schemas_body = if !field_schemas_logic.is_empty() {
@@ -145,7 +227,11 @@ fn impl_struct_schema_bodies(_name: &Ident, data: DataStruct) -> (TokenStream, T
     (schema_body, field_schemas_body)
 }
 
-fn impl_enum_schema(_name: &Ident, data: DataEnum) -> TokenStream {
+fn impl_enum_schema(
+    openapi_path: &TokenStream,
+    serde_json_path: &TokenStream,
+    data: DataEnum,
+) -> TokenStream {
     let is_string_enum = data
         .variants
         .iter()
@@ -156,19 +242,19 @@ fn impl_enum_schema(_name: &Ident, data: DataEnum) -> TokenStream {
         let push_variants = variants.iter().map(|v| quote! { #v.into() });
 
         return quote! {
-            let name_cow = <Self as ::rustapi_openapi::schema::RustApiSchema>::name();
+            let name_cow = <Self as #openapi_path::schema::RustApiSchema>::name();
             let name = name_cow.as_ref();
 
             if let Some(_) = ctx.components.get(name) {
-                return ::rustapi_openapi::schema::SchemaRef::Ref { reference: format!("#/components/schemas/{}", name) };
+                return #openapi_path::schema::SchemaRef::Ref { reference: format!("#/components/schemas/{}", name) };
             }
 
-            let mut schema = ::rustapi_openapi::schema::JsonSchema2020::string();
+            let mut schema = #openapi_path::schema::JsonSchema2020::string();
             schema.enum_values = Some(vec![ #(#push_variants),* ]);
 
             ctx.components.insert(name.to_string(), schema);
 
-            ::rustapi_openapi::schema::SchemaRef::Ref { reference: format!("#/components/schemas/{}", name) }
+            #openapi_path::schema::SchemaRef::Ref { reference: format!("#/components/schemas/{}", name) }
         };
     }
 
@@ -185,16 +271,16 @@ fn impl_enum_schema(_name: &Ident, data: DataEnum) -> TokenStream {
                     let fname = field.ident.unwrap().to_string();
                     let fty = field.ty;
                     props_logic.push(quote! {
-                        let fs_ref = <#fty as ::rustapi_openapi::schema::RustApiSchema>::schema(ctx);
+                        let fs_ref = <#fty as #openapi_path::schema::RustApiSchema>::schema(ctx);
                         let fs = match fs_ref {
-                            ::rustapi_openapi::schema::SchemaRef::Schema(s) => *s,
-                            ::rustapi_openapi::schema::SchemaRef::Ref { reference } => {
-                                let mut s = ::rustapi_openapi::schema::JsonSchema2020::new();
+                            #openapi_path::schema::SchemaRef::Schema(s) => *s,
+                            #openapi_path::schema::SchemaRef::Ref { reference } => {
+                                let mut s = #openapi_path::schema::JsonSchema2020::new();
                                 s.reference = Some(reference);
                                 s
                             },
-                            ::rustapi_openapi::schema::SchemaRef::Inline(v) => {
-                                ::serde_json::from_value(v).unwrap_or_default()
+                            #openapi_path::schema::SchemaRef::Inline(v) => {
+                                #serde_json_path::from_value(v).unwrap_or_default()
                             },
                         };
                         v_props.insert(#fname.to_string(), fs);
@@ -208,13 +294,13 @@ fn impl_enum_schema(_name: &Ident, data: DataEnum) -> TokenStream {
                         let mut v_req = Vec::new();
                         #(#props_logic)*
 
-                        let mut v_schema = ::rustapi_openapi::schema::JsonSchema2020::object();
+                        let mut v_schema = #openapi_path::schema::JsonSchema2020::object();
                         v_schema.properties = Some(v_props);
                         v_schema.required = Some(v_req);
 
                         let mut outer_props = ::std::collections::BTreeMap::new();
                         outer_props.insert(#variant_name.to_string(), v_schema);
-                        let mut outer = ::rustapi_openapi::schema::JsonSchema2020::object();
+                        let mut outer = #openapi_path::schema::JsonSchema2020::object();
                         outer.properties = Some(outer_props);
                         outer.required = Some(vec![#variant_name.to_string()]);
 
@@ -227,22 +313,22 @@ fn impl_enum_schema(_name: &Ident, data: DataEnum) -> TokenStream {
                     let fty = &unnamed.unnamed[0].ty;
                     one_of_logic.push(quote! {
                         {
-                            let fs_ref = <#fty as ::rustapi_openapi::schema::RustApiSchema>::schema(ctx);
+                            let fs_ref = <#fty as #openapi_path::schema::RustApiSchema>::schema(ctx);
                             let fs = match fs_ref {
-                                ::rustapi_openapi::schema::SchemaRef::Schema(s) => *s,
-                                ::rustapi_openapi::schema::SchemaRef::Ref { reference } => {
-                                    let mut s = ::rustapi_openapi::schema::JsonSchema2020::new();
+                                #openapi_path::schema::SchemaRef::Schema(s) => *s,
+                                #openapi_path::schema::SchemaRef::Ref { reference } => {
+                                    let mut s = #openapi_path::schema::JsonSchema2020::new();
                                     s.reference = Some(reference);
                                     s
                                 },
-                                ::rustapi_openapi::schema::SchemaRef::Inline(v) => {
-                                    ::serde_json::from_value(v).unwrap_or_default()
+                                #openapi_path::schema::SchemaRef::Inline(v) => {
+                                    #serde_json_path::from_value(v).unwrap_or_default()
                                 },
                             };
 
                             let mut outer_props = ::std::collections::BTreeMap::new();
                             outer_props.insert(#variant_name.to_string(), fs);
-                            let mut outer = ::rustapi_openapi::schema::JsonSchema2020::object();
+                            let mut outer = #openapi_path::schema::JsonSchema2020::object();
                             outer.properties = Some(outer_props);
                             outer.required = Some(vec![#variant_name.to_string()]);
                             outer
@@ -250,14 +336,14 @@ fn impl_enum_schema(_name: &Ident, data: DataEnum) -> TokenStream {
                     });
                 } else {
                     one_of_logic.push(quote! {
-                        ::rustapi_openapi::schema::JsonSchema2020::object()
+                        #openapi_path::schema::JsonSchema2020::object()
                     });
                 }
             }
             Fields::Unit => {
                 one_of_logic.push(quote! {
                      {
-                         let mut s = ::rustapi_openapi::schema::JsonSchema2020::string();
+                         let mut s = #openapi_path::schema::JsonSchema2020::string();
                          s.enum_values = Some(vec![#variant_name.into()]);
                          s
                      }
@@ -267,20 +353,20 @@ fn impl_enum_schema(_name: &Ident, data: DataEnum) -> TokenStream {
     }
 
     quote! {
-        let name_cow = <Self as ::rustapi_openapi::schema::RustApiSchema>::name();
+        let name_cow = <Self as #openapi_path::schema::RustApiSchema>::name();
         let name = name_cow.as_ref();
 
         if let Some(_) = ctx.components.get(name) {
-            return ::rustapi_openapi::schema::SchemaRef::Ref { reference: format!("#/components/schemas/{}", name) };
+            return #openapi_path::schema::SchemaRef::Ref { reference: format!("#/components/schemas/{}", name) };
         }
 
-        ctx.components.insert(name.to_string(), ::rustapi_openapi::schema::JsonSchema2020::new());
+        ctx.components.insert(name.to_string(), #openapi_path::schema::JsonSchema2020::new());
 
-        let mut schema = ::rustapi_openapi::schema::JsonSchema2020::new();
+        let mut schema = #openapi_path::schema::JsonSchema2020::new();
         schema.one_of = Some(vec![ #(#one_of_logic),* ]);
 
         ctx.components.insert(name.to_string(), schema);
 
-        ::rustapi_openapi::schema::SchemaRef::Ref { reference: format!("#/components/schemas/{}", name) }
+        #openapi_path::schema::SchemaRef::Ref { reference: format!("#/components/schemas/{}", name) }
     }
 }

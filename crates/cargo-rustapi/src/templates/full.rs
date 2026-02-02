@@ -56,7 +56,7 @@ use tokio::sync::RwLock;
 
 pub type AppState = Arc<RwLock<models::Store>>;
 
-#[rustapi::main]
+#[rustapi_rs::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // Load environment variables
     load_dotenv();
@@ -70,7 +70,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .init();
 
     // Get configuration
-    let env = Environment::from_env();
+    let env = Environment::current();
     let host = env_or("HOST", "127.0.0.1");
     let port = env_or("PORT", "8080");
     let addr = format!("{}:{}", host, port);
@@ -93,17 +93,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .route("/auth/login", post(handlers::auth::login))
         .route("/auth/me", get(handlers::auth::me))
         // Protected items endpoints (require JWT)
-        .mount(handlers::items::list)
-        .mount(handlers::items::get)
-        .mount(handlers::items::create)
-        .mount(handlers::items::update)
-        .mount(handlers::items::delete)
+        .mount_route(handlers::items::list_route())
+        .mount_route(handlers::items::get_route())
+        .mount_route(handlers::items::create_route())
+        .mount_route(handlers::items::update_route())
+        .mount_route(handlers::items::delete_route())
         // Documentation
-        .docs_with_info("/docs", ApiInfo {
-            title: env!("CARGO_PKG_NAME").to_string(),
-            version: env!("CARGO_PKG_VERSION").to_string(),
-            description: Some("Full-featured RustAPI application".to_string()),
-        })
+        .docs_with_info(
+            "/docs",
+            env!("CARGO_PKG_NAME"),
+            env!("CARGO_PKG_VERSION"),
+            Some("Full-featured RustAPI application"),
+        )
         .run(&addr)
         .await
 }
@@ -154,7 +155,7 @@ pub struct LoginResponse {
     pub token_type: String,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Schema)]
 pub struct UserClaims {
     pub sub: String,
     pub username: String,
@@ -162,9 +163,9 @@ pub struct UserClaims {
 }
 
 /// Login and get a JWT token
-#[rustapi::post("/auth/login")]
-#[rustapi::tag("Authentication")]
-#[rustapi::summary("Login with username and password")]
+#[rustapi_rs::post("/auth/login")]
+#[rustapi_rs::tag("Authentication")]
+#[rustapi_rs::summary("Login with username and password")]
 pub async fn login(Json(body): Json<LoginRequest>) -> Result<Json<LoginResponse>> {
     // TODO: Validate credentials against your database
     if body.username == "admin" && body.password == "password" {
@@ -177,7 +178,8 @@ pub async fn login(Json(body): Json<LoginRequest>) -> Result<Json<LoginResponse>
             exp: (chrono_now() + 86400) as usize, // 24 hours
         };
         
-        let token = create_token(&claims, &jwt_secret)?;
+        let token = create_token(&claims, &jwt_secret)
+            .map_err(|e| ApiError::internal(format!("Failed to create token: {}", e)))?;
         
         Ok(Json(LoginResponse {
             token,
@@ -189,11 +191,11 @@ pub async fn login(Json(body): Json<LoginRequest>) -> Result<Json<LoginResponse>
 }
 
 /// Get current user info
-#[rustapi::get("/auth/me")]
-#[rustapi::tag("Authentication")]
-#[rustapi::summary("Get current authenticated user")]
+#[rustapi_rs::get("/auth/me")]
+#[rustapi_rs::tag("Authentication")]
+#[rustapi_rs::summary("Get current authenticated user")]
 pub async fn me(auth: AuthUser<UserClaims>) -> Json<UserClaims> {
-    Json(auth.claims)
+    Json(auth.0)
 }
 
 fn chrono_now() -> u64 {
@@ -214,9 +216,9 @@ use crate::AppState;
 use rustapi_rs::prelude::*;
 
 /// List all items
-#[rustapi::get("/items")]
-#[rustapi::tag("Items")]
-#[rustapi::summary("List all items")]
+#[rustapi_rs::get("/items")]
+#[rustapi_rs::tag("Items")]
+#[rustapi_rs::summary("List all items")]
 pub async fn list(
     _auth: AuthUser<UserClaims>,
     State(state): State<AppState>,
@@ -226,9 +228,9 @@ pub async fn list(
 }
 
 /// Get an item by ID
-#[rustapi::get("/items/{id}")]
-#[rustapi::tag("Items")]
-#[rustapi::summary("Get item by ID")]
+#[rustapi_rs::get("/items/{id}")]
+#[rustapi_rs::tag("Items")]
+#[rustapi_rs::summary("Get item by ID")]
 pub async fn get(
     _auth: AuthUser<UserClaims>,
     Path(id): Path<String>,
@@ -243,28 +245,28 @@ pub async fn get(
 }
 
 /// Create a new item
-#[rustapi::post("/items")]
-#[rustapi::tag("Items")]
-#[rustapi::summary("Create a new item")]
+#[rustapi_rs::post("/items")]
+#[rustapi_rs::tag("Items")]
+#[rustapi_rs::summary("Create a new item")]
 pub async fn create(
     auth: AuthUser<UserClaims>,
     State(state): State<AppState>,
     Json(body): Json<CreateItem>,
-) -> Result<Created<Json<Item>>> {
-    let item = Item::new(body.name, body.description, auth.claims.sub.clone());
+) -> Json<Item> {
+    let item = Item::new(body.name, body.description, auth.0.sub.clone());
     
     let mut store = state.write().await;
     store.items.insert(item.id.clone(), item.clone());
     
-    tracing::info!("User {} created item {}", auth.claims.username, item.id);
+    tracing::info!("User {} created item {}", auth.0.username, item.id);
     
-    Ok(Created(Json(item)))
+    Json(item)
 }
 
 /// Update an item
-#[rustapi::put("/items/{id}")]
-#[rustapi::tag("Items")]
-#[rustapi::summary("Update an item")]
+#[rustapi_rs::put("/items/{id}")]
+#[rustapi_rs::tag("Items")]
+#[rustapi_rs::summary("Update an item")]
 pub async fn update(
     _auth: AuthUser<UserClaims>,
     Path(id): Path<String>,
@@ -281,7 +283,7 @@ pub async fn update(
         item.name = name;
     }
     if let Some(description) = body.description {
-        item.description = description;
+        item.description = Some(description);
     }
     item.updated_at = chrono_now();
     
@@ -289,9 +291,9 @@ pub async fn update(
 }
 
 /// Delete an item
-#[rustapi::delete("/items/{id}")]
-#[rustapi::tag("Items")]
-#[rustapi::summary("Delete an item")]
+#[rustapi_rs::delete("/items/{id}")]
+#[rustapi_rs::tag("Items")]
+#[rustapi_rs::summary("Delete an item")]
 pub async fn delete(
     auth: AuthUser<UserClaims>,
     Path(id): Path<String>,
@@ -303,7 +305,7 @@ pub async fn delete(
         .remove(&id)
         .ok_or_else(|| ApiError::not_found(format!("Item {} not found", id)))?;
     
-    tracing::info!("User {} deleted item {}", auth.claims.username, id);
+    tracing::info!("User {} deleted item {}", auth.0.username, id);
     
     Ok(NoContent)
 }
@@ -321,7 +323,7 @@ fn chrono_now() -> String {
     let models_mod = r#"//! Data models
 
 use serde::{Deserialize, Serialize};
-use rustapi_rs::Schema;
+use rustapi_rs::prelude::Schema;
 use std::collections::HashMap;
 
 pub struct Store {

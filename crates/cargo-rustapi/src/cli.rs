@@ -1,7 +1,8 @@
 //! CLI argument parsing
 
 use crate::commands::{
-    self, AddArgs, ClientArgs, DeployArgs, DoctorArgs, GenerateArgs, NewArgs, RunArgs, WatchArgs,
+    self, AddArgs, ClientArgs, DeployArgs, DoctorArgs, GenerateArgs, MigrateArgs, NewArgs, RunArgs,
+    WatchArgs,
 };
 use clap::{Parser, Subcommand};
 
@@ -36,6 +37,10 @@ enum Commands {
     #[command(subcommand)]
     Generate(GenerateArgs),
 
+    /// Database migration commands
+    #[command(subcommand)]
+    Migrate(MigrateArgs),
+
     /// Open API documentation in browser
     Docs {
         /// Port to check for running server
@@ -61,6 +66,7 @@ impl Cli {
             Commands::Add(args) => commands::add(args).await,
             Commands::Doctor(args) => commands::doctor(args).await,
             Commands::Generate(args) => commands::generate(args).await,
+            Commands::Migrate(args) => commands::migrate(args).await,
             Commands::Docs { port } => commands::open_docs(port).await,
             Commands::Client(args) => commands::client(args).await,
             Commands::Deploy(args) => commands::deploy(args).await,

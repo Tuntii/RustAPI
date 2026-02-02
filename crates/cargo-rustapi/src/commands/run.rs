@@ -21,8 +21,8 @@ pub struct RunArgs {
     #[arg(long)]
     pub release: bool,
 
-    /// Watch for changes and auto-reload
-    #[arg(short, long)]
+    /// Watch for changes and auto-reload (like FastAPI's --reload)
+    #[arg(short, long, visible_alias = "reload", alias = "hot")]
     pub watch: bool,
 }
 
@@ -32,13 +32,26 @@ pub async fn run_dev(args: RunArgs) -> Result<()> {
     std::env::set_var("PORT", args.port.to_string());
     std::env::set_var("RUSTAPI_ENV", "development");
 
-    println!("{}", style("Starting RustAPI development server...").bold());
-    println!();
-
     if args.watch {
+        println!(
+            "{}",
+            style("🔄 Starting RustAPI in hot-reload mode...")
+                .bold()
+                .cyan()
+        );
+        println!(
+            "{}",
+            style("   Changes to source files will trigger automatic rebuild").dim()
+        );
+        println!();
         // Use cargo-watch if available
         run_with_watch(&args).await
     } else {
+        println!(
+            "{}",
+            style("🚀 Starting RustAPI development server...").bold()
+        );
+        println!();
         run_cargo(&args).await
     }
 }
@@ -93,7 +106,7 @@ async fn run_with_watch(args: &RunArgs) -> Result<()> {
     }
 
     let mut cmd = Command::new("cargo");
-    cmd.args(["watch", "-x"]);
+    cmd.arg("watch");
 
     // Ignore heavy directories for better performance
     cmd.args([
@@ -107,6 +120,7 @@ async fn run_with_watch(args: &RunArgs) -> Result<()> {
         "assets",
     ]);
 
+    // Build the run command string
     let mut run_cmd = String::from("run");
     if args.release {
         run_cmd.push_str(" --release");
@@ -115,7 +129,9 @@ async fn run_with_watch(args: &RunArgs) -> Result<()> {
         run_cmd.push_str(&format!(" --features {}", features.join(",")));
     }
 
-    cmd.arg(run_cmd);
+    // Pass the command with -x flag
+    cmd.arg("-x").arg(&run_cmd);
+
     cmd.stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .stdin(Stdio::inherit());

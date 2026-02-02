@@ -3,6 +3,14 @@
 > [!TIP]
 > From zero to a production-ready API in 60 seconds.
 
+## Install the CLI
+
+First, install the RustAPI CLI tool:
+
+```bash
+cargo install cargo-rustapi
+```
+
 ## Create a New Project
 
 Use the CLI to generate a new project. We'll call it `my-api`.
@@ -11,6 +19,8 @@ Use the CLI to generate a new project. We'll call it `my-api`.
 cargo rustapi new my-api
 cd my-api
 ```
+
+> **Note**: If `cargo rustapi` doesn't work, you can also run `cargo-rustapi new my-api` directly.
 
 This command sets up a complete project structure with handling, models, and tests ready to go.
 
