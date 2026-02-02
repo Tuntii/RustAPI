@@ -58,7 +58,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let queue = JobQueue::new(backend);
 
     // 3. Register the job type
-    queue.register_job::<EmailJob>();
+    // `register_job` is async and expects a job handler instance, not a type parameter.
+    queue.register_job(EmailJobHandler::new()).await?;
 
     // 4. Start the worker in the background
     let worker_queue = queue.clone();
