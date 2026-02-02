@@ -98,11 +98,12 @@ rustapi-extras = { version = "0.1.233", features = ["insight"] }
 use rustapi_extras::insight::{InsightLayer, InMemoryInsightStore, InsightConfig};
 use std::sync::Arc;
 
-let store = Arc::new(InMemoryInsightStore::new());
+let store = Arc::new(InMemoryInsightStore::new(InMemoryInsightStore::default_capacity()));
 let config = InsightConfig::default();
 
 let app = RustApi::new()
-    .layer(InsightLayer::new(config, store.clone()));
+    .state(store.clone())
+    .layer(InsightLayer::with_config(config).with_store(store.clone()));
 ```
 
 ### Accessing Data
