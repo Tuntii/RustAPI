@@ -362,7 +362,7 @@ mod property_tests {
             // Remaining time should be close to expires_in (within a few seconds)
             let remaining_secs = remaining.unwrap().as_secs();
             prop_assert!(remaining_secs <= expires_in_secs);
-            prop_assert!(remaining_secs >= expires_in_secs - 2); // Allow 2 sec tolerance
+            prop_assert!(remaining_secs >= expires_in_secs.saturating_sub(2)); // Allow 2 sec tolerance
         }
 
         /// Property 16: Token response builder pattern works correctly
