@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-b8492182.js";
+            window.path_to_searchindex_js = "../searchindex-50e2da92.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-5ece1d58.js"></script>
+        <script src="../toc-0b329e8e.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -204,10 +204,10 @@ struct Metric {
 <p>Use macros to enrich endpoints:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>#[rustapi::get("/metrics")]
-#[rustapi::tag("Metrics")]
-#[rustapi::summary("List all metrics")]
-#[rustapi::response(200, Json&lt;Vec&lt;Metric&gt;&gt;)]
+</span>#[rustapi_rs::get("/metrics")]
+#[rustapi_rs::tag("Metrics")]
+#[rustapi_rs::summary("List all metrics")]
+#[rustapi_rs::response(200, Json&lt;Vec&lt;Metric&gt;&gt;)]
 async fn list_metrics() -&gt; Json&lt;Vec&lt;Metric&gt;&gt; { ... }
 <span class="boring">}</span></code></pre>
 <h2 id="swagger-ui"><a class="header" href="#swagger-ui">Swagger UI</a></h2>
@@ -225,14 +225,14 @@ async fn list_metrics() -&gt; Json&lt;Vec&lt;Metric&gt;&gt; { ... }
 <li>Parameters named <code>uuid</code>, <code>user_uuid</code>, etc. → <code>string</code> with <code>uuid</code> format</li>
 <li>Other parameters → <code>string</code></li>
 </ul>
-<p>However, sometimes auto-inference is incorrect. For example, you might have a parameter named <code>id</code> that is actually a UUID. Use the <code>#[rustapi::param]</code> attribute to override the inferred type:</p>
+<p>However, sometimes auto-inference is incorrect. For example, you might have a parameter named <code>id</code> that is actually a UUID. Use the <code>#[rustapi_rs::param]</code> attribute to override the inferred type:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use uuid::Uuid;
 
-#[rustapi::get("/users/{id}")]
-#[rustapi::param(id, schema = "uuid")]
-#[rustapi::tag("Users")]
+#[rustapi_rs::get("/users/{id}")]
+#[rustapi_rs::param(id, schema = "uuid")]
+#[rustapi_rs::tag("Users")]
 async fn get_user(Path(id): Path&lt;Uuid&gt;) -&gt; Json&lt;User&gt; {
     // The OpenAPI spec will now correctly show:
     // { "type": "string", "format": "uuid" }
@@ -261,8 +261,8 @@ async fn get_user(Path(id): Path&lt;Uuid&gt;) -&gt; Json&lt;User&gt; {
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>// Shorter syntax: param_name = "schema_type"
-#[rustapi::get("/posts/{post_id}")]
-#[rustapi::param(post_id = "uuid")]
+#[rustapi_rs::get("/posts/{post_id}")]
+#[rustapi_rs::param(post_id = "uuid")]
 async fn get_post(Path(post_id): Path&lt;Uuid&gt;) -&gt; Json&lt;Post&gt; { ... }
 <span class="boring">}</span></code></pre>
 <h3 id="programmatic-api"><a class="header" href="#programmatic-api">Programmatic API</a></h3>

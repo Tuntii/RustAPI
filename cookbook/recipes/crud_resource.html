@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-b8492182.js";
+            window.path_to_searchindex_js = "../searchindex-50e2da92.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-5ece1d58.js"></script>
+        <script src="../toc-0b329e8e.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -200,12 +200,12 @@ pub struct CreateUser {
     pub name: String,
 }
 
-#[rustapi::get("/users")]
+#[rustapi_rs::get("/users")]
 pub async fn list() -&gt; Json&lt;Vec&lt;User&gt;&gt; {
     Json(vec![]) // Fetch from DB in real app
 }
 
-#[rustapi::post("/users")]
+#[rustapi_rs::post("/users")]
 pub async fn create(Json(payload): Json&lt;CreateUser&gt;) -&gt; impl IntoResponse {
     let user = User { id: 1, name: payload.name };
     (StatusCode::CREATED, Json(user))
@@ -216,7 +216,7 @@ pub async fn create(Json(payload): Json&lt;CreateUser&gt;) -&gt; impl IntoRespon
 
 mod handlers; // Make sure the module is part of the compilation unit!
 
-#[rustapi::main]
+#[rustapi_rs::main]
 async fn main() -&gt; Result&lt;()&gt; {
     // RustAPI automatically discovers all routes decorated with macros
     RustApi::auto()
@@ -224,7 +224,7 @@ async fn main() -&gt; Result&lt;()&gt; {
         .await
 }</code></pre>
 <h2 id="discussion"><a class="header" href="#discussion">Discussion</a></h2>
-<p>RustAPI uses <strong>distributed slices</strong> (via <code>linkme</code>) to automatically register routes decorated with <code>#[rustapi::get]</code>, <code>#[rustapi::post]</code>, etc. This means you don’t need to manually import or mount every single handler in your <code>main</code> function.</p>
+<p>RustAPI uses <strong>distributed slices</strong> (via <code>linkme</code>) to automatically register routes decorated with <code>#[rustapi_rs::get]</code>, <code>#[rustapi_rs::post]</code>, etc. This means you don’t need to manually import or mount every single handler in your <code>main</code> function.</p>
 <p>Just ensure your handler modules are reachable (e.g., via <code>mod handlers;</code>), and the framework handles the rest. This encourages a clean, Domain-Driven Design (DDD) structure where resources are self-contained.</p>
 
                     </main>

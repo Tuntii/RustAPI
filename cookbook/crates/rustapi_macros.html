@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-b8492182.js";
+            window.path_to_searchindex_js = "../searchindex-50e2da92.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-5ece1d58.js"></script>
+        <script src="../toc-0b329e8e.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -216,24 +216,24 @@ async fn handler(input: MyExtractor) {
 <p>This is heavily used to group multiple extractors into a single struct (often called the “Parameter Object” pattern), keeping function signatures clean.</p>
 <h2 id="route-metadata-macros"><a class="header" href="#route-metadata-macros">Route Metadata Macros</a></h2>
 <p>RustAPI provides several attribute macros for enriching OpenAPI documentation:</p>
-<h3 id="rustapitag"><a class="header" href="#rustapitag"><code>#[rustapi::tag]</code></a></h3>
+<h3 id="rustapi_rstag"><a class="header" href="#rustapi_rstag"><code>#[rustapi_rs::tag]</code></a></h3>
 <p>Groups endpoints under a common tag in Swagger UI:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>#[rustapi::get("/users")]
-#[rustapi::tag("Users")]
+</span>#[rustapi_rs::get("/users")]
+#[rustapi_rs::tag("Users")]
 async fn list_users() -&gt; Json&lt;Vec&lt;User&gt;&gt; { ... }
 <span class="boring">}</span></code></pre>
-<h3 id="rustapisummary--rustapidescription"><a class="header" href="#rustapisummary--rustapidescription"><code>#[rustapi::summary]</code> &amp; <code>#[rustapi::description]</code></a></h3>
+<h3 id="rustapi_rssummary--rustapi_rsdescription"><a class="header" href="#rustapi_rssummary--rustapi_rsdescription"><code>#[rustapi_rs::summary]</code> &amp; <code>#[rustapi_rs::description]</code></a></h3>
 <p>Adds human-readable documentation:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>#[rustapi::get("/users/{id}")]
-#[rustapi::summary("Get user by ID")]
-#[rustapi::description("Returns a single user by their unique identifier.")]
+</span>#[rustapi_rs::get("/users/{id}")]
+#[rustapi_rs::summary("Get user by ID")]
+#[rustapi_rs::description("Returns a single user by their unique identifier.")]
 async fn get_user(Path(id): Path&lt;i64&gt;) -&gt; Json&lt;User&gt; { ... }
 <span class="boring">}</span></code></pre>
-<h3 id="rustapiparam"><a class="header" href="#rustapiparam"><code>#[rustapi::param]</code></a></h3>
+<h3 id="rustapi_rsparam"><a class="header" href="#rustapi_rsparam"><code>#[rustapi_rs::param]</code></a></h3>
 <p>Customizes the OpenAPI schema type for path parameters. This is essential when the auto-inferred type is incorrect:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -241,8 +241,8 @@ async fn get_user(Path(id): Path&lt;i64&gt;) -&gt; Json&lt;User&gt; { ... }
 
 // Without #[param], the `id` parameter would be documented as "integer"
 // because of the naming convention. With #[param], it's correctly documented as UUID.
-#[rustapi::get("/items/{id}")]
-#[rustapi::param(id, schema = "uuid")]
+#[rustapi_rs::get("/items/{id}")]
+#[rustapi_rs::param(id, schema = "uuid")]
 async fn get_item(Path(id): Path&lt;Uuid&gt;) -&gt; Json&lt;Item&gt; {
     find_item(id).await
 }
@@ -251,7 +251,7 @@ async fn get_item(Path(id): Path&lt;Uuid&gt;) -&gt; Json&lt;Item&gt; {
 <p><strong>Alternative syntax:</strong></p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>#[rustapi::param(id = "uuid")]  // Shorter form
+</span>#[rustapi_rs::param(id = "uuid")]  // Shorter form
 <span class="boring">}</span></code></pre>
 
                     </main>

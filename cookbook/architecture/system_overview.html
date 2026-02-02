@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-b8492182.js";
+            window.path_to_searchindex_js = "../searchindex-50e2da92.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-5ece1d58.js"></script>
+        <script src="../toc-0b329e8e.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -194,7 +194,7 @@
     subgraph Public["📦 rustapi-rs (Public Facade)"]
         direction TB
         Prelude[prelude::*]
-        Macros["#[rustapi::get/post]&lt;br&gt;#[rustapi::main]"]
+        Macros["#[rustapi_rs::get/post]&lt;br&gt;#[rustapi_rs::main]"]
         Types[Json, Query, Path, Form]
     end
 
@@ -346,7 +346,7 @@
 <tbody>
 <tr><td><code>rustapi-rs</code></td><td>Public facade — single <code>use</code> for everything</td></tr>
 <tr><td><code>rustapi-core</code></td><td>HTTP engine, routing, extractors, response handling</td></tr>
-<tr><td><code>rustapi-macros</code></td><td>Procedural macros: <code>#[rustapi::get]</code>, <code>#[rustapi::main]</code></td></tr>
+<tr><td><code>rustapi-macros</code></td><td>Procedural macros: <code>#[rustapi_rs::get]</code>, <code>#[rustapi_rs::main]</code></td></tr>
 <tr><td><code>rustapi-openapi</code></td><td>Swagger UI generation, OpenAPI 3.0 spec</td></tr>
 <tr><td><code>rustapi-validate</code></td><td>Request body/query validation via <code>#[validate]</code></td></tr>
 <tr><td><code>rustapi-toon</code></td><td>TOON format serializer, content negotiation, LLM headers</td></tr>

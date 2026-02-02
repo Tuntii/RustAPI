@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-b8492182.js";
+            window.path_to_searchindex_js = "../searchindex-50e2da92.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-5ece1d58.js"></script>
+        <script src="../toc-0b329e8e.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -218,7 +218,7 @@ pub struct AppState {
 </span>use rustapi_rs::prelude::*;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-#[rustapi::get("/profile")]
+#[rustapi_rs::get("/profile")]
 async fn protected_profile(
     // This handler will only be called if a valid token is present
     AuthUser(claims): AuthUser&lt;Claims&gt;
@@ -226,7 +226,7 @@ async fn protected_profile(
     Json(format!("Welcome back, {}! You are a {}.", claims.sub, claims.role))
 }
 
-#[rustapi::post("/login")]
+#[rustapi_rs::post("/login")]
 async fn login(State(state): State&lt;AppState&gt;) -&gt; Result&lt;Json&lt;String&gt;&gt; {
     // In a real app, validate credentials first!
     use std::time::{SystemTime, UNIX_EPOCH};
@@ -250,7 +250,7 @@ async fn login(State(state): State&lt;AppState&gt;) -&gt; Result&lt;Json&lt;Stri
 <span class="boring">}</span></code></pre>
 <h2 id="4-wiring-it-up"><a class="header" href="#4-wiring-it-up">4. Wiring it Up</a></h2>
 <p>Register the <code>JwtLayer</code> and the state in your application.</p>
-<pre class="playground"><code class="language-rust">#[rustapi::main]
+<pre class="playground"><code class="language-rust">#[rustapi_rs::main]
 async fn main() -&gt; Result&lt;()&gt; {
     // In production, load this from an environment variable!
     let secret = "my_secret_key".to_string();
@@ -272,7 +272,7 @@ async fn main() -&gt; Result&lt;()&gt; {
 <p>Since we have the <code>role</code> in our claims, we can enforce permissions easily within the handler:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>#[rustapi::get("/admin")]
+</span>#[rustapi_rs::get("/admin")]
 async fn admin_only(AuthUser(claims): AuthUser&lt;Claims&gt;) -&gt; Result&lt;String, StatusCode&gt; {
     if claims.role != "admin" {
         return Err(StatusCode::FORBIDDEN);

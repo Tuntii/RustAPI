@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-b8492182.js";
+            window.path_to_searchindex_js = "../searchindex-50e2da92.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-5ece1d58.js"></script>
+        <script src="../toc-0b329e8e.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -189,10 +189,12 @@
 <h3 id="commands"><a class="header" href="#commands">Commands</a></h3>
 <ul>
 <li><code>cargo rustapi new &lt;name&gt;</code>: Create a new project with the perfect directory structure.</li>
+<li><code>cargo rustapi run</code>: Run the development server.</li>
+<li><code>cargo rustapi run --reload</code>: Run with hot-reload (auto-rebuild on file changes).</li>
 <li><code>cargo rustapi generate resource &lt;name&gt;</code>: Scaffold a new API resource (Model + Handlers + Tests).</li>
 <li><code>cargo rustapi client --spec &lt;path&gt; --language &lt;lang&gt;</code>: Generate a client library (Rust, TS, Python) from OpenAPI spec.</li>
 <li><code>cargo rustapi deploy &lt;platform&gt;</code>: Generate deployment configs for Docker, Fly.io, Railway, or Shuttle.</li>
-<li><code>cargo rustapi serve</code>: Run the development server with hot reload (future feature).</li>
+<li><code>cargo rustapi migrate &lt;action&gt;</code>: Database migration commands (create, run, revert, status, reset).</li>
 </ul>
 <h2 id="templates"><a class="header" href="#templates">Templates</a></h2>
 <p>The templates used by the CLI are opinionated but flexible. They enforce:</p>
