@@ -10,6 +10,16 @@ We maintain a comprehensive examples repository with **18 real-world projects** 
 
 🔗 **[rustapi-rs-examples](https://github.com/Tuntii/rustapi-rs-examples)** - Complete examples from hello-world to production microservices
 
+### Cookbook Internal Path
+
+If you prefer reading through documentation first, follow this path through the cookbook:
+
+1. **Foundations**: Start with [Handlers & Extractors](../concepts/handlers.md) and [System Overview](../architecture/system_overview.md).
+2. **Core Crates**: Read about [rustapi-core](../crates/rustapi_core.md) and [rustapi-macros](../crates/rustapi_macros.md).
+3. **Building Blocks**: Try the [Creating Resources](../recipes/crud_resource.md) recipe.
+4. **Security**: Implement [JWT Authentication](../recipes/jwt_auth.md) and [CSRF Protection](../recipes/csrf_protection.md).
+5. **Advanced**: Explore [Performance Tuning](../recipes/high_performance.md) and [HTTP/3](../recipes/http3_quic.md).
+
 ### Why Use the Examples Repository?
 
 | Benefit | Description |

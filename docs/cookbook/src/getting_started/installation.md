@@ -25,6 +25,21 @@ Verify your installation:
 cargo-rustapi --version
 ```
 
+## Adding to an Existing Project
+
+If you prefer not to use the CLI, you can add RustAPI to your `Cargo.toml` manually:
+
+```bash
+cargo add rustapi-rs@0.1.233
+```
+
+Or add this to your `Cargo.toml`:
+
+```toml
+[dependencies]
+rustapi-rs = "0.1.233"
+```
+
 ## Editor Setup
 
 For the best experience, we recommend **VS Code** with the **rust-analyzer** extension. This provides:
