@@ -131,19 +131,15 @@ pub async fn watch(args: WatchArgs) -> Result<()> {
             style("Ignoring:").bold(),
             args.ignore_paths.join(", ")
         );
-        println!(
-            "{} {} {}ms",
-            GEAR,
-            style("Delay:").bold(),
-            args.delay
-        );
+        println!("{} {} {}ms", GEAR, style("Delay:").bold(), args.delay);
+        println!();
+        println!("{}", style("Press Ctrl+C to stop watching.").dim());
         println!();
         println!(
-            "{}",
-            style("Press Ctrl+C to stop watching.").dim()
+            "{} {}",
+            ROCKET,
+            style("Starting watch mode...").green().bold()
         );
-        println!();
-        println!("{} {}", ROCKET, style("Starting watch mode...").green().bold());
         println!();
     }
 

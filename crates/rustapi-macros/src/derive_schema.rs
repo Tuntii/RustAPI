@@ -4,20 +4,19 @@ use quote::quote;
 use syn::{Data, DataEnum, DataStruct, Fields, Ident};
 
 /// Determine the path to rustapi_openapi module based on the user's dependencies.
-/// 
+///
 /// This function checks if the user's Cargo.toml has:
 /// 1. `rustapi-rs` - use `::rustapi_rs::prelude::rustapi_openapi`
 /// 2. `rustapi-openapi` - use `::rustapi_openapi` directly
-/// 
+///
 /// This allows the Schema derive macro to work in both:
 /// - Internal crates (like rustapi-openapi itself)
 /// - User projects that depend on rustapi-rs
 fn get_openapi_path() -> TokenStream {
     // Try both hyphenated and underscored versions for rustapi-rs
     // Cargo normalizes crate names but proc-macro-crate looks at Cargo.toml
-    let rustapi_rs_found = crate_name("rustapi-rs")
-        .or_else(|_| crate_name("rustapi_rs"));
-    
+    let rustapi_rs_found = crate_name("rustapi-rs").or_else(|_| crate_name("rustapi_rs"));
+
     if let Ok(found) = rustapi_rs_found {
         match found {
             FoundCrate::Itself => {
@@ -31,7 +30,9 @@ fn get_openapi_path() -> TokenStream {
                 quote! { ::#ident::prelude::rustapi_openapi }
             }
         }
-    } else if let Ok(found) = crate_name("rustapi-openapi").or_else(|_| crate_name("rustapi_openapi")) {
+    } else if let Ok(found) =
+        crate_name("rustapi-openapi").or_else(|_| crate_name("rustapi_openapi"))
+    {
         // Fallback to rustapi-openapi directly
         match found {
             FoundCrate::Itself => {
@@ -53,9 +54,8 @@ fn get_openapi_path() -> TokenStream {
 /// Get serde_json path - either from rustapi_rs::prelude or directly
 fn get_serde_json_path() -> TokenStream {
     // Try both hyphenated and underscored versions
-    let rustapi_rs_found = crate_name("rustapi-rs")
-        .or_else(|_| crate_name("rustapi_rs"));
-    
+    let rustapi_rs_found = crate_name("rustapi-rs").or_else(|_| crate_name("rustapi_rs"));
+
     if let Ok(found) = rustapi_rs_found {
         match found {
             FoundCrate::Itself => {
@@ -100,7 +100,10 @@ pub fn expand_derive_schema(input: syn::DeriveInput) -> TokenStream {
 
     let (schema_impl, field_schemas_impl) = match input.data {
         Data::Struct(data) => impl_struct_schema_bodies(&openapi_path, &serde_json_path, data),
-        Data::Enum(data) => (impl_enum_schema(&openapi_path, &serde_json_path, data), quote! { None }),
+        Data::Enum(data) => (
+            impl_enum_schema(&openapi_path, &serde_json_path, data),
+            quote! { None },
+        ),
         Data::Union(_) => {
             return syn::Error::new_spanned(name, "Unions not supported").to_compile_error();
         }
@@ -128,7 +131,11 @@ pub fn expand_derive_schema(input: syn::DeriveInput) -> TokenStream {
     }
 }
 
-fn impl_struct_schema_bodies(openapi_path: &TokenStream, serde_json_path: &TokenStream, data: DataStruct) -> (TokenStream, TokenStream) {
+fn impl_struct_schema_bodies(
+    openapi_path: &TokenStream,
+    serde_json_path: &TokenStream,
+    data: DataStruct,
+) -> (TokenStream, TokenStream) {
     let mut field_logic = Vec::new();
     let mut field_schemas_logic = Vec::new();
 
@@ -220,7 +227,11 @@ fn impl_struct_schema_bodies(openapi_path: &TokenStream, serde_json_path: &Token
     (schema_body, field_schemas_body)
 }
 
-fn impl_enum_schema(openapi_path: &TokenStream, serde_json_path: &TokenStream, data: DataEnum) -> TokenStream {
+fn impl_enum_schema(
+    openapi_path: &TokenStream,
+    serde_json_path: &TokenStream,
+    data: DataEnum,
+) -> TokenStream {
     let is_string_enum = data
         .variants
         .iter()

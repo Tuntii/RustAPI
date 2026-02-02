@@ -140,13 +140,16 @@ async fn ensure_sqlx_installed() -> Result<()> {
                 "{}",
                 style("sqlx-cli is not installed. Installing...").yellow()
             );
-            println!(
-                "{}",
-                style("This may take a few minutes...").dim()
-            );
+            println!("{}", style("This may take a few minutes...").dim());
 
             let status = Command::new("cargo")
-                .args(["install", "sqlx-cli", "--no-default-features", "--features", "postgres,mysql,sqlite"])
+                .args([
+                    "install",
+                    "sqlx-cli",
+                    "--no-default-features",
+                    "--features",
+                    "postgres,mysql,sqlite",
+                ])
                 .status()
                 .await
                 .context("Failed to run cargo install")?;
@@ -166,7 +169,11 @@ async fn ensure_sqlx_installed() -> Result<()> {
 
 /// Run pending migrations
 async fn run_migrations(args: MigrateRunArgs) -> Result<()> {
-    println!("{} {} Running migrations...", DB, style("migrate run").cyan().bold());
+    println!(
+        "{} {} Running migrations...",
+        DB,
+        style("migrate run").cyan().bold()
+    );
     println!();
 
     // Ensure migrations directory exists
@@ -237,7 +244,10 @@ async fn revert_migrations(args: MigrateRevertArgs) -> Result<()> {
     // Revert N times
     for i in 0..args.count {
         println!("{} Reverting migration {}...", ARROW, i + 1);
-        let status = cmd.status().await.context("Failed to run sqlx migrate revert")?;
+        let status = cmd
+            .status()
+            .await
+            .context("Failed to run sqlx migrate revert")?;
         if !status.success() {
             anyhow::bail!("Failed to revert migration {}", i + 1);
         }
@@ -251,7 +261,11 @@ async fn revert_migrations(args: MigrateRevertArgs) -> Result<()> {
 
 /// Show migration status
 async fn show_status(args: MigrateStatusArgs) -> Result<()> {
-    println!("{} {} Checking migration status...", DB, style("migrate status").cyan().bold());
+    println!(
+        "{} {} Checking migration status...",
+        DB,
+        style("migrate status").cyan().bold()
+    );
     println!();
 
     // Check if migrations directory exists
@@ -364,7 +378,7 @@ async fn create_migration(args: MigrateCreateArgs) -> Result<()> {
 
         // For simple migrations, sqlx expects just a .sql file in the migrations dir
         let migration_file = format!("{}/{}_{}.sql", args.source, timestamp, args.name);
-        
+
         // Remove the directory we created and use file instead
         fs::remove_dir(&migration_dir).await.ok();
         fs::write(&migration_file, content).await?;
@@ -374,10 +388,7 @@ async fn create_migration(args: MigrateCreateArgs) -> Result<()> {
     }
 
     println!();
-    println!(
-        "{}",
-        style("Edit the migration file(s), then run:").dim()
-    );
+    println!("{}", style("Edit the migration file(s), then run:").dim());
     println!("   cargo rustapi migrate run");
 
     Ok(())
@@ -458,18 +469,18 @@ async fn reset_database(args: MigrateResetArgs) -> Result<()> {
 /// Generate a timestamp for migration names
 fn chrono_timestamp() -> String {
     use std::time::{SystemTime, UNIX_EPOCH};
-    
+
     let duration = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .expect("Time went backwards");
-    
+
     // Format: YYYYMMDDHHMMSS
     let secs = duration.as_secs();
-    
+
     // Simple conversion (not timezone aware, but good enough for migration ordering)
     let days = secs / 86400;
     let _years_since_1970 = days / 365;
-    
+
     // For simplicity, just use the unix timestamp
     // This ensures unique, sortable names
     format!("{}", secs)
@@ -483,10 +494,10 @@ mod tests {
     fn test_timestamp_generation() {
         let ts1 = chrono_timestamp();
         let ts2 = chrono_timestamp();
-        
+
         // Timestamps should be numeric
         assert!(ts1.chars().all(|c| c.is_ascii_digit()));
-        
+
         // Should be reasonably close (within same second usually)
         let diff: i64 = ts2.parse::<i64>().unwrap() - ts1.parse::<i64>().unwrap();
         assert!(diff.abs() <= 1);
@@ -500,7 +511,7 @@ mod tests {
             source: "migrations".to_string(),
             timestamp: false,
         };
-        
+
         assert_eq!(args.name, "create_users");
         assert!(args.reversible);
     }

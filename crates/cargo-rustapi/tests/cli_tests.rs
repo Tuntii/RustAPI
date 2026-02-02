@@ -48,8 +48,8 @@ mod new_command {
         );
 
         // Verify Cargo.toml content
-        let cargo_content = fs::read_to_string(project_path.join("Cargo.toml"))
-            .expect("Failed to read Cargo.toml");
+        let cargo_content =
+            fs::read_to_string(project_path.join("Cargo.toml")).expect("Failed to read Cargo.toml");
         assert!(
             cargo_content.contains("rustapi-rs"),
             "Cargo.toml should depend on rustapi-rs"
@@ -96,8 +96,8 @@ mod new_command {
             .assert()
             .success();
 
-        let cargo_content = fs::read_to_string(project_path.join("Cargo.toml"))
-            .expect("Failed to read Cargo.toml");
+        let cargo_content =
+            fs::read_to_string(project_path.join("Cargo.toml")).expect("Failed to read Cargo.toml");
         assert!(
             cargo_content.contains("jwt") && cargo_content.contains("cors"),
             "Cargo.toml should include jwt and cors features"

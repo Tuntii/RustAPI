@@ -35,7 +35,9 @@ pub async fn run_dev(args: RunArgs) -> Result<()> {
     if args.watch {
         println!(
             "{}",
-            style("🔄 Starting RustAPI in hot-reload mode...").bold().cyan()
+            style("🔄 Starting RustAPI in hot-reload mode...")
+                .bold()
+                .cyan()
         );
         println!(
             "{}",
@@ -45,7 +47,10 @@ pub async fn run_dev(args: RunArgs) -> Result<()> {
         // Use cargo-watch if available
         run_with_watch(&args).await
     } else {
-        println!("{}", style("🚀 Starting RustAPI development server...").bold());
+        println!(
+            "{}",
+            style("🚀 Starting RustAPI development server...").bold()
+        );
         println!();
         run_cargo(&args).await
     }
@@ -126,7 +131,7 @@ async fn run_with_watch(args: &RunArgs) -> Result<()> {
 
     // Pass the command with -x flag
     cmd.arg("-x").arg(&run_cmd);
-    
+
     cmd.stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .stdin(Stdio::inherit());
