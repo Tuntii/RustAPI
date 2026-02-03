@@ -15,7 +15,7 @@ RustAPI's CSRF protection works by:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1", features = ["csrf"] }
+rustapi-rs = { version = "0.1.275", features = ["csrf"] }
 ```
 
 ```rust

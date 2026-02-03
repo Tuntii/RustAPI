@@ -82,6 +82,44 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 - **Redis**: High throughput persistence. Recommended for production.
 - **Postgres**: Transactional reliability (ACID). Best if you cannot lose jobs.
 
+### Redis Backend
+
+Enable the `redis` feature in `Cargo.toml`:
+
+```toml
+[dependencies]
+rustapi-jobs = { version = "0.1.275", features = ["redis"] }
+```
+
+```rust
+use rustapi_jobs::backend::redis::RedisBackend;
+
+let backend = RedisBackend::new("redis://127.0.0.1:6379").await?;
+let queue = JobQueue::new(backend);
+```
+
+### Postgres Backend
+
+Enable the `postgres` feature in `Cargo.toml`. This uses `sqlx`.
+
+```toml
+[dependencies]
+rustapi-jobs = { version = "0.1.275", features = ["postgres"] }
+```
+
+```rust
+use rustapi_jobs::backend::postgres::PostgresBackend;
+use sqlx::postgres::PgPoolOptions;
+
+let pool = PgPoolOptions::new().connect("postgres://user:pass@localhost/db").await?;
+let backend = PostgresBackend::new(pool);
+
+// Ensure the jobs table exists
+backend.migrate().await?;
+
+let queue = JobQueue::new(backend);
+```
+
 ## Reliability Features
 
 The worker system includes built-in reliability features:

@@ -106,6 +106,22 @@ Build AI-friendly APIs with TOON format and MCP support.
 
 ---
 
+### 🏢 Path 5: Enterprise Platform
+
+Build robust, observable, and secure systems.
+
+| Step | Feature | Description |
+|------|---------|-------------|
+| 1 | **Observability** | Set up [OpenTelemetry and Structured Logging](../crates/rustapi_extras.md#observability) |
+| 2 | **Resilience** | Implement [Circuit Breakers and Retries](../crates/rustapi_extras.md#resilience) |
+| 3 | **Advanced Security** | Add [OAuth2 and Security Headers](../crates/rustapi_extras.md#advanced-security) |
+| 4 | **Optimization** | Configure [Caching and Deduplication](../crates/rustapi_extras.md#optimization) |
+
+**Related Cookbook Recipes:**
+- [rustapi-extras: The Toolbox](../crates/rustapi_extras.md)
+
+---
+
 ## 📦 Examples by Category
 
 ### Getting Started
@@ -163,6 +179,9 @@ Find examples by the RustAPI features they demonstrate:
 | Rate Limiting | `rate-limit-demo`, `auth-api` |
 | WebSockets (`ws` feature) | `websocket`, `graphql-api` |
 | TOON (`toon` feature) | `toon-api`, `mcp-server` |
+| OAuth2 (`oauth2-client`) | `auth-api` (extended) |
+| Circuit Breaker | `microservices` |
+| OpenTelemetry (`otel`) | `microservices-advanced` |
 | OpenAPI/Swagger | All examples |
 
 ---

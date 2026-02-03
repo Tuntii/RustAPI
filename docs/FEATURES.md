@@ -1157,7 +1157,7 @@ RustApi::new()
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.4", features = ["full"] }
+rustapi-rs = { version = "0.1.275", features = ["full"] }
 ```
 
 | Feature | Description |
@@ -1285,7 +1285,7 @@ let events = store.query()
 ### 1. Use `simd-json` (when available)
 
 ```toml
-rustapi-rs = { version = "0.1.4", features = ["simd-json"] }
+rustapi-rs = { version = "0.1.275", features = ["simd-json"] }
 ```
 
 2-4x faster JSON parsing.
