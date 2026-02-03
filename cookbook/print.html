@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-50e2da92.js";
+            window.path_to_searchindex_js = "searchindex-6ad64c80.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-0b329e8e.js"></script>
@@ -242,11 +242,11 @@
 </code></pre>
 <h2 id="adding-to-an-existing-project"><a class="header" href="#adding-to-an-existing-project">Adding to an Existing Project</a></h2>
 <p>If you prefer not to use the CLI, you can add RustAPI to your <code>Cargo.toml</code> manually:</p>
-<pre><code class="language-bash">cargo add rustapi-rs@0.1.233
+<pre><code class="language-bash">cargo add rustapi-rs@0.1.275
 </code></pre>
 <p>Or add this to your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = "0.1.233"
+rustapi-rs = "0.1.275"
 </code></pre>
 <h2 id="editor-setup"><a class="header" href="#editor-setup">Editor Setup</a></h2>
 <p>For the best experience, we recommend <strong>VS Code</strong> with the <strong>rust-analyzer</strong> extension. This provides:</p>
@@ -1336,7 +1336,7 @@ async fn show_form(token: CsrfToken) -&gt; Html&lt;String&gt; {
 <h2 id="traffic-insight"><a class="header" href="#traffic-insight">Traffic Insight</a></h2>
 <p>The <code>insight</code> feature provides powerful real-time traffic analysis and debugging capabilities without external dependencies. It is designed to be low-overhead and privacy-conscious.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-extras = { version = "0.1", features = ["insight"] }
+rustapi-extras = { version = "0.1.275", features = ["insight"] }
 </code></pre>
 <h3 id="setup-1"><a class="header" href="#setup-1">Setup</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -1361,6 +1361,97 @@ async fn get_insights(State(store): State&lt;Arc&lt;InMemoryInsightStore&gt;&gt;
 }
 <span class="boring">}</span></code></pre>
 <p>The <code>InsightStore</code> trait allows you to implement custom backends (e.g., ClickHouse or Elasticsearch) if you need long-term retention.</p>
+<h2 id="observability"><a class="header" href="#observability">Observability</a></h2>
+<p>The <code>otel</code> and <code>structured-logging</code> features bring enterprise-grade observability.</p>
+<h3 id="opentelemetry"><a class="header" href="#opentelemetry">OpenTelemetry</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_extras::otel::{OtelLayer, OtelConfig};
+
+let config = OtelConfig::default().service_name("my-service");
+let app = RustApi::new()
+    .layer(OtelLayer::new(config));
+<span class="boring">}</span></code></pre>
+<h3 id="structured-logging"><a class="header" href="#structured-logging">Structured Logging</a></h3>
+<p>Emit logs as JSON for aggregators like Datadog or Splunk.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_extras::structured_logging::{StructuredLoggingLayer, JsonFormatter};
+
+let app = RustApi::new()
+    .layer(StructuredLoggingLayer::new(JsonFormatter::default()));
+<span class="boring">}</span></code></pre>
+<h2 id="advanced-security"><a class="header" href="#advanced-security">Advanced Security</a></h2>
+<h3 id="oauth2-client"><a class="header" href="#oauth2-client">OAuth2 Client</a></h3>
+<p>The <code>oauth2-client</code> feature provides a complete client implementation.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_extras::oauth2::{OAuth2Client, OAuth2Config, Provider};
+
+let config = OAuth2Config::new(
+    Provider::Google,
+    "client_id",
+    "client_secret",
+    "http://localhost:8080/callback"
+);
+let client = OAuth2Client::new(config);
+<span class="boring">}</span></code></pre>
+<h3 id="security-headers"><a class="header" href="#security-headers">Security Headers</a></h3>
+<p>Add standard security headers (HSTS, X-Frame-Options, etc.).</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_extras::security_headers::SecurityHeadersLayer;
+
+let app = RustApi::new()
+    .layer(SecurityHeadersLayer::default());
+<span class="boring">}</span></code></pre>
+<h3 id="api-keys"><a class="header" href="#api-keys">API Keys</a></h3>
+<p>Simple API Key authentication strategy.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_extras::api_key::ApiKeyLayer;
+
+let app = RustApi::new()
+    .layer(ApiKeyLayer::new("my-secret-key"));
+<span class="boring">}</span></code></pre>
+<h2 id="resilience"><a class="header" href="#resilience">Resilience</a></h2>
+<h3 id="circuit-breaker"><a class="header" href="#circuit-breaker">Circuit Breaker</a></h3>
+<p>Prevent cascading failures by stopping requests to failing upstreams.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_extras::circuit_breaker::CircuitBreakerLayer;
+
+let app = RustApi::new()
+    .layer(CircuitBreakerLayer::new());
+<span class="boring">}</span></code></pre>
+<h3 id="retry"><a class="header" href="#retry">Retry</a></h3>
+<p>Automatically retry failed requests with backoff.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_extras::retry::RetryLayer;
+
+let app = RustApi::new()
+    .layer(RetryLayer::default());
+<span class="boring">}</span></code></pre>
+<h2 id="optimization"><a class="header" href="#optimization">Optimization</a></h2>
+<h3 id="caching"><a class="header" href="#caching">Caching</a></h3>
+<p>Cache responses based on headers or path.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_extras::cache::CacheLayer;
+
+let app = RustApi::new()
+    .layer(CacheLayer::new());
+<span class="boring">}</span></code></pre>
+<h3 id="request-deduplication"><a class="header" href="#request-deduplication">Request Deduplication</a></h3>
+<p>Prevent duplicate requests (e.g., from double clicks) from processing twice.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_extras::dedup::DedupLayer;
+
+let app = RustApi::new()
+    .layer(DedupLayer::new());
+<span class="boring">}</span></code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="rustapi-toon-the-diplomat"><a class="header" href="#rustapi-toon-the-diplomat">rustapi-toon: The Diplomat</a></h1>
 <p><strong>Lens</strong>: “The Diplomat”
@@ -1490,6 +1581,36 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
 <li><strong>Redis</strong>: High throughput persistence. Recommended for production.</li>
 <li><strong>Postgres</strong>: Transactional reliability (ACID). Best if you cannot lose jobs.</li>
 </ul>
+<h3 id="redis-backend"><a class="header" href="#redis-backend">Redis Backend</a></h3>
+<p>Enable the <code>redis</code> feature in <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[dependencies]
+rustapi-jobs = { version = "0.1.275", features = ["redis"] }
+</code></pre>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_jobs::backend::redis::RedisBackend;
+
+let backend = RedisBackend::new("redis://127.0.0.1:6379").await?;
+let queue = JobQueue::new(backend);
+<span class="boring">}</span></code></pre>
+<h3 id="postgres-backend"><a class="header" href="#postgres-backend">Postgres Backend</a></h3>
+<p>Enable the <code>postgres</code> feature in <code>Cargo.toml</code>. This uses <code>sqlx</code>.</p>
+<pre><code class="language-toml">[dependencies]
+rustapi-jobs = { version = "0.1.275", features = ["postgres"] }
+</code></pre>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_jobs::backend::postgres::PostgresBackend;
+use sqlx::postgres::PgPoolOptions;
+
+let pool = PgPoolOptions::new().connect("postgres://user:pass@localhost/db").await?;
+let backend = PostgresBackend::new(pool);
+
+// Ensure the jobs table exists
+backend.migrate().await?;
+
+let queue = JobQueue::new(backend);
+<span class="boring">}</span></code></pre>
 <h2 id="reliability-features"><a class="header" href="#reliability-features">Reliability Features</a></h2>
 <p>The worker system includes built-in reliability features:</p>
 <ul>
@@ -1617,7 +1738,7 @@ async fn main() -&gt; Result&lt;()&gt; {
 <h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
 <p>Enable the <code>jwt</code> feature in your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1", features = ["jwt"] }
+rustapi-rs = { version = "0.1.275", features = ["jwt"] }
 serde = { version = "1", features = ["derive"] }
 </code></pre>
 <h2 id="1-define-claims"><a class="header" href="#1-define-claims">1. Define Claims</a></h2>
@@ -1730,7 +1851,7 @@ async fn admin_only(AuthUser(claims): AuthUser&lt;Claims&gt;) -&gt; Result&lt;St
 </ol>
 <h2 id="quick-start-1"><a class="header" href="#quick-start-1">Quick Start</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1", features = ["csrf"] }
+rustapi-rs = { version = "0.1.275", features = ["csrf"] }
 </code></pre>
 <pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
 use rustapi_extras::csrf::{CsrfConfig, CsrfLayer, CsrfToken};
@@ -2089,7 +2210,7 @@ impl UserRepository for PostgresRepo {
 <p>Handling file uploads efficiently is crucial. RustAPI allows you to stream <code>Multipart</code> data, meaning you can handle 1GB uploads without using 1GB of RAM.</p>
 <h2 id="dependencies-2"><a class="header" href="#dependencies-2">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi = { version = "0.1", features = ["multipart"] }
+rustapi = { version = "0.1.275", features = ["multipart"] }
 tokio = { version = "1", features = ["fs", "io-util"] }
 uuid = { version = "1", features = ["v4"] }
 </code></pre>
@@ -2285,7 +2406,7 @@ Response::from_parts(parts, body)
 <p>WebSockets allow full-duplex communication between the client and server. RustAPI leverages the <code>rustapi-ws</code> crate (based on <code>tungstenite</code> and <code>tokio</code>) to make this easy.</p>
 <h2 id="dependencies-3"><a class="header" href="#dependencies-3">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-ws = "0.1"
+rustapi-ws = "0.1.275"
 tokio = { version = "1", features = ["sync"] }
 futures = "0.3"
 </code></pre>
@@ -2466,9 +2587,9 @@ async fn main() {
 <h2 id="enabling-http3"><a class="header" href="#enabling-http3">Enabling HTTP/3</a></h2>
 <p>HTTP/3 support is optional and can be enabled via feature flags in <code>Cargo.toml</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.9", features = ["http3"] }
+rustapi-rs = { version = "0.1.275", features = ["http3"] }
 # For development with self-signed certificates
-rustapi-rs = { version = "0.1.9", features = ["http3", "http3-dev"] }
+rustapi-rs = { version = "0.1.275", features = ["http3", "http3-dev"] }
 </code></pre>
 <h2 id="running-an-http3-server"><a class="header" href="#running-an-http3-server">Running an HTTP/3 Server</a></h2>
 <p>Since HTTP/3 requires TLS (even for local development), RustAPI provides helpers to make this easy.</p>
@@ -2687,7 +2808,7 @@ utoipa = "4.2"  # ❌ Don't add this
 </code></pre>
 <p><strong>Correct:</strong></p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1", features = ["full"] }
+rustapi-rs = { version = "0.1.275", features = ["full"] }
 # rustapi-openapi is re-exported through rustapi-rs
 </code></pre>
 <p><strong>Why?</strong></p>
@@ -3116,6 +3237,26 @@ RustApi::auto()
 <li><a href="#rustapi-toon-the-diplomat">rustapi-toon: The Diplomat</a></li>
 </ul>
 <hr>
+<h3 id="-path-5-enterprise-platform"><a class="header" href="#-path-5-enterprise-platform">🏢 Path 5: Enterprise Platform</a></h3>
+<p>Build robust, observable, and secure systems.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Step</th><th>Feature</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td>1</td><td><strong>Observability</strong></td><td>Set up <a href="#observability">OpenTelemetry and Structured Logging</a></td></tr>
+<tr><td>2</td><td><strong>Resilience</strong></td><td>Implement <a href="#resilience">Circuit Breakers and Retries</a></td></tr>
+<tr><td>3</td><td><strong>Advanced Security</strong></td><td>Add <a href="#advanced-security">OAuth2 and Security Headers</a></td></tr>
+<tr><td>4</td><td><strong>Optimization</strong></td><td>Configure <a href="#optimization">Caching and Deduplication</a></td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Related Cookbook Recipes:</strong></p>
+<ul>
+<li><a href="#rustapi-extras-the-toolbox">rustapi-extras: The Toolbox</a></li>
+</ul>
+<hr>
 <h2 id="-examples-by-category"><a class="header" href="#-examples-by-category">📦 Examples by Category</a></h2>
 <h3 id="getting-started-1"><a class="header" href="#getting-started-1">Getting Started</a></h3>
 <div class="table-wrapper">
@@ -3209,6 +3350,9 @@ RustApi::auto()
 <tr><td>Rate Limiting</td><td><code>rate-limit-demo</code>, <code>auth-api</code></td></tr>
 <tr><td>WebSockets (<code>ws</code> feature)</td><td><code>websocket</code>, <code>graphql-api</code></td></tr>
 <tr><td>TOON (<code>toon</code> feature)</td><td><code>toon-api</code>, <code>mcp-server</code></td></tr>
+<tr><td>OAuth2 (<code>oauth2-client</code>)</td><td><code>auth-api</code> (extended)</td></tr>
+<tr><td>Circuit Breaker</td><td><code>microservices</code></td></tr>
+<tr><td>OpenTelemetry (<code>otel</code>)</td><td><code>microservices-advanced</code></td></tr>
 <tr><td>OpenAPI/Swagger</td><td>All examples</td></tr>
 </tbody>
 </table>

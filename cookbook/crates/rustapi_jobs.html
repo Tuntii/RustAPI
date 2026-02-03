@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-50e2da92.js";
+            window.path_to_searchindex_js = "../searchindex-6ad64c80.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-0b329e8e.js"></script>
@@ -252,6 +252,36 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
 <li><strong>Redis</strong>: High throughput persistence. Recommended for production.</li>
 <li><strong>Postgres</strong>: Transactional reliability (ACID). Best if you cannot lose jobs.</li>
 </ul>
+<h3 id="redis-backend"><a class="header" href="#redis-backend">Redis Backend</a></h3>
+<p>Enable the <code>redis</code> feature in <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[dependencies]
+rustapi-jobs = { version = "0.1.275", features = ["redis"] }
+</code></pre>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_jobs::backend::redis::RedisBackend;
+
+let backend = RedisBackend::new("redis://127.0.0.1:6379").await?;
+let queue = JobQueue::new(backend);
+<span class="boring">}</span></code></pre>
+<h3 id="postgres-backend"><a class="header" href="#postgres-backend">Postgres Backend</a></h3>
+<p>Enable the <code>postgres</code> feature in <code>Cargo.toml</code>. This uses <code>sqlx</code>.</p>
+<pre><code class="language-toml">[dependencies]
+rustapi-jobs = { version = "0.1.275", features = ["postgres"] }
+</code></pre>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_jobs::backend::postgres::PostgresBackend;
+use sqlx::postgres::PgPoolOptions;
+
+let pool = PgPoolOptions::new().connect("postgres://user:pass@localhost/db").await?;
+let backend = PostgresBackend::new(pool);
+
+// Ensure the jobs table exists
+backend.migrate().await?;
+
+let queue = JobQueue::new(backend);
+<span class="boring">}</span></code></pre>
 <h2 id="reliability-features"><a class="header" href="#reliability-features">Reliability Features</a></h2>
 <p>The worker system includes built-in reliability features:</p>
 <ul>
