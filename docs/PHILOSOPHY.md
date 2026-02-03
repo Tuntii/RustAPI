@@ -72,7 +72,7 @@ We achieve this through:
 ```toml
 # Your Cargo.toml - simple and stable
 [dependencies]
-rustapi-rs = "0.1"
+rustapi-rs = "0.1.275"
 ```
 
 You never write:
@@ -111,13 +111,13 @@ validator = "0.16"
 
 ```toml
 # Just the basics
-rustapi-rs = "0.1"
+rustapi-rs = "0.1.275"
 
 # Kitchen sink
-rustapi-rs = { version = "0.1", features = ["full"] }
+rustapi-rs = { version = "0.1.275", features = ["full"] }
 
 # Pick what you need
-rustapi-rs = { version = "0.1", features = ["jwt", "cors", "toon"] }
+rustapi-rs = { version = "0.1.275", features = ["jwt", "cors", "toon"] }
 ```
 
 | Feature | What You Get |

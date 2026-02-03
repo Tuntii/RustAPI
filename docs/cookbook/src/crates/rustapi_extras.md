@@ -89,7 +89,7 @@ The `insight` feature provides powerful real-time traffic analysis and debugging
 
 ```toml
 [dependencies]
-rustapi-extras = { version = "0.1", features = ["insight"] }
+rustapi-extras = { version = "0.1.275", features = ["insight"] }
 ```
 
 ### Setup
@@ -118,3 +118,116 @@ async fn get_insights(State(store): State<Arc<InMemoryInsightStore>>) -> Json<In
 ```
 
 The `InsightStore` trait allows you to implement custom backends (e.g., ClickHouse or Elasticsearch) if you need long-term retention.
+
+## Observability
+
+The `otel` and `structured-logging` features bring enterprise-grade observability.
+
+### OpenTelemetry
+
+```rust
+use rustapi_extras::otel::{OtelLayer, OtelConfig};
+
+let config = OtelConfig::default().service_name("my-service");
+let app = RustApi::new()
+    .layer(OtelLayer::new(config));
+```
+
+### Structured Logging
+
+Emit logs as JSON for aggregators like Datadog or Splunk.
+
+```rust
+use rustapi_extras::structured_logging::{StructuredLoggingLayer, JsonFormatter};
+
+let app = RustApi::new()
+    .layer(StructuredLoggingLayer::new(JsonFormatter::default()));
+```
+
+## Advanced Security
+
+### OAuth2 Client
+
+The `oauth2-client` feature provides a complete client implementation.
+
+```rust
+use rustapi_extras::oauth2::{OAuth2Client, OAuth2Config, Provider};
+
+let config = OAuth2Config::new(
+    Provider::Google,
+    "client_id",
+    "client_secret",
+    "http://localhost:8080/callback"
+);
+let client = OAuth2Client::new(config);
+```
+
+### Security Headers
+
+Add standard security headers (HSTS, X-Frame-Options, etc.).
+
+```rust
+use rustapi_extras::security_headers::SecurityHeadersLayer;
+
+let app = RustApi::new()
+    .layer(SecurityHeadersLayer::default());
+```
+
+### API Keys
+
+Simple API Key authentication strategy.
+
+```rust
+use rustapi_extras::api_key::ApiKeyLayer;
+
+let app = RustApi::new()
+    .layer(ApiKeyLayer::new("my-secret-key"));
+```
+
+## Resilience
+
+### Circuit Breaker
+
+Prevent cascading failures by stopping requests to failing upstreams.
+
+```rust
+use rustapi_extras::circuit_breaker::CircuitBreakerLayer;
+
+let app = RustApi::new()
+    .layer(CircuitBreakerLayer::new());
+```
+
+### Retry
+
+Automatically retry failed requests with backoff.
+
+```rust
+use rustapi_extras::retry::RetryLayer;
+
+let app = RustApi::new()
+    .layer(RetryLayer::default());
+```
+
+## Optimization
+
+### Caching
+
+Cache responses based on headers or path.
+
+```rust
+use rustapi_extras::cache::CacheLayer;
+
+let app = RustApi::new()
+    .layer(CacheLayer::new());
+```
+
+### Request Deduplication
+
+Prevent duplicate requests (e.g., from double clicks) from processing twice.
+
+```rust
+use rustapi_extras::dedup::DedupLayer;
+
+let app = RustApi::new()
+    .layer(DedupLayer::new());
+```
