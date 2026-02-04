@@ -62,7 +62,7 @@ reqwest = { version = "0.12", optional = true, default-features = false, feature
 opentelemetry = { version = "0.22", optional = true }
 opentelemetry_sdk = { version = "0.31", optional = true, features = ["rt-tokio"] }
 opentelemetry-otlp = { version = "0.31", optional = true }
-opentelemetry-semantic-conventions = { version = "0.14", optional = true }
+opentelemetry-semantic-conventions = { version = "0.31", optional = true }
 tracing-opentelemetry = { version = "0.32", optional = true }
 
 # CSRF (feature-gated)
