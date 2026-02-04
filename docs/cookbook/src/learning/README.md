@@ -66,8 +66,9 @@ Design and build distributed systems with RustAPI.
 | 3 | `rate-limit-demo` | API protection, throttling |
 | 4 | `microservices` | Service communication patterns |
 | 5 | `microservices-advanced` | Service discovery, Consul integration |
-| 6 | `job-queue` | Background processing, Redis/Postgres backends |
+| 6 | Background jobs (conceptual) | Background processing with `rustapi-jobs`, Redis/Postgres backends |
 
+> Note: The **Background jobs (conceptual)** step refers to using the `rustapi-jobs` crate rather than a standalone example project.
 **Related Cookbook Recipes:**
 - [rustapi-jobs](../crates/rustapi_jobs.md)
 - [Custom Middleware](../recipes/custom_middleware.md)
