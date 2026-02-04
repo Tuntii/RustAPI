@@ -17,7 +17,7 @@ WebSocket connections start as HTTP requests. We "upgrade" them.
 
 ```rust
 use rustapi_ws::{WebSocket, WebSocketUpgrade, Message};
-use rustapi::prelude::*;
+use rustapi_rs::prelude::*;
 use std::sync::Arc;
 use tokio::sync::broadcast;
 

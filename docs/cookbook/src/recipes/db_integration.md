@@ -59,7 +59,7 @@ async fn main() {
 Extract the `State` to get access to the pool.
 
 ```rust
-use rustapi::prelude::*;
+use rustapi_rs::prelude::*;
 
 #[derive(Deserialize)]
 struct CreateUser {

@@ -15,7 +15,7 @@ If the data cannot be extracted (e.g., missing header, invalid JSON), the reques
 A handler is simply an asynchronous function that takes zero or more **Extractors** as arguments and returns something that implements `IntoResponse`.
 
 ```rust
-use rustapi::prelude::*;
+use rustapi_rs::prelude::*;
 
 async fn create_user(
     State(db): State<DbPool>,         // 1. Dependency Injection

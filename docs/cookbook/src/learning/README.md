@@ -19,6 +19,7 @@ If you prefer reading through documentation first, follow this path through the 
 3. **Building Blocks**: Try the [Creating Resources](../recipes/crud_resource.md) recipe.
 4. **Security**: Implement [JWT Authentication](../recipes/jwt_auth.md) and [CSRF Protection](../recipes/csrf_protection.md).
 5. **Advanced**: Explore [Performance Tuning](../recipes/high_performance.md) and [HTTP/3](../recipes/http3_quic.md).
+6. **Background Tasks**: Master [rustapi-jobs](../crates/rustapi_jobs.md) for async processing.
 
 ### Why Use the Examples Repository?
 
@@ -65,8 +66,10 @@ Design and build distributed systems with RustAPI.
 | 3 | `rate-limit-demo` | API protection, throttling |
 | 4 | `microservices` | Service communication patterns |
 | 5 | `microservices-advanced` | Service discovery, Consul integration |
+| 6 | `job-queue` | Background processing, Redis/Postgres backends |
 
 **Related Cookbook Recipes:**
+- [rustapi-jobs](../crates/rustapi_jobs.md)
 - [Custom Middleware](../recipes/custom_middleware.md)
 - [Production Tuning](../recipes/high_performance.md)
 - [Deployment](../recipes/deployment.md)
@@ -116,9 +119,11 @@ Build robust, observable, and secure systems.
 | 2 | **Resilience** | Implement [Circuit Breakers and Retries](../crates/rustapi_extras.md#resilience) |
 | 3 | **Advanced Security** | Add [OAuth2 and Security Headers](../crates/rustapi_extras.md#advanced-security) |
 | 4 | **Optimization** | Configure [Caching and Deduplication](../crates/rustapi_extras.md#optimization) |
+| 5 | **Background Jobs** | Implement [Reliable Job Queues](../crates/rustapi_jobs.md) |
 
 **Related Cookbook Recipes:**
 - [rustapi-extras: The Toolbox](../crates/rustapi_extras.md)
+- [rustapi-jobs: The Workhorse](../crates/rustapi_jobs.md)
 
 ---
 
