@@ -6,7 +6,7 @@ Handling file uploads efficiently is crucial. RustAPI allows you to stream `Mult
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.275", features = ["multipart"] }
+rustapi-rs = "0.1.275"
 tokio = { version = "1", features = ["fs", "io-util"] }
 uuid = { version = "1", features = ["v4"] }
 ```
