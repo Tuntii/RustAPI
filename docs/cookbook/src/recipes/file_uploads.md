@@ -6,7 +6,7 @@ Handling file uploads efficiently is crucial. RustAPI allows you to stream `Mult
 
 ```toml
 [dependencies]
-rustapi = { version = "0.1.275", features = ["multipart"] }
+rustapi-rs = "0.1.275"
 tokio = { version = "1", features = ["fs", "io-util"] }
 uuid = { version = "1", features = ["v4"] }
 ```
@@ -16,8 +16,8 @@ uuid = { version = "1", features = ["v4"] }
 This handler reads the incoming stream part-by-part and writes it directly to disk (or S3).
 
 ```rust
-use rustapi::prelude::*;
-use rustapi::extract::Multipart;
+use rustapi_rs::prelude::*;
+use rustapi_rs::extract::Multipart;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 
@@ -58,7 +58,7 @@ async fn upload_file(mut multipart: Multipart) -> Result<StatusCode, ApiError> {
 You should always set limits to prevent DoS attacks.
 
 ```rust
-use rustapi::extract::DefaultBodyLimit;
+use rustapi_rs::extract::DefaultBodyLimit;
 
 let app = RustApi::new()
     .route("/upload", post(upload_file))
