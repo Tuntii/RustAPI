@@ -19,7 +19,7 @@ If you prefer reading through documentation first, follow this path through the 
 3. **Building Blocks**: Try the [Creating Resources](../recipes/crud_resource.md) recipe.
 4. **Security**: Implement [JWT Authentication](../recipes/jwt_auth.md) and [CSRF Protection](../recipes/csrf_protection.md).
 5. **Advanced**: Explore [Performance Tuning](../recipes/high_performance.md) and [HTTP/3](../recipes/http3_quic.md).
-6. **Background Tasks**: Master [rustapi-jobs](../crates/rustapi_jobs.md) for async processing.
+6. **Background Jobs**: Master [rustapi-jobs](../crates/rustapi_jobs.md) for async processing.
 
 ### Why Use the Examples Repository?
 
