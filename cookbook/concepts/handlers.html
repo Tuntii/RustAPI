@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-6ad64c80.js";
+            window.path_to_searchindex_js = "../searchindex-a7369cc8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-0b329e8e.js"></script>
@@ -191,7 +191,7 @@
 <p>A handler is simply an asynchronous function that takes zero or more <strong>Extractors</strong> as arguments and returns something that implements <code>IntoResponse</code>.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use rustapi::prelude::*;
+</span>use rustapi_rs::prelude::*;
 
 async fn create_user(
     State(db): State&lt;DbPool&gt;,         // 1. Dependency Injection

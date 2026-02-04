@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-6ad64c80.js";
+            window.path_to_searchindex_js = "searchindex-a7369cc8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-0b329e8e.js"></script>
@@ -348,7 +348,7 @@ INFO rustapi: 📚 API docs at http://127.0.0.1:8080/docs
 <p>A handler is simply an asynchronous function that takes zero or more <strong>Extractors</strong> as arguments and returns something that implements <code>IntoResponse</code>.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use rustapi::prelude::*;
+</span>use rustapi_rs::prelude::*;
 
 async fn create_user(
     State(db): State&lt;DbPool&gt;,         // 1. Dependency Injection
@@ -2126,7 +2126,7 @@ async fn main() {
 <p>Extract the <code>State</code> to get access to the pool.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use rustapi::prelude::*;
+</span>use rustapi_rs::prelude::*;
 
 #[derive(Deserialize)]
 struct CreateUser {
@@ -2210,7 +2210,7 @@ impl UserRepository for PostgresRepo {
 <p>Handling file uploads efficiently is crucial. RustAPI allows you to stream <code>Multipart</code> data, meaning you can handle 1GB uploads without using 1GB of RAM.</p>
 <h2 id="dependencies-2"><a class="header" href="#dependencies-2">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi = { version = "0.1.275", features = ["multipart"] }
+rustapi-rs = "0.1.275"
 tokio = { version = "1", features = ["fs", "io-util"] }
 uuid = { version = "1", features = ["v4"] }
 </code></pre>
@@ -2218,8 +2218,8 @@ uuid = { version = "1", features = ["v4"] }
 <p>This handler reads the incoming stream part-by-part and writes it directly to disk (or S3).</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use rustapi::prelude::*;
-use rustapi::extract::Multipart;
+</span>use rustapi_rs::prelude::*;
+use rustapi_rs::extract::Multipart;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 
@@ -2258,7 +2258,7 @@ async fn upload_file(mut multipart: Multipart) -&gt; Result&lt;StatusCode, ApiEr
 <p>You should always set limits to prevent DoS attacks.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use rustapi::extract::DefaultBodyLimit;
+</span>use rustapi_rs::extract::DefaultBodyLimit;
 
 let app = RustApi::new()
     .route("/upload", post(upload_file))
@@ -2415,7 +2415,7 @@ futures = "0.3"
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use rustapi_ws::{WebSocket, WebSocketUpgrade, Message};
-use rustapi::prelude::*;
+use rustapi_rs::prelude::*;
 use std::sync::Arc;
 use tokio::sync::broadcast;
 
@@ -3132,6 +3132,7 @@ RustApi::auto()
 <li><strong>Building Blocks</strong>: Try the <a href="#creating-resources">Creating Resources</a> recipe.</li>
 <li><strong>Security</strong>: Implement <a href="#jwt-authentication">JWT Authentication</a> and <a href="#csrf-protection-1">CSRF Protection</a>.</li>
 <li><strong>Advanced</strong>: Explore <a href="#production-tuning">Performance Tuning</a> and <a href="#http3-quic-support">HTTP/3</a>.</li>
+<li><strong>Background Jobs</strong>: Master <a href="#rustapi-jobs-the-workhorse">rustapi-jobs</a> for async processing.</li>
 </ol>
 <h3 id="why-use-the-examples-repository"><a class="header" href="#why-use-the-examples-repository">Why Use the Examples Repository?</a></h3>
 <div class="table-wrapper">
@@ -3186,11 +3187,16 @@ RustApi::auto()
 <tr><td>3</td><td><code>rate-limit-demo</code></td><td>API protection, throttling</td></tr>
 <tr><td>4</td><td><code>microservices</code></td><td>Service communication patterns</td></tr>
 <tr><td>5</td><td><code>microservices-advanced</code></td><td>Service discovery, Consul integration</td></tr>
+<tr><td>6</td><td>Background jobs (conceptual)</td><td>Background processing with <code>rustapi-jobs</code>, Redis/Postgres backends</td></tr>
 </tbody>
 </table>
 </div>
-<p><strong>Related Cookbook Recipes:</strong></p>
+<blockquote>
+<p>Note: The <strong>Background jobs (conceptual)</strong> step refers to using the <code>rustapi-jobs</code> crate rather than a standalone example project.
+<strong>Related Cookbook Recipes:</strong></p>
+</blockquote>
 <ul>
+<li><a href="#rustapi-jobs-the-workhorse">rustapi-jobs</a></li>
 <li><a href="#custom-middleware">Custom Middleware</a></li>
 <li><a href="#production-tuning">Production Tuning</a></li>
 <li><a href="#deployment">Deployment</a></li>
@@ -3249,12 +3255,14 @@ RustApi::auto()
 <tr><td>2</td><td><strong>Resilience</strong></td><td>Implement <a href="#resilience">Circuit Breakers and Retries</a></td></tr>
 <tr><td>3</td><td><strong>Advanced Security</strong></td><td>Add <a href="#advanced-security">OAuth2 and Security Headers</a></td></tr>
 <tr><td>4</td><td><strong>Optimization</strong></td><td>Configure <a href="#optimization">Caching and Deduplication</a></td></tr>
+<tr><td>5</td><td><strong>Background Jobs</strong></td><td>Implement <a href="#rustapi-jobs-the-workhorse">Reliable Job Queues</a></td></tr>
 </tbody>
 </table>
 </div>
 <p><strong>Related Cookbook Recipes:</strong></p>
 <ul>
 <li><a href="#rustapi-extras-the-toolbox">rustapi-extras: The Toolbox</a></li>
+<li><a href="#rustapi-jobs-the-workhorse">rustapi-jobs: The Workhorse</a></li>
 </ul>
 <hr>
 <h2 id="-examples-by-category"><a class="header" href="#-examples-by-category">📦 Examples by Category</a></h2>

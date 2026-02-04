@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-6ad64c80.js";
+            window.path_to_searchindex_js = "../searchindex-a7369cc8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-0b329e8e.js"></script>
@@ -195,6 +195,7 @@
 <li><strong>Building Blocks</strong>: Try the <a href="../recipes/crud_resource.html">Creating Resources</a> recipe.</li>
 <li><strong>Security</strong>: Implement <a href="../recipes/jwt_auth.html">JWT Authentication</a> and <a href="../recipes/csrf_protection.html">CSRF Protection</a>.</li>
 <li><strong>Advanced</strong>: Explore <a href="../recipes/high_performance.html">Performance Tuning</a> and <a href="../recipes/http3_quic.html">HTTP/3</a>.</li>
+<li><strong>Background Jobs</strong>: Master <a href="../crates/rustapi_jobs.html">rustapi-jobs</a> for async processing.</li>
 </ol>
 <h3 id="why-use-the-examples-repository"><a class="header" href="#why-use-the-examples-repository">Why Use the Examples Repository?</a></h3>
 <div class="table-wrapper">
@@ -249,11 +250,16 @@
 <tr><td>3</td><td><code>rate-limit-demo</code></td><td>API protection, throttling</td></tr>
 <tr><td>4</td><td><code>microservices</code></td><td>Service communication patterns</td></tr>
 <tr><td>5</td><td><code>microservices-advanced</code></td><td>Service discovery, Consul integration</td></tr>
+<tr><td>6</td><td>Background jobs (conceptual)</td><td>Background processing with <code>rustapi-jobs</code>, Redis/Postgres backends</td></tr>
 </tbody>
 </table>
 </div>
-<p><strong>Related Cookbook Recipes:</strong></p>
+<blockquote>
+<p>Note: The <strong>Background jobs (conceptual)</strong> step refers to using the <code>rustapi-jobs</code> crate rather than a standalone example project.
+<strong>Related Cookbook Recipes:</strong></p>
+</blockquote>
 <ul>
+<li><a href="../crates/rustapi_jobs.html">rustapi-jobs</a></li>
 <li><a href="../recipes/custom_middleware.html">Custom Middleware</a></li>
 <li><a href="../recipes/high_performance.html">Production Tuning</a></li>
 <li><a href="../recipes/deployment.html">Deployment</a></li>
@@ -312,12 +318,14 @@
 <tr><td>2</td><td><strong>Resilience</strong></td><td>Implement <a href="../crates/rustapi_extras.html#resilience">Circuit Breakers and Retries</a></td></tr>
 <tr><td>3</td><td><strong>Advanced Security</strong></td><td>Add <a href="../crates/rustapi_extras.html#advanced-security">OAuth2 and Security Headers</a></td></tr>
 <tr><td>4</td><td><strong>Optimization</strong></td><td>Configure <a href="../crates/rustapi_extras.html#optimization">Caching and Deduplication</a></td></tr>
+<tr><td>5</td><td><strong>Background Jobs</strong></td><td>Implement <a href="../crates/rustapi_jobs.html">Reliable Job Queues</a></td></tr>
 </tbody>
 </table>
 </div>
 <p><strong>Related Cookbook Recipes:</strong></p>
 <ul>
 <li><a href="../crates/rustapi_extras.html">rustapi-extras: The Toolbox</a></li>
+<li><a href="../crates/rustapi_jobs.html">rustapi-jobs: The Workhorse</a></li>
 </ul>
 <hr>
 <h2 id="-examples-by-category"><a class="header" href="#-examples-by-category">📦 Examples by Category</a></h2>
