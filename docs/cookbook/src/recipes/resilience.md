@@ -6,7 +6,7 @@ These patterns are essential for the "Enterprise Platform" learning path and mic
 
 ## Prerequisites
 
-Add `rustapi-extras` to your `Cargo.toml` with the necessary features:
+Add the resilience features to your `Cargo.toml`. For example:
 
 ```toml
 [dependencies]
