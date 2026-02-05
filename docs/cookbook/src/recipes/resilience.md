@@ -113,11 +113,11 @@ In RustAPI (Tower) middleware, layers wrap around each other. The order you call
 
 ```rust
 let app = RustApi::new()
-    // 3. Timeout (applies to the whole operation)
-    .layer(TimeoutLayer::from_secs(10))
-    // 2. Circuit Breaker (protects upstream)
-    .layer(CircuitBreakerLayer::new())
     // 1. Retry (handles transient errors)
     .layer(RetryLayer::new())
+    // 2. Circuit Breaker (protects upstream)
+    .layer(CircuitBreakerLayer::new())
+    // 3. Timeout (applies to the whole operation)
+    .layer(TimeoutLayer::from_secs(10))
     .route("/", get(handler));
 ```
