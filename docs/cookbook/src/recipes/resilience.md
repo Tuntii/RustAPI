@@ -102,7 +102,7 @@ fn main() {
 
 ## Combining Layers (The Resilience Stack)
 
-Order matters! You typically want the Timeout to be the "outermost" constraint (or innermost, depending on perspective), followed by Circuit Breaker, then Retry.
+Order matters! Timeout should be the "outermost" constraint, followed by Circuit Breaker, then Retry.
 
 In RustAPI (Tower) middleware, layers wrap around each other. The order you call `.layer()` wraps the *previous* service.
 
