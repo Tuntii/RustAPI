@@ -128,6 +128,10 @@ pub use rustapi_extras::otel;
 #[cfg(feature = "structured-logging")]
 pub use rustapi_extras::structured_logging;
 
+// Replay (time-travel debugging)
+#[cfg(feature = "replay")]
+pub use rustapi_extras::replay;
+
 // Re-export TOON (feature-gated)
 #[cfg(feature = "toon")]
 pub mod toon {

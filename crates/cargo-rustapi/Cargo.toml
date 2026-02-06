@@ -53,3 +53,4 @@ predicates = "3.1"
 [features]
 default = ["remote-spec"]
 remote-spec = ["dep:reqwest"]
+replay = ["dep:reqwest"]

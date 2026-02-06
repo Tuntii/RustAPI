@@ -68,6 +68,8 @@ pub mod middleware;
 pub mod multipart;
 pub mod path_params;
 pub mod path_validation;
+#[cfg(feature = "replay")]
+pub mod replay;
 mod request;
 mod response;
 mod router;
