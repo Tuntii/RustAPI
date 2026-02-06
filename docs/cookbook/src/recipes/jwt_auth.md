@@ -8,7 +8,7 @@ Enable the `jwt` feature in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.275", features = ["jwt"] }
+rustapi-rs = { version = "0.1.300", features = ["jwt"] }
 serde = { version = "1", features = ["derive"] }
 ```
 

@@ -8,9 +8,9 @@ HTTP/3 support is optional and can be enabled via feature flags in `Cargo.toml`.
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.275", features = ["http3"] }
+rustapi-rs = { version = "0.1.300", features = ["http3"] }
 # For development with self-signed certificates
-rustapi-rs = { version = "0.1.275", features = ["http3", "http3-dev"] }
+rustapi-rs = { version = "0.1.300", features = ["http3", "http3-dev"] }
 ```
 
 ## Running an HTTP/3 Server

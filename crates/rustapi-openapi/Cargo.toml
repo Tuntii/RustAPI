@@ -20,7 +20,7 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 
 # Macros
-rustapi-macros = { path = "../rustapi-macros", version = "0.1.188" }
+rustapi-macros = { path = "../rustapi-macros", version = "0.1.300" }
 
 [features]
 default = ["swagger-ui"]

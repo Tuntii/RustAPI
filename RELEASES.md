@@ -1,6 +1,6 @@
 # RustAPI Release History
 
-## v0.1.275 - Time-Travel Debugging (2026-02-06)
+## v0.1.300 - Time-Travel Debugging (2026-02-06)
 
 ### 🎯 Major Feature: Replay System
 

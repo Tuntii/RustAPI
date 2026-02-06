@@ -30,14 +30,14 @@ cargo-rustapi --version
 If you prefer not to use the CLI, you can add RustAPI to your `Cargo.toml` manually:
 
 ```bash
-cargo add rustapi-rs@0.1.275
+cargo add rustapi-rs@0.1.300
 ```
 
 Or add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rustapi-rs = "0.1.275"
+rustapi-rs = "0.1.300"
 ```
 
 ## Editor Setup
