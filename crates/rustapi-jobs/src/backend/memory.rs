@@ -34,19 +34,26 @@ impl JobBackend for InMemoryBackend {
             .lock()
             .map_err(|_| JobError::BackendError("Lock poisoned".to_string()))?;
 
-        // Simple FIFO for now, ignoring run_at logic complexity for basic in-memory
-        // In reality we should scan for ready jobs
-        if let Some(job) = q.front() {
+        let now = chrono::Utc::now();
+        let mut index_to_remove = None;
+
+        // Scan the queue for the first ready job
+        for (i, job) in q.iter().enumerate() {
             if let Some(run_at) = job.run_at {
-                if run_at > chrono::Utc::now() {
-                    return Ok(None);
+                if run_at > now {
+                    continue;
                 }
             }
-        } else {
-            return Ok(None);
+            // Found a ready job (no run_at, or run_at <= now)
+            index_to_remove = Some(i);
+            break;
         }
 
-        Ok(q.pop_front())
+        if let Some(i) = index_to_remove {
+            Ok(q.remove(i))
+        } else {
+            Ok(None)
+        }
     }
 
     async fn complete(&self, _job_id: &str) -> Result<()> {
