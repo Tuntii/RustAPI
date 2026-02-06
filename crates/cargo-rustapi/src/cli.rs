@@ -11,7 +11,9 @@ use clap::{Parser, Subcommand};
 #[command(name = "cargo-rustapi")]
 #[command(bin_name = "cargo rustapi")]
 #[command(author, version, about)]
-#[command(long_about = "The official CLI tool for the RustAPI framework.\n\nUsage:\n  cargo rustapi <COMMAND>\n  cargo-rustapi <COMMAND>\n\nBoth forms are equivalent and can be used interchangeably.")]
+#[command(
+    long_about = "The official CLI tool for the RustAPI framework.\n\nUsage:\n  cargo rustapi <COMMAND>\n  cargo-rustapi <COMMAND>\n\nBoth forms are equivalent and can be used interchangeably."
+)]
 pub struct Cli {
     #[command(subcommand)]
     command: Commands,
