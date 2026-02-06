@@ -10,7 +10,7 @@ Add the `replay` feature to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1", features = ["replay"] }
+rustapi-rs = { version = "0.1.300", features = ["replay"] }
 ```
 
 Add the `ReplayLayer` middleware to your application:

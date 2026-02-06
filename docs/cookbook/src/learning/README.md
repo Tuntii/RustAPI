@@ -121,9 +121,11 @@ Build robust, observable, and secure systems.
 | 3 | **Advanced Security** | Add [OAuth2 and Security Headers](../crates/rustapi_extras.md#advanced-security) |
 | 4 | **Optimization** | Configure [Caching and Deduplication](../crates/rustapi_extras.md#optimization) |
 | 5 | **Background Jobs** | Implement [Reliable Job Queues](../crates/rustapi_jobs.md) |
+| 6 | **Debugging** | Set up [Time-Travel Debugging](../recipes/replay.md) |
 
 **Related Cookbook Recipes:**
 - [rustapi-extras: The Toolbox](../crates/rustapi_extras.md)
+- [Time-Travel Debugging](../recipes/replay.md)
 - [rustapi-jobs: The Workhorse](../crates/rustapi_jobs.md)
 - [Resilience Patterns](../recipes/resilience.md)
 
@@ -188,6 +190,7 @@ Find examples by the RustAPI features they demonstrate:
 | TOON (`toon` feature) | `toon-api`, `mcp-server` |
 | OAuth2 (`oauth2-client`) | `auth-api` (extended) |
 | Circuit Breaker | `microservices` |
+| Replay (`replay` feature) | `microservices` (conceptual) |
 | OpenTelemetry (`otel`) | `microservices-advanced` |
 | OpenAPI/Swagger | All examples |
 
@@ -244,6 +247,7 @@ Each example includes:
 | [Real-time Chat](../recipes/websockets.md) | `websocket` |
 | [Production Tuning](../recipes/high_performance.md) | `microservices-advanced` |
 | [Resilience Patterns](../recipes/resilience.md) | `microservices` |
+| [Time-Travel Debugging](../recipes/replay.md) | `microservices` |
 | [Deployment](../recipes/deployment.md) | `serverless-lambda` |
 
 ---

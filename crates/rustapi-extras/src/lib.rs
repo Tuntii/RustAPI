@@ -36,7 +36,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! rustapi-extras = { version = "0.1.275", features = ["jwt", "cors", "csrf"] }
+//! rustapi-extras = { version = "0.1.300", features = ["jwt", "cors", "csrf"] }
 //! ```
 
 #![warn(missing_docs)]

@@ -10,9 +10,9 @@ Add the resilience features to your `Cargo.toml`. For example:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.275", features = ["full"] }
+rustapi-rs = { version = "0.1.300", features = ["full"] }
 # OR cherry-pick features
-# rustapi-extras = { version = "0.1.275", features = ["circuit-breaker", "retry", "timeout"] }
+# rustapi-extras = { version = "0.1.300", features = ["circuit-breaker", "retry", "timeout"] }
 ```
 
 ## Circuit Breaker
