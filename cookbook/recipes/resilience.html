@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Part V: Learning &amp; Examples - RustAPI Architecture Cookbook</title>
+        <title>Resilience Patterns - RustAPI Architecture Cookbook</title>
 
 
         <!-- Custom HTML head -->
@@ -147,7 +147,7 @@
                         <a href="https://github.com/Tuntii/RustAPI" title="Git repository" aria-label="Git repository">
                             <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
                         </a>
-                        <a href="https://github.com/Tuntii/RustAPI/edit/master/docs/cookbook/src/learning/README.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                        <a href="https://github.com/Tuntii/RustAPI/edit/master/docs/cookbook/src/recipes/resilience.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
                             <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
                         </a>
 
@@ -181,339 +181,118 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="learning--examples"><a class="header" href="#learning--examples">Learning &amp; Examples</a></h1>
-<p>Welcome to the RustAPI learning resources! This section provides structured learning paths and links to comprehensive real-world examples to help you master the framework.</p>
-<h2 id="-learning-resources"><a class="header" href="#-learning-resources">📚 Learning Resources</a></h2>
-<h3 id="official-examples-repository"><a class="header" href="#official-examples-repository">Official Examples Repository</a></h3>
-<p>We maintain a comprehensive examples repository with <strong>18 real-world projects</strong> demonstrating RustAPI’s full capabilities:</p>
-<p>🔗 <strong><a href="https://github.com/Tuntii/rustapi-rs-examples">rustapi-rs-examples</a></strong> - Complete examples from hello-world to production microservices</p>
-<h3 id="cookbook-internal-path"><a class="header" href="#cookbook-internal-path">Cookbook Internal Path</a></h3>
-<p>If you prefer reading through documentation first, follow this path through the cookbook:</p>
+                        <h1 id="resilience-patterns"><a class="header" href="#resilience-patterns">Resilience Patterns</a></h1>
+<p>Building robust applications requires handling failures gracefully. RustAPI provides a suite of middleware to help your service survive partial outages, latency spikes, and transient errors.</p>
+<p>These patterns are essential for the “Enterprise Platform” learning path and microservices architectures.</p>
+<h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
+<p>Add the resilience features to your <code>Cargo.toml</code>. For example:</p>
+<pre><code class="language-toml">[dependencies]
+rustapi-rs = { version = "0.1.275", features = ["full"] }
+# OR cherry-pick features
+# rustapi-extras = { version = "0.1.275", features = ["circuit-breaker", "retry", "timeout"] }
+</code></pre>
+<h2 id="circuit-breaker"><a class="header" href="#circuit-breaker">Circuit Breaker</a></h2>
+<p>The Circuit Breaker pattern prevents your application from repeatedly trying to execute an operation that’s likely to fail. It gives the failing service time to recover.</p>
+<h3 id="how-it-works"><a class="header" href="#how-it-works">How it works</a></h3>
 <ol>
-<li><strong>Foundations</strong>: Start with <a href="../concepts/handlers.html">Handlers &amp; Extractors</a> and <a href="../architecture/system_overview.html">System Overview</a>.</li>
-<li><strong>Core Crates</strong>: Read about <a href="../crates/rustapi_core.html">rustapi-core</a> and <a href="../crates/rustapi_macros.html">rustapi-macros</a>.</li>
-<li><strong>Building Blocks</strong>: Try the <a href="../recipes/crud_resource.html">Creating Resources</a> recipe.</li>
-<li><strong>Security</strong>: Implement <a href="../recipes/jwt_auth.html">JWT Authentication</a> and <a href="../recipes/csrf_protection.html">CSRF Protection</a>.</li>
-<li><strong>Advanced</strong>: Explore <a href="../recipes/high_performance.html">Performance Tuning</a> and <a href="../recipes/http3_quic.html">HTTP/3</a>.</li>
-<li><strong>Background Jobs</strong>: Master <a href="../crates/rustapi_jobs.html">rustapi-jobs</a> for async processing.</li>
+<li><strong>Closed</strong>: Requests flow normally.</li>
+<li><strong>Open</strong>: After <code>failure_threshold</code> is reached, requests fail immediately with <code>503 Service Unavailable</code>.</li>
+<li><strong>Half-Open</strong>: After <code>timeout</code> passes, a limited number of test requests are allowed. If they succeed, the circuit closes.</li>
 </ol>
-<h3 id="why-use-the-examples-repository"><a class="header" href="#why-use-the-examples-repository">Why Use the Examples Repository?</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Benefit</th><th>Description</th></tr>
-</thead>
-<tbody>
-<tr><td><strong>Structured Learning</strong></td><td>Progress from beginner → intermediate → advanced</td></tr>
-<tr><td><strong>Real-world Patterns</strong></td><td>Production-ready implementations you can adapt</td></tr>
-<tr><td><strong>Feature Discovery</strong></td><td>Find examples by the features you want to learn</td></tr>
-<tr><td><strong>AI-Friendly</strong></td><td>Module-level docs help AI assistants understand your code</td></tr>
-</tbody>
-</table>
-</div>
-<hr>
-<h2 id="-learning-paths"><a class="header" href="#-learning-paths">🎯 Learning Paths</a></h2>
-<p>Choose a learning path based on your goals:</p>
-<h3 id="-path-1-rest-api-developer"><a class="header" href="#-path-1-rest-api-developer">🚀 Path 1: REST API Developer</a></h3>
-<p>Build production-ready REST APIs with RustAPI.</p>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Step</th><th>Example</th><th>Skills Learned</th></tr>
-</thead>
-<tbody>
-<tr><td>1</td><td><code>hello-world</code></td><td>Basic routing, handlers, server setup</td></tr>
-<tr><td>2</td><td><code>crud-api</code></td><td>CRUD operations, extractors, error handling</td></tr>
-<tr><td>3</td><td><code>auth-api</code></td><td>JWT authentication, protected routes</td></tr>
-<tr><td>4</td><td><code>middleware-chain</code></td><td>Custom middleware, logging, CORS</td></tr>
-<tr><td>5</td><td><code>sqlx-crud</code></td><td>Database integration, async queries</td></tr>
-</tbody>
-</table>
-</div>
-<p><strong>Related Cookbook Recipes:</strong></p>
-<ul>
-<li><a href="../recipes/crud_resource.html">Creating Resources</a></li>
-<li><a href="../recipes/jwt_auth.html">JWT Authentication</a></li>
-<li><a href="../recipes/db_integration.html">Database Integration</a></li>
-</ul>
-<hr>
-<h3 id="-path-2-microservices-architect"><a class="header" href="#-path-2-microservices-architect">🏗️ Path 2: Microservices Architect</a></h3>
-<p>Design and build distributed systems with RustAPI.</p>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Step</th><th>Example</th><th>Skills Learned</th></tr>
-</thead>
-<tbody>
-<tr><td>1</td><td><code>crud-api</code></td><td>Service fundamentals</td></tr>
-<tr><td>2</td><td><code>middleware-chain</code></td><td>Cross-cutting concerns</td></tr>
-<tr><td>3</td><td><code>rate-limit-demo</code></td><td>API protection, throttling</td></tr>
-<tr><td>4</td><td><code>microservices</code></td><td>Service communication patterns</td></tr>
-<tr><td>5</td><td><code>microservices-advanced</code></td><td>Service discovery, Consul integration</td></tr>
-<tr><td>6</td><td>Background jobs (conceptual)</td><td>Background processing with <code>rustapi-jobs</code>, Redis/Postgres backends</td></tr>
-</tbody>
-</table>
-</div>
-<blockquote>
-<p>Note: The <strong>Background jobs (conceptual)</strong> step refers to using the <code>rustapi-jobs</code> crate rather than a standalone example project.
-<strong>Related Cookbook Recipes:</strong></p>
-</blockquote>
-<ul>
-<li><a href="../crates/rustapi_jobs.html">rustapi-jobs</a></li>
-<li><a href="../recipes/custom_middleware.html">Custom Middleware</a></li>
-<li><a href="../recipes/high_performance.html">Production Tuning</a></li>
-<li><a href="../recipes/deployment.html">Deployment</a></li>
-</ul>
-<hr>
-<h3 id="-path-3-real-time-applications"><a class="header" href="#-path-3-real-time-applications">⚡ Path 3: Real-time Applications</a></h3>
-<p>Build interactive, real-time features with WebSockets.</p>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Step</th><th>Example</th><th>Skills Learned</th></tr>
-</thead>
-<tbody>
-<tr><td>1</td><td><code>hello-world</code></td><td>Framework basics</td></tr>
-<tr><td>2</td><td><code>websocket</code></td><td>WebSocket connections, message handling</td></tr>
-<tr><td>3</td><td><code>middleware-chain</code></td><td>Connection middleware</td></tr>
-<tr><td>4</td><td><code>graphql-api</code></td><td>Subscriptions, real-time queries</td></tr>
-</tbody>
-</table>
-</div>
-<p><strong>Related Cookbook Recipes:</strong></p>
-<ul>
-<li><a href="../recipes/websockets.html">Real-time Chat</a></li>
-<li><a href="../concepts/handlers.html">Handlers &amp; Extractors</a></li>
-</ul>
-<hr>
-<h3 id="-path-4-aillm-integration"><a class="header" href="#-path-4-aillm-integration">🤖 Path 4: AI/LLM Integration</a></h3>
-<p>Build AI-friendly APIs with TOON format and MCP support.</p>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Step</th><th>Example</th><th>Skills Learned</th></tr>
-</thead>
-<tbody>
-<tr><td>1</td><td><code>crud-api</code></td><td>API fundamentals</td></tr>
-<tr><td>2</td><td><code>toon-api</code></td><td>TOON format for LLM-friendly responses</td></tr>
-<tr><td>3</td><td><code>mcp-server</code></td><td>Model Context Protocol implementation</td></tr>
-<tr><td>4</td><td><code>proof-of-concept</code></td><td>Combining multiple AI features</td></tr>
-</tbody>
-</table>
-</div>
-<p><strong>Related Cookbook Recipes:</strong></p>
-<ul>
-<li><a href="../crates/rustapi_toon.html">rustapi-toon: The Diplomat</a></li>
-</ul>
-<hr>
-<h3 id="-path-5-enterprise-platform"><a class="header" href="#-path-5-enterprise-platform">🏢 Path 5: Enterprise Platform</a></h3>
-<p>Build robust, observable, and secure systems.</p>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Step</th><th>Feature</th><th>Description</th></tr>
-</thead>
-<tbody>
-<tr><td>1</td><td><strong>Observability</strong></td><td>Set up <a href="../crates/rustapi_extras.html#observability">OpenTelemetry and Structured Logging</a></td></tr>
-<tr><td>2</td><td><strong>Resilience</strong></td><td>Implement <a href="../recipes/resilience.html">Circuit Breakers and Retries</a></td></tr>
-<tr><td>3</td><td><strong>Advanced Security</strong></td><td>Add <a href="../crates/rustapi_extras.html#advanced-security">OAuth2 and Security Headers</a></td></tr>
-<tr><td>4</td><td><strong>Optimization</strong></td><td>Configure <a href="../crates/rustapi_extras.html#optimization">Caching and Deduplication</a></td></tr>
-<tr><td>5</td><td><strong>Background Jobs</strong></td><td>Implement <a href="../crates/rustapi_jobs.html">Reliable Job Queues</a></td></tr>
-</tbody>
-</table>
-</div>
-<p><strong>Related Cookbook Recipes:</strong></p>
-<ul>
-<li><a href="../crates/rustapi_extras.html">rustapi-extras: The Toolbox</a></li>
-<li><a href="../crates/rustapi_jobs.html">rustapi-jobs: The Workhorse</a></li>
-<li><a href="../recipes/resilience.html">Resilience Patterns</a></li>
-</ul>
-<hr>
-<h2 id="-examples-by-category"><a class="header" href="#-examples-by-category">📦 Examples by Category</a></h2>
-<h3 id="getting-started"><a class="header" href="#getting-started">Getting Started</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Example</th><th>Description</th><th>Difficulty</th></tr>
-</thead>
-<tbody>
-<tr><td><code>hello-world</code></td><td>Minimal RustAPI server</td><td>⭐ Beginner</td></tr>
-<tr><td><code>crud-api</code></td><td>Complete CRUD operations</td><td>⭐ Beginner</td></tr>
-</tbody>
-</table>
-</div>
-<h3 id="authentication--security"><a class="header" href="#authentication--security">Authentication &amp; Security</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Example</th><th>Description</th><th>Difficulty</th></tr>
-</thead>
-<tbody>
-<tr><td><code>auth-api</code></td><td>JWT authentication flow</td><td>⭐⭐ Intermediate</td></tr>
-<tr><td><code>middleware-chain</code></td><td>Middleware composition</td><td>⭐⭐ Intermediate</td></tr>
-<tr><td><code>rate-limit-demo</code></td><td>API rate limiting</td><td>⭐⭐ Intermediate</td></tr>
-</tbody>
-</table>
-</div>
-<h3 id="database-integration"><a class="header" href="#database-integration">Database Integration</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Example</th><th>Description</th><th>Difficulty</th></tr>
-</thead>
-<tbody>
-<tr><td><code>sqlx-crud</code></td><td>SQLx with PostgreSQL/SQLite</td><td>⭐⭐ Intermediate</td></tr>
-<tr><td><code>event-sourcing</code></td><td>Event sourcing patterns</td><td>⭐⭐⭐ Advanced</td></tr>
-</tbody>
-</table>
-</div>
-<h3 id="ai--llm"><a class="header" href="#ai--llm">AI &amp; LLM</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Example</th><th>Description</th><th>Difficulty</th></tr>
-</thead>
-<tbody>
-<tr><td><code>toon-api</code></td><td>TOON format responses</td><td>⭐⭐ Intermediate</td></tr>
-<tr><td><code>mcp-server</code></td><td>Model Context Protocol</td><td>⭐⭐⭐ Advanced</td></tr>
-</tbody>
-</table>
-</div>
-<h3 id="real-time--graphql"><a class="header" href="#real-time--graphql">Real-time &amp; GraphQL</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Example</th><th>Description</th><th>Difficulty</th></tr>
-</thead>
-<tbody>
-<tr><td><code>websocket</code></td><td>WebSocket chat example</td><td>⭐⭐ Intermediate</td></tr>
-<tr><td><code>graphql-api</code></td><td>GraphQL with async-graphql</td><td>⭐⭐⭐ Advanced</td></tr>
-</tbody>
-</table>
-</div>
-<h3 id="production-patterns"><a class="header" href="#production-patterns">Production Patterns</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Example</th><th>Description</th><th>Difficulty</th></tr>
-</thead>
-<tbody>
-<tr><td><code>microservices</code></td><td>Basic service communication</td><td>⭐⭐⭐ Advanced</td></tr>
-<tr><td><code>microservices-advanced</code></td><td>Consul service discovery</td><td>⭐⭐⭐ Advanced</td></tr>
-<tr><td><code>serverless-lambda</code></td><td>AWS Lambda deployment</td><td>⭐⭐⭐ Advanced</td></tr>
-</tbody>
-</table>
-</div>
-<hr>
-<h2 id="-feature-matrix"><a class="header" href="#-feature-matrix">🔧 Feature Matrix</a></h2>
-<p>Find examples by the RustAPI features they demonstrate:</p>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Feature</th><th>Examples</th></tr>
-</thead>
-<tbody>
-<tr><td><code>#[get]</code>, <code>#[post]</code> macros</td><td>All examples</td></tr>
-<tr><td><code>State&lt;T&gt;</code> extractor</td><td><code>crud-api</code>, <code>auth-api</code>, <code>sqlx-crud</code></td></tr>
-<tr><td><code>Json&lt;T&gt;</code> extractor</td><td><code>crud-api</code>, <code>auth-api</code>, <code>graphql-api</code></td></tr>
-<tr><td><code>ValidatedJson&lt;T&gt;</code></td><td><code>auth-api</code>, <code>crud-api</code></td></tr>
-<tr><td>JWT (<code>jwt</code> feature)</td><td><code>auth-api</code>, <code>microservices</code></td></tr>
-<tr><td>CORS (<code>cors</code> feature)</td><td><code>middleware-chain</code>, <code>auth-api</code></td></tr>
-<tr><td>Rate Limiting</td><td><code>rate-limit-demo</code>, <code>auth-api</code></td></tr>
-<tr><td>WebSockets (<code>ws</code> feature)</td><td><code>websocket</code>, <code>graphql-api</code></td></tr>
-<tr><td>TOON (<code>toon</code> feature)</td><td><code>toon-api</code>, <code>mcp-server</code></td></tr>
-<tr><td>OAuth2 (<code>oauth2-client</code>)</td><td><code>auth-api</code> (extended)</td></tr>
-<tr><td>Circuit Breaker</td><td><code>microservices</code></td></tr>
-<tr><td>OpenTelemetry (<code>otel</code>)</td><td><code>microservices-advanced</code></td></tr>
-<tr><td>OpenAPI/Swagger</td><td>All examples</td></tr>
-</tbody>
-</table>
-</div>
-<hr>
-<h2 id="-getting-started-with-examples"><a class="header" href="#-getting-started-with-examples">🚦 Getting Started with Examples</a></h2>
-<h3 id="clone-the-repository"><a class="header" href="#clone-the-repository">Clone the Repository</a></h3>
-<pre><code class="language-bash">git clone https://github.com/Tuntii/rustapi-rs-examples.git
-cd rustapi-rs-examples
-</code></pre>
-<h3 id="run-an-example"><a class="header" href="#run-an-example">Run an Example</a></h3>
-<pre><code class="language-bash">cd hello-world
-cargo run
-</code></pre>
-<h3 id="test-an-example"><a class="header" href="#test-an-example">Test an Example</a></h3>
-<pre><code class="language-bash"># Most examples have tests
-cargo test
+<h3 id="usage"><a class="header" href="#usage">Usage</a></h3>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+use rustapi_extras::circuit_breaker::CircuitBreakerLayer;
+use std::time::Duration;
 
-# Or use the TestClient
-cd ../crud-api
-cargo test
-</code></pre>
-<h3 id="explore-the-structure"><a class="header" href="#explore-the-structure">Explore the Structure</a></h3>
-<p>Each example includes:</p>
+fn main() {
+    let app = RustApi::new()
+        .layer(
+            CircuitBreakerLayer::new()
+                .failure_threshold(5)                // Open after 5 failures
+                .timeout(Duration::from_secs(30))    // Wait 30s before retrying
+                .success_threshold(2)                // Require 2 successes to close
+        )
+        .route("/", get(handler));
+
+    // ... run app
+}</code></pre>
+<h2 id="retry-with-backoff"><a class="header" href="#retry-with-backoff">Retry with Backoff</a></h2>
+<p>Transient failures (network blips, temporary timeouts) can often be resolved by simply retrying the request. The <code>RetryLayer</code> handles this automatically with configurable backoff strategies.</p>
+<h3 id="strategies"><a class="header" href="#strategies">Strategies</a></h3>
 <ul>
-<li><code>README.md</code> - Detailed documentation with API endpoints</li>
-<li><code>src/main.rs</code> - Entry point with server setup</li>
-<li><code>src/handlers.rs</code> - Request handlers (where applicable)</li>
-<li><code>Cargo.toml</code> - Dependencies and feature flags</li>
-<li>Tests demonstrating the TestClient</li>
+<li><strong>Exponential</strong>: <code>base * 2^attempt</code> (Recommended for most cases)</li>
+<li><strong>Linear</strong>: <code>base * attempt</code></li>
+<li><strong>Fixed</strong>: Constant delay</li>
 </ul>
-<hr>
-<h2 id="-cross-reference-cookbook--examples"><a class="header" href="#-cross-reference-cookbook--examples">📖 Cross-Reference: Cookbook ↔ Examples</a></h2>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Cookbook Recipe</th><th>Related Examples</th></tr>
-</thead>
-<tbody>
-<tr><td><a href="../recipes/crud_resource.html">Creating Resources</a></td><td><code>crud-api</code>, <code>sqlx-crud</code></td></tr>
-<tr><td><a href="../recipes/jwt_auth.html">JWT Authentication</a></td><td><code>auth-api</code></td></tr>
-<tr><td><a href="../recipes/csrf_protection.html">CSRF Protection</a></td><td><code>auth-api</code>, <code>middleware-chain</code></td></tr>
-<tr><td><a href="../recipes/db_integration.html">Database Integration</a></td><td><code>sqlx-crud</code>, <code>event-sourcing</code></td></tr>
-<tr><td><a href="../recipes/file_uploads.html">File Uploads</a></td><td><code>file-upload</code> (coming soon)</td></tr>
-<tr><td><a href="../recipes/custom_middleware.html">Custom Middleware</a></td><td><code>middleware-chain</code></td></tr>
-<tr><td><a href="../recipes/websockets.html">Real-time Chat</a></td><td><code>websocket</code></td></tr>
-<tr><td><a href="../recipes/high_performance.html">Production Tuning</a></td><td><code>microservices-advanced</code></td></tr>
-<tr><td><a href="../recipes/resilience.html">Resilience Patterns</a></td><td><code>microservices</code></td></tr>
-<tr><td><a href="../recipes/deployment.html">Deployment</a></td><td><code>serverless-lambda</code></td></tr>
-</tbody>
-</table>
-</div>
-<hr>
-<h2 id="-contributing-examples"><a class="header" href="#-contributing-examples">💡 Contributing Examples</a></h2>
-<p>Have a great example to share? We welcome contributions!</p>
-<ol>
-<li>Fork the <a href="https://github.com/Tuntii/rustapi-rs-examples">rustapi-rs-examples</a> repository</li>
-<li>Create your example following our structure guidelines</li>
-<li>Add comprehensive documentation in README.md</li>
-<li>Submit a pull request</li>
-</ol>
-<h3 id="example-guidelines"><a class="header" href="#example-guidelines">Example Guidelines</a></h3>
-<ul>
-<li>Include a clear README with prerequisites and API endpoints</li>
-<li>Add code comments explaining RustAPI-specific patterns</li>
-<li>Include working tests using <code>rustapi-testing</code></li>
-<li>List the feature flags used</li>
-</ul>
-<hr>
-<h2 id="-additional-resources"><a class="header" href="#-additional-resources">🔗 Additional Resources</a></h2>
-<ul>
-<li><strong><a href="https://github.com/Tuntii/RustAPI">RustAPI GitHub</a></strong> - Framework source code</li>
-<li><strong><a href="https://docs.rs/rustapi-rs">API Reference</a></strong> - Generated documentation</li>
-<li><strong><a href="../reference/">Feature Flags Reference</a></strong> - All available features</li>
-<li><strong><a href="../architecture/system_overview.html">Architecture Guide</a></strong> - How RustAPI works internally</li>
-</ul>
-<hr>
+<h3 id="usage-1"><a class="header" href="#usage-1">Usage</a></h3>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+use rustapi_extras::retry::{RetryLayer, RetryStrategy};
+use std::time::Duration;
+
+fn main() {
+    let app = RustApi::new()
+        .layer(
+            RetryLayer::new()
+                .max_attempts(3)
+                .initial_backoff(Duration::from_millis(100))
+                .max_backoff(Duration::from_secs(5))
+                .strategy(RetryStrategy::Exponential)
+                .retryable_statuses(vec![500, 502, 503, 504, 429])
+        )
+        .route("/", get(handler));
+
+    // ... run app
+}</code></pre>
 <blockquote>
-<p>💬 <strong>Need help?</strong> Open an issue in the examples repository or join our community discussions!</p>
+<p><strong>Warning</strong>: Be careful when combining Retries with non-idempotent operations (like <code>POST</code> requests that charge a credit card). The middleware safely handles cloning requests, but your business logic must support it.</p>
 </blockquote>
+<h2 id="timeouts"><a class="header" href="#timeouts">Timeouts</a></h2>
+<p>Never let a request hang indefinitely. The <code>TimeoutLayer</code> enforces a hard limit on request duration, returning <code>408 Request Timeout</code> if exceeded.</p>
+<h3 id="usage-2"><a class="header" href="#usage-2">Usage</a></h3>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+use rustapi_extras::timeout::TimeoutLayer;
+use std::time::Duration;
+
+fn main() {
+    let app = RustApi::new()
+        // Fail if handler takes longer than 5 seconds
+        .layer(TimeoutLayer::from_secs(5))
+        .route("/", get(slow_handler));
+
+    // ... run app
+}</code></pre>
+<h2 id="combining-layers-the-resilience-stack"><a class="header" href="#combining-layers-the-resilience-stack">Combining Layers (The Resilience Stack)</a></h2>
+<p>Order matters! Timeout should be the “outermost” constraint, followed by Circuit Breaker, then Retry.</p>
+<p>In RustAPI (Tower) middleware, layers wrap around each other. The order you call <code>.layer()</code> wraps the <em>previous</em> service.</p>
+<p><strong>Recommended Order:</strong></p>
+<ol>
+<li><strong>Retry</strong> (Inner): Retries specific failures from the handler.</li>
+<li><strong>Circuit Breaker</strong> (Middle): Stops retrying if the system is overloaded.</li>
+<li><strong>Timeout</strong> (Outer): Enforces global time limit including all retries.</li>
+</ol>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let app = RustApi::new()
+    // 1. Retry (handles transient errors)
+    .layer(RetryLayer::new())
+    // 2. Circuit Breaker (protects upstream)
+    .layer(CircuitBreakerLayer::new())
+    // 3. Timeout (applies to the whole operation)
+    .layer(TimeoutLayer::from_secs(10))
+    .route("/", get(handler));
+<span class="boring">}</span></code></pre>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../troubleshooting.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../recipes/high_performance.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
+                            <a rel="next prefetch" href="../recipes/deployment.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -521,10 +300,13 @@ cargo test
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../troubleshooting.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../recipes/high_performance.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
+                    <a rel="next prefetch" href="../recipes/deployment.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    </a>
             </nav>
 
         </div>

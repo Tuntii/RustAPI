@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-a7369cc8.js";
+            window.path_to_searchindex_js = "searchindex-e9382446.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-0b329e8e.js"></script>
+        <script src="toc-cc3bec4a.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -2529,6 +2529,107 @@ async fn main() {
 <h2 id="discussion-1"><a class="header" href="#discussion-1">Discussion</a></h2>
 <p>RustAPI is fast by default, but the OS often becomes the bottleneck using default settings. <code>panic = "abort"</code> reduces binary size and slightly improves performance by removing unwinding tables.</p>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="resilience-patterns"><a class="header" href="#resilience-patterns">Resilience Patterns</a></h1>
+<p>Building robust applications requires handling failures gracefully. RustAPI provides a suite of middleware to help your service survive partial outages, latency spikes, and transient errors.</p>
+<p>These patterns are essential for the “Enterprise Platform” learning path and microservices architectures.</p>
+<h2 id="prerequisites-1"><a class="header" href="#prerequisites-1">Prerequisites</a></h2>
+<p>Add the resilience features to your <code>Cargo.toml</code>. For example:</p>
+<pre><code class="language-toml">[dependencies]
+rustapi-rs = { version = "0.1.275", features = ["full"] }
+# OR cherry-pick features
+# rustapi-extras = { version = "0.1.275", features = ["circuit-breaker", "retry", "timeout"] }
+</code></pre>
+<h2 id="circuit-breaker-1"><a class="header" href="#circuit-breaker-1">Circuit Breaker</a></h2>
+<p>The Circuit Breaker pattern prevents your application from repeatedly trying to execute an operation that’s likely to fail. It gives the failing service time to recover.</p>
+<h3 id="how-it-works-3"><a class="header" href="#how-it-works-3">How it works</a></h3>
+<ol>
+<li><strong>Closed</strong>: Requests flow normally.</li>
+<li><strong>Open</strong>: After <code>failure_threshold</code> is reached, requests fail immediately with <code>503 Service Unavailable</code>.</li>
+<li><strong>Half-Open</strong>: After <code>timeout</code> passes, a limited number of test requests are allowed. If they succeed, the circuit closes.</li>
+</ol>
+<h3 id="usage"><a class="header" href="#usage">Usage</a></h3>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+use rustapi_extras::circuit_breaker::CircuitBreakerLayer;
+use std::time::Duration;
+
+fn main() {
+    let app = RustApi::new()
+        .layer(
+            CircuitBreakerLayer::new()
+                .failure_threshold(5)                // Open after 5 failures
+                .timeout(Duration::from_secs(30))    // Wait 30s before retrying
+                .success_threshold(2)                // Require 2 successes to close
+        )
+        .route("/", get(handler));
+
+    // ... run app
+}</code></pre>
+<h2 id="retry-with-backoff"><a class="header" href="#retry-with-backoff">Retry with Backoff</a></h2>
+<p>Transient failures (network blips, temporary timeouts) can often be resolved by simply retrying the request. The <code>RetryLayer</code> handles this automatically with configurable backoff strategies.</p>
+<h3 id="strategies"><a class="header" href="#strategies">Strategies</a></h3>
+<ul>
+<li><strong>Exponential</strong>: <code>base * 2^attempt</code> (Recommended for most cases)</li>
+<li><strong>Linear</strong>: <code>base * attempt</code></li>
+<li><strong>Fixed</strong>: Constant delay</li>
+</ul>
+<h3 id="usage-1"><a class="header" href="#usage-1">Usage</a></h3>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+use rustapi_extras::retry::{RetryLayer, RetryStrategy};
+use std::time::Duration;
+
+fn main() {
+    let app = RustApi::new()
+        .layer(
+            RetryLayer::new()
+                .max_attempts(3)
+                .initial_backoff(Duration::from_millis(100))
+                .max_backoff(Duration::from_secs(5))
+                .strategy(RetryStrategy::Exponential)
+                .retryable_statuses(vec![500, 502, 503, 504, 429])
+        )
+        .route("/", get(handler));
+
+    // ... run app
+}</code></pre>
+<blockquote>
+<p><strong>Warning</strong>: Be careful when combining Retries with non-idempotent operations (like <code>POST</code> requests that charge a credit card). The middleware safely handles cloning requests, but your business logic must support it.</p>
+</blockquote>
+<h2 id="timeouts"><a class="header" href="#timeouts">Timeouts</a></h2>
+<p>Never let a request hang indefinitely. The <code>TimeoutLayer</code> enforces a hard limit on request duration, returning <code>408 Request Timeout</code> if exceeded.</p>
+<h3 id="usage-2"><a class="header" href="#usage-2">Usage</a></h3>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+use rustapi_extras::timeout::TimeoutLayer;
+use std::time::Duration;
+
+fn main() {
+    let app = RustApi::new()
+        // Fail if handler takes longer than 5 seconds
+        .layer(TimeoutLayer::from_secs(5))
+        .route("/", get(slow_handler));
+
+    // ... run app
+}</code></pre>
+<h2 id="combining-layers-the-resilience-stack"><a class="header" href="#combining-layers-the-resilience-stack">Combining Layers (The Resilience Stack)</a></h2>
+<p>Order matters! Timeout should be the “outermost” constraint, followed by Circuit Breaker, then Retry.</p>
+<p>In RustAPI (Tower) middleware, layers wrap around each other. The order you call <code>.layer()</code> wraps the <em>previous</em> service.</p>
+<p><strong>Recommended Order:</strong></p>
+<ol>
+<li><strong>Retry</strong> (Inner): Retries specific failures from the handler.</li>
+<li><strong>Circuit Breaker</strong> (Middle): Stops retrying if the system is overloaded.</li>
+<li><strong>Timeout</strong> (Outer): Enforces global time limit including all retries.</li>
+</ol>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let app = RustApi::new()
+    // 1. Retry (handles transient errors)
+    .layer(RetryLayer::new())
+    // 2. Circuit Breaker (protects upstream)
+    .layer(CircuitBreakerLayer::new())
+    // 3. Timeout (applies to the whole operation)
+    .layer(TimeoutLayer::from_secs(10))
+    .route("/", get(handler));
+<span class="boring">}</span></code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="deployment"><a class="header" href="#deployment">Deployment</a></h1>
 <p>RustAPI includes built-in deployment tooling to helping you ship your applications to production with ease. The <code>cargo rustapi deploy</code> command generates configuration files and provides instructions for various platforms.</p>
 <h2 id="supported-platforms"><a class="header" href="#supported-platforms">Supported Platforms</a></h2>
@@ -2538,7 +2639,7 @@ async fn main() {
 <li><strong>Railway</strong>: Generate <code>railway.toml</code> and project setup.</li>
 <li><strong>Shuttle.rs</strong>: Generate <code>Shuttle.toml</code> and setup instructions.</li>
 </ul>
-<h2 id="usage"><a class="header" href="#usage">Usage</a></h2>
+<h2 id="usage-3"><a class="header" href="#usage-3">Usage</a></h2>
 <h3 id="docker"><a class="header" href="#docker">Docker</a></h3>
 <p>Generate a <code>Dockerfile</code> optimized for RustAPI applications:</p>
 <pre><code class="language-bash">cargo rustapi deploy docker
@@ -2633,7 +2734,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&g
         .run_dual_stack("127.0.0.1:8080")
         .await
 }</code></pre>
-<h2 id="how-it-works-3"><a class="header" href="#how-it-works-3">How It Works</a></h2>
+<h2 id="how-it-works-4"><a class="header" href="#how-it-works-4">How It Works</a></h2>
 <p>HTTP/3 in RustAPI is built on top of <code>quinn</code> and <code>h3</code>. When enabled:</p>
 <ol>
 <li><strong>UDP Binding</strong>: The server binds to a UDP socket (in addition to TCP if dual-stack).</li>
@@ -3252,7 +3353,7 @@ RustApi::auto()
 </thead>
 <tbody>
 <tr><td>1</td><td><strong>Observability</strong></td><td>Set up <a href="#observability">OpenTelemetry and Structured Logging</a></td></tr>
-<tr><td>2</td><td><strong>Resilience</strong></td><td>Implement <a href="#resilience">Circuit Breakers and Retries</a></td></tr>
+<tr><td>2</td><td><strong>Resilience</strong></td><td>Implement <a href="#resilience-patterns">Circuit Breakers and Retries</a></td></tr>
 <tr><td>3</td><td><strong>Advanced Security</strong></td><td>Add <a href="#advanced-security">OAuth2 and Security Headers</a></td></tr>
 <tr><td>4</td><td><strong>Optimization</strong></td><td>Configure <a href="#optimization">Caching and Deduplication</a></td></tr>
 <tr><td>5</td><td><strong>Background Jobs</strong></td><td>Implement <a href="#rustapi-jobs-the-workhorse">Reliable Job Queues</a></td></tr>
@@ -3263,6 +3364,7 @@ RustApi::auto()
 <ul>
 <li><a href="#rustapi-extras-the-toolbox">rustapi-extras: The Toolbox</a></li>
 <li><a href="#rustapi-jobs-the-workhorse">rustapi-jobs: The Workhorse</a></li>
+<li><a href="#resilience-patterns">Resilience Patterns</a></li>
 </ul>
 <hr>
 <h2 id="-examples-by-category"><a class="header" href="#-examples-by-category">📦 Examples by Category</a></h2>
@@ -3408,6 +3510,7 @@ cargo test
 <tr><td><a href="#custom-middleware">Custom Middleware</a></td><td><code>middleware-chain</code></td></tr>
 <tr><td><a href="#real-time-chat-websockets">Real-time Chat</a></td><td><code>websocket</code></td></tr>
 <tr><td><a href="#production-tuning">Production Tuning</a></td><td><code>microservices-advanced</code></td></tr>
+<tr><td><a href="#resilience-patterns">Resilience Patterns</a></td><td><code>microservices</code></td></tr>
 <tr><td><a href="#deployment">Deployment</a></td><td><code>serverless-lambda</code></td></tr>
 </tbody>
 </table>
