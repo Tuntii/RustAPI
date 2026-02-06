@@ -81,6 +81,9 @@ rustls-pemfile = { workspace = true, optional = true }
 rcgen = { workspace = true, optional = true }
 chrono = "0.4.43"
 
+# Replay (feature-gated)
+async-trait = { workspace = true, optional = true }
+
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 proptest = "1.4"
@@ -100,6 +103,7 @@ simd-json = ["dep:simd-json"]
 tracing = []
 http3 = ["dep:quinn", "dep:h3", "dep:h3-quinn", "dep:rustls", "dep:rustls-pemfile"]
 http3-dev = ["http3", "dep:rcgen"]
+replay = ["dep:async-trait"]
 
 
 

@@ -72,6 +72,9 @@ base64 = { version = "0.22", optional = true }
 # OAuth2 (feature-gated)
 sha2 = { version = "0.10", optional = true }
 
+# Replay (feature-gated)
+uuid = { workspace = true, optional = true }
+
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 proptest = "1.4"
@@ -121,6 +124,9 @@ csrf = ["dep:cookie", "dep:rand", "dep:base64"]
 oauth2-client = ["dep:sha2", "dep:rand", "dep:base64", "dep:reqwest", "dep:urlencoding"]
 audit = ["dep:rand"]
 
+# Replay (time-travel debugging)
+replay = ["dep:reqwest", "dep:dashmap", "dep:uuid", "rustapi-core/replay"]
+
 # Meta feature that enables all security features
 extras = ["jwt", "cors", "rate-limit"]
 
@@ -128,4 +134,4 @@ extras = ["jwt", "cors", "rate-limit"]
 observability = ["otel", "structured-logging"]
 
 # Full feature set (retry temporarily disabled)
-full = ["extras", "config", "cookies", "sqlx", "insight", "webhook", "timeout", "guard", "logging", "circuit-breaker", "security-headers", "api-key", "cache", "dedup", "sanitization", "retry", "otel", "structured-logging", "csrf", "oauth2-client", "audit"]
+full = ["extras", "config", "cookies", "sqlx", "insight", "webhook", "timeout", "guard", "logging", "circuit-breaker", "security-headers", "api-key", "cache", "dedup", "sanitization", "retry", "otel", "structured-logging", "csrf", "oauth2-client", "audit", "replay"]

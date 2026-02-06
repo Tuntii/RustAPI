@@ -54,6 +54,11 @@ enum Commands {
     /// Deploy to various platforms
     #[command(subcommand)]
     Deploy(DeployArgs),
+
+    /// Replay debugging commands (time-travel debugging)
+    #[cfg(feature = "replay")]
+    #[command(subcommand)]
+    Replay(commands::ReplayArgs),
 }
 
 impl Cli {
@@ -70,6 +75,8 @@ impl Cli {
             Commands::Docs { port } => commands::open_docs(port).await,
             Commands::Client(args) => commands::client(args).await,
             Commands::Deploy(args) => commands::deploy(args).await,
+            #[cfg(feature = "replay")]
+            Commands::Replay(args) => commands::replay(args).await,
         }
     }
 }

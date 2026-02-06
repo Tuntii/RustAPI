@@ -78,6 +78,8 @@ pub mod status;
 pub mod stream;
 pub mod typed_path;
 pub mod validation;
+#[cfg(feature = "replay")]
+pub mod replay;
 #[macro_use]
 mod tracing_macros;
 

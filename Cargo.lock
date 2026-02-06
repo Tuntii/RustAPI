@@ -3039,6 +3039,7 @@ name = "rustapi-core"
 version = "0.1.275"
 dependencies = [
  "async-stream",
+ "async-trait",
  "base64 0.22.1",
  "brotli 6.0.0",
  "bytes",
@@ -3123,6 +3124,7 @@ dependencies = [
  "tracing",
  "tracing-opentelemetry",
  "urlencoding",
+ "uuid",
 ]
 
 [[package]]

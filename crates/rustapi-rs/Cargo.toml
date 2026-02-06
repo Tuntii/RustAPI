@@ -82,6 +82,9 @@ sanitization = ["dep:rustapi-extras", "rustapi-extras/sanitization"]
 otel = ["dep:rustapi-extras", "rustapi-extras/otel"]
 structured-logging = ["dep:rustapi-extras", "rustapi-extras/structured-logging"]
 
+# Replay (time-travel debugging)
+replay = ["dep:rustapi-extras", "rustapi-extras/replay"]
+
 # Meta features
 extras = ["jwt", "cors", "rate-limit"]
-full = ["extras", "config", "cookies", "sqlx", "toon", "insight", "compression", "ws", "view", "timeout", "guard", "logging", "circuit-breaker", "security-headers", "api-key", "cache", "dedup", "sanitization", "otel", "structured-logging"]
+full = ["extras", "config", "cookies", "sqlx", "toon", "insight", "compression", "ws", "view", "timeout", "guard", "logging", "circuit-breaker", "security-headers", "api-key", "cache", "dedup", "sanitization", "otel", "structured-logging", "replay"]

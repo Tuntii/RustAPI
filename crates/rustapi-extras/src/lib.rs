@@ -214,3 +214,13 @@ pub use audit::{
     AuditAction, AuditEvent, AuditQuery, AuditQueryBuilder, AuditSeverity, AuditStore,
     ComplianceInfo, FileAuditStore, InMemoryAuditStore,
 };
+
+// Replay middleware (time-travel debugging)
+#[cfg(feature = "replay")]
+pub mod replay;
+
+#[cfg(feature = "replay")]
+pub use replay::{
+    FsReplayStore, FsReplayStoreConfig, InMemoryReplayStore, ReplayAdminAuth, ReplayClient,
+    ReplayLayer, RetentionJob,
+};
