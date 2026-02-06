@@ -1720,12 +1720,13 @@ mod tests {
         }
     }
 
-
     #[tokio::test]
     async fn test_async_validated_json_with_state_context() {
         use async_trait::async_trait;
-        use rustapi_validate::v2::{DatabaseValidator, ValidationContextBuilder, AsyncValidationRule};
         use rustapi_validate::prelude::*;
+        use rustapi_validate::v2::{
+            AsyncValidationRule, DatabaseValidator, ValidationContextBuilder,
+        };
         use serde::{Deserialize, Serialize};
 
         struct MockDbValidator {
@@ -1734,13 +1735,29 @@ mod tests {
 
         #[async_trait]
         impl DatabaseValidator for MockDbValidator {
-            async fn exists(&self, _table: &str, _column: &str, _value: &str) -> Result<bool, String> {
+            async fn exists(
+                &self,
+                _table: &str,
+                _column: &str,
+                _value: &str,
+            ) -> Result<bool, String> {
                 Ok(true)
             }
-            async fn is_unique(&self, _table: &str, _column: &str, value: &str) -> Result<bool, String> {
+            async fn is_unique(
+                &self,
+                _table: &str,
+                _column: &str,
+                value: &str,
+            ) -> Result<bool, String> {
                 Ok(!self.unique_values.contains(&value.to_string()))
             }
-            async fn is_unique_except(&self, _table: &str, _column: &str, value: &str, _except_id: &str) -> Result<bool, String> {
+            async fn is_unique_except(
+                &self,
+                _table: &str,
+                _column: &str,
+                value: &str,
+                _except_id: &str,
+            ) -> Result<bool, String> {
                 Ok(!self.unique_values.contains(&value.to_string()))
             }
         }
@@ -1751,28 +1768,37 @@ mod tests {
         }
 
         impl Validate for TestUser {
-             fn validate_with_group(&self, _group: rustapi_validate::v2::ValidationGroup) -> Result<(), rustapi_validate::v2::ValidationErrors> {
+            fn validate_with_group(
+                &self,
+                _group: rustapi_validate::v2::ValidationGroup,
+            ) -> Result<(), rustapi_validate::v2::ValidationErrors> {
                 Ok(())
             }
         }
 
         #[async_trait]
         impl AsyncValidate for TestUser {
-             async fn validate_async_with_group(&self, ctx: &ValidationContext, _group: rustapi_validate::v2::ValidationGroup) -> Result<(), rustapi_validate::v2::ValidationErrors> {
-                 let mut errors = rustapi_validate::v2::ValidationErrors::new();
+            async fn validate_async_with_group(
+                &self,
+                ctx: &ValidationContext,
+                _group: rustapi_validate::v2::ValidationGroup,
+            ) -> Result<(), rustapi_validate::v2::ValidationErrors> {
+                let mut errors = rustapi_validate::v2::ValidationErrors::new();
 
-                 let rule = AsyncUniqueRule::new("users", "email");
-                 if let Err(e) = rule.validate_async(&self.email, ctx).await {
-                     errors.add("email", e);
-                 }
+                let rule = AsyncUniqueRule::new("users", "email");
+                if let Err(e) = rule.validate_async(&self.email, ctx).await {
+                    errors.add("email", e);
+                }
 
-                 errors.into_result()
-             }
+                errors.into_result()
+            }
         }
 
         // Test 1: Without context in state (should fail due to missing validator)
         let uri: http::Uri = "/test".parse().unwrap();
-        let user = TestUser { email: "new@example.com".to_string() };
+        let user = TestUser {
+            email: "new@example.com".to_string(),
+        };
         let body_bytes = serde_json::to_vec(&user).unwrap();
 
         let builder = http::Request::builder()
@@ -1795,12 +1821,20 @@ mod tests {
         assert!(result.is_err(), "Expected error when validator is missing");
         let err = result.unwrap_err();
         let err_str = format!("{:?}", err);
-        assert!(err_str.contains("Database validator not configured") || err_str.contains("async_unique"),
-            "Error should mention missing configuration or rule: {:?}", err_str);
+        assert!(
+            err_str.contains("Database validator not configured")
+                || err_str.contains("async_unique"),
+            "Error should mention missing configuration or rule: {:?}",
+            err_str
+        );
 
         // Test 2: With context in state (should succeed)
-        let db_validator = MockDbValidator { unique_values: vec!["taken@example.com".to_string()] };
-        let ctx = ValidationContextBuilder::new().database(db_validator).build();
+        let db_validator = MockDbValidator {
+            unique_values: vec!["taken@example.com".to_string()],
+        };
+        let ctx = ValidationContextBuilder::new()
+            .database(db_validator)
+            .build();
 
         let mut extensions = Extensions::new();
         extensions.insert(ctx);
@@ -1820,14 +1854,24 @@ mod tests {
         );
 
         let result = AsyncValidatedJson::<TestUser>::from_request(&mut request).await;
-        assert!(result.is_ok(), "Expected success when validator is present and value is unique. Error: {:?}", result.err());
+        assert!(
+            result.is_ok(),
+            "Expected success when validator is present and value is unique. Error: {:?}",
+            result.err()
+        );
 
         // Test 3: With context in state (should fail validation logic)
-        let user_taken = TestUser { email: "taken@example.com".to_string() };
+        let user_taken = TestUser {
+            email: "taken@example.com".to_string(),
+        };
         let body_taken = serde_json::to_vec(&user_taken).unwrap();
 
-        let db_validator = MockDbValidator { unique_values: vec!["taken@example.com".to_string()] };
-        let ctx = ValidationContextBuilder::new().database(db_validator).build();
+        let db_validator = MockDbValidator {
+            unique_values: vec!["taken@example.com".to_string()],
+        };
+        let ctx = ValidationContextBuilder::new()
+            .database(db_validator)
+            .build();
 
         let mut extensions = Extensions::new();
         extensions.insert(ctx);
