@@ -4,9 +4,7 @@
 
 use async_trait::async_trait;
 use dashmap::DashMap;
-use rustapi_core::replay::{
-    ReplayEntry, ReplayQuery, ReplayStore, ReplayStoreResult,
-};
+use rustapi_core::replay::{ReplayEntry, ReplayQuery, ReplayStore, ReplayStoreResult};
 use std::collections::VecDeque;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -174,18 +172,12 @@ mod tests {
             .store(make_entry("POST", "/users", 201))
             .await
             .unwrap();
-        store
-            .store(make_entry("GET", "/items", 404))
-            .await
-            .unwrap();
+        store.store(make_entry("GET", "/items", 404)).await.unwrap();
 
         let all = store.list(&ReplayQuery::new()).await.unwrap();
         assert_eq!(all.len(), 3);
 
-        let filtered = store
-            .list(&ReplayQuery::new().method("GET"))
-            .await
-            .unwrap();
+        let filtered = store.list(&ReplayQuery::new().method("GET")).await.unwrap();
         assert_eq!(filtered.len(), 2);
     }
 

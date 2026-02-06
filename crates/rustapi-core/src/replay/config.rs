@@ -105,7 +105,7 @@ impl ReplayConfig {
             record_paths: HashSet::new(),
             skip_paths: HashSet::new(),
             admin_route_prefix: "/__rustapi/replays".to_string(),
-            max_request_body: 65_536,  // 64KB
+            max_request_body: 65_536,   // 64KB
             max_response_body: 262_144, // 256KB
             store_capacity: 500,
             ttl_secs: 3600,

@@ -119,9 +119,7 @@ fn build_client(token: &str) -> Result<(reqwest::Client, reqwest::header::Header
     let auth_value = format!("Bearer {}", token);
     headers.insert(
         reqwest::header::AUTHORIZATION,
-        auth_value
-            .parse()
-            .context("Invalid token format")?,
+        auth_value.parse().context("Invalid token format")?,
     );
     Ok((client, headers))
 }
@@ -244,7 +242,12 @@ async fn cmd_show(args: ReplayShowArgs) -> Result<()> {
 
     // Request section
     let req = &body["request"];
-    println!("  {} {} {}", style("Request:").bold(), req["method"].as_str().unwrap_or("-"), req["uri"].as_str().unwrap_or("-"));
+    println!(
+        "  {} {} {}",
+        style("Request:").bold(),
+        req["method"].as_str().unwrap_or("-"),
+        req["uri"].as_str().unwrap_or("-")
+    );
     if let Some(headers_obj) = req["headers"].as_object() {
         for (k, v) in headers_obj {
             println!("    {}: {}", style(k).dim(), v.as_str().unwrap_or("-"));
@@ -283,7 +286,10 @@ async fn cmd_show(args: ReplayShowArgs) -> Result<()> {
     // Meta section
     let meta = &body["meta"];
     println!("  {}", style("Meta:").bold());
-    println!("    Duration: {}ms", meta["duration_ms"].as_u64().unwrap_or(0));
+    println!(
+        "    Duration: {}ms",
+        meta["duration_ms"].as_u64().unwrap_or(0)
+    );
     if let Some(ip) = meta["client_ip"].as_str() {
         println!("    Client IP: {}", ip);
     }
@@ -328,8 +334,16 @@ async fn cmd_run(args: ReplayRunArgs) -> Result<()> {
     }
 
     println!();
-    println!("  {} Original status: {}", style("Original:").bold(), body["original_response"]["status"]);
-    println!("  {} Replayed status: {}", style("Replayed:").bold(), body["replayed_response"]["status"]);
+    println!(
+        "  {} Original status: {}",
+        style("Original:").bold(),
+        body["original_response"]["status"]
+    );
+    println!(
+        "  {} Replayed status: {}",
+        style("Replayed:").bold(),
+        body["replayed_response"]["status"]
+    );
 
     if let Some(body_str) = body["replayed_response"]["body"].as_str() {
         println!();
@@ -379,15 +393,9 @@ async fn cmd_diff(args: ReplayDiffArgs) -> Result<()> {
     println!();
 
     if !has_diff {
-        println!(
-            "  {} No differences found!",
-            style("MATCH").green().bold()
-        );
+        println!("  {} No differences found!", style("MATCH").green().bold());
     } else {
-        println!(
-            "  {} Differences detected:",
-            style("DIFF").red().bold()
-        );
+        println!("  {} Differences detected:", style("DIFF").red().bold());
         println!();
 
         // Status diff

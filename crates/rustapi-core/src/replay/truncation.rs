@@ -93,10 +93,7 @@ pub fn content_sniff(bytes: &[u8]) -> ContentKind {
         }
         _ => {
             // Check if it looks like text
-            let is_text = trimmed
-                .iter()
-                .take(512)
-                .all(|&b| b.is_ascii() || b > 0x7F);
+            let is_text = trimmed.iter().take(512).all(|&b| b.is_ascii() || b > 0x7F);
             if is_text {
                 ContentKind::PlainText
             } else {
@@ -162,7 +159,10 @@ mod tests {
 
     #[test]
     fn test_content_sniff_json_with_whitespace() {
-        assert_eq!(content_sniff(b"  \n  {\"key\":\"value\"}"), ContentKind::Json);
+        assert_eq!(
+            content_sniff(b"  \n  {\"key\":\"value\"}"),
+            ContentKind::Json
+        );
     }
 
     #[test]
@@ -175,10 +175,7 @@ mod tests {
 
     #[test]
     fn test_content_sniff_html() {
-        assert_eq!(
-            content_sniff(b"<!DOCTYPE html><html>"),
-            ContentKind::Html
-        );
+        assert_eq!(content_sniff(b"<!DOCTYPE html><html>"), ContentKind::Html);
     }
 
     #[test]

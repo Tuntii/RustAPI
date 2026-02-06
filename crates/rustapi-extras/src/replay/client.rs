@@ -44,11 +44,9 @@ impl ReplayClient {
         let path = &entry.request.uri;
         let url = format!("{}{}", base, path);
 
-        let method: reqwest::Method = entry
-            .request
-            .method
-            .parse()
-            .map_err(|_| ReplayClientError::InvalidUrl(format!("Invalid method: {}", entry.request.method)))?;
+        let method: reqwest::Method = entry.request.method.parse().map_err(|_| {
+            ReplayClientError::InvalidUrl(format!("Invalid method: {}", entry.request.method))
+        })?;
 
         let mut builder = self.http.request(method, &url);
 

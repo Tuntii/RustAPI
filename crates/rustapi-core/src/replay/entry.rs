@@ -203,6 +203,9 @@ mod tests {
         assert_eq!(deserialized.id, entry.id);
         assert_eq!(deserialized.request.method, "POST");
         assert_eq!(deserialized.response.status, 201);
-        assert_eq!(deserialized.request.body.as_deref(), Some(r#"{"name":"test"}"#));
+        assert_eq!(
+            deserialized.request.body.as_deref(),
+            Some(r#"{"name":"test"}"#)
+        );
     }
 }

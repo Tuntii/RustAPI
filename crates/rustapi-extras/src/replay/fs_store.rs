@@ -149,8 +149,7 @@ impl FsReplayStore {
                             .unwrap_or_default()
                             .as_secs()
                     ));
-                    fs::rename(&path, &rotated)
-                        .map_err(|e| ReplayStoreError::Io(e.to_string()))?;
+                    fs::rename(&path, &rotated).map_err(|e| ReplayStoreError::Io(e.to_string()))?;
 
                     // Reset writer
                     if let Ok(mut writer) = self.writer.lock() {
@@ -179,7 +178,8 @@ impl ReplayStore for FsReplayStore {
 
         if let Some(ref mut file) = *writer {
             writeln!(file, "{}", line).map_err(|e| ReplayStoreError::Io(e.to_string()))?;
-            file.flush().map_err(|e| ReplayStoreError::Io(e.to_string()))?;
+            file.flush()
+                .map_err(|e| ReplayStoreError::Io(e.to_string()))?;
         }
 
         Ok(())

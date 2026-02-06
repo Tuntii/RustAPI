@@ -2,8 +2,8 @@
 
 use bytes::Bytes;
 use http_body_util::Full;
-use rustapi_core::ResponseBody;
 use rustapi_core::Response;
+use rustapi_core::ResponseBody;
 use serde_json::json;
 
 /// Admin authentication check for replay endpoints.
@@ -15,13 +15,8 @@ impl ReplayAdminAuth {
     /// Returns `Ok(())` if the token is valid, or an `Err(Response)` with
     /// a 401 JSON error if the token is missing or invalid.
     #[allow(clippy::result_large_err)]
-    pub fn check(
-        headers: &http::HeaderMap,
-        expected_token: &str,
-    ) -> Result<(), Response> {
-        let auth = headers
-            .get("authorization")
-            .and_then(|v| v.to_str().ok());
+    pub fn check(headers: &http::HeaderMap, expected_token: &str) -> Result<(), Response> {
+        let auth = headers.get("authorization").and_then(|v| v.to_str().ok());
 
         let expected = format!("Bearer {}", expected_token);
 

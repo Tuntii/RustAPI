@@ -54,11 +54,7 @@ pub fn redact_headers(
 /// is not valid JSON.
 ///
 /// Field paths are top-level keys only (e.g., `"password"`, `"ssn"`).
-pub fn redact_body(
-    body: &str,
-    field_paths: &HashSet<String>,
-    replacement: &str,
-) -> Option<String> {
+pub fn redact_body(body: &str, field_paths: &HashSet<String>, replacement: &str) -> Option<String> {
     if field_paths.is_empty() {
         return Some(body.to_string());
     }

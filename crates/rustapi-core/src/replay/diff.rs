@@ -91,10 +91,8 @@ pub fn compute_diff(
     }
 
     // Compare headers
-    let ignore_set: std::collections::HashSet<String> = ignore_headers
-        .iter()
-        .map(|h| h.to_lowercase())
-        .collect();
+    let ignore_set: std::collections::HashSet<String> =
+        ignore_headers.iter().map(|h| h.to_lowercase()).collect();
 
     // Check headers in original
     for (key, orig_val) in &original.headers {
@@ -456,10 +454,8 @@ mod tests {
 
     #[test]
     fn test_diff_json_extra_key() {
-        let orig: serde_json::Value =
-            serde_json::from_str(r#"{"a":1}"#).unwrap();
-        let replay: serde_json::Value =
-            serde_json::from_str(r#"{"a":1,"b":2}"#).unwrap();
+        let orig: serde_json::Value = serde_json::from_str(r#"{"a":1}"#).unwrap();
+        let replay: serde_json::Value = serde_json::from_str(r#"{"a":1,"b":2}"#).unwrap();
 
         let diffs = diff_json(&orig, &replay, "");
         assert_eq!(diffs.len(), 1);

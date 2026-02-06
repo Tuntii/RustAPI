@@ -219,8 +219,7 @@ impl MiddlewareLayer for ReplayLayer {
             let req_headers = redact_headers(&raw_headers, &config.redact_headers);
 
             // Capture request body if eligible
-            let capture_req_body =
-                ReplayLayer::should_capture_body(req.headers(), &config);
+            let capture_req_body = ReplayLayer::should_capture_body(req.headers(), &config);
 
             let (req_body_size, req_body_str, req_body_truncated) = if capture_req_body {
                 if let Some(body_bytes) = req.take_body() {
@@ -269,8 +268,7 @@ impl MiddlewareLayer for ReplayLayer {
             let raw_resp_headers = ReplayLayer::capture_headers(response.headers());
             let resp_headers = redact_headers(&raw_resp_headers, &config.redact_headers);
 
-            let capture_resp_body =
-                ReplayLayer::should_capture_body(response.headers(), &config);
+            let capture_resp_body = ReplayLayer::should_capture_body(response.headers(), &config);
 
             // Buffer response body (must consume and reconstruct)
             let (resp_parts, resp_body) = response.into_parts();
@@ -280,29 +278,28 @@ impl MiddlewareLayer for ReplayLayer {
             };
 
             let resp_body_size = resp_body_bytes.len();
-            let (resp_body_str, resp_body_truncated) =
-                if capture_resp_body && resp_body_size > 0 {
-                    if resp_body_size <= config.max_response_body {
-                        let body_str = String::from_utf8(resp_body_bytes.to_vec()).ok();
-                        let redacted = body_str.and_then(|s| {
-                            if config.redact_body_fields.is_empty() {
-                                Some(s)
-                            } else {
-                                redact_body(&s, &config.redact_body_fields, "[REDACTED]")
-                            }
-                        });
-                        (redacted, false)
-                    } else {
-                        let body_str = String::from_utf8(resp_body_bytes.to_vec()).ok();
-                        let truncated = body_str.map(|s| {
-                            let (t, _) = truncate_body(&s, config.max_response_body);
-                            t
-                        });
-                        (truncated, true)
-                    }
+            let (resp_body_str, resp_body_truncated) = if capture_resp_body && resp_body_size > 0 {
+                if resp_body_size <= config.max_response_body {
+                    let body_str = String::from_utf8(resp_body_bytes.to_vec()).ok();
+                    let redacted = body_str.and_then(|s| {
+                        if config.redact_body_fields.is_empty() {
+                            Some(s)
+                        } else {
+                            redact_body(&s, &config.redact_body_fields, "[REDACTED]")
+                        }
+                    });
+                    (redacted, false)
                 } else {
-                    (None, false)
-                };
+                    let body_str = String::from_utf8(resp_body_bytes.to_vec()).ok();
+                    let truncated = body_str.map(|s| {
+                        let (t, _) = truncate_body(&s, config.max_response_body);
+                        t
+                    });
+                    (truncated, true)
+                }
+            } else {
+                (None, false)
+            };
 
             // Build RecordedRequest
             let recorded_request = RecordedRequest {
