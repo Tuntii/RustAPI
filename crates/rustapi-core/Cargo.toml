@@ -90,6 +90,7 @@ proptest = "1.4"
 rustapi-testing = { workspace = true }
 reqwest = { version = "0.12", features = ["json", "stream"] }
 async-stream = "0.3"
+async-trait = { workspace = true }
 [features]
 default = ["swagger-ui", "tracing"]
 swagger-ui = ["rustapi-openapi/swagger-ui"]
