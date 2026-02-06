@@ -4,9 +4,11 @@ use super::event::AuditEvent;
 use super::query::AuditQuery;
 use super::store::{AuditError, AuditResult, AuditStore};
 use std::fs::{File, OpenOptions};
+use std::future::Future;
 use std::io::{BufRead, BufReader, Write};
 use std::path::PathBuf;
-use std::sync::Mutex;
+use std::pin::Pin;
+use std::sync::{Arc, Mutex};
 
 /// Configuration for file-based audit store.
 #[derive(Debug, Clone)]
@@ -45,18 +47,28 @@ impl FileAuditStoreConfig {
     }
 }
 
-/// File-based audit store (JSON Lines format).
-pub struct FileAuditStore {
+/// Internal state for FileAuditStore
+#[derive(Debug)]
+struct FileAuditStoreInner {
     config: FileAuditStoreConfig,
     writer: Mutex<Option<File>>,
+}
+
+/// File-based audit store (JSON Lines format).
+#[derive(Clone, Debug)]
+pub struct FileAuditStore {
+    inner: Arc<FileAuditStoreInner>,
 }
 
 impl FileAuditStore {
     /// Create a new file-based audit store.
     pub fn new(config: FileAuditStoreConfig) -> AuditResult<Self> {
-        let store = Self {
+        let inner = FileAuditStoreInner {
             config,
             writer: Mutex::new(None),
+        };
+        let store = Self {
+            inner: Arc::new(inner),
         };
         store.open_writer()?;
         Ok(store)
@@ -70,13 +82,14 @@ impl FileAuditStore {
     /// Open or create the file writer.
     fn open_writer(&self) -> AuditResult<()> {
         let mut writer = self
+            .inner
             .writer
             .lock()
             .map_err(|e| AuditError::WriteError(format!("Failed to acquire lock: {}", e)))?;
 
         // Create parent directories if they don't exist
-        if let Some(parent) = self.config.file_path.parent() {
-            if !parent.exists() && self.config.create_if_missing {
+        if let Some(parent) = self.inner.config.file_path.parent() {
+            if !parent.exists() && self.inner.config.create_if_missing {
                 std::fs::create_dir_all(parent).map_err(|e| {
                     AuditError::IoError(format!("Failed to create directories: {}", e))
                 })?;
@@ -84,10 +97,10 @@ impl FileAuditStore {
         }
 
         let file = OpenOptions::new()
-            .create(self.config.create_if_missing)
-            .append(self.config.append)
+            .create(self.inner.config.create_if_missing)
+            .append(self.inner.config.append)
             .write(true)
-            .open(&self.config.file_path)
+            .open(&self.inner.config.file_path)
             .map_err(|e| AuditError::IoError(format!("Failed to open file: {}", e)))?;
 
         *writer = Some(file);
@@ -96,8 +109,8 @@ impl FileAuditStore {
 
     /// Check if rotation is needed and perform it.
     fn check_rotation(&self) -> AuditResult<()> {
-        if let Some(max_size) = self.config.max_file_size {
-            if let Ok(metadata) = std::fs::metadata(&self.config.file_path) {
+        if let Some(max_size) = self.inner.config.max_file_size {
+            if let Ok(metadata) = std::fs::metadata(&self.inner.config.file_path) {
                 if metadata.len() >= max_size {
                     self.rotate()?;
                 }
@@ -109,6 +122,7 @@ impl FileAuditStore {
     /// Rotate the log file.
     fn rotate(&self) -> AuditResult<()> {
         let mut writer = self
+            .inner
             .writer
             .lock()
             .map_err(|e| AuditError::WriteError(format!("Failed to acquire lock: {}", e)))?;
@@ -123,12 +137,13 @@ impl FileAuditStore {
             .unwrap_or(0);
 
         let rotated_path = self
+            .inner
             .config
             .file_path
             .with_extension(format!("{}.log", timestamp));
 
         // Rename current file
-        std::fs::rename(&self.config.file_path, &rotated_path)
+        std::fs::rename(&self.inner.config.file_path, &rotated_path)
             .map_err(|e| AuditError::IoError(format!("Failed to rotate file: {}", e)))?;
 
         // Open new file
@@ -140,7 +155,7 @@ impl FileAuditStore {
 
     /// Read all events from the file.
     fn read_all_events(&self) -> AuditResult<Vec<AuditEvent>> {
-        let path = &self.config.file_path;
+        let path = &self.inner.config.file_path;
 
         if !path.exists() {
             return Ok(Vec::new());
@@ -178,6 +193,7 @@ impl AuditStore for FileAuditStore {
         self.check_rotation()?;
 
         let mut writer = self
+            .inner
             .writer
             .lock()
             .map_err(|e| AuditError::WriteError(format!("Failed to acquire lock: {}", e)))?;
@@ -193,6 +209,18 @@ impl AuditStore for FileAuditStore {
             .map_err(|e| AuditError::IoError(format!("Failed to write: {}", e)))?;
 
         Ok(())
+    }
+
+    fn log_async(
+        &self,
+        event: AuditEvent,
+    ) -> Pin<Box<dyn Future<Output = AuditResult<()>> + Send + '_>> {
+        let store = self.clone();
+        Box::pin(async move {
+            tokio::task::spawn_blocking(move || store.log(event))
+                .await
+                .map_err(|e| AuditError::IoError(format!("Task join error: {}", e)))?
+        })
     }
 
     fn get(&self, id: &str) -> AuditResult<Option<AuditEvent>> {
@@ -238,6 +266,7 @@ impl AuditStore for FileAuditStore {
 
     fn clear(&self) -> AuditResult<()> {
         let mut writer = self
+            .inner
             .writer
             .lock()
             .map_err(|e| AuditError::WriteError(format!("Failed to acquire lock: {}", e)))?;
@@ -245,7 +274,7 @@ impl AuditStore for FileAuditStore {
         *writer = None;
 
         // Truncate the file
-        File::create(&self.config.file_path)
+        File::create(&self.inner.config.file_path)
             .map_err(|e| AuditError::IoError(format!("Failed to clear file: {}", e)))?;
 
         // Reopen
@@ -257,6 +286,7 @@ impl AuditStore for FileAuditStore {
 
     fn flush(&self) -> AuditResult<()> {
         let mut writer = self
+            .inner
             .writer
             .lock()
             .map_err(|e| AuditError::WriteError(format!("Failed to acquire lock: {}", e)))?;
