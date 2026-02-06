@@ -6,11 +6,12 @@ use crate::commands::{
 };
 use clap::{Parser, Subcommand};
 
-/// RustAPI CLI - Project scaffolding and development utilities
+/// The official CLI tool for the RustAPI framework. Scaffold new projects, run development servers, and manage database migrations.
 #[derive(Parser, Debug)]
 #[command(name = "cargo-rustapi")]
 #[command(bin_name = "cargo rustapi")]
-#[command(author, version, about, long_about = None)]
+#[command(author, version, about)]
+#[command(long_about = "The official CLI tool for the RustAPI framework.\n\nUsage:\n  cargo rustapi <COMMAND>\n  cargo-rustapi <COMMAND>\n\nBoth forms are equivalent and can be used interchangeably.")]
 pub struct Cli {
     #[command(subcommand)]
     command: Commands,

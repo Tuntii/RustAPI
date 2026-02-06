@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.275] - 2026-02-06
+
+### Added
+- **Replay (Time-Travel Debugging)**: Complete time-travel debugging system for recording and replaying HTTP requests
+  - **rustapi-core**: Pure types and traits (ReplayConfig, compute_diff, ReplayEntry, ReplayMeta, redaction, ReplayStore trait, truncation)
+  - **rustapi-extras**: Production-ready implementation
+    - `ReplayLayer` middleware for automatic request/response recording
+    - `InMemoryReplayStore` and `FileSystemReplayStore` implementations
+    - Admin HTTP routes for listing, replaying, and diffing entries
+    - `ReplayClient` for programmatic replay testing
+    - Authentication with bearer token
+    - `RetentionJob` for automatic cleanup of expired entries
+  - **cargo-rustapi**: CLI commands for replay management (requires `replay` feature)
+    - Install with: `cargo install cargo-rustapi --features replay`
+    - `cargo rustapi replay list` - List recorded entries
+    - `cargo rustapi replay show <id>` - Show entry details
+    - `cargo rustapi replay run <id> --target <url>` - Replay request
+    - `cargo rustapi replay diff <id> --target <url>` - Compare responses
+    - `cargo rustapi replay delete <id>` - Delete entry
+  - Security features: disabled by default, admin token required, sensitive header/body redaction, configurable TTL
+  - Cookbook recipe with comprehensive examples and security guidelines
+
+### Fixed
+- Fixed broken intra-doc link to `ReplayLayer` in rustapi-core replay module documentation
+
+### Removed
+- Removed unused `check_diff.py` script from repository root
+
 ## [0.1.202] - 2026-01-26
 
 ### Performance - 12x Improvement 🚀
