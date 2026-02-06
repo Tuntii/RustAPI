@@ -15,7 +15,7 @@
 //! # Crate Organization
 //!
 //! - **rustapi-core** (this module): Pure types, traits, and utilities
-//! - **rustapi-extras**: Middleware ([`ReplayLayer`]), stores, HTTP routes
+//! - **rustapi-extras**: Middleware (`ReplayLayer`), stores, HTTP routes
 //! - **cargo-rustapi**: CLI commands for replay management
 
 mod config;
