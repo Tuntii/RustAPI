@@ -54,7 +54,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! rustapi-rs = { version = "0.1", features = ["jwt", "cors"] }
+//! rustapi-rs = { version = "0.1.275", features = ["jwt", "cors"] }
 //! ```
 
 // Re-export core functionality
