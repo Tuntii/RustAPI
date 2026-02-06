@@ -34,6 +34,31 @@ Top-tier LLMs (Claude, GPT-4) charge by the token. RustAPI's TOON format reduces
 
 > "RustAPI isn't just a web server; it's the native language of your AI agents."
 
+## 🔄 Time-Travel Debugging (NEW in v0.1.300)
+
+**Production debugging shouldn't be a nightmare.** RustAPI's Replay system records and replays HTTP requests with surgical precision.
+
+```rust
+// 1. Enable replay recording in production
+RustApi::new()
+    .layer(ReplayLayer::new(store, config))
+    .run("0.0.0.0:8080").await;
+
+// 2. Replay ANY request from the CLI
+$ cargo rustapi replay list
+$ cargo rustapi replay run <id> --target http://localhost:8080
+$ cargo rustapi replay diff <id> --target http://staging
+```
+
+**What makes it special:**
+*   🎬 **Zero-Code Recording**: Middleware automatically captures request/response pairs
+*   🔐 **Security First**: Sensitive headers redacted, bearer auth required, disabled by default
+*   💾 **Flexible Storage**: In-memory (dev) or filesystem (production) with TTL cleanup
+*   🧪 **Integration Testing**: `ReplayClient` for programmatic test automation
+*   🕵️ **Root Cause Analysis**: Replay exact production failures in local environment
+
+> "Fix production bugs in 5 minutes instead of 5 hours."
+
 ## 🥊 Dare to Compare
 
 We optimize for **Developer Joy** without sacrificing **Req/Sec**.
@@ -44,6 +69,7 @@ We optimize for **Developer Joy** without sacrificing **Req/Sec**.
 | **DX (Simplicity)** | 🟢 **High** | 🔴 Low | 🟡 Medium | 🟢 High |
 | **Boilerplate** | **Zero** | High | Medium | Zero |
 | **AI/LLM Native** | ✅ **Yes** | ❌ No | ❌ No | ❌ No |
+| **Time-Travel Debug** | ✅ **Built-in** | ❌ No | ❌ No | ⚠️ 3rd-party |
 | **Stability Logic** | 🛡️ **Facade** | ⚠️ Direct | ⚠️ Direct | ✅ Stable |
 
 ## 🚀 30-Second Start
@@ -73,6 +99,13 @@ async fn main() {
 *   ✅ **Input Validation**
 *   ✅ **Multi-threaded Runtime**
 *   ✅ **Zero Config**
+
+## ✨ Latest Release Highlights (v0.1.300)
+
+*   ✅ **Replay System**: Complete time-travel debugging with CLI tools
+*   ✅ **Security Hardening**: Token-based admin API, automatic PII redaction
+*   ✅ **Retention Jobs**: Auto-cleanup expired replay entries
+*   ✅ **Multi-Store Support**: In-memory and filesystem backends
 
 ## 🗺️ Public Roadmap: Next 30 Days
 
