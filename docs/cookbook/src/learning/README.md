@@ -117,7 +117,7 @@ Build robust, observable, and secure systems.
 | Step | Feature | Description |
 |------|---------|-------------|
 | 1 | **Observability** | Set up [OpenTelemetry and Structured Logging](../crates/rustapi_extras.md#observability) |
-| 2 | **Resilience** | Implement [Circuit Breakers and Retries](../crates/rustapi_extras.md#resilience) |
+| 2 | **Resilience** | Implement [Circuit Breakers and Retries](../recipes/resilience.md) |
 | 3 | **Advanced Security** | Add [OAuth2 and Security Headers](../crates/rustapi_extras.md#advanced-security) |
 | 4 | **Optimization** | Configure [Caching and Deduplication](../crates/rustapi_extras.md#optimization) |
 | 5 | **Background Jobs** | Implement [Reliable Job Queues](../crates/rustapi_jobs.md) |
@@ -125,6 +125,7 @@ Build robust, observable, and secure systems.
 **Related Cookbook Recipes:**
 - [rustapi-extras: The Toolbox](../crates/rustapi_extras.md)
 - [rustapi-jobs: The Workhorse](../crates/rustapi_jobs.md)
+- [Resilience Patterns](../recipes/resilience.md)
 
 ---
 
@@ -242,6 +243,7 @@ Each example includes:
 | [Custom Middleware](../recipes/custom_middleware.md) | `middleware-chain` |
 | [Real-time Chat](../recipes/websockets.md) | `websocket` |
 | [Production Tuning](../recipes/high_performance.md) | `microservices-advanced` |
+| [Resilience Patterns](../recipes/resilience.md) | `microservices` |
 | [Deployment](../recipes/deployment.md) | `serverless-lambda` |
 
 ---

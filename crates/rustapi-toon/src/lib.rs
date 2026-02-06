@@ -30,7 +30,7 @@
 //!
 //! ```toml
 //! [dependencies]
-//! rustapi-rs = { version = "0.1", features = ["toon"] }
+//! rustapi-rs = { version = "0.1.275", features = ["toon"] }
 //! ```
 //!
 //! ### Toon Extractor
