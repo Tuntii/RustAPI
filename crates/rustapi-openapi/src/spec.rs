@@ -164,27 +164,38 @@ impl OpenApiSpec {
             // Ignore other refs for now (e.g. external or non-schema refs)
         };
 
-        // Visitor pattern to traverse the spec
-        let mut visit_schema = |schema: &SchemaRef| {
-            visit_schema_ref(schema, &mut check_ref);
-        };
-
         // 1. Visit Paths
         for path_item in self.paths.values() {
-            visit_path_item(path_item, &mut visit_schema);
+            visit_path_item(path_item, &mut |s| visit_schema_ref(s, &mut check_ref));
         }
 
         // 2. Visit Webhooks
         for path_item in self.webhooks.values() {
-            visit_path_item(path_item, &mut visit_schema);
+            visit_path_item(path_item, &mut |s| visit_schema_ref(s, &mut check_ref));
         }
 
-        // 3. Visit Components (including schemas referencing other schemas)
+        // 3. Visit Components
         if let Some(components) = &self.components {
             for schema in components.schemas.values() {
                 visit_json_schema(schema, &mut check_ref);
             }
-            // TODO: Visit other components like parameters, headers, etc. if they can contain refs
+            for resp in components.responses.values() {
+                visit_response(resp, &mut |s| visit_schema_ref(s, &mut check_ref));
+            }
+            for param in components.parameters.values() {
+                visit_parameter(param, &mut |s| visit_schema_ref(s, &mut check_ref));
+            }
+            for body in components.request_bodies.values() {
+                visit_request_body(body, &mut |s| visit_schema_ref(s, &mut check_ref));
+            }
+            for header in components.headers.values() {
+                visit_header(header, &mut |s| visit_schema_ref(s, &mut check_ref));
+            }
+            for callback_map in components.callbacks.values() {
+                for item in callback_map.values() {
+                    visit_path_item(item, &mut |s| visit_schema_ref(s, &mut check_ref));
+                }
+            }
         }
 
         if missing_refs.is_empty() {
@@ -228,9 +239,7 @@ where
     }
 
     for param in &item.parameters {
-        if let Some(s) = &param.schema {
-            visit(s);
-        }
+        visit_parameter(param, visit);
     }
 }
 
@@ -239,28 +248,61 @@ where
     F: FnMut(&SchemaRef),
 {
     for param in &op.parameters {
-        if let Some(s) = &param.schema {
-            visit(s);
-        }
+        visit_parameter(param, visit);
     }
     if let Some(body) = &op.request_body {
-        for media in body.content.values() {
-            if let Some(s) = &media.schema {
-                visit(s);
-            }
-        }
+        visit_request_body(body, visit);
     }
     for resp in op.responses.values() {
-        for media in resp.content.values() {
-            if let Some(s) = &media.schema {
-                visit(s);
-            }
-        }
-        for header in resp.headers.values() {
-            if let Some(s) = &header.schema {
-                visit(s);
-            }
-        }
+        visit_response(resp, visit);
+    }
+}
+
+fn visit_parameter<F>(param: &Parameter, visit: &mut F)
+where
+    F: FnMut(&SchemaRef),
+{
+    if let Some(s) = &param.schema {
+        visit(s);
+    }
+}
+
+fn visit_response<F>(resp: &ResponseSpec, visit: &mut F)
+where
+    F: FnMut(&SchemaRef),
+{
+    for media in resp.content.values() {
+        visit_media_type(media, visit);
+    }
+    for header in resp.headers.values() {
+        visit_header(header, visit);
+    }
+}
+
+fn visit_request_body<F>(body: &RequestBody, visit: &mut F)
+where
+    F: FnMut(&SchemaRef),
+{
+    for media in body.content.values() {
+        visit_media_type(media, visit);
+    }
+}
+
+fn visit_header<F>(header: &Header, visit: &mut F)
+where
+    F: FnMut(&SchemaRef),
+{
+    if let Some(s) = &header.schema {
+        visit(s);
+    }
+}
+
+fn visit_media_type<F>(media: &MediaType, visit: &mut F)
+where
+    F: FnMut(&SchemaRef),
+{
+    if let Some(s) = &media.schema {
+        visit(s);
     }
 }
 

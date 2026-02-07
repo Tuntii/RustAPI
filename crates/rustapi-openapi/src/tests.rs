@@ -237,4 +237,34 @@ mod tests {
         assert_eq!(missing.len(), 1);
         assert_eq!(missing[0], "#/components/schemas/NonExistent");
     }
+
+    #[test]
+    fn test_ref_integrity_components_invalid() {
+        let mut spec = OpenApiSpec::new("Test", "1.0");
+        let mut components = crate::spec::Components::default();
+
+        components.parameters.insert(
+            "badParam".to_string(),
+            crate::spec::Parameter {
+                name: "badParam".to_string(),
+                location: "query".to_string(),
+                required: false,
+                description: None,
+                deprecated: None,
+                schema: Some(SchemaRef::Ref {
+                    reference: "#/components/schemas/NonExistent".to_string(),
+                }),
+            },
+        );
+
+        spec.components = Some(components);
+
+        let result = spec.validate_integrity();
+        assert!(
+            result.is_err(),
+            "Should detect missing ref in components.parameters"
+        );
+        let missing = result.unwrap_err();
+        assert!(missing.contains(&"#/components/schemas/NonExistent".to_string()));
+    }
 }
