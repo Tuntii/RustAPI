@@ -53,7 +53,7 @@ pub trait CustomValidator: Send + Sync {
 ///
 /// user.validate_async(&ctx).await?;
 /// ```
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ValidationContext {
     database: Option<Arc<dyn DatabaseValidator>>,
     http: Option<Arc<dyn HttpValidator>>,
@@ -114,7 +114,7 @@ impl std::fmt::Debug for ValidationContext {
 }
 
 /// Builder for constructing a `ValidationContext`.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub struct ValidationContextBuilder {
     database: Option<Arc<dyn DatabaseValidator>>,
     http: Option<Arc<dyn HttpValidator>>,
