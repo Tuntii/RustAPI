@@ -280,7 +280,7 @@ pub struct RegexRule {
     pub pattern: String,
     /// Compiled regex (not serialized)
     #[serde(skip)]
-    compiled: OnceLock<Regex>,
+    compiled: OnceLock<Result<Regex, String>>,
     /// Custom error message
     #[serde(skip_serializing_if = "Option::is_none")]
     pub message: Option<String>,
@@ -309,19 +309,15 @@ impl RegexRule {
     }
 
     fn get_regex(&self) -> Result<&Regex, RuleError> {
-        self.compiled.get_or_init(|| {
-            Regex::new(&self.pattern).unwrap_or_else(|_| Regex::new("^$").unwrap())
+        let result = self.compiled.get_or_init(|| {
+            Regex::new(&self.pattern)
+                .map_err(|_| format!("Invalid regex pattern: {}", self.pattern))
         });
 
-        // Verify the pattern is valid
-        if Regex::new(&self.pattern).is_err() {
-            return Err(RuleError::new(
-                "regex",
-                format!("Invalid regex pattern: {}", self.pattern),
-            ));
+        match result {
+            Ok(regex) => Ok(regex),
+            Err(msg) => Err(RuleError::new("regex", msg.clone())),
         }
-
-        Ok(self.compiled.get().unwrap())
     }
 }
 
