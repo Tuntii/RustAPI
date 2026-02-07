@@ -102,8 +102,8 @@ You can define strict expectations on how your application interacts with the mo
 ```rust,ignore
 // Match a POST request with specific body
 server.expect(RequestMatcher::new(Method::POST, "/webhook")
-    .body_contains("event_type=payment_success"))
-    .respond_with(MockResponse::new().status(200));
+    .body_string("event_type=payment_success".into()))
+    .respond_with(MockResponse::new().status(StatusCode::OK));
 ```
 
 #### Verification
