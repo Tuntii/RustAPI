@@ -66,7 +66,8 @@ Design and build distributed systems with RustAPI.
 | 3 | `rate-limit-demo` | API protection, throttling |
 | 4 | `microservices` | Service communication patterns |
 | 5 | `microservices-advanced` | Service discovery, Consul integration |
-| 6 | Background jobs (conceptual) | Background processing with `rustapi-jobs`, Redis/Postgres backends |
+| 6 | Service Mocking | Testing microservices with `MockServer` from `rustapi-testing` |
+| 7 | Background jobs (conceptual) | Background processing with `rustapi-jobs`, Redis/Postgres backends |
 
 > Note: The **Background jobs (conceptual)** step refers to using the `rustapi-jobs` crate rather than a standalone example project.
 **Related Cookbook Recipes:**
@@ -122,8 +123,10 @@ Build robust, observable, and secure systems.
 | 4 | **Optimization** | Configure [Caching and Deduplication](../crates/rustapi_extras.md#optimization) |
 | 5 | **Background Jobs** | Implement [Reliable Job Queues](../crates/rustapi_jobs.md) |
 | 6 | **Debugging** | Set up [Time-Travel Debugging](../recipes/replay.md) |
+| 7 | **Reliable Testing** | Master [Mocking and Integration Testing](../crates/rustapi_testing.md) |
 
 **Related Cookbook Recipes:**
+- [rustapi-testing: The Auditor](../crates/rustapi_testing.md)
 - [rustapi-extras: The Toolbox](../crates/rustapi_extras.md)
 - [Time-Travel Debugging](../recipes/replay.md)
 - [rustapi-jobs: The Workhorse](../crates/rustapi_jobs.md)
