@@ -8,7 +8,7 @@ This recipe shows how to integrate PostgreSQL/MySQL/SQLite using a global connec
 
 ```toml
 [dependencies]
-sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "uuid"] }
+sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "uuid"] }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 dotenvy = "0.15"
