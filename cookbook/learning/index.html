@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-64bc0991.js";
+            window.path_to_searchindex_js = "../searchindex-6cf81054.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-54f2b124.js"></script>
@@ -250,7 +250,8 @@
 <tr><td>3</td><td><code>rate-limit-demo</code></td><td>API protection, throttling</td></tr>
 <tr><td>4</td><td><code>microservices</code></td><td>Service communication patterns</td></tr>
 <tr><td>5</td><td><code>microservices-advanced</code></td><td>Service discovery, Consul integration</td></tr>
-<tr><td>6</td><td>Background jobs (conceptual)</td><td>Background processing with <code>rustapi-jobs</code>, Redis/Postgres backends</td></tr>
+<tr><td>6</td><td>Service Mocking</td><td>Testing microservices with <code>MockServer</code> from <code>rustapi-testing</code></td></tr>
+<tr><td>7</td><td>Background jobs (conceptual)</td><td>Background processing with <code>rustapi-jobs</code>, Redis/Postgres backends</td></tr>
 </tbody>
 </table>
 </div>
@@ -320,11 +321,13 @@
 <tr><td>4</td><td><strong>Optimization</strong></td><td>Configure <a href="../crates/rustapi_extras.html#optimization">Caching and Deduplication</a></td></tr>
 <tr><td>5</td><td><strong>Background Jobs</strong></td><td>Implement <a href="../crates/rustapi_jobs.html">Reliable Job Queues</a></td></tr>
 <tr><td>6</td><td><strong>Debugging</strong></td><td>Set up <a href="../recipes/replay.html">Time-Travel Debugging</a></td></tr>
+<tr><td>7</td><td><strong>Reliable Testing</strong></td><td>Master <a href="../crates/rustapi_testing.html">Mocking and Integration Testing</a></td></tr>
 </tbody>
 </table>
 </div>
 <p><strong>Related Cookbook Recipes:</strong></p>
 <ul>
+<li><a href="../crates/rustapi_testing.html">rustapi-testing: The Auditor</a></li>
 <li><a href="../crates/rustapi_extras.html">rustapi-extras: The Toolbox</a></li>
 <li><a href="../recipes/replay.html">Time-Travel Debugging</a></li>
 <li><a href="../crates/rustapi_jobs.html">rustapi-jobs: The Workhorse</a></li>

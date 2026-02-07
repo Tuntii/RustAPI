@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-64bc0991.js";
+            window.path_to_searchindex_js = "../searchindex-6cf81054.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-54f2b124.js"></script>
@@ -186,7 +186,7 @@
 <p>This recipe shows how to integrate PostgreSQL/MySQL/SQLite using a global connection pool.</p>
 <h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "uuid"] }
+sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "uuid"] }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 dotenvy = "0.15"
