@@ -7,6 +7,15 @@
 1. **In-process API testing**: Testing your endpoints without binding to a real TCP port.
 2. **External service mocking**: Mocking downstream services (like payment gateways or auth providers) that your API calls.
 
+## Installation
+
+Add the crate to your `dev-dependencies`:
+
+```toml
+[dev-dependencies]
+rustapi-testing = { version = "0.1.300" }
+```
+
 ## The `TestClient`
 
 Integration testing is often slow and painful because it involves spinning up a server, waiting for ports, and managing child processes. `TestClient` solves this by wrapping your `RustApi` application and executing requests directly against the service layer.

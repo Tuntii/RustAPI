@@ -11,29 +11,36 @@ Long-running tasks shouldn't block HTTP requests. `rustapi-jobs` provides a robu
 
 Here is how to set up a simple background job queue using the in-memory backend.
 
-### 1. Define the Job
+### 1. Define the Job and Data
 
-Jobs are simple structs that implement `Serialize` and `Deserialize`.
+Jobs are separated into two parts:
+1. The **Data** struct (the payload), which must be serializable.
+2. The **Job** struct (the handler), which contains the logic.
 
 ```rust
 use serde::{Deserialize, Serialize};
 use rustapi_jobs::{Job, JobContext, Result};
-use std::sync::Arc;
+use async_trait::async_trait;
 
+// 1. The payload data
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct EmailJob {
+struct EmailJobData {
     to: String,
     subject: String,
     body: String,
 }
 
-// Implement the Job trait to define how to process it
-#[async_trait::async_trait]
+// 2. The handler struct (usually stateless)
+#[derive(Clone)]
+struct EmailJob;
+
+#[async_trait]
 impl Job for EmailJob {
     const NAME: &'static str = "email_job";
+    type Data = EmailJobData;
 
-    async fn run(&self, _ctx: JobContext) -> Result<()> {
-        println!("Sending email to {} with subject: {}", self.to, self.subject);
+    async fn execute(&self, _ctx: JobContext, data: Self::Data) -> Result<()> {
+        println!("Sending email to {} with subject: {}", data.to, data.subject);
         // Simulate work
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
         Ok(())
@@ -46,7 +53,7 @@ impl Job for EmailJob {
 In your `main` function, initialize the queue and start the worker.
 
 ```rust
-use rustapi_jobs::{JobQueue, InMemoryBackend, EnqueueOptions};
+use rustapi_jobs::{JobQueue, InMemoryBackend};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -56,17 +63,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 2. Create the queue
     let queue = JobQueue::new(backend);
 
-    // 3. Register the job type
-    queue.register_job::<EmailJob>();
+    // 3. Register the job handler
+    queue.register_job(EmailJob).await;
 
     // 4. Start the worker in the background
     let worker_queue = queue.clone();
     tokio::spawn(async move {
-        worker_queue.start_workers().await;
+        if let Err(e) = worker_queue.start_worker().await {
+            eprintln!("Worker failed: {:?}", e);
+        }
     });
 
-    // 5. Enqueue a job
-    queue.enqueue(EmailJob {
+    // 5. Enqueue a job (pass the DATA, not the handler)
+    queue.enqueue::<EmailJob>(EmailJobData {
         to: "user@example.com".into(),
         subject: "Welcome!".into(),
         body: "Thanks for joining.".into(),

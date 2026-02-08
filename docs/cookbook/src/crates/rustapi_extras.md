@@ -15,6 +15,10 @@ This crate is a collection of production-ready middleware. Everything is behind 
 | `audit` | `AuditStore`, `AuditLogger` |
 | `insight` | `InsightLayer`, `InsightStore` |
 | `rate-limit` | `RateLimitLayer` |
+| `replay` | `ReplayLayer` (Time-Travel Debugging) |
+| `timeout` | `TimeoutLayer` |
+| `guard` | `PermissionGuard` |
+| `sanitization` | Input sanitization utilities |
 
 ## Middleware Usage
 
@@ -135,7 +139,7 @@ let app = RustApi::new()
 
 ### Structured Logging
 
-Emit logs as JSON for aggregators like Datadog or Splunk.
+Emit logs as JSON for aggregators like Datadog or Splunk. This is different from request logging; it formats your application logs.
 
 ```rust
 use rustapi_extras::structured_logging::{StructuredLoggingLayer, JsonFormatter};
@@ -184,6 +188,33 @@ let app = RustApi::new()
     .layer(ApiKeyLayer::new("my-secret-key"));
 ```
 
+### Permission Guards
+
+The `guard` feature provides role-based access control (RBAC) helpers.
+
+```rust
+use rustapi_extras::guard::PermissionGuard;
+
+// Only allows users with "admin" role
+#[rustapi_rs::get("/admin")]
+async fn admin_panel(
+    _guard: PermissionGuard
+) -> &'static str {
+    "Welcome Admin"
+}
+```
+
+### Input Sanitization
+
+The `sanitization` feature helps prevent XSS by cleaning user input.
+
+```rust
+use rustapi_extras::sanitization::sanitize_html;
+
+let safe_html = sanitize_html("<script>alert(1)</script>Hello");
+// Result: "&lt;script&gt;alert(1)&lt;/script&gt;Hello"
+```
+
 ## Resilience
 
 ### Circuit Breaker
@@ -208,6 +239,18 @@ let app = RustApi::new()
     .layer(RetryLayer::default());
 ```
 
+### Timeout
+
+Ensure requests don't hang indefinitely.
+
+```rust
+use rustapi_extras::timeout::TimeoutLayer;
+use std::time::Duration;
+
+let app = RustApi::new()
+    .layer(TimeoutLayer::new(Duration::from_secs(30)));
+```
+
 ## Optimization
 
 ### Caching
@@ -230,4 +273,22 @@ use rustapi_extras::dedup::DedupLayer;
 
 let app = RustApi::new()
     .layer(DedupLayer::new());
+```
+
+## Debugging
+
+### Time-Travel Debugging (Replay)
+
+The `replay` feature allows you to record production traffic and replay it locally for debugging.
+
+See the [Time-Travel Debugging Recipe](../recipes/replay.md) for full details.
+
+```rust
+use rustapi_extras::replay::{ReplayLayer, ReplayConfig, InMemoryReplayStore};
+
+let replay_config = ReplayConfig::default();
+let store = InMemoryReplayStore::new(1_000);
+
+let app = RustApi::new()
+    .layer(ReplayLayer::new(replay_config).with_store(store));
 ```
