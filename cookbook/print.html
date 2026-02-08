@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-cdfa44bb.js";
+            window.path_to_searchindex_js = "searchindex-1ea4266e.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-54f2b124.js"></script>
@@ -496,8 +496,8 @@ impl IntoResponse for ApiError {
 
     subgraph Extensions["🔌 Extension Crates"]
         direction LR
-        OpenAPI["rustapi-openapi&lt;br&gt;Swagger/Docs"]
-        Validate["rustapi-validate&lt;br&gt;Request Validation"]
+        OpenAPI["rustapi-openapi&lt;br&gt;OpenAPI 3.1 + Docs"]
+        Validate["rustapi-validate&lt;br&gt;Validation (v2 native)"]
         Toon["rustapi-toon&lt;br&gt;LLM Optimization"]
         Extras["rustapi-extras&lt;br&gt;JWT/CORS/RateLimit"]
         WsCrate["rustapi-ws&lt;br&gt;WebSocket Support"]
@@ -538,7 +538,7 @@ impl IntoResponse for ApiError {
     
     M-&gt;&gt;E: Extract parameters
     E-&gt;&gt;E: Json&lt;T&gt;, Path&lt;T&gt;, Query&lt;T&gt;
-    E-&gt;&gt;E: Validate with #[validate]
+    E-&gt;&gt;E: Validate (v2 native / optional legacy)
     
     alt Validation Failed
         E--&gt;&gt;C: 422 Unprocessable Entity
@@ -634,8 +634,8 @@ impl IntoResponse for ApiError {
 <tr><td><code>rustapi-rs</code></td><td>Public facade — single <code>use</code> for everything</td></tr>
 <tr><td><code>rustapi-core</code></td><td>HTTP engine, routing, extractors, response handling</td></tr>
 <tr><td><code>rustapi-macros</code></td><td>Procedural macros: <code>#[rustapi_rs::get]</code>, <code>#[rustapi_rs::main]</code></td></tr>
-<tr><td><code>rustapi-openapi</code></td><td>Swagger UI generation, OpenAPI 3.0 spec</td></tr>
-<tr><td><code>rustapi-validate</code></td><td>Request body/query validation via <code>#[validate]</code></td></tr>
+<tr><td><code>rustapi-openapi</code></td><td>Native OpenAPI 3.1 model, schema registry, and docs endpoints</td></tr>
+<tr><td><code>rustapi-validate</code></td><td>Validation runtime (v2 native default, legacy validator optional)</td></tr>
 <tr><td><code>rustapi-toon</code></td><td>TOON format serializer, content negotiation, LLM headers</td></tr>
 <tr><td><code>rustapi-extras</code></td><td>JWT auth, CORS, rate limiting, audit logging</td></tr>
 <tr><td><code>rustapi-ws</code></td><td>WebSocket support with broadcast channels</td></tr>
