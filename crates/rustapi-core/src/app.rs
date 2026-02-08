@@ -1115,7 +1115,11 @@ impl RustApi {
             .ok_or("HTTP/3 config not set. Use .with_http3(...)")?;
 
         let http_socket: std::net::SocketAddr = http_addr.parse()?;
-        config.bind_addr = http_socket.ip().to_string();
+        config.bind_addr = if http_socket.ip().is_ipv6() {
+            format!("[{}]", http_socket.ip())
+        } else {
+            http_socket.ip().to_string()
+        };
         config.port = http_socket.port();
         let http_addr = http_socket.to_string();
 
