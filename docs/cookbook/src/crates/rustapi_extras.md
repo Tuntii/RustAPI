@@ -212,7 +212,7 @@ The `sanitization` feature helps prevent XSS by cleaning user input.
 use rustapi_extras::sanitization::sanitize_html;
 
 let safe_html = sanitize_html("<script>alert(1)</script>Hello");
-// Result: "Hello"
+// Result: "&lt;script&gt;alert(1)&lt;/script&gt;Hello"
 ```
 
 ## Resilience
