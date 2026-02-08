@@ -198,7 +198,7 @@ use rustapi_extras::guard::PermissionGuard;
 // Only allows users with "admin" role
 #[rustapi_rs::get("/admin")]
 async fn admin_panel(
-    _guard: PermissionGuard<"admin">
+    _guard: PermissionGuard
 ) -> &'static str {
     "Welcome Admin"
 }
