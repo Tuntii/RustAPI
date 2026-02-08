@@ -1,8 +1,7 @@
 //! OpenAPI documentation for RustAPI
 //!
 //! This crate provides OpenAPI specification generation and Swagger UI serving
-//! for RustAPI applications. It wraps `utoipa` internally while providing a
-//! clean public API.
+//! for RustAPI applications with a native OpenAPI model and schema engine.
 //!
 //! # Features
 //!

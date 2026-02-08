@@ -27,14 +27,13 @@ tokio = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 tracing = { workspace = true }
-validator = { workspace = true }
+validator = { workspace = true, optional = true }
 rustapi-openapi = { workspace = true, default-features = false }
 
 [dev-dependencies]
 rustapi-core = { workspace = true }
 rustapi-macros = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
-utoipa = { workspace = true }
 doc-comment = "0.3"
 uuid = { workspace = true, features = ["serde", "v4"] }
 
@@ -45,6 +44,7 @@ swagger-ui = ["rustapi-core/swagger-ui", "rustapi-openapi/swagger-ui"]
 # Performance features
 simd-json = ["rustapi-core/simd-json"]
 tracing = ["rustapi-core/tracing"]
+legacy-validator = ["dep:validator", "rustapi-core/legacy-validator"]
 
 # Compression middleware
 compression = ["rustapi-core/compression"]
@@ -87,4 +87,4 @@ replay = ["dep:rustapi-extras", "rustapi-extras/replay"]
 
 # Meta features
 extras = ["jwt", "cors", "rate-limit"]
-full = ["extras", "config", "cookies", "sqlx", "toon", "insight", "compression", "ws", "view", "timeout", "guard", "logging", "circuit-breaker", "security-headers", "api-key", "cache", "dedup", "sanitization", "otel", "structured-logging", "replay"]
+full = ["extras", "config", "cookies", "sqlx", "toon", "insight", "compression", "ws", "view", "timeout", "guard", "logging", "circuit-breaker", "security-headers", "api-key", "cache", "dedup", "sanitization", "otel", "structured-logging", "replay", "legacy-validator"]

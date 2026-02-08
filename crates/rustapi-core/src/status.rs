@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::{Arc, RwLock};
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 /// Configuration for the Status Page
 #[derive(Clone, Debug)]
@@ -97,8 +97,7 @@ impl StatusMonitor {
         }
         entry.total_latency_ms += duration.as_millis();
 
-        let now = chrono::Utc::now().to_rfc3339();
-        entry.last_access = Some(now);
+        entry.last_access = Some(format_unix_timestamp());
     }
 
     pub fn get_uptime(&self) -> Duration {
@@ -273,4 +272,11 @@ fn format_duration(d: Duration) -> String {
     } else {
         format!("{}m {}s", minutes, secs)
     }
+}
+
+fn format_unix_timestamp() -> String {
+    let now = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_else(|_| Duration::from_secs(0));
+    format!("unix:{}", now.as_secs())
 }

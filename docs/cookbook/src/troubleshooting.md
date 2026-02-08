@@ -36,7 +36,7 @@ pub struct ListParams {
 
 ---
 
-## 2. Don't Use `utoipa` Directly
+## 2. Don't Add External OpenAPI Generators Directly
 
 **Wrong:**
 ```toml
@@ -53,7 +53,7 @@ rustapi-rs = { version = "0.1.300", features = ["full"] }
 
 **Why?**
 - RustAPI has its own OpenAPI implementation (`rustapi-openapi`)
-- Adding `utoipa` directly can cause dependency conflicts
+- External OpenAPI derive/macros are not part of RustAPI's public API surface
 - The `Schema` derive macro is already in `rustapi_rs::prelude::*`
 
 ---
@@ -370,7 +370,7 @@ async fn handler(
 ## The Golden Rules
 
 1. **Add `Schema` derive** to any struct used with extractors or responses
-2. **Don't use `utoipa`** directly - `rustapi-openapi` is already included
+2. **Don't add external OpenAPI crates** directly - `rustapi-openapi` is already included
 3. **Import from `rustapi_rs`** only - never use internal crates directly
 4. **Use `RustApi::auto()`** with handler macros for automatic route discovery
 

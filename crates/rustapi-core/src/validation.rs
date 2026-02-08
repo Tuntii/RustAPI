@@ -10,6 +10,7 @@ pub trait Validatable {
 }
 
 // Blanket implementation for types implementing the external validator::Validate trait
+#[cfg(feature = "legacy-validator")]
 impl<T: validator::Validate> Validatable for T {
     fn do_validate(&self) -> Result<(), ApiError> {
         match validator::Validate::validate(self) {
@@ -20,6 +21,7 @@ impl<T: validator::Validate> Validatable for T {
 }
 
 /// Helper to convert validator::ValidationErrors to rustapi_core::error::ApiError
+#[cfg(feature = "legacy-validator")]
 pub fn convert_validator_errors(errors: validator::ValidationErrors) -> ApiError {
     let field_errors =
         errors

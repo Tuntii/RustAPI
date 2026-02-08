@@ -15,7 +15,7 @@ rustapi-core = { workspace = true }
 rustapi-openapi = { workspace = true }
 
 # Async
-tokio = { workspace = true }
+tokio = { workspace = true, features = ["rt", "sync", "time"] }
 futures-util = { workspace = true }
 async-trait = { workspace = true }
 

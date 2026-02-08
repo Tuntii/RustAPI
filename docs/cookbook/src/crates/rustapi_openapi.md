@@ -5,7 +5,7 @@
 
 ## Automatic Spec Generation
 
-We believe that if documentation is manual, it is wrong. RustAPI uses `utoipa` to generate an OpenAPI 3.0 specification directly from your code.
+We believe that if documentation is manual, it is wrong. RustAPI uses a native OpenAPI generator to build the specification directly from your code.
 
 ## The `Schema` Trait
 

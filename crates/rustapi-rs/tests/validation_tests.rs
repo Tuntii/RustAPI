@@ -7,12 +7,14 @@ use serde::{Deserialize, Serialize};
 // ============================================================================
 
 #[derive(Debug, Deserialize, Serialize, validator::Validate)]
+#[cfg(feature = "legacy-validator")]
 struct LegacyUser {
     #[validate(length(min = 3))]
     name: String,
 }
 
 #[test]
+#[cfg(feature = "legacy-validator")]
 fn test_legacy_validator_compat() {
     let valid_user = LegacyUser {
         name: "Bob".to_string(),

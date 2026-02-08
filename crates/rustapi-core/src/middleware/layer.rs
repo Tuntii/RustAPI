@@ -9,7 +9,7 @@ use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::task::{Context, Poll};
-use tower::Service;
+use tower_service::Service;
 
 /// A boxed middleware function type
 #[allow(dead_code)]

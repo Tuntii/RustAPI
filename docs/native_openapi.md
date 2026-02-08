@@ -1,10 +1,10 @@
 # Native OpenAPI Design for RustAPI
 
 ## Overview
-RustAPI is moving to a native OpenAPI 3.1 generator to reduce external dependencies (specifically `utoipa`) and ensure deterministic, high-quality spec generation. This document outlines the architecture for the "Native OpenAPI" implementation.
+RustAPI uses a native OpenAPI 3.1 generator to reduce external dependencies and ensure deterministic, high-quality spec generation. This document outlines the architecture for the "Native OpenAPI" implementation.
 
 ## Goals
-- **Zero Heavy Dependencies**: Remove `utoipa`. Use only `serde` + `serde_json` + standard library.
+- **Zero Heavy Dependencies**: Use only `serde` + `serde_json` + standard library.
 - **OpenAPI 3.1**: Support full JSON Schema 2020-12 compatibility.
 - **Determinism**: Output MUST be stable (sorted keys, stable component names).
 - **Backwards Compatibility**: Maintain existing `RustApi::auto()` experience.
