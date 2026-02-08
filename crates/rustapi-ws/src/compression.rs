@@ -68,7 +68,10 @@ mod tests {
                 .client_window_bits(client_window_bits);
 
             let client_extensions = if client_supports_compression {
-                Some("permessage-deflate; client_max_window_bits".to_string())
+                Some(
+                    "permessage-deflate; server_max_window_bits=15; client_max_window_bits"
+                        .to_string(),
+                )
             } else {
                 None
             };
