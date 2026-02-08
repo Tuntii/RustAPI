@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-6cf81054.js";
+            window.path_to_searchindex_js = "../searchindex-26942635.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-54f2b124.js"></script>
@@ -189,6 +189,11 @@
 <li><strong>In-process API testing</strong>: Testing your endpoints without binding to a real TCP port.</li>
 <li><strong>External service mocking</strong>: Mocking downstream services (like payment gateways or auth providers) that your API calls.</li>
 </ol>
+<h2 id="installation"><a class="header" href="#installation">Installation</a></h2>
+<p>Add the crate to your <code>dev-dependencies</code>:</p>
+<pre><code class="language-toml">[dev-dependencies]
+rustapi-testing = { version = "0.1.300" }
+</code></pre>
 <h2 id="the-testclient"><a class="header" href="#the-testclient">The <code>TestClient</code></a></h2>
 <p>Integration testing is often slow and painful because it involves spinning up a server, waiting for ports, and managing child processes. <code>TestClient</code> solves this by wrapping your <code>RustApi</code> application and executing requests directly against the service layer.</p>
 <h3 id="basic-usage"><a class="header" href="#basic-usage">Basic Usage</a></h3>

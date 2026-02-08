@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-6cf81054.js";
+            window.path_to_searchindex_js = "searchindex-26942635.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-54f2b124.js"></script>
@@ -1272,6 +1272,10 @@ app.mount_route(route);
 <tr><td><code>audit</code></td><td><code>AuditStore</code>, <code>AuditLogger</code></td></tr>
 <tr><td><code>insight</code></td><td><code>InsightLayer</code>, <code>InsightStore</code></td></tr>
 <tr><td><code>rate-limit</code></td><td><code>RateLimitLayer</code></td></tr>
+<tr><td><code>replay</code></td><td><code>ReplayLayer</code> (Time-Travel Debugging)</td></tr>
+<tr><td><code>timeout</code></td><td><code>TimeoutLayer</code></td></tr>
+<tr><td><code>guard</code></td><td><code>PermissionGuard</code></td></tr>
+<tr><td><code>sanitization</code></td><td>Input sanitization utilities</td></tr>
 </tbody>
 </table>
 </div>
@@ -1373,7 +1377,7 @@ let app = RustApi::new()
     .layer(OtelLayer::new(config));
 <span class="boring">}</span></code></pre>
 <h3 id="structured-logging"><a class="header" href="#structured-logging">Structured Logging</a></h3>
-<p>Emit logs as JSON for aggregators like Datadog or Splunk.</p>
+<p>Emit logs as JSON for aggregators like Datadog or Splunk. This is different from request logging; it formats your application logs.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use rustapi_extras::structured_logging::{StructuredLoggingLayer, JsonFormatter};
@@ -1414,6 +1418,29 @@ let app = RustApi::new()
 let app = RustApi::new()
     .layer(ApiKeyLayer::new("my-secret-key"));
 <span class="boring">}</span></code></pre>
+<h3 id="permission-guards"><a class="header" href="#permission-guards">Permission Guards</a></h3>
+<p>The <code>guard</code> feature provides role-based access control (RBAC) helpers.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_extras::guard::PermissionGuard;
+
+// Only allows users with "admin" role
+#[rustapi_rs::get("/admin")]
+async fn admin_panel(
+    _guard: PermissionGuard
+) -&gt; &amp;'static str {
+    "Welcome Admin"
+}
+<span class="boring">}</span></code></pre>
+<h3 id="input-sanitization"><a class="header" href="#input-sanitization">Input Sanitization</a></h3>
+<p>The <code>sanitization</code> feature helps prevent XSS by cleaning user input.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_extras::sanitization::sanitize_html;
+
+let safe_html = sanitize_html("&lt;script&gt;alert(1)&lt;/script&gt;Hello");
+// Result: "&amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt;Hello"
+<span class="boring">}</span></code></pre>
 <h2 id="resilience"><a class="header" href="#resilience">Resilience</a></h2>
 <h3 id="circuit-breaker"><a class="header" href="#circuit-breaker">Circuit Breaker</a></h3>
 <p>Prevent cascading failures by stopping requests to failing upstreams.</p>
@@ -1433,6 +1460,16 @@ let app = RustApi::new()
 let app = RustApi::new()
     .layer(RetryLayer::default());
 <span class="boring">}</span></code></pre>
+<h3 id="timeout"><a class="header" href="#timeout">Timeout</a></h3>
+<p>Ensure requests don’t hang indefinitely.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_extras::timeout::TimeoutLayer;
+use std::time::Duration;
+
+let app = RustApi::new()
+    .layer(TimeoutLayer::new(Duration::from_secs(30)));
+<span class="boring">}</span></code></pre>
 <h2 id="optimization"><a class="header" href="#optimization">Optimization</a></h2>
 <h3 id="caching"><a class="header" href="#caching">Caching</a></h3>
 <p>Cache responses based on headers or path.</p>
@@ -1451,6 +1488,20 @@ let app = RustApi::new()
 
 let app = RustApi::new()
     .layer(DedupLayer::new());
+<span class="boring">}</span></code></pre>
+<h2 id="debugging"><a class="header" href="#debugging">Debugging</a></h2>
+<h3 id="time-travel-debugging-replay"><a class="header" href="#time-travel-debugging-replay">Time-Travel Debugging (Replay)</a></h3>
+<p>The <code>replay</code> feature allows you to record production traffic and replay it locally for debugging.</p>
+<p>See the <a href="#replay-time-travel-debugging">Time-Travel Debugging Recipe</a> for full details.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_extras::replay::{ReplayLayer, ReplayConfig, InMemoryReplayStore};
+
+let replay_config = ReplayConfig::default();
+let store = InMemoryReplayStore::new(1_000);
+
+let app = RustApi::new()
+    .layer(ReplayLayer::new(replay_config).with_store(store));
 <span class="boring">}</span></code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="rustapi-toon-the-diplomat"><a class="header" href="#rustapi-toon-the-diplomat">rustapi-toon: The Diplomat</a></h1>
@@ -1517,28 +1568,37 @@ let app = RustApi::new()
 <p>Long-running tasks shouldn’t block HTTP requests. <code>rustapi-jobs</code> provides a robust queue system that can run in-memory or be backed by Redis/Postgres.</p>
 <h2 id="usage-example"><a class="header" href="#usage-example">Usage Example</a></h2>
 <p>Here is how to set up a simple background job queue using the in-memory backend.</p>
-<h3 id="1-define-the-job"><a class="header" href="#1-define-the-job">1. Define the Job</a></h3>
-<p>Jobs are simple structs that implement <code>Serialize</code> and <code>Deserialize</code>.</p>
+<h3 id="1-define-the-job-and-data"><a class="header" href="#1-define-the-job-and-data">1. Define the Job and Data</a></h3>
+<p>Jobs are separated into two parts:</p>
+<ol>
+<li>The <strong>Data</strong> struct (the payload), which must be serializable.</li>
+<li>The <strong>Job</strong> struct (the handler), which contains the logic.</li>
+</ol>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use serde::{Deserialize, Serialize};
 use rustapi_jobs::{Job, JobContext, Result};
-use std::sync::Arc;
+use async_trait::async_trait;
 
+// 1. The payload data
 #[derive(Serialize, Deserialize, Debug, Clone)]
-struct EmailJob {
+struct EmailJobData {
     to: String,
     subject: String,
     body: String,
 }
 
-// Implement the Job trait to define how to process it
-#[async_trait::async_trait]
+// 2. The handler struct (usually stateless)
+#[derive(Clone)]
+struct EmailJob;
+
+#[async_trait]
 impl Job for EmailJob {
     const NAME: &amp;'static str = "email_job";
+    type Data = EmailJobData;
 
-    async fn run(&amp;self, _ctx: JobContext) -&gt; Result&lt;()&gt; {
-        println!("Sending email to {} with subject: {}", self.to, self.subject);
+    async fn execute(&amp;self, _ctx: JobContext, data: Self::Data) -&gt; Result&lt;()&gt; {
+        println!("Sending email to {} with subject: {}", data.to, data.subject);
         // Simulate work
         tokio::time::sleep(std::time::Duration::from_millis(100)).await;
         Ok(())
@@ -1547,7 +1607,7 @@ impl Job for EmailJob {
 <span class="boring">}</span></code></pre>
 <h3 id="2-configure-the-queue"><a class="header" href="#2-configure-the-queue">2. Configure the Queue</a></h3>
 <p>In your <code>main</code> function, initialize the queue and start the worker.</p>
-<pre class="playground"><code class="language-rust">use rustapi_jobs::{JobQueue, InMemoryBackend, EnqueueOptions};
+<pre class="playground"><code class="language-rust">use rustapi_jobs::{JobQueue, InMemoryBackend};
 
 #[tokio::main]
 async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
@@ -1557,17 +1617,19 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
     // 2. Create the queue
     let queue = JobQueue::new(backend);
 
-    // 3. Register the job type
-    queue.register_job::&lt;EmailJob&gt;();
+    // 3. Register the job handler
+    queue.register_job(EmailJob).await;
 
     // 4. Start the worker in the background
     let worker_queue = queue.clone();
     tokio::spawn(async move {
-        worker_queue.start_workers().await;
+        if let Err(e) = worker_queue.start_worker().await {
+            eprintln!("Worker failed: {:?}", e);
+        }
     });
 
-    // 5. Enqueue a job
-    queue.enqueue(EmailJob {
+    // 5. Enqueue a job (pass the DATA, not the handler)
+    queue.enqueue::&lt;EmailJob&gt;(EmailJobData {
         to: "user@example.com".into(),
         subject: "Welcome!".into(),
         body: "Thanks for joining.".into(),
@@ -1627,6 +1689,11 @@ let queue = JobQueue::new(backend);
 <li><strong>In-process API testing</strong>: Testing your endpoints without binding to a real TCP port.</li>
 <li><strong>External service mocking</strong>: Mocking downstream services (like payment gateways or auth providers) that your API calls.</li>
 </ol>
+<h2 id="installation-1"><a class="header" href="#installation-1">Installation</a></h2>
+<p>Add the crate to your <code>dev-dependencies</code>:</p>
+<pre><code class="language-toml">[dev-dependencies]
+rustapi-testing = { version = "0.1.300" }
+</code></pre>
 <h2 id="the-testclient"><a class="header" href="#the-testclient">The <code>TestClient</code></a></h2>
 <p>Integration testing is often slow and painful because it involves spinning up a server, waiting for ports, and managing child processes. <code>TestClient</code> solves this by wrapping your <code>RustApi</code> application and executing requests directly against the service layer.</p>
 <h3 id="basic-usage"><a class="header" href="#basic-usage">Basic Usage</a></h3>
