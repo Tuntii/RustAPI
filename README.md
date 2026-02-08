@@ -26,7 +26,7 @@ No boilerplate. No fighting the borrow checker for simple handlers. Just code th
 **Problem:** Standard JSON APIs are verbose and expensive for Large Language Models (LLMs).
 **Solution:** RustAPI natively supports **TOON (Token-Oriented Object Notation)**.
 
-Top-tier LLMs (Claude, GPT-4) charge by the token. RustAPI's TOON format reduces response token counts by **50-58%** compared to standard JSON.
+Top-tier LLMs (Claude, GPT-4o) charge by the token. RustAPI's TOON format reduces response token counts by **50-58%** compared to standard JSON.
 
 *   **💰 Save 50% on API Costs**: Half the tokens, same data.
 *   **🌊 Zero-Latency Streaming**: Built for real-time AI agents.
