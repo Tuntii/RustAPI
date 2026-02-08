@@ -283,8 +283,11 @@ The `replay` feature allows you to record production traffic and replay it local
 See the [Time-Travel Debugging Recipe](../recipes/replay.md) for full details.
 
 ```rust
-use rustapi_extras::replay::{ReplayLayer, InMemoryReplayStore};
+use rustapi_extras::replay::{ReplayLayer, ReplayConfig, InMemoryReplayStore};
+
+let replay_config = ReplayConfig::default();
+let store = InMemoryReplayStore::new(1_000);
 
 let app = RustApi::new()
-    .layer(ReplayLayer::new(InMemoryReplayStore::new()));
+    .layer(ReplayLayer::new(replay_config).with_store(store));
 ```
