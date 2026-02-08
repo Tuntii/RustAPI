@@ -1072,20 +1072,7 @@ impl RustApi {
         server.run().await
     }
 
-    /// Run both HTTP/1.1 and HTTP/3 servers simultaneously
-    ///
-    /// This allows clients to use either protocol. The HTTP/1.1 server
-    /// will advertise HTTP/3 availability via Alt-Svc header.
-    ///
-    /// # Example
-    ///
-    /// ```rust,ignore
-    /// RustApi::new()
-    ///     .route("/", get(hello))
-    ///     .run_dual_stack("0.0.0.0:8080", Http3Config::new("cert.pem", "key.pem"))
-    ///     .await
-    /// ```
-    /// Configure HTTP/3 support
+    /// Configure HTTP/3 support for `run_http3` and `run_dual_stack`.
     ///
     /// # Example
     ///
@@ -1101,10 +1088,10 @@ impl RustApi {
         self
     }
 
-    /// Run both HTTP/1.1 and HTTP/3 servers simultaneously
+    /// Run both HTTP/1.1 (TCP) and HTTP/3 (QUIC/UDP) simultaneously.
     ///
-    /// This allows clients to use either protocol. The HTTP/1.1 server
-    /// will advertise HTTP/3 availability via Alt-Svc header.
+    /// The HTTP/3 listener is bound to the same host and port as `http_addr`
+    /// so clients can upgrade to either protocol on one endpoint.
     ///
     /// # Example
     ///
@@ -1118,22 +1105,53 @@ impl RustApi {
     #[cfg(feature = "http3")]
     pub async fn run_dual_stack(
         mut self,
-        _http_addr: &str,
+        http_addr: &str,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        // TODO: Dual-stack requires Router, LayerStack, InterceptorChain to implement Clone.
-        // For now, we only run HTTP/3.
-        // In the future, we can either:
-        // 1. Make Router/LayerStack/InterceptorChain Clone
-        // 2. Use Arc<RwLock<...>> pattern
-        // 3. Create shared state mechanism
+        use std::sync::Arc;
 
-        let config = self
+        let mut config = self
             .http3_config
             .take()
             .ok_or("HTTP/3 config not set. Use .with_http3(...)")?;
 
-        tracing::warn!("run_dual_stack currently only runs HTTP/3. HTTP/1.1 support coming soon.");
-        self.run_http3(config).await
+        let http_socket: std::net::SocketAddr = http_addr.parse()?;
+        config.bind_addr = if http_socket.ip().is_ipv6() {
+            format!("[{}]", http_socket.ip())
+        } else {
+            http_socket.ip().to_string()
+        };
+        config.port = http_socket.port();
+        let http_addr = http_socket.to_string();
+
+        // Apply status page if configured
+        self.apply_status_page();
+
+        // Apply body limit layer if configured
+        if let Some(limit) = self.body_limit {
+            self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
+        }
+
+        let router = Arc::new(self.router);
+        let layers = Arc::new(self.layers);
+        let interceptors = Arc::new(self.interceptors);
+
+        let http1_server =
+            Server::from_shared(router.clone(), layers.clone(), interceptors.clone());
+        let http3_server =
+            crate::http3::Http3Server::new(&config, router, layers, interceptors).await?;
+
+        tracing::info!(
+            http1_addr = %http_addr,
+            http3_addr = %config.socket_addr(),
+            "Starting dual-stack HTTP/1.1 + HTTP/3 servers"
+        );
+
+        tokio::try_join!(
+            http1_server.run_with_shutdown(&http_addr, std::future::pending::<()>()),
+            http3_server.run_with_shutdown(std::future::pending::<()>()),
+        )?;
+
+        Ok(())
     }
 }
 

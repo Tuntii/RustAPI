@@ -29,8 +29,8 @@ graph TB
 
     subgraph Extensions["🔌 Extension Crates"]
         direction LR
-        OpenAPI["rustapi-openapi<br>Swagger/Docs"]
-        Validate["rustapi-validate<br>Request Validation"]
+        OpenAPI["rustapi-openapi<br>OpenAPI 3.1 + Docs"]
+        Validate["rustapi-validate<br>Validation (v2 native)"]
         Toon["rustapi-toon<br>LLM Optimization"]
         Extras["rustapi-extras<br>JWT/CORS/RateLimit"]
         WsCrate["rustapi-ws<br>WebSocket Support"]
@@ -74,7 +74,7 @@ sequenceDiagram
     
     M->>E: Extract parameters
     E->>E: Json<T>, Path<T>, Query<T>
-    E->>E: Validate with #[validate]
+    E->>E: Validate (v2 native / optional legacy)
     
     alt Validation Failed
         E-->>C: 422 Unprocessable Entity
@@ -166,8 +166,8 @@ graph BT
 | `rustapi-rs` | Public facade — single `use` for everything |
 | `rustapi-core` | HTTP engine, routing, extractors, response handling |
 | `rustapi-macros` | Procedural macros: `#[rustapi_rs::get]`, `#[rustapi_rs::main]` |
-| `rustapi-openapi` | Swagger UI generation, OpenAPI 3.0 spec |
-| `rustapi-validate` | Request body/query validation via `#[validate]` |
+| `rustapi-openapi` | Native OpenAPI 3.1 model, schema registry, and docs endpoints |
+| `rustapi-validate` | Validation runtime (v2 native default, legacy validator optional) |
 | `rustapi-toon` | TOON format serializer, content negotiation, LLM headers |
 | `rustapi-extras` | JWT auth, CORS, rate limiting, audit logging |
 | `rustapi-ws` | WebSocket support with broadcast channels |

@@ -11,7 +11,7 @@ Automated API specifications and Swagger UI integration for RustAPI.
 
 1. **Reflection**: RustAPI macros collect metadata about your routes (path, method, input types, output types) at compile time
 2. **Schema Gen**: Uses RustAPI's native schema engine to generate OpenAPI-compatible JSON Schemas
-3. **Spec Build**: At runtime, assembles the full OpenAPI 3.0 JSON specification
+3. **Spec Build**: At runtime, assembles the full OpenAPI 3.1 JSON specification with schema ref integrity checks
 4. **UI Serve**: Embeds the Swagger UI assets and serves them at your specified path
 
 ## Route Metadata Macros

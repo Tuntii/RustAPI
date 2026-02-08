@@ -16,11 +16,15 @@ members = [
 ]
 
 [workspace.package]
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 version = "0.1.300"
 =======
 version = "0.1.335"
 >>>>>>> Stashed changes
+=======
+version = "0.1.333"
+>>>>>>> f3bae5807de9f33f6f2de443f10e2c26cd15510d
 edition = "2021"
 authors = ["RustAPI Contributors"]
 license = "MIT OR Apache-2.0"
@@ -141,8 +145,12 @@ strip = false
 
 
 
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 =======
 
 
 >>>>>>> Stashed changes
+=======
+
+>>>>>>> f3bae5807de9f33f6f2de443f10e2c26cd15510d

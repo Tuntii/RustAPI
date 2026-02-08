@@ -267,4 +267,100 @@ mod tests {
         let missing = result.unwrap_err();
         assert!(missing.contains(&"#/components/schemas/NonExistent".to_string()));
     }
+
+    #[test]
+    fn test_ref_integrity_components_traverses_all_ref_bearing_members() {
+        let mut spec = OpenApiSpec::new("Test", "1.0");
+        let mut components = crate::spec::Components::default();
+
+        components.responses.insert(
+            "badResponse".to_string(),
+            crate::spec::ResponseSpec {
+                description: "bad".to_string(),
+                content: std::collections::BTreeMap::from([(
+                    "application/json".to_string(),
+                    crate::spec::MediaType {
+                        schema: Some(SchemaRef::Ref {
+                            reference: "#/components/schemas/MissingFromResponse".to_string(),
+                        }),
+                        example: None,
+                    },
+                )]),
+                headers: std::collections::BTreeMap::from([(
+                    "X-Callback".to_string(),
+                    crate::spec::Header {
+                        description: None,
+                        schema: Some(SchemaRef::Ref {
+                            reference: "#/components/schemas/MissingFromResponseHeader".to_string(),
+                        }),
+                    },
+                )]),
+            },
+        );
+
+        components.request_bodies.insert(
+            "badRequestBody".to_string(),
+            crate::spec::RequestBody {
+                description: None,
+                required: Some(true),
+                content: std::collections::BTreeMap::from([(
+                    "application/json".to_string(),
+                    crate::spec::MediaType {
+                        schema: Some(SchemaRef::Ref {
+                            reference: "#/components/schemas/MissingFromRequestBody".to_string(),
+                        }),
+                        example: None,
+                    },
+                )]),
+            },
+        );
+
+        components.headers.insert(
+            "badHeader".to_string(),
+            crate::spec::Header {
+                description: None,
+                schema: Some(SchemaRef::Ref {
+                    reference: "#/components/schemas/MissingFromHeader".to_string(),
+                }),
+            },
+        );
+
+        let mut callback_operation = crate::spec::Operation::new();
+        callback_operation.request_body = Some(crate::spec::RequestBody {
+            description: None,
+            required: Some(true),
+            content: std::collections::BTreeMap::from([(
+                "application/json".to_string(),
+                crate::spec::MediaType {
+                    schema: Some(SchemaRef::Ref {
+                        reference: "#/components/schemas/MissingFromCallback".to_string(),
+                    }),
+                    example: None,
+                },
+            )]),
+        });
+
+        let mut callback_path = crate::spec::PathItem::default();
+        callback_path.post = Some(callback_operation);
+
+        components.callbacks.insert(
+            "badCallback".to_string(),
+            std::collections::BTreeMap::from([(
+                "{$request.body#/callbackUrl}".to_string(),
+                callback_path,
+            )]),
+        );
+
+        spec.components = Some(components);
+
+        let missing = spec
+            .validate_integrity()
+            .expect_err("should report all missing schema refs");
+
+        assert!(missing.contains(&"#/components/schemas/MissingFromResponse".to_string()));
+        assert!(missing.contains(&"#/components/schemas/MissingFromResponseHeader".to_string()));
+        assert!(missing.contains(&"#/components/schemas/MissingFromRequestBody".to_string()));
+        assert!(missing.contains(&"#/components/schemas/MissingFromHeader".to_string()));
+        assert!(missing.contains(&"#/components/schemas/MissingFromCallback".to_string()));
+    }
 }

@@ -290,11 +290,15 @@ checksum = "b35204fbdc0b3f4446b89fc1ac2cf84a8a68971995d0bf2e925ec7cd960f9cb3"
 
 [[package]]
 name = "cargo-rustapi"
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 version = "0.1.300"
 =======
 version = "0.1.335"
 >>>>>>> Stashed changes
+=======
+version = "0.1.333"
+>>>>>>> f3bae5807de9f33f6f2de443f10e2c26cd15510d
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -2900,11 +2904,15 @@ dependencies = [
 
 [[package]]
 name = "rustapi-core"
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 version = "0.1.300"
 =======
 version = "0.1.335"
 >>>>>>> Stashed changes
+=======
+version = "0.1.333"
+>>>>>>> f3bae5807de9f33f6f2de443f10e2c26cd15510d
 dependencies = [
  "async-stream",
  "async-trait",
@@ -2951,11 +2959,15 @@ dependencies = [
 
 [[package]]
 name = "rustapi-extras"
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 version = "0.1.300"
 =======
 version = "0.1.335"
 >>>>>>> Stashed changes
+=======
+version = "0.1.333"
+>>>>>>> f3bae5807de9f33f6f2de443f10e2c26cd15510d
 dependencies = [
  "async-trait",
  "base64",
@@ -2996,11 +3008,15 @@ dependencies = [
 
 [[package]]
 name = "rustapi-jobs"
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 version = "0.1.300"
 =======
 version = "0.1.335"
 >>>>>>> Stashed changes
+=======
+version = "0.1.333"
+>>>>>>> f3bae5807de9f33f6f2de443f10e2c26cd15510d
 dependencies = [
  "async-trait",
  "chrono",
@@ -3018,11 +3034,15 @@ dependencies = [
 
 [[package]]
 name = "rustapi-macros"
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 version = "0.1.300"
 =======
 version = "0.1.335"
 >>>>>>> Stashed changes
+=======
+version = "0.1.333"
+>>>>>>> f3bae5807de9f33f6f2de443f10e2c26cd15510d
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -3033,11 +3053,15 @@ dependencies = [
 
 [[package]]
 name = "rustapi-openapi"
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 version = "0.1.300"
 =======
 version = "0.1.335"
 >>>>>>> Stashed changes
+=======
+version = "0.1.333"
+>>>>>>> f3bae5807de9f33f6f2de443f10e2c26cd15510d
 dependencies = [
  "bytes",
  "http",
@@ -3049,11 +3073,15 @@ dependencies = [
 
 [[package]]
 name = "rustapi-rs"
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 version = "0.1.300"
 =======
 version = "0.1.335"
 >>>>>>> Stashed changes
+=======
+version = "0.1.333"
+>>>>>>> f3bae5807de9f33f6f2de443f10e2c26cd15510d
 dependencies = [
  "async-trait",
  "doc-comment",
@@ -3075,11 +3103,15 @@ dependencies = [
 
 [[package]]
 name = "rustapi-testing"
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 version = "0.1.300"
 =======
 version = "0.1.335"
 >>>>>>> Stashed changes
+=======
+version = "0.1.333"
+>>>>>>> f3bae5807de9f33f6f2de443f10e2c26cd15510d
 dependencies = [
  "bytes",
  "futures-util",
@@ -3099,11 +3131,15 @@ dependencies = [
 
 [[package]]
 name = "rustapi-toon"
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 version = "0.1.300"
 =======
 version = "0.1.335"
 >>>>>>> Stashed changes
+=======
+version = "0.1.333"
+>>>>>>> f3bae5807de9f33f6f2de443f10e2c26cd15510d
 dependencies = [
  "bytes",
  "futures-util",
@@ -3121,11 +3157,15 @@ dependencies = [
 
 [[package]]
 name = "rustapi-validate"
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 version = "0.1.300"
 =======
 version = "0.1.335"
 >>>>>>> Stashed changes
+=======
+version = "0.1.333"
+>>>>>>> f3bae5807de9f33f6f2de443f10e2c26cd15510d
 dependencies = [
  "async-trait",
  "http",
@@ -3142,11 +3182,15 @@ dependencies = [
 
 [[package]]
 name = "rustapi-view"
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 version = "0.1.300"
 =======
 version = "0.1.335"
 >>>>>>> Stashed changes
+=======
+version = "0.1.333"
+>>>>>>> f3bae5807de9f33f6f2de443f10e2c26cd15510d
 dependencies = [
  "bytes",
  "http",
@@ -3163,11 +3207,15 @@ dependencies = [
 
 [[package]]
 name = "rustapi-ws"
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 version = "0.1.300"
 =======
 version = "0.1.335"
 >>>>>>> Stashed changes
+=======
+version = "0.1.333"
+>>>>>>> f3bae5807de9f33f6f2de443f10e2c26cd15510d
 dependencies = [
  "async-trait",
  "base64",
