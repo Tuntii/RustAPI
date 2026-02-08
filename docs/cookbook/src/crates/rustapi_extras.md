@@ -18,6 +18,7 @@ This crate is a collection of production-ready middleware. Everything is behind 
 | `replay` | `ReplayLayer` (Time-Travel Debugging) |
 | `timeout` | `TimeoutLayer` |
 | `guard` | `PermissionGuard` |
+| `sanitization` | Input sanitization utilities |
 
 ## Middleware Usage
 
