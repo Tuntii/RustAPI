@@ -145,8 +145,8 @@ RustApi::auto().run("0.0.0.0:8080").await
 **Automatic OpenAPI/Swagger generation.**
 
 Features:
-- Native OpenAPI model and schema registry (no external OpenAPI generator dependency)
-- Auto-generates OpenAPI 3.0 spec
+- Native OpenAPI 3.1 model and schema registry (no external OpenAPI generator dependency)
+- Integrity validation for component references (`$ref`)
 - Serves Swagger UI at `/docs`
 - Extracts schemas from `Json<T>`, `Query<T>`, `Path<T>`
 
@@ -166,8 +166,9 @@ struct User {
 **Type-safe request validation.**
 
 Features:
-- Wraps `validator` crate (not exposed)
-- `ValidatedJson<T>` extractor
+- Native v2 validation engine is the default (`rustapi_macros::Validate`)
+- `ValidatedJson<T>` and `AsyncValidatedJson<T>` extractors
+- Legacy `validator` compatibility is optional via `legacy-validator`
 - Automatic 422 responses with field errors
 - Custom validation rules
 

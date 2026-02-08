@@ -34,6 +34,19 @@ impl Server {
         }
     }
 
+    #[cfg(feature = "http3")]
+    pub fn from_shared(
+        router: Arc<Router>,
+        layers: Arc<LayerStack>,
+        interceptors: Arc<InterceptorChain>,
+    ) -> Self {
+        Self {
+            router,
+            layers,
+            interceptors,
+        }
+    }
+
     /// Run the server
     pub async fn run(self, addr: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         self.run_with_shutdown(addr, std::future::pending()).await

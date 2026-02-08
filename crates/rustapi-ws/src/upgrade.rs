@@ -83,29 +83,8 @@ impl WebSocketUpgrade {
     pub fn compress(mut self, config: WsCompressionConfig) -> Self {
         self.compression = Some(config);
 
-        // Simple negotiation: if client supports it, we enable it
         if let Some(exts) = &self.client_extensions {
-            if exts.contains("permessage-deflate") {
-                // We currently use a simple negotiation strategy
-                // TODO: Parse parameters and negotiate window bits
-                let mut header_val = String::from("permessage-deflate");
-
-                // Add server/client_no_context_takeover to reduce memory usage at cost of compression ratio
-                // This is a common default for many servers
-                header_val.push_str("; server_no_context_takeover");
-                header_val.push_str("; client_no_context_takeover");
-
-                if config.window_bits < 15 {
-                    header_val
-                        .push_str(&format!("; server_max_window_bits={}", config.window_bits));
-                }
-                if config.client_window_bits < 15 {
-                    header_val.push_str(&format!(
-                        "; client_max_window_bits={}",
-                        config.client_window_bits
-                    ));
-                }
-
+            if let Some(header_val) = negotiate_permessage_deflate(exts, config) {
                 if let Ok(val) = header::HeaderValue::from_str(&header_val) {
                     self.response
                         .headers_mut()
@@ -218,6 +197,153 @@ impl ResponseModifier for WebSocketUpgrade {
     }
 }
 
+#[derive(Debug)]
+struct ParsedExtension {
+    name: String,
+    params: Vec<(String, Option<String>)>,
+}
+
+#[derive(Debug, Default)]
+struct PerMessageDeflateOffer {
+    server_no_context_takeover: bool,
+    client_no_context_takeover: bool,
+    server_max_window_bits: Option<Option<u8>>,
+    client_max_window_bits: Option<Option<u8>>,
+}
+
+fn negotiate_permessage_deflate(
+    client_extensions: &str,
+    config: WsCompressionConfig,
+) -> Option<String> {
+    for ext in parse_extension_offers(client_extensions) {
+        if ext.name != "permessage-deflate" {
+            continue;
+        }
+
+        let Some(offer) = parse_permessage_deflate_offer(&ext) else {
+            continue;
+        };
+        let mut negotiated = vec!["permessage-deflate".to_string()];
+
+        if offer.server_no_context_takeover {
+            negotiated.push("server_no_context_takeover".to_string());
+        }
+        if offer.client_no_context_takeover {
+            negotiated.push("client_no_context_takeover".to_string());
+        }
+
+        if let Some(requested) = offer.server_max_window_bits {
+            let bits = requested
+                .map(|max| config.window_bits.min(max))
+                .unwrap_or(config.window_bits);
+            negotiated.push(format!("server_max_window_bits={}", bits));
+        }
+
+        if let Some(requested) = offer.client_max_window_bits {
+            let bits = requested
+                .map(|max| config.client_window_bits.min(max))
+                .unwrap_or(config.client_window_bits);
+            negotiated.push(format!("client_max_window_bits={}", bits));
+        }
+
+        return Some(negotiated.join("; "));
+    }
+
+    None
+}
+
+fn parse_extension_offers(header_value: &str) -> Vec<ParsedExtension> {
+    let mut offers = Vec::new();
+
+    for raw_extension in header_value.split(',') {
+        let mut parts = raw_extension
+            .split(';')
+            .map(|part| part.trim())
+            .filter(|part| !part.is_empty());
+
+        let Some(name) = parts.next() else {
+            continue;
+        };
+
+        let mut params = Vec::new();
+        for raw_param in parts {
+            let (key, value) = parse_extension_param(raw_param);
+            params.push((key, value));
+        }
+
+        offers.push(ParsedExtension {
+            name: name.to_ascii_lowercase(),
+            params,
+        });
+    }
+
+    offers
+}
+
+fn parse_extension_param(raw_param: &str) -> (String, Option<String>) {
+    if let Some((key, value)) = raw_param.split_once('=') {
+        let value = value.trim().trim_matches('"').to_string();
+        (key.trim().to_ascii_lowercase(), Some(value))
+    } else {
+        (raw_param.trim().to_ascii_lowercase(), None)
+    }
+}
+
+fn parse_permessage_deflate_offer(ext: &ParsedExtension) -> Option<PerMessageDeflateOffer> {
+    let mut offer = PerMessageDeflateOffer::default();
+
+    for (key, value) in &ext.params {
+        match key.as_str() {
+            "server_no_context_takeover" => {
+                if value.is_some() || offer.server_no_context_takeover {
+                    return None;
+                }
+                offer.server_no_context_takeover = true;
+            }
+            "client_no_context_takeover" => {
+                if value.is_some() || offer.client_no_context_takeover {
+                    return None;
+                }
+                offer.client_no_context_takeover = true;
+            }
+            "server_max_window_bits" => {
+                if offer.server_max_window_bits.is_some() {
+                    return None;
+                }
+                let parsed = match value {
+                    Some(v) => Some(parse_window_bits(v)?),
+                    None => None,
+                };
+                offer.server_max_window_bits = Some(parsed);
+            }
+            "client_max_window_bits" => {
+                if offer.client_max_window_bits.is_some() {
+                    return None;
+                }
+                let parsed = match value {
+                    Some(v) => Some(parse_window_bits(v)?),
+                    None => None,
+                };
+                offer.client_max_window_bits = Some(parsed);
+            }
+            _ => {
+                // Ignore unknown permessage-deflate params for compatibility.
+            }
+        }
+    }
+
+    Some(offer)
+}
+
+fn parse_window_bits(value: &str) -> Option<u8> {
+    let parsed = value.parse::<u8>().ok()?;
+    if (9..=15).contains(&parsed) {
+        Some(parsed)
+    } else {
+        None
+    }
+}
+
 /// Generate the Sec-WebSocket-Accept key from the client's Sec-WebSocket-Key
 fn generate_accept_key(key: &str) -> String {
     use base64::Engine;
@@ -295,6 +421,7 @@ pub(crate) fn validate_upgrade_request(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::WsCompressionConfig;
 
     #[test]
     fn test_accept_key_generation() {
@@ -302,5 +429,48 @@ mod tests {
         let key = "dGhlIHNhbXBsZSBub25jZQ==";
         let accept = generate_accept_key(key);
         assert_eq!(accept, "s3pPLMBiTxaQ9kYGzzhZRbK+xOo=");
+    }
+
+    #[test]
+    fn test_permessage_deflate_negotiates_context_takeover_and_window_bits() {
+        let config = WsCompressionConfig::new()
+            .window_bits(13)
+            .client_window_bits(10);
+
+        let negotiated = negotiate_permessage_deflate(
+            "permessage-deflate; server_no_context_takeover; client_no_context_takeover; server_max_window_bits=12; client_max_window_bits",
+            config,
+        )
+        .expect("expected successful negotiation");
+
+        assert!(negotiated.contains("permessage-deflate"));
+        assert!(negotiated.contains("server_no_context_takeover"));
+        assert!(negotiated.contains("client_no_context_takeover"));
+        assert!(negotiated.contains("server_max_window_bits=12"));
+        assert!(negotiated.contains("client_max_window_bits=10"));
+    }
+
+    #[test]
+    fn test_permessage_deflate_skips_invalid_offer_and_uses_next_offer() {
+        let config = WsCompressionConfig::new()
+            .window_bits(11)
+            .client_window_bits(11);
+
+        let negotiated = negotiate_permessage_deflate(
+            "permessage-deflate; server_max_window_bits=7, permessage-deflate; client_max_window_bits",
+            config,
+        )
+        .expect("expected fallback to second valid offer");
+
+        assert!(negotiated.contains("permessage-deflate"));
+        assert!(negotiated.contains("client_max_window_bits=11"));
+        assert!(!negotiated.contains("server_max_window_bits=7"));
+    }
+
+    #[test]
+    fn test_permessage_deflate_returns_none_when_not_offered() {
+        let config = WsCompressionConfig::default();
+        let negotiated = negotiate_permessage_deflate("x-webkit-deflate-frame", config);
+        assert!(negotiated.is_none());
     }
 }
