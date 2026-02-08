@@ -290,7 +290,11 @@ checksum = "b35204fbdc0b3f4446b89fc1ac2cf84a8a68971995d0bf2e925ec7cd960f9cb3"
 
 [[package]]
 name = "cargo-rustapi"
+<<<<<<< Updated upstream
 version = "0.1.300"
+=======
+version = "0.1.335"
+>>>>>>> Stashed changes
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -2896,7 +2900,11 @@ dependencies = [
 
 [[package]]
 name = "rustapi-core"
+<<<<<<< Updated upstream
 version = "0.1.300"
+=======
+version = "0.1.335"
+>>>>>>> Stashed changes
 dependencies = [
  "async-stream",
  "async-trait",
@@ -2943,7 +2951,11 @@ dependencies = [
 
 [[package]]
 name = "rustapi-extras"
+<<<<<<< Updated upstream
 version = "0.1.300"
+=======
+version = "0.1.335"
+>>>>>>> Stashed changes
 dependencies = [
  "async-trait",
  "base64",
@@ -2984,7 +2996,11 @@ dependencies = [
 
 [[package]]
 name = "rustapi-jobs"
+<<<<<<< Updated upstream
 version = "0.1.300"
+=======
+version = "0.1.335"
+>>>>>>> Stashed changes
 dependencies = [
  "async-trait",
  "chrono",
@@ -3002,7 +3018,11 @@ dependencies = [
 
 [[package]]
 name = "rustapi-macros"
+<<<<<<< Updated upstream
 version = "0.1.300"
+=======
+version = "0.1.335"
+>>>>>>> Stashed changes
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -3013,7 +3033,11 @@ dependencies = [
 
 [[package]]
 name = "rustapi-openapi"
+<<<<<<< Updated upstream
 version = "0.1.300"
+=======
+version = "0.1.335"
+>>>>>>> Stashed changes
 dependencies = [
  "bytes",
  "http",
@@ -3025,7 +3049,11 @@ dependencies = [
 
 [[package]]
 name = "rustapi-rs"
+<<<<<<< Updated upstream
 version = "0.1.300"
+=======
+version = "0.1.335"
+>>>>>>> Stashed changes
 dependencies = [
  "async-trait",
  "doc-comment",
@@ -3047,7 +3075,11 @@ dependencies = [
 
 [[package]]
 name = "rustapi-testing"
+<<<<<<< Updated upstream
 version = "0.1.300"
+=======
+version = "0.1.335"
+>>>>>>> Stashed changes
 dependencies = [
  "bytes",
  "futures-util",
@@ -3067,7 +3099,11 @@ dependencies = [
 
 [[package]]
 name = "rustapi-toon"
+<<<<<<< Updated upstream
 version = "0.1.300"
+=======
+version = "0.1.335"
+>>>>>>> Stashed changes
 dependencies = [
  "bytes",
  "futures-util",
@@ -3085,7 +3121,11 @@ dependencies = [
 
 [[package]]
 name = "rustapi-validate"
+<<<<<<< Updated upstream
 version = "0.1.300"
+=======
+version = "0.1.335"
+>>>>>>> Stashed changes
 dependencies = [
  "async-trait",
  "http",
@@ -3102,7 +3142,11 @@ dependencies = [
 
 [[package]]
 name = "rustapi-view"
+<<<<<<< Updated upstream
 version = "0.1.300"
+=======
+version = "0.1.335"
+>>>>>>> Stashed changes
 dependencies = [
  "bytes",
  "http",
@@ -3119,7 +3163,11 @@ dependencies = [
 
 [[package]]
 name = "rustapi-ws"
+<<<<<<< Updated upstream
 version = "0.1.300"
+=======
+version = "0.1.335"
+>>>>>>> Stashed changes
 dependencies = [
  "async-trait",
  "base64",
