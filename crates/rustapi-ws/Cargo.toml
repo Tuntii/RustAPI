@@ -29,8 +29,8 @@ futures-util = { workspace = true }
 http = { workspace = true }
 http-body-util = { workspace = true }
 bytes = { workspace = true }
-hyper = { workspace = true }
-hyper-util = { workspace = true }
+hyper = { workspace = true, features = ["server", "http1"] }
+hyper-util = { workspace = true, features = ["tokio"] }
 
 # Serialization (optional, for JSON messages)
 serde = { workspace = true }

@@ -43,7 +43,7 @@ pub fn derive_schema(input: TokenStream) -> TokenStream {
 
 /// Auto-register a schema type for zero-config OpenAPI.
 ///
-/// Attach this to a `struct` or `enum` that also derives `Schema` (utoipa::ToSchema).
+/// Attach this to a `struct` or `enum` that also derives `Schema`.
 /// This ensures the type is registered into RustAPI's OpenAPI components even if it is
 /// only referenced indirectly (e.g. as a nested field type).
 ///

@@ -11,19 +11,16 @@ homepage.workspace = true
 
 [dependencies]
 # Async
-tokio = { workspace = true }
+tokio = { workspace = true, features = ["rt", "net", "time", "fs", "macros"] }
 futures-util = { workspace = true }
 pin-project-lite = { workspace = true }
 
 # HTTP
-hyper = { workspace = true }
-hyper-util = { workspace = true }
+hyper = { workspace = true, features = ["server", "http1"] }
+hyper-util = { workspace = true, features = ["tokio"] }
 http = { workspace = true }
 http-body-util = { workspace = true }
 bytes = { workspace = true }
-
-# Socket options
-socket2 = { version = "0.5", features = ["all"] }
 
 # Router
 matchit = { workspace = true }
@@ -38,15 +35,12 @@ simd-json = { version = "0.17", optional = true }
 smallvec = "1.13"
 
 # Middleware
-tower = { workspace = true }
 tower-service = { workspace = true }
-tower-http = { workspace = true }
 
 # Utilities
 thiserror = { workspace = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
-inventory = { workspace = true }
 linkme = { workspace = true }
 uuid = { workspace = true }
 base64 = "0.22"
@@ -59,7 +53,7 @@ brotli = { version = "6.0", optional = true }
 cookie = { version = "0.18", optional = true }
 
 # Validation
-validator = { workspace = true }
+validator = { workspace = true, optional = true }
 rustapi-validate = { workspace = true }
 
 # Metrics (optional)
@@ -79,7 +73,6 @@ h3-quinn = { version = "0.0.10", optional = true }
 rustls = { workspace = true, optional = true }
 rustls-pemfile = { workspace = true, optional = true }
 rcgen = { workspace = true, optional = true }
-chrono = "0.4.43"
 
 # Replay (feature-gated)
 async-trait = { workspace = true, optional = true }
@@ -95,6 +88,7 @@ async-trait = { workspace = true }
 default = ["swagger-ui", "tracing"]
 swagger-ui = ["rustapi-openapi/swagger-ui"]
 test-utils = []
+legacy-validator = ["dep:validator"]
 cookies = ["dep:cookie"]
 sqlx = ["dep:sqlx"]
 metrics = ["dep:prometheus"]

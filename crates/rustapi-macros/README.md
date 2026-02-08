@@ -31,8 +31,8 @@ Enrich your auto-generated documentation.
 
 ### `#[derive(Schema)]`
 Generates a JSON Schema for the struct, used by `rustapi-openapi`.
-*Wraps `utoipa::ToSchema` via `rustapi-openapi` integration.*
+*Uses RustAPI's native OpenAPI schema integration.*
 
 ### `#[derive(Validate)]`
 Generates validation logic.
-*Wraps `validator::Validate` via `rustapi-validate` integration.*
+*Implements RustAPI v2 validation traits via `rustapi-validate` integration.*

@@ -30,7 +30,7 @@ http-body-util = { workspace = true }
 bytes = { workspace = true }
 
 # Async
-tokio = { workspace = true }
+tokio = { workspace = true, features = ["sync"] }
 
 # Utilities
 thiserror = { workspace = true }

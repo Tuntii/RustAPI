@@ -96,9 +96,9 @@ validator = "0.16"
 |-----------|----------------|--------------|
 | HTTP Server | `hyper 1.x` | `hyper 2.x`, `h3` (HTTP/3) |
 | Async Runtime | `tokio` | `smol`, `async-std` (future) |
-| Validation | `validator` | Custom engine (planned for v1.0) |
+| Validation | Native RustAPI v2 (legacy optional) | Further optimized native engine |
 | Router | `matchit` | Custom radix tree |
-| OpenAPI | `utoipa` | Native implementation |
+| OpenAPI | Native implementation | Further optimized native implementation |
 
 **Example scenario:** When `hyper 2.0` releases with breaking changes:
 1. We update `rustapi-core` to use `hyper 2.0`

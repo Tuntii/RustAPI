@@ -145,7 +145,7 @@ RustApi::auto().run("0.0.0.0:8080").await
 **Automatic OpenAPI/Swagger generation.**
 
 Features:
-- Wraps `utoipa` internally (not exposed)
+- Native OpenAPI model and schema registry (no external OpenAPI generator dependency)
 - Auto-generates OpenAPI 3.0 spec
 - Serves Swagger UI at `/docs`
 - Extracts schemas from `Json<T>`, `Query<T>`, `Path<T>`

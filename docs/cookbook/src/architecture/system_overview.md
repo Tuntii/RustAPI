@@ -121,7 +121,6 @@ graph BT
         Tokio[tokio]
         Hyper[hyper]
         Serde[serde]
-        Utoipa[utoipa]
         Validator[validator]
         Tungstenite[tungstenite]
         Tera[tera]
@@ -140,8 +139,8 @@ graph BT
     Core --> Tokio
     Core --> Hyper
     Core --> Serde
-    OpenAPI --> Utoipa
-    Validate --> Validator
+    OpenAPI --> Serde
+    Validate -.->|legacy optional| Validator
     Toon --> Serde
     WS --> Tungstenite
     View --> Tera

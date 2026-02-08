@@ -49,6 +49,7 @@
 //! - `config` - Configuration management with `.env` file support
 //! - `cookies` - Cookie parsing extractor
 //! - `sqlx` - SQLx database error conversion to ApiError
+//! - `legacy-validator` - Compatibility mode for `validator::Validate`
 //! - `extras` - Meta feature enabling jwt, cors, and rate-limit
 //! - `full` - All optional features enabled
 //!
@@ -302,6 +303,7 @@ pub mod prelude {
     // Re-export validation - use validator derive macro directly
     pub use rustapi_validate::v2::AsyncValidate;
     pub use rustapi_validate::v2::Validate as V2Validate;
+    #[cfg(feature = "legacy-validator")]
     pub use validator::Validate;
 
     // Re-export OpenAPI schema derive
