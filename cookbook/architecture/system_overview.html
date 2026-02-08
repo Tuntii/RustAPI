@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-26942635.js";
+            window.path_to_searchindex_js = "../searchindex-cdfa44bb.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-54f2b124.js"></script>
@@ -294,7 +294,6 @@
         Tokio[tokio]
         Hyper[hyper]
         Serde[serde]
-        Utoipa[utoipa]
         Validator[validator]
         Tungstenite[tungstenite]
         Tera[tera]
@@ -313,8 +312,8 @@
     Core --&gt; Tokio
     Core --&gt; Hyper
     Core --&gt; Serde
-    OpenAPI --&gt; Utoipa
-    Validate --&gt; Validator
+    OpenAPI --&gt; Serde
+    Validate -.-&gt;|legacy optional| Validator
     Toon --&gt; Serde
     WS --&gt; Tungstenite
     View --&gt; Tera

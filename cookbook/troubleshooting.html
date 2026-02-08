@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-26942635.js";
+            window.path_to_searchindex_js = "searchindex-cdfa44bb.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-54f2b124.js"></script>
@@ -212,7 +212,7 @@ pub struct ListParams {
 <li>The <code>Schema</code> derive macro implements this trait for you</li>
 </ul>
 <hr>
-<h2 id="2-dont-use-utoipa-directly"><a class="header" href="#2-dont-use-utoipa-directly">2. Don’t Use <code>utoipa</code> Directly</a></h2>
+<h2 id="2-dont-add-external-openapi-generators-directly"><a class="header" href="#2-dont-add-external-openapi-generators-directly">2. Don’t Add External OpenAPI Generators Directly</a></h2>
 <p><strong>Wrong:</strong></p>
 <pre><code class="language-toml">[dependencies]
 utoipa = "4.2"  # ❌ Don't add this
@@ -225,7 +225,7 @@ rustapi-rs = { version = "0.1.300", features = ["full"] }
 <p><strong>Why?</strong></p>
 <ul>
 <li>RustAPI has its own OpenAPI implementation (<code>rustapi-openapi</code>)</li>
-<li>Adding <code>utoipa</code> directly can cause dependency conflicts</li>
+<li>External OpenAPI derive/macros are not part of RustAPI’s public API surface</li>
 <li>The <code>Schema</code> derive macro is already in <code>rustapi_rs::prelude::*</code></li>
 </ul>
 <hr>
@@ -523,7 +523,7 @@ RustApi::auto()
 <h2 id="the-golden-rules"><a class="header" href="#the-golden-rules">The Golden Rules</a></h2>
 <ol>
 <li><strong>Add <code>Schema</code> derive</strong> to any struct used with extractors or responses</li>
-<li><strong>Don’t use <code>utoipa</code></strong> directly - <code>rustapi-openapi</code> is already included</li>
+<li><strong>Don’t add external OpenAPI crates</strong> directly - <code>rustapi-openapi</code> is already included</li>
 <li><strong>Import from <code>rustapi_rs</code></strong> only - never use internal crates directly</li>
 <li><strong>Use <code>RustApi::auto()</code></strong> with handler macros for automatic route discovery</li>
 </ol>
