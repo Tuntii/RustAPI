@@ -23,7 +23,7 @@
     - Includes prerequisites, tasks, and pitfalls for each module.
 
 ## ✅ Verification
-- Created temporary test `crates/rustapi-rs/tests/doc_check_pagination.rs` to verify the new recipe code compiles.
+- Locally created a temporary test in `crates/rustapi-rs/tests/` to verify the new recipe code compiles (not committed to the repo).
 - Verified that `rustapi-core` compiles with the new Schema implementations.
 
 ## 📝 TODOs for Next Run

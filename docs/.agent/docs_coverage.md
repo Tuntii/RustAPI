@@ -8,8 +8,8 @@
 | State | `concepts/handlers.md` | `rustapi-core/src/extract.rs` | OK |
 | Validation | `crates/rustapi_validate.md` | `rustapi-validate` | OK |
 | **HATEOAS** | | | |
-| Pagination | `recipes/pagination.md` (Planned) | `rustapi-core/src/hateoas.rs` | **Missing** |
-| Links | `recipes/pagination.md` (Planned) | `rustapi-core/src/hateoas.rs` | **Missing** |
+| Pagination | `recipes/pagination.md` | `rustapi-core/src/hateoas.rs` | OK |
+| Links | `recipes/pagination.md` | `rustapi-core/src/hateoas.rs` | OK |
 | **Extras** | | | |
 | Auth (JWT) | `recipes/jwt_auth.md` | `rustapi-extras/src/jwt` | OK |
 | Security | `recipes/csrf_protection.md` | `rustapi-extras/src/security` | OK |
@@ -17,4 +17,4 @@
 | **Jobs** | | | |
 | Job Queue | `crates/rustapi_jobs.md` | `rustapi-jobs` | OK |
 | **Learning** | | | |
-| Structured Path | `learning/curriculum.md` (Planned) | N/A | **Missing** |
+| Structured Path | `learning/curriculum.md` | N/A | OK |
