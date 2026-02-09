@@ -36,7 +36,7 @@ struct Pagination {
 #[rustapi_rs::get("/users")]
 async fn list_users(Query(params): Query<Pagination>) -> Json<ResourceCollection<User>> {
     let page = params.page.unwrap_or(0);
-    let size = params.size.unwrap_or(20);
+    let size = params.size.unwrap_or(20).max(1); // Ensure size is at least 1 to prevent division by zero
 
     // In a real app, you would fetch this from a database
     // let (users, total_elements) = db.fetch_users(page, size).await?;
