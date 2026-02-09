@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-1ea4266e.js";
+            window.path_to_searchindex_js = "searchindex-0c7c067b.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-54f2b124.js"></script>
+        <script src="toc-95a3f79e.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -242,11 +242,11 @@
 </code></pre>
 <h2 id="adding-to-an-existing-project"><a class="header" href="#adding-to-an-existing-project">Adding to an Existing Project</a></h2>
 <p>If you prefer not to use the CLI, you can add RustAPI to your <code>Cargo.toml</code> manually:</p>
-<pre><code class="language-bash">cargo add rustapi-rs@0.1.300
+<pre><code class="language-bash">cargo add rustapi-rs@0.1.335
 </code></pre>
 <p>Or add this to your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = "0.1.300"
+rustapi-rs = "0.1.335"
 </code></pre>
 <h2 id="editor-setup"><a class="header" href="#editor-setup">Editor Setup</a></h2>
 <p>For the best experience, we recommend <strong>VS Code</strong> with the <strong>rust-analyzer</strong> extension. This provides:</p>
@@ -1339,7 +1339,7 @@ async fn show_form(token: CsrfToken) -&gt; Html&lt;String&gt; {
 <h2 id="traffic-insight"><a class="header" href="#traffic-insight">Traffic Insight</a></h2>
 <p>The <code>insight</code> feature provides powerful real-time traffic analysis and debugging capabilities without external dependencies. It is designed to be low-overhead and privacy-conscious.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-extras = { version = "0.1.300", features = ["insight"] }
+rustapi-extras = { version = "0.1.335", features = ["insight"] }
 </code></pre>
 <h3 id="setup-1"><a class="header" href="#setup-1">Setup</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -1645,7 +1645,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
 <h3 id="redis-backend"><a class="header" href="#redis-backend">Redis Backend</a></h3>
 <p>Enable the <code>redis</code> feature in <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-jobs = { version = "0.1.300", features = ["redis"] }
+rustapi-jobs = { version = "0.1.335", features = ["redis"] }
 </code></pre>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -1657,7 +1657,7 @@ let queue = JobQueue::new(backend);
 <h3 id="postgres-backend"><a class="header" href="#postgres-backend">Postgres Backend</a></h3>
 <p>Enable the <code>postgres</code> feature in <code>Cargo.toml</code>. This uses <code>sqlx</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-jobs = { version = "0.1.300", features = ["postgres"] }
+rustapi-jobs = { version = "0.1.335", features = ["postgres"] }
 </code></pre>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -1691,7 +1691,7 @@ let queue = JobQueue::new(backend);
 <h2 id="installation-1"><a class="header" href="#installation-1">Installation</a></h2>
 <p>Add the crate to your <code>dev-dependencies</code>:</p>
 <pre><code class="language-toml">[dev-dependencies]
-rustapi-testing = { version = "0.1.300" }
+rustapi-testing = { version = "0.1.335" }
 </code></pre>
 <h2 id="the-testclient"><a class="header" href="#the-testclient">The <code>TestClient</code></a></h2>
 <p>Integration testing is often slow and painful because it involves spinning up a server, waiting for ports, and managing child processes. <code>TestClient</code> solves this by wrapping your <code>RustApi</code> application and executing requests directly against the service layer.</p>
@@ -1877,12 +1877,128 @@ async fn main() -&gt; Result&lt;()&gt; {
 <p>RustAPI uses <strong>distributed slices</strong> (via <code>linkme</code>) to automatically register routes decorated with <code>#[rustapi_rs::get]</code>, <code>#[rustapi_rs::post]</code>, etc. This means you don’t need to manually import or mount every single handler in your <code>main</code> function.</p>
 <p>Just ensure your handler modules are reachable (e.g., via <code>mod handlers;</code>), and the framework handles the rest. This encourages a clean, Domain-Driven Design (DDD) structure where resources are self-contained.</p>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="pagination--hateoas"><a class="header" href="#pagination--hateoas">Pagination &amp; HATEOAS</a></h1>
+<p>Implementing pagination correctly is crucial for API performance and usability. RustAPI provides built-in support for HATEOAS (Hypermedia As The Engine Of Application State) compliant pagination, which includes navigation links in the response.</p>
+<h2 id="problem"><a class="header" href="#problem">Problem</a></h2>
+<p>You need to return a list of resources, but there are too many to return in a single request. You want to provide a standard way for clients to navigate through pages of data.</p>
+<h2 id="solution-1"><a class="header" href="#solution-1">Solution</a></h2>
+<p>Use <code>ResourceCollection</code> and <code>PageInfo</code> from <code>rustapi_core::hateoas</code>. These types automatically generate HAL (Hypertext Application Language) compliant responses with <code>_links</code> (self, first, last, next, prev) and <code>_embedded</code> resources.</p>
+<h2 id="example-code"><a class="header" href="#example-code">Example Code</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+use rustapi_rs::{PageInfo, ResourceCollection};
+use serde::{Deserialize, Serialize};
+
+// 1. Define your resource
+// Note: It must derive Schema for OpenAPI generation
+#[derive(Serialize, Clone, Schema)]
+struct User {
+    id: i64,
+    name: String,
+}
+
+// 2. Define query parameters
+#[derive(Deserialize, Schema)]
+struct Pagination {
+    page: Option&lt;usize&gt;,
+    size: Option&lt;usize&gt;,
+}
+
+// 3. Create the handler
+#[rustapi_rs::get("/users")]
+async fn list_users(Query(params): Query&lt;Pagination&gt;) -&gt; Json&lt;ResourceCollection&lt;User&gt;&gt; {
+    let page = params.page.unwrap_or(0);
+    let size = params.size.unwrap_or(20).max(1); // Ensure size is at least 1 to prevent division by zero
+
+    // In a real app, you would fetch this from a database
+    // let (users, total_elements) = db.fetch_users(page, size).await?;
+    let users = vec![
+        User { id: 1, name: "Alice".to_string() },
+        User { id: 2, name: "Bob".to_string() },
+    ];
+    let total_elements = 100;
+
+    // 4. Calculate pagination info
+    let page_info = PageInfo::calculate(total_elements, size, page);
+
+    // 5. Build the collection response
+    // "users" is the key in the _embedded map
+    // "/users" is the base URL for generating links
+    let collection = ResourceCollection::new("users", users)
+        .page_info(page_info)
+        .with_pagination("/users");
+
+    Json(collection)
+}
+<span class="boring">}</span></code></pre>
+<h2 id="explanation"><a class="header" href="#explanation">Explanation</a></h2>
+<p>The response will look like this (HAL format):</p>
+<pre><code class="language-json">{
+  "_embedded": {
+    "users": [
+      { "id": 1, "name": "Alice" },
+      { "id": 2, "name": "Bob" }
+    ]
+  },
+  "_links": {
+    "self": { "href": "/users?page=0&amp;size=20" },
+    "first": { "href": "/users?page=0&amp;size=20" },
+    "last": { "href": "/users?page=4&amp;size=20" },
+    "next": { "href": "/users?page=1&amp;size=20" }
+  },
+  "page": {
+    "size": 20,
+    "totalElements": 100,
+    "totalPages": 5,
+    "number": 0
+  }
+}
+</code></pre>
+<h3 id="key-components"><a class="header" href="#key-components">Key Components</a></h3>
+<ol>
+<li><strong><code>ResourceCollection&lt;T&gt;</code></strong>: Wraps a list of items. It places them under <code>_embedded</code> and adds <code>_links</code>.</li>
+<li><strong><code>PageInfo</code></strong>: Holds metadata about the current page (size, total elements, total pages, current number).</li>
+<li><strong><code>with_pagination(base_url)</code></strong>: Automatically generates standard navigation links based on the <code>PageInfo</code> and the provided base URL.</li>
+</ol>
+<h2 id="variations"><a class="header" href="#variations">Variations</a></h2>
+<h3 id="cursor-based-pagination"><a class="header" href="#cursor-based-pagination">Cursor-based Pagination</a></h3>
+<p>If you are using cursor-based pagination (e.g., <code>before_id</code>, <code>after_id</code>), you can manually construct links instead of using <code>with_pagination</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let collection = ResourceCollection::new("users", users)
+    .self_link("/users?after=10")
+    .next_link("/users?after=20");
+<span class="boring">}</span></code></pre>
+<h3 id="hateoas-for-single-resources"><a class="header" href="#hateoas-for-single-resources">HATEOAS for Single Resources</a></h3>
+<p>You can also add links to individual resources using <code>Resource&lt;T&gt;</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::hateoas::Linkable; // Trait for .with_links()
+
+#[rustapi_rs::get("/users/{id}")]
+async fn get_user(Path(id): Path&lt;i64&gt;) -&gt; Json&lt;Resource&lt;User&gt;&gt; {
+    let user = User { id, name: "Alice".to_string() };
+
+    let resource = user.with_links()
+        .self_link(format!("/users/{}", id))
+        .link("orders", format!("/users/{}/orders", id));
+
+    Json(resource)
+}
+<span class="boring">}</span></code></pre>
+<h2 id="gotchas"><a class="header" href="#gotchas">Gotchas</a></h2>
+<ul>
+<li><strong>Schema Derive</strong>: The type <code>T</code> inside <code>ResourceCollection&lt;T&gt;</code> or <code>Resource&lt;T&gt;</code> MUST implement <code>RustApiSchema</code> (via <code>#[derive(Schema)]</code>) for OpenAPI generation to work.</li>
+<li><strong>Base URL</strong>: The <code>base_url</code> passed to <code>with_pagination</code> should generally match the route path. If your API is behind a proxy or prefix, ensure this URL is correct from the client’s perspective.</li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="jwt-authentication"><a class="header" href="#jwt-authentication">JWT Authentication</a></h1>
 <p>Authentication is critical for almost every API. RustAPI provides a built-in, production-ready JWT authentication system via the <code>jwt</code> feature.</p>
 <h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
 <p>Enable the <code>jwt</code> feature in your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.300", features = ["jwt"] }
+rustapi-rs = { version = "0.1.335", features = ["jwt"] }
 serde = { version = "1", features = ["derive"] }
 </code></pre>
 <h2 id="1-define-claims"><a class="header" href="#1-define-claims">1. Define Claims</a></h2>
@@ -1995,7 +2111,7 @@ async fn admin_only(AuthUser(claims): AuthUser&lt;Claims&gt;) -&gt; Result&lt;St
 </ol>
 <h2 id="quick-start-1"><a class="header" href="#quick-start-1">Quick Start</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.300", features = ["csrf"] }
+rustapi-rs = { version = "0.1.335", features = ["csrf"] }
 </code></pre>
 <pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
 use rustapi_extras::csrf::{CsrfConfig, CsrfLayer, CsrfToken};
@@ -2354,7 +2470,7 @@ impl UserRepository for PostgresRepo {
 <p>Handling file uploads efficiently is crucial. RustAPI allows you to stream <code>Multipart</code> data, meaning you can handle 1GB uploads without using 1GB of RAM.</p>
 <h2 id="dependencies-2"><a class="header" href="#dependencies-2">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = "0.1.300"
+rustapi-rs = "0.1.335"
 tokio = { version = "1", features = ["fs", "io-util"] }
 uuid = { version = "1", features = ["v4"] }
 </code></pre>
@@ -2424,7 +2540,7 @@ if let Some(ct) = field.content_type() {
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="custom-middleware"><a class="header" href="#custom-middleware">Custom Middleware</a></h1>
 <p><strong>Problem</strong>: You need to execute code before or after every request (e.g., logging, authentication, metrics) or modify the response.</p>
-<h2 id="solution-1"><a class="header" href="#solution-1">Solution</a></h2>
+<h2 id="solution-2"><a class="header" href="#solution-2">Solution</a></h2>
 <p>In RustAPI, the idiomatic way to implement custom middleware is by implementing the <code>MiddlewareLayer</code> trait. This trait provides a safe, asynchronous interface for inspecting and modifying requests and responses.</p>
 <h3 id="the-middlewarelayer-trait"><a class="header" href="#the-middlewarelayer-trait">The <code>MiddlewareLayer</code> Trait</a></h3>
 <p>The trait is defined in <code>rustapi_core::middleware</code>:</p>
@@ -2550,7 +2666,7 @@ Response::from_parts(parts, body)
 <p>WebSockets allow full-duplex communication between the client and server. RustAPI leverages the <code>rustapi-ws</code> crate (based on <code>tungstenite</code> and <code>tokio</code>) to make this easy.</p>
 <h2 id="dependencies-3"><a class="header" href="#dependencies-3">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-ws = "0.1.300"
+rustapi-ws = "0.1.335"
 tokio = { version = "1", features = ["sync"] }
 futures = "0.3"
 </code></pre>
@@ -2651,7 +2767,7 @@ ws.send("Hello form JS!");
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="production-tuning"><a class="header" href="#production-tuning">Production Tuning</a></h1>
 <p><strong>Problem</strong>: Your API needs to handle extreme load (10k+ requests per second).</p>
-<h2 id="solution-2"><a class="header" href="#solution-2">Solution</a></h2>
+<h2 id="solution-3"><a class="header" href="#solution-3">Solution</a></h2>
 <h3 id="1-release-profile"><a class="header" href="#1-release-profile">1. Release Profile</a></h3>
 <p>Ensure <code>Cargo.toml</code> has optimal settings:</p>
 <pre><code class="language-toml">[profile.release]
@@ -2679,9 +2795,9 @@ async fn main() {
 <h2 id="prerequisites-1"><a class="header" href="#prerequisites-1">Prerequisites</a></h2>
 <p>Add the resilience features to your <code>Cargo.toml</code>. For example:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.300", features = ["full"] }
+rustapi-rs = { version = "0.1.335", features = ["full"] }
 # OR cherry-pick features
-# rustapi-extras = { version = "0.1.300", features = ["circuit-breaker", "retry", "timeout"] }
+# rustapi-extras = { version = "0.1.335", features = ["circuit-breaker", "retry", "timeout"] }
 </code></pre>
 <h2 id="circuit-breaker-1"><a class="header" href="#circuit-breaker-1">Circuit Breaker</a></h2>
 <p>The Circuit Breaker pattern prevents your application from repeatedly trying to execute an operation that’s likely to fail. It gives the failing service time to recover.</p>
@@ -2782,7 +2898,7 @@ fn main() {
 <h2 id="quick-start-2"><a class="header" href="#quick-start-2">Quick Start</a></h2>
 <p>Add the <code>replay</code> feature to your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.300", features = ["replay"] }
+rustapi-rs = { version = "0.1.335", features = ["replay"] }
 </code></pre>
 <p>Add the <code>ReplayLayer</code> middleware to your application:</p>
 <pre><code class="language-rust ignore">use rustapi_rs::prelude::*;
@@ -3075,9 +3191,9 @@ impl ReplayStore for MyCustomStore {
 <h2 id="enabling-http3"><a class="header" href="#enabling-http3">Enabling HTTP/3</a></h2>
 <p>HTTP/3 support is optional and can be enabled via feature flags in <code>Cargo.toml</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.300", features = ["http3"] }
+rustapi-rs = { version = "0.1.335", features = ["http3"] }
 # For development with self-signed certificates
-rustapi-rs = { version = "0.1.300", features = ["http3", "http3-dev"] }
+rustapi-rs = { version = "0.1.335", features = ["http3", "http3-dev"] }
 </code></pre>
 <h2 id="running-an-http3-server"><a class="header" href="#running-an-http3-server">Running an HTTP/3 Server</a></h2>
 <p>Since HTTP/3 requires TLS (even for local development), RustAPI provides helpers to make this easy.</p>
@@ -3296,7 +3412,7 @@ utoipa = "4.2"  # ❌ Don't add this
 </code></pre>
 <p><strong>Correct:</strong></p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.300", features = ["full"] }
+rustapi-rs = { version = "0.1.335", features = ["full"] }
 # rustapi-openapi is re-exported through rustapi-rs
 </code></pre>
 <p><strong>Why?</strong></p>
@@ -3608,6 +3724,8 @@ RustApi::auto()
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="learning--examples"><a class="header" href="#learning--examples">Learning &amp; Examples</a></h1>
 <p>Welcome to the RustAPI learning resources! This section provides structured learning paths and links to comprehensive real-world examples to help you master the framework.</p>
+<h2 id="-structured-curriculum"><a class="header" href="#-structured-curriculum">🎓 Structured Curriculum</a></h2>
+<p>New to RustAPI? Follow our step-by-step <a href="#structured-learning-path">Structured Learning Path</a> to go from beginner to production-ready.</p>
 <h2 id="-learning-resources"><a class="header" href="#-learning-resources">📚 Learning Resources</a></h2>
 <h3 id="official-examples-repository"><a class="header" href="#official-examples-repository">Official Examples Repository</a></h3>
 <p>We maintain a comprehensive examples repository with <strong>18 real-world projects</strong> demonstrating RustAPI’s full capabilities:</p>
@@ -3937,6 +4055,115 @@ cargo test
 <blockquote>
 <p>💬 <strong>Need help?</strong> Open an issue in the examples repository or join our community discussions!</p>
 </blockquote>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="structured-learning-path"><a class="header" href="#structured-learning-path">Structured Learning Path</a></h1>
+<p>This curriculum is designed to take you from a RustAPI beginner to an advanced user capable of building production-grade microservices.</p>
+<h2 id="phase-1-foundations"><a class="header" href="#phase-1-foundations">Phase 1: Foundations</a></h2>
+<p><strong>Goal:</strong> Build a simple CRUD API and understand the core request/response cycle.</p>
+<h3 id="module-1-introduction--setup"><a class="header" href="#module-1-introduction--setup">Module 1: Introduction &amp; Setup</a></h3>
+<ul>
+<li><strong>Prerequisites:</strong> Rust installed, basic Cargo knowledge.</li>
+<li><strong>Reading:</strong> <a href="#installation">Installation</a>, <a href="#project-structure">Project Structure</a>.</li>
+<li><strong>Task:</strong> Create a new project using <code>cargo rustapi new my-api</code>.</li>
+<li><strong>Expected Output:</strong> A running server that responds to <code>GET /</code> with “Hello World”.</li>
+<li><strong>Pitfalls:</strong> Not enabling <code>tokio</code> features if setting up manually.</li>
+</ul>
+<h3 id="module-2-routing--handlers"><a class="header" href="#module-2-routing--handlers">Module 2: Routing &amp; Handlers</a></h3>
+<ul>
+<li><strong>Prerequisites:</strong> Module 1.</li>
+<li><strong>Reading:</strong> <a href="#handlers--extractors">Handlers &amp; Extractors</a>.</li>
+<li><strong>Task:</strong> Create routes for <code>GET /users</code>, <code>POST /users</code>, <code>GET /users/{id}</code>.</li>
+<li><strong>Expected Output:</strong> Endpoints that return static JSON data.</li>
+<li><strong>Pitfalls:</strong> Forgetting to register routes in <code>main.rs</code> if not using auto-discovery.</li>
+</ul>
+<h3 id="module-3-extractors"><a class="header" href="#module-3-extractors">Module 3: Extractors</a></h3>
+<ul>
+<li><strong>Prerequisites:</strong> Module 2.</li>
+<li><strong>Reading:</strong> <a href="#handlers--extractors">Handlers &amp; Extractors</a>.</li>
+<li><strong>Task:</strong> Use <code>Path</code>, <code>Query</code>, and <code>Json</code> extractors to handle dynamic input.</li>
+<li><strong>Expected Output:</strong> <code>GET /users/{id}</code> returns the ID. <code>POST /users</code> echoes the JSON body.</li>
+<li><strong>Pitfalls:</strong> Consuming the body twice (e.g., using <code>Json</code> and <code>Body</code> in the same handler).</li>
+</ul>
+<h2 id="phase-2-core-development"><a class="header" href="#phase-2-core-development">Phase 2: Core Development</a></h2>
+<p><strong>Goal:</strong> Add real logic, validation, and documentation.</p>
+<h3 id="module-4-state-management"><a class="header" href="#module-4-state-management">Module 4: State Management</a></h3>
+<ul>
+<li><strong>Prerequisites:</strong> Phase 1.</li>
+<li><strong>Reading:</strong> <a href="#handlers--extractors">State Extractor</a>.</li>
+<li><strong>Task:</strong> Create an <code>AppState</code> struct with a <code>Mutex&lt;Vec&lt;User&gt;&gt;</code>. Inject it into handlers.</li>
+<li><strong>Expected Output:</strong> A stateful API where POST adds a user and GET retrieves it (in-memory).</li>
+<li><strong>Pitfalls:</strong> Using <code>std::sync::Mutex</code> instead of <code>tokio::sync::Mutex</code> in async code (though <code>std</code> is fine for simple data).</li>
+</ul>
+<h3 id="module-5-validation"><a class="header" href="#module-5-validation">Module 5: Validation</a></h3>
+<ul>
+<li><strong>Prerequisites:</strong> Module 4.</li>
+<li><strong>Reading:</strong> <a href="#rustapi-validate-the-gatekeeper">Validation</a>.</li>
+<li><strong>Task:</strong> Add <code>#[derive(Validate)]</code> to your <code>User</code> struct. Use <code>ValidatedJson</code>.</li>
+<li><strong>Expected Output:</strong> Requests with invalid email or short password return <code>422 Unprocessable Entity</code>.</li>
+<li><strong>Pitfalls:</strong> Forgetting to add <code>#[validate]</code> attributes to struct fields.</li>
+</ul>
+<h3 id="module-6-openapi--hateoas"><a class="header" href="#module-6-openapi--hateoas">Module 6: OpenAPI &amp; HATEOAS</a></h3>
+<ul>
+<li><strong>Prerequisites:</strong> Module 5.</li>
+<li><strong>Reading:</strong> <a href="#rustapi-openapi-the-cartographer">OpenAPI</a>, <a href="#pagination--hateoas">Pagination Recipe</a>.</li>
+<li><strong>Task:</strong> Add <code>#[derive(Schema)]</code> to all DTOs. Implement pagination for <code>GET /users</code>.</li>
+<li><strong>Expected Output:</strong> Swagger UI at <code>/docs</code> showing full schema. Paginated responses with <code>_links</code>.</li>
+<li><strong>Pitfalls:</strong> Using types that don’t implement <code>Schema</code> (like raw <code>serde_json::Value</code>) inside response structs.</li>
+</ul>
+<h2 id="phase-3-advanced-features"><a class="header" href="#phase-3-advanced-features">Phase 3: Advanced Features</a></h2>
+<p><strong>Goal:</strong> Security, Real-time, and Production readiness.</p>
+<h3 id="module-7-authentication-jwt"><a class="header" href="#module-7-authentication-jwt">Module 7: Authentication (JWT)</a></h3>
+<ul>
+<li><strong>Prerequisites:</strong> Phase 2.</li>
+<li><strong>Reading:</strong> <a href="#jwt-authentication">JWT Auth Recipe</a>.</li>
+<li><strong>Task:</strong> Implement a login route that returns a JWT. Protect user routes with <code>AuthUser</code> extractor.</li>
+<li><strong>Expected Output:</strong> Protected routes return <code>401 Unauthorized</code> without a valid token.</li>
+<li><strong>Pitfalls:</strong> Hardcoding secrets. Not checking token expiration.</li>
+</ul>
+<h3 id="module-8-websockets--real-time"><a class="header" href="#module-8-websockets--real-time">Module 8: WebSockets &amp; Real-time</a></h3>
+<ul>
+<li><strong>Prerequisites:</strong> Phase 2.</li>
+<li><strong>Reading:</strong> <a href="#real-time-chat-websockets">WebSockets Recipe</a>.</li>
+<li><strong>Task:</strong> Create a chat endpoint where users can broadcast messages.</li>
+<li><strong>Expected Output:</strong> Multiple clients connected via WS receiving messages in real-time.</li>
+<li><strong>Pitfalls:</strong> Blocking the WebSocket loop with long-running synchronous tasks.</li>
+</ul>
+<h3 id="module-9-production-readiness"><a class="header" href="#module-9-production-readiness">Module 9: Production Readiness</a></h3>
+<ul>
+<li><strong>Prerequisites:</strong> Phase 3.</li>
+<li><strong>Reading:</strong> <a href="#production-tuning">Production Tuning</a>, <a href="#resilience-patterns">Resilience</a>.</li>
+<li><strong>Task:</strong> Add <code>RateLimitLayer</code>, <code>CompressionLayer</code>, and <code>TimeoutLayer</code>.</li>
+<li><strong>Expected Output:</strong> An API that handles load gracefully and rejects abuse.</li>
+<li><strong>Pitfalls:</strong> Setting timeouts too low for slow operations.</li>
+</ul>
+<h2 id="knowledge-check"><a class="header" href="#knowledge-check">Knowledge Check</a></h2>
+<ol>
+<li><strong>Q:</strong> Which extractor consumes the request body?
+<ul>
+<li><strong>A:</strong> <code>Json&lt;T&gt;</code>, <code>ValidatedJson&lt;T&gt;</code>, <code>Body</code>.</li>
+</ul>
+</li>
+<li><strong>Q:</strong> How do you share a database connection pool across handlers?
+<ul>
+<li><strong>A:</strong> Use the <code>State&lt;T&gt;</code> extractor and initialize it in <code>RustApi::new().with_state(state)</code>.</li>
+</ul>
+</li>
+<li><strong>Q:</strong> What is the purpose of <code>derive(Schema)</code>?
+<ul>
+<li><strong>A:</strong> It generates the OpenAPI schema definition for the struct, allowing it to be documented in Swagger UI.</li>
+</ul>
+</li>
+<li><strong>Q:</strong> How do you handle pagination links automatically?
+<ul>
+<li><strong>A:</strong> Return <code>ResourceCollection&lt;T&gt;</code> and call <code>.with_pagination()</code>.</li>
+</ul>
+</li>
+</ol>
+<h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
+<ul>
+<li>Explore the <a href="https://github.com/Tuntii/rustapi-rs-examples">Examples Repository</a>.</li>
+<li>Contribute a new recipe to the Cookbook!</li>
+</ul>
 
                     </main>
 

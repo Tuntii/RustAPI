@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-1ea4266e.js";
+            window.path_to_searchindex_js = "../searchindex-0c7c067b.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-54f2b124.js"></script>
+        <script src="../toc-95a3f79e.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -187,9 +187,9 @@
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
 <p>Add the resilience features to your <code>Cargo.toml</code>. For example:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.300", features = ["full"] }
+rustapi-rs = { version = "0.1.335", features = ["full"] }
 # OR cherry-pick features
-# rustapi-extras = { version = "0.1.300", features = ["circuit-breaker", "retry", "timeout"] }
+# rustapi-extras = { version = "0.1.335", features = ["circuit-breaker", "retry", "timeout"] }
 </code></pre>
 <h2 id="circuit-breaker"><a class="header" href="#circuit-breaker">Circuit Breaker</a></h2>
 <p>The Circuit Breaker pattern prevents your application from repeatedly trying to execute an operation that’s likely to fail. It gives the failing service time to recover.</p>

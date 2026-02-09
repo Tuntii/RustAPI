@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-1ea4266e.js";
+            window.path_to_searchindex_js = "../searchindex-0c7c067b.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-54f2b124.js"></script>
+        <script src="../toc-95a3f79e.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -266,7 +266,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
 <h3 id="redis-backend"><a class="header" href="#redis-backend">Redis Backend</a></h3>
 <p>Enable the <code>redis</code> feature in <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-jobs = { version = "0.1.300", features = ["redis"] }
+rustapi-jobs = { version = "0.1.335", features = ["redis"] }
 </code></pre>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -278,7 +278,7 @@ let queue = JobQueue::new(backend);
 <h3 id="postgres-backend"><a class="header" href="#postgres-backend">Postgres Backend</a></h3>
 <p>Enable the <code>postgres</code> feature in <code>Cargo.toml</code>. This uses <code>sqlx</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-jobs = { version = "0.1.300", features = ["postgres"] }
+rustapi-jobs = { version = "0.1.335", features = ["postgres"] }
 </code></pre>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {

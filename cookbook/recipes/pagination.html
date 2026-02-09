@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Introduction - RustAPI Architecture Cookbook</title>
+        <title>Pagination &amp; HATEOAS - RustAPI Architecture Cookbook</title>
 
 
         <!-- Custom HTML head -->
@@ -12,34 +12,34 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
 
-        <link rel="icon" href="favicon-de23e50b.svg">
-        <link rel="shortcut icon" href="favicon-8114d1fc.png">
-        <link rel="stylesheet" href="css/variables-8adf115d.css">
-        <link rel="stylesheet" href="css/general-2459343d.css">
-        <link rel="stylesheet" href="css/chrome-ae938929.css">
-        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+        <link rel="icon" href="../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../css/general-2459343d.css">
+        <link rel="stylesheet" href="../css/chrome-ae938929.css">
+        <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+        <link rel="stylesheet" href="../fonts/fonts-9644e21d.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
-        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
-        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../ayu-highlight-3fdfc3ac.css">
 
         <!-- Custom theme stylesheets -->
-        <link rel="stylesheet" href="theme/custom-1bc5c9dc.css">
+        <link rel="stylesheet" href="../theme/custom-1bc5c9dc.css">
 
 
         <!-- Provide site root and default themes to javascript -->
         <script>
-            const path_to_root = "";
+            const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-0c7c067b.js";
+            window.path_to_searchindex_js = "../searchindex-0c7c067b.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-95a3f79e.js"></script>
+        <script src="../toc-95a3f79e.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -106,7 +106,7 @@
             <!-- populated by js -->
             <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
             <noscript>
-                <iframe class="sidebar-iframe-outer" src="toc.html"></iframe>
+                <iframe class="sidebar-iframe-outer" src="../toc.html"></iframe>
             </noscript>
             <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -141,13 +141,13 @@
                     <h1 class="menu-title">RustAPI Architecture Cookbook</h1>
 
                     <div class="right-buttons">
-                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
                             <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
                         </a>
                         <a href="https://github.com/Tuntii/RustAPI" title="Git repository" aria-label="Git repository">
                             <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
                         </a>
-                        <a href="https://github.com/Tuntii/RustAPI/edit/master/docs/cookbook/src/introduction.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                        <a href="https://github.com/Tuntii/RustAPI/edit/master/docs/cookbook/src/recipes/pagination.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
                             <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
                         </a>
 
@@ -181,54 +181,131 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="rustapi-cookbook"><a class="header" href="#rustapi-cookbook">RustAPI Cookbook</a></h1>
-<p>Welcome to the <strong>RustAPI Architecture Cookbook</strong>. This documentation is designed to be the single source of truth for the project’s philosophy, patterns, and practical implementation details.</p>
-<blockquote class="blockquote-tag blockquote-tag-note">
-<p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>Note</p>
-<p>This is a living document. As our architecture evolves, so will this cookbook.</p>
-</blockquote>
-<h2 id="what-is-this"><a class="header" href="#what-is-this">What is this?</a></h2>
-<p>This is not just API documentation. This is a collection of:</p>
+                        <h1 id="pagination--hateoas"><a class="header" href="#pagination--hateoas">Pagination &amp; HATEOAS</a></h1>
+<p>Implementing pagination correctly is crucial for API performance and usability. RustAPI provides built-in support for HATEOAS (Hypermedia As The Engine Of Application State) compliant pagination, which includes navigation links in the response.</p>
+<h2 id="problem"><a class="header" href="#problem">Problem</a></h2>
+<p>You need to return a list of resources, but there are too many to return in a single request. You want to provide a standard way for clients to navigate through pages of data.</p>
+<h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
+<p>Use <code>ResourceCollection</code> and <code>PageInfo</code> from <code>rustapi_core::hateoas</code>. These types automatically generate HAL (Hypertext Application Language) compliant responses with <code>_links</code> (self, first, last, next, prev) and <code>_embedded</code> resources.</p>
+<h2 id="example-code"><a class="header" href="#example-code">Example Code</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+use rustapi_rs::{PageInfo, ResourceCollection};
+use serde::{Deserialize, Serialize};
+
+// 1. Define your resource
+// Note: It must derive Schema for OpenAPI generation
+#[derive(Serialize, Clone, Schema)]
+struct User {
+    id: i64,
+    name: String,
+}
+
+// 2. Define query parameters
+#[derive(Deserialize, Schema)]
+struct Pagination {
+    page: Option&lt;usize&gt;,
+    size: Option&lt;usize&gt;,
+}
+
+// 3. Create the handler
+#[rustapi_rs::get("/users")]
+async fn list_users(Query(params): Query&lt;Pagination&gt;) -&gt; Json&lt;ResourceCollection&lt;User&gt;&gt; {
+    let page = params.page.unwrap_or(0);
+    let size = params.size.unwrap_or(20).max(1); // Ensure size is at least 1 to prevent division by zero
+
+    // In a real app, you would fetch this from a database
+    // let (users, total_elements) = db.fetch_users(page, size).await?;
+    let users = vec![
+        User { id: 1, name: "Alice".to_string() },
+        User { id: 2, name: "Bob".to_string() },
+    ];
+    let total_elements = 100;
+
+    // 4. Calculate pagination info
+    let page_info = PageInfo::calculate(total_elements, size, page);
+
+    // 5. Build the collection response
+    // "users" is the key in the _embedded map
+    // "/users" is the base URL for generating links
+    let collection = ResourceCollection::new("users", users)
+        .page_info(page_info)
+        .with_pagination("/users");
+
+    Json(collection)
+}
+<span class="boring">}</span></code></pre>
+<h2 id="explanation"><a class="header" href="#explanation">Explanation</a></h2>
+<p>The response will look like this (HAL format):</p>
+<pre><code class="language-json">{
+  "_embedded": {
+    "users": [
+      { "id": 1, "name": "Alice" },
+      { "id": 2, "name": "Bob" }
+    ]
+  },
+  "_links": {
+    "self": { "href": "/users?page=0&amp;size=20" },
+    "first": { "href": "/users?page=0&amp;size=20" },
+    "last": { "href": "/users?page=4&amp;size=20" },
+    "next": { "href": "/users?page=1&amp;size=20" }
+  },
+  "page": {
+    "size": 20,
+    "totalElements": 100,
+    "totalPages": 5,
+    "number": 0
+  }
+}
+</code></pre>
+<h3 id="key-components"><a class="header" href="#key-components">Key Components</a></h3>
+<ol>
+<li><strong><code>ResourceCollection&lt;T&gt;</code></strong>: Wraps a list of items. It places them under <code>_embedded</code> and adds <code>_links</code>.</li>
+<li><strong><code>PageInfo</code></strong>: Holds metadata about the current page (size, total elements, total pages, current number).</li>
+<li><strong><code>with_pagination(base_url)</code></strong>: Automatically generates standard navigation links based on the <code>PageInfo</code> and the provided base URL.</li>
+</ol>
+<h2 id="variations"><a class="header" href="#variations">Variations</a></h2>
+<h3 id="cursor-based-pagination"><a class="header" href="#cursor-based-pagination">Cursor-based Pagination</a></h3>
+<p>If you are using cursor-based pagination (e.g., <code>before_id</code>, <code>after_id</code>), you can manually construct links instead of using <code>with_pagination</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let collection = ResourceCollection::new("users", users)
+    .self_link("/users?after=10")
+    .next_link("/users?after=20");
+<span class="boring">}</span></code></pre>
+<h3 id="hateoas-for-single-resources"><a class="header" href="#hateoas-for-single-resources">HATEOAS for Single Resources</a></h3>
+<p>You can also add links to individual resources using <code>Resource&lt;T&gt;</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::hateoas::Linkable; // Trait for .with_links()
+
+#[rustapi_rs::get("/users/{id}")]
+async fn get_user(Path(id): Path&lt;i64&gt;) -&gt; Json&lt;Resource&lt;User&gt;&gt; {
+    let user = User { id, name: "Alice".to_string() };
+
+    let resource = user.with_links()
+        .self_link(format!("/users/{}", id))
+        .link("orders", format!("/users/{}/orders", id));
+
+    Json(resource)
+}
+<span class="boring">}</span></code></pre>
+<h2 id="gotchas"><a class="header" href="#gotchas">Gotchas</a></h2>
 <ul>
-<li><strong>Keynotes</strong>: High-level architectural decisions and “why” we made them.</li>
-<li><strong>Patterns</strong>: The repeated structures (like <code>Action</code> and <code>Service</code>) that form the backbone of our code.</li>
-<li><strong>Recipes</strong>: Practical, step-by-step guides for adding features, testing, and maintaining cleanliness.</li>
-<li><strong>Learning Paths</strong>: Structured progressions with real-world examples.</li>
-</ul>
-<h2 id="-new-examples-repository"><a class="header" href="#-new-examples-repository">🚀 New: Examples Repository</a></h2>
-<p>Looking for hands-on learning? Check out our <strong><a href="https://github.com/Tuntii/rustapi-rs-examples">Examples Repository</a></strong> with 18 complete projects:</p>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Category</th><th>Examples</th></tr>
-</thead>
-<tbody>
-<tr><td><strong>Getting Started</strong></td><td>hello-world, crud-api</td></tr>
-<tr><td><strong>Authentication</strong></td><td>auth-api (JWT), rate-limit-demo</td></tr>
-<tr><td><strong>Database</strong></td><td>sqlx-crud, event-sourcing</td></tr>
-<tr><td><strong>AI/LLM</strong></td><td>toon-api, mcp-server</td></tr>
-<tr><td><strong>Real-time</strong></td><td>websocket, graphql-api</td></tr>
-<tr><td><strong>Production</strong></td><td>microservices, serverless-lambda</td></tr>
-</tbody>
-</table>
-</div>
-<p>👉 See <a href="learning/README.html">Learning &amp; Examples</a> for structured learning paths.</p>
-<h2 id="visual-identity"><a class="header" href="#visual-identity">Visual Identity</a></h2>
-<p>This cookbook is styled with the <strong>RustAPI Premium Dark</strong> theme, focusing on readability, contrast, and modern “glassmorphism” aesthetics.</p>
-<h2 id="quick-start"><a class="header" href="#quick-start">Quick Start</a></h2>
-<ul>
-<li>Want to add a feature? Jump to <a href="recipes/new_feature.html">Adding a New Feature</a>.</li>
-<li>Want to understand performance? Read <a href="architecture/performance.html">Performance Philosophy</a>.</li>
-<li>Need to check code quality? See <a href="recipes/maintenance.html">Maintenance</a>.</li>
-<li><strong>New to RustAPI?</strong> Follow our <a href="learning/README.html">Learning Paths</a>.</li>
+<li><strong>Schema Derive</strong>: The type <code>T</code> inside <code>ResourceCollection&lt;T&gt;</code> or <code>Resource&lt;T&gt;</code> MUST implement <code>RustApiSchema</code> (via <code>#[derive(Schema)]</code>) for OpenAPI generation to work.</li>
+<li><strong>Base URL</strong>: The <code>base_url</code> passed to <code>with_pagination</code> should generally match the route path. If your API is behind a proxy or prefix, ensure this URL is correct from the client’s perspective.</li>
 </ul>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
+                            <a rel="prev" href="../recipes/crud_resource.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                            </a>
 
-                            <a rel="next prefetch" href="getting_started/index.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../recipes/jwt_auth.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -238,8 +315,11 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                    <a rel="prev" href="../recipes/crud_resource.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
+                    </a>
 
-                    <a rel="next prefetch" href="getting_started/index.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../recipes/jwt_auth.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>
@@ -259,13 +339,13 @@
         </script>
 
 
-        <script src="elasticlunr-ef4e11c1.min.js"></script>
-        <script src="mark-09e88c2c.min.js"></script>
-        <script src="searcher-c2a407aa.js"></script>
+        <script src="../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../mark-09e88c2c.min.js"></script>
+        <script src="../searcher-c2a407aa.js"></script>
 
-        <script src="clipboard-1626706a.min.js"></script>
-        <script src="highlight-abc7f01d.js"></script>
-        <script src="book-a0b12cfe.js"></script>
+        <script src="../clipboard-1626706a.min.js"></script>
+        <script src="../highlight-abc7f01d.js"></script>
+        <script src="../book-a0b12cfe.js"></script>
 
         <!-- Custom JS scripts -->
 
