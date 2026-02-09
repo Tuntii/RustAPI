@@ -100,12 +100,12 @@ async fn main() {
 *   ✅ **Multi-threaded Runtime**
 *   ✅ **Zero Config**
 
-## ✨ Latest Release Highlights (v0.1.300)
+## ✨ Latest Release Highlights (v0.1.335)
 
-*   ✅ **Replay System**: Complete time-travel debugging with CLI tools
-*   ✅ **Security Hardening**: Token-based admin API, automatic PII redaction
-*   ✅ **Retention Jobs**: Auto-cleanup expired replay entries
-*   ✅ **Multi-Store Support**: In-memory and filesystem backends
+*   ✅ **Dual-Stack Runtime**: Simultaneous HTTP/1.1 (TCP) and HTTP/3 (QUIC/UDP) support
+*   ✅ **WebSocket**: Full permessage-deflate negotiation and compression
+*   ✅ **OpenAPI**: Improved reference integrity and native validation docs
+*   ✅ **Async Validation**: Deep integration with application state for complex rules
 
 ## 🗺️ Public Roadmap: Next 30 Days
 

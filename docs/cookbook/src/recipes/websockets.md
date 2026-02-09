@@ -6,7 +6,7 @@ WebSockets allow full-duplex communication between the client and server. RustAP
 
 ```toml
 [dependencies]
-rustapi-ws = "0.1.300"
+rustapi-ws = "0.1.335"
 tokio = { version = "1", features = ["sync"] }
 futures = "0.3"
 ```

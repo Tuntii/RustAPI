@@ -28,6 +28,7 @@
 
 - [Part IV: Recipes](recipes/README.md)
     - [Creating Resources](recipes/crud_resource.md)
+    - [Pagination & HATEOAS](recipes/pagination.md)
     - [JWT Authentication](recipes/jwt_auth.md)
     - [CSRF Protection](recipes/csrf_protection.md)
     - [Database Integration](recipes/db_integration.md)
@@ -44,5 +45,6 @@
 - [Troubleshooting: Common Gotchas](troubleshooting.md)
 
 - [Part V: Learning & Examples](learning/README.md)
+    - [Structured Curriculum](learning/curriculum.md)
 
 

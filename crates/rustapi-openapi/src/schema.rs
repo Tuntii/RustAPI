@@ -394,6 +394,16 @@ impl<T: RustApiSchema> RustApiSchema for std::collections::HashMap<String, T> {
     }
 }
 
+// serde_json::Value
+impl RustApiSchema for serde_json::Value {
+    fn schema(_: &mut SchemaCtx) -> SchemaRef {
+        SchemaRef::Schema(Box::new(JsonSchema2020::new()))
+    }
+    fn name() -> std::borrow::Cow<'static, str> {
+        std::borrow::Cow::Borrowed("Any")
+    }
+}
+
 // Add empty SchemaTransformer for spec.rs usage
 pub struct SchemaTransformer;
 impl SchemaTransformer {

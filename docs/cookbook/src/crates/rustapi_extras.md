@@ -93,7 +93,7 @@ The `insight` feature provides powerful real-time traffic analysis and debugging
 
 ```toml
 [dependencies]
-rustapi-extras = { version = "0.1.300", features = ["insight"] }
+rustapi-extras = { version = "0.1.335", features = ["insight"] }
 ```
 
 ### Setup

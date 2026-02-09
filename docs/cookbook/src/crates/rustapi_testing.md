@@ -13,7 +13,7 @@ Add the crate to your `dev-dependencies`:
 
 ```toml
 [dev-dependencies]
-rustapi-testing = { version = "0.1.300" }
+rustapi-testing = { version = "0.1.335" }
 ```
 
 ## The `TestClient`

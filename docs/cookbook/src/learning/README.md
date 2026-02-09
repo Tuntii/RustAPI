@@ -2,6 +2,10 @@
 
 Welcome to the RustAPI learning resources! This section provides structured learning paths and links to comprehensive real-world examples to help you master the framework.
 
+## 🎓 Structured Curriculum
+
+New to RustAPI? Follow our step-by-step [Structured Learning Path](curriculum.md) to go from beginner to production-ready.
+
 ## 📚 Learning Resources
 
 ### Official Examples Repository
