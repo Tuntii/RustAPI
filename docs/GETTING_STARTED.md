@@ -22,14 +22,14 @@ Add RustAPI to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rustapi-rs = "0.1.300"
+rustapi-rs = "0.1.335"
 ```
 
 Or with specific features:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.300", features = ["jwt", "cors", "toon", "ws", "view"] }
+rustapi-rs = { version = "0.1.335", features = ["jwt", "cors", "toon", "ws", "view"] }
 ```
 
 ### Available Features
@@ -358,7 +358,7 @@ ApiError::internal("message")         // 500
 ### CORS
 
 ```toml
-rustapi-rs = { version = "0.1.300", features = ["cors"] }
+rustapi-rs = { version = "0.1.335", features = ["cors"] }
 ```
 
 ```rust
@@ -379,7 +379,7 @@ RustApi::new()
 ### JWT Authentication
 
 ```toml
-rustapi-rs = { version = "0.1.300", features = ["jwt"] }
+rustapi-rs = { version = "0.1.335", features = ["jwt"] }
 ```
 
 ```rust
@@ -409,7 +409,7 @@ async fn protected(user: AuthUser<Claims>) -> Json<Response> {
 ### Rate Limiting
 
 ```toml
-rustapi-rs = { version = "0.1.300", features = ["rate-limit"] }
+rustapi-rs = { version = "0.1.335", features = ["rate-limit"] }
 ```
 
 ```rust
@@ -427,7 +427,7 @@ RustApi::new()
 ## TOON Format (LLM Optimization)
 
 ```toml
-rustapi-rs = { version = "0.1.300", features = ["toon"] }
+rustapi-rs = { version = "0.1.335", features = ["toon"] }
 ```
 
 ```rust
@@ -458,7 +458,7 @@ Response includes token counting headers:
 Real-time bidirectional communication:
 
 ```toml
-rustapi-rs = { version = "0.1.300", features = ["ws"] }
+rustapi-rs = { version = "0.1.335", features = ["ws"] }
 ```
 
 ```rust
@@ -495,7 +495,7 @@ websocat ws://localhost:8080/ws
 Server-side HTML rendering with Tera:
 
 ```toml
-rustapi-rs = { version = "0.1.300", features = ["view"] }
+rustapi-rs = { version = "0.1.335", features = ["view"] }
 ```
 
 Create a template file `templates/index.html`:
@@ -697,7 +697,7 @@ struct AnyBody { ... }
 Check that the `swagger-ui` feature is enabled (it's on by default):
 
 ```toml
-rustapi-rs = { version = "0.1.300", features = ["swagger-ui"] }
+rustapi-rs = { version = "0.1.335", features = ["swagger-ui"] }
 ```
 
 ### CLI Commands Not Working

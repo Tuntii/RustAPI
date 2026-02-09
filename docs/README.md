@@ -32,7 +32,7 @@ RustAPI provides a stable, ergonomic public API. Internal dependencies (`hyper`,
 
 ```toml
 [dependencies]
-rustapi-rs = "0.1.300"
+rustapi-rs = "0.1.335"
 ```
 
 ```rust

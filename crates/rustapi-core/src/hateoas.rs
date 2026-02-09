@@ -29,6 +29,7 @@
 //! }
 //! ```
 
+use rustapi_openapi::Schema;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -44,7 +45,7 @@ use std::collections::HashMap;
 ///     .title("User details")
 ///     .set_templated(false);
 /// ```
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Schema)]
 pub struct Link {
     /// The URI of the linked resource
     pub href: String,
@@ -172,8 +173,8 @@ impl Link {
 ///     .self_link("/users/1")
 ///     .link("orders", "/users/1/orders");
 /// ```
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Resource<T> {
+#[derive(Debug, Clone, Serialize, Deserialize, Schema)]
+pub struct Resource<T: rustapi_openapi::schema::RustApiSchema> {
     /// The actual resource data (flattened into the JSON)
     #[serde(flatten)]
     pub data: T,
@@ -188,7 +189,7 @@ pub struct Resource<T> {
 }
 
 /// Either a single link or an array of links
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Schema)]
 #[serde(untagged)]
 pub enum LinkOrArray {
     /// Single link
@@ -209,7 +210,7 @@ impl From<Vec<Link>> for LinkOrArray {
     }
 }
 
-impl<T> Resource<T> {
+impl<T: rustapi_openapi::schema::RustApiSchema> Resource<T> {
     /// Create a new resource wrapper
     pub fn new(data: T) -> Self {
         Self {
@@ -288,8 +289,8 @@ impl<T> Resource<T> {
 ///     .next_link("/users?page=2")
 ///     .page_info(PageInfo::new(20, 100, 5, 1));
 /// ```
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ResourceCollection<T> {
+#[derive(Debug, Clone, Serialize, Deserialize, Schema)]
+pub struct ResourceCollection<T: rustapi_openapi::schema::RustApiSchema> {
     /// Embedded resources
     #[serde(rename = "_embedded")]
     pub embedded: HashMap<String, Vec<T>>,
@@ -304,7 +305,7 @@ pub struct ResourceCollection<T> {
 }
 
 /// Pagination information
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Schema)]
 pub struct PageInfo {
     /// Number of items per page
     pub size: usize,
@@ -341,7 +342,7 @@ impl PageInfo {
     }
 }
 
-impl<T> ResourceCollection<T> {
+impl<T: rustapi_openapi::schema::RustApiSchema> ResourceCollection<T> {
     /// Create a new resource collection
     pub fn new(rel: impl Into<String>, items: Vec<T>) -> Self {
         let mut embedded = HashMap::new();
@@ -436,15 +437,15 @@ impl<T> ResourceCollection<T> {
 }
 
 /// Helper trait for adding HATEOAS links to any type
-pub trait Linkable: Sized + Serialize {
+pub trait Linkable: Sized + Serialize + rustapi_openapi::schema::RustApiSchema {
     /// Wrap this value in a Resource with HATEOAS links
     fn with_links(self) -> Resource<Self> {
         Resource::new(self)
     }
 }
 
-// Implement Linkable for all Serialize types
-impl<T: Serialize> Linkable for T {}
+// Implement Linkable for all Serialize + Schema types
+impl<T: Serialize + rustapi_openapi::schema::RustApiSchema> Linkable for T {}
 
 #[cfg(test)]
 mod tests {
