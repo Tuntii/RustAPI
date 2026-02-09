@@ -1,7 +1,5 @@
 use rustapi_macros::Validate;
-use rustapi_validate::v2::{
-    AsyncApiRule, AsyncExistsRule, AsyncUniqueRule, EmailRule, Validate,
-};
+use rustapi_validate::v2::{AsyncApiRule, AsyncExistsRule, AsyncUniqueRule, EmailRule, Validate};
 
 #[derive(Validate)]
 struct CustomMessageTest {
