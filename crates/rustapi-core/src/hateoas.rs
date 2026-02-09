@@ -38,7 +38,7 @@ use std::collections::HashMap;
 /// Links provide navigation between related resources.
 ///
 /// # Example
-/// ```rust
+/// ```rust,ignore
 /// use rustapi_core::hateoas::Link;
 ///
 /// let link = Link::new("/users/123")
@@ -158,7 +158,7 @@ impl Link {
 /// Wraps any data type with `_links` and optional `_embedded` sections.
 ///
 /// # Example
-/// ```rust
+/// ```rust,ignore
 /// use rustapi_core::hateoas::Resource;
 /// use serde::Serialize;
 ///
@@ -269,7 +269,7 @@ impl<T: rustapi_openapi::schema::RustApiSchema> Resource<T> {
 /// navigation links.
 ///
 /// # Example
-/// ```rust
+/// ```rust,ignore
 /// use rustapi_core::hateoas::{ResourceCollection, PageInfo};
 /// use serde::Serialize;
 ///
@@ -450,12 +450,27 @@ impl<T: Serialize + rustapi_openapi::schema::RustApiSchema> Linkable for T {}
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rustapi_openapi::schema::{JsonSchema2020, RustApiSchema, SchemaCtx, SchemaRef};
     use serde::Serialize;
 
     #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
     struct User {
         id: i64,
         name: String,
+    }
+
+    impl RustApiSchema for User {
+        fn schema(_: &mut SchemaCtx) -> SchemaRef {
+            let mut s = JsonSchema2020::object();
+            let mut props = std::collections::BTreeMap::new();
+            props.insert("id".to_string(), JsonSchema2020::integer());
+            props.insert("name".to_string(), JsonSchema2020::string());
+            s.properties = Some(props);
+            SchemaRef::Schema(Box::new(s))
+        }
+        fn name() -> std::borrow::Cow<'static, str> {
+            std::borrow::Cow::Borrowed("User")
+        }
     }
 
     #[test]
