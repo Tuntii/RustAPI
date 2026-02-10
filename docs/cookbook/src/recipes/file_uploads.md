@@ -39,10 +39,8 @@ async fn upload_file(mut multipart: Multipart) -> Result<StatusCode, ApiError> {
         let mut file = File::create(&path).await.map_err(|e| ApiError::InternalServerError(e.to_string()))?;
 
         // Write stream to file chunk by chunk
-        let mut field_bytes = field; // field implements Stream itself (in some drivers) or we read chunks
-        
         // In RustAPI/Axum multipart, `field.bytes()` loads the whole field into memory.
-        // To stream, we use `field.chunk()`:
+        // To stream efficiently, we use `field.chunk()`:
         
         while let Some(chunk) = field.chunk().await.map_err(|_| ApiError::BadRequest)? {
              file.write_all(&chunk).await.map_err(|e| ApiError::InternalServerError(e.to_string()))?;

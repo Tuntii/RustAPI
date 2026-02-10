@@ -18,3 +18,6 @@
 | Job Queue | `crates/rustapi_jobs.md` | `rustapi-jobs` | OK |
 | **Learning** | | | |
 | Structured Path | `learning/curriculum.md` | N/A | OK |
+| **Recipes** | | | |
+| File Uploads | `recipes/file_uploads.md` | `rustapi-core` | OK |
+| Deployment | `recipes/deployment.md` | `cargo-rustapi` | OK |
