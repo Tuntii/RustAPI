@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-0c7c067b.js";
+            window.path_to_searchindex_js = "searchindex-096afc7e.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-95a3f79e.js"></script>
@@ -2501,10 +2501,8 @@ async fn upload_file(mut multipart: Multipart) -&gt; Result&lt;StatusCode, ApiEr
         let mut file = File::create(&amp;path).await.map_err(|e| ApiError::InternalServerError(e.to_string()))?;
 
         // Write stream to file chunk by chunk
-        let mut field_bytes = field; // field implements Stream itself (in some drivers) or we read chunks
-        
         // In RustAPI/Axum multipart, `field.bytes()` loads the whole field into memory.
-        // To stream, we use `field.chunk()`:
+        // To stream efficiently, we use `field.chunk()`:
         
         while let Some(chunk) = field.chunk().await.map_err(|_| ApiError::BadRequest)? {
              file.write_all(&amp;chunk).await.map_err(|e| ApiError::InternalServerError(e.to_string()))?;
@@ -4017,7 +4015,7 @@ cargo test
 <tr><td><a href="#jwt-authentication">JWT Authentication</a></td><td><code>auth-api</code></td></tr>
 <tr><td><a href="#csrf-protection-1">CSRF Protection</a></td><td><code>auth-api</code>, <code>middleware-chain</code></td></tr>
 <tr><td><a href="#database-integration">Database Integration</a></td><td><code>sqlx-crud</code>, <code>event-sourcing</code></td></tr>
-<tr><td><a href="#file-uploads">File Uploads</a></td><td><code>file-upload</code> (coming soon)</td></tr>
+<tr><td><a href="#file-uploads">File Uploads</a></td><td><code>file-upload</code> (planned)</td></tr>
 <tr><td><a href="#custom-middleware">Custom Middleware</a></td><td><code>middleware-chain</code></td></tr>
 <tr><td><a href="#real-time-chat-websockets">Real-time Chat</a></td><td><code>websocket</code></td></tr>
 <tr><td><a href="#production-tuning">Production Tuning</a></td><td><code>microservices-advanced</code></td></tr>
@@ -4068,6 +4066,12 @@ cargo test
 <li><strong>Expected Output:</strong> A running server that responds to <code>GET /</code> with “Hello World”.</li>
 <li><strong>Pitfalls:</strong> Not enabling <code>tokio</code> features if setting up manually.</li>
 </ul>
+<h4 id="-knowledge-check"><a class="header" href="#-knowledge-check">🧠 Knowledge Check</a></h4>
+<ol>
+<li>What command scaffolds a new RustAPI project?</li>
+<li>Which feature flag is required for the async runtime?</li>
+<li>Where is the main entry point of the application typically located?</li>
+</ol>
 <h3 id="module-2-routing--handlers"><a class="header" href="#module-2-routing--handlers">Module 2: Routing &amp; Handlers</a></h3>
 <ul>
 <li><strong>Prerequisites:</strong> Module 1.</li>
@@ -4076,6 +4080,12 @@ cargo test
 <li><strong>Expected Output:</strong> Endpoints that return static JSON data.</li>
 <li><strong>Pitfalls:</strong> Forgetting to register routes in <code>main.rs</code> if not using auto-discovery.</li>
 </ul>
+<h4 id="-knowledge-check-1"><a class="header" href="#-knowledge-check-1">🧠 Knowledge Check</a></h4>
+<ol>
+<li>Which macro is used to define a GET handler?</li>
+<li>How do you return a JSON response from a handler?</li>
+<li>What is the return type of a typical handler function?</li>
+</ol>
 <h3 id="module-3-extractors"><a class="header" href="#module-3-extractors">Module 3: Extractors</a></h3>
 <ul>
 <li><strong>Prerequisites:</strong> Module 2.</li>
@@ -4084,6 +4094,23 @@ cargo test
 <li><strong>Expected Output:</strong> <code>GET /users/{id}</code> returns the ID. <code>POST /users</code> echoes the JSON body.</li>
 <li><strong>Pitfalls:</strong> Consuming the body twice (e.g., using <code>Json</code> and <code>Body</code> in the same handler).</li>
 </ul>
+<h4 id="-knowledge-check-2"><a class="header" href="#-knowledge-check-2">🧠 Knowledge Check</a></h4>
+<ol>
+<li>Which extractor is used for URL parameters like <code>/users/:id</code>?</li>
+<li>Which extractor parses the request body as JSON?</li>
+<li>Can you use multiple extractors in a single handler?</li>
+</ol>
+<h3 id="-phase-1-capstone-the-todo-list-api"><a class="header" href="#-phase-1-capstone-the-todo-list-api">🏆 Phase 1 Capstone: “The Todo List API”</a></h3>
+<p><strong>Objective:</strong> Build a simple in-memory Todo List API.
+<strong>Requirements:</strong></p>
+<ul>
+<li><code>GET /todos</code>: List all todos.</li>
+<li><code>POST /todos</code>: Create a new todo.</li>
+<li><code>GET /todos/:id</code>: Get a specific todo.</li>
+<li><code>DELETE /todos/:id</code>: Delete a todo.</li>
+<li>Use <code>State</code> to store the list in a <code>Mutex&lt;Vec&lt;Todo&gt;&gt;</code>.</li>
+</ul>
+<hr>
 <h2 id="phase-2-core-development"><a class="header" href="#phase-2-core-development">Phase 2: Core Development</a></h2>
 <p><strong>Goal:</strong> Add real logic, validation, and documentation.</p>
 <h3 id="module-4-state-management"><a class="header" href="#module-4-state-management">Module 4: State Management</a></h3>
@@ -4094,6 +4121,12 @@ cargo test
 <li><strong>Expected Output:</strong> A stateful API where POST adds a user and GET retrieves it (in-memory).</li>
 <li><strong>Pitfalls:</strong> Using <code>std::sync::Mutex</code> instead of <code>tokio::sync::Mutex</code> in async code (though <code>std</code> is fine for simple data).</li>
 </ul>
+<h4 id="-knowledge-check-3"><a class="header" href="#-knowledge-check-3">🧠 Knowledge Check</a></h4>
+<ol>
+<li>How do you inject global state into the application?</li>
+<li>Which extractor retrieves the application state?</li>
+<li>Why should you use <code>Arc</code> for shared state?</li>
+</ol>
 <h3 id="module-5-validation"><a class="header" href="#module-5-validation">Module 5: Validation</a></h3>
 <ul>
 <li><strong>Prerequisites:</strong> Module 4.</li>
@@ -4102,6 +4135,12 @@ cargo test
 <li><strong>Expected Output:</strong> Requests with invalid email or short password return <code>422 Unprocessable Entity</code>.</li>
 <li><strong>Pitfalls:</strong> Forgetting to add <code>#[validate]</code> attributes to struct fields.</li>
 </ul>
+<h4 id="-knowledge-check-4"><a class="header" href="#-knowledge-check-4">🧠 Knowledge Check</a></h4>
+<ol>
+<li>Which trait must a struct implement to be validatable?</li>
+<li>What HTTP status code is returned on validation failure?</li>
+<li>How do you combine JSON extraction and validation?</li>
+</ol>
 <h3 id="module-6-openapi--hateoas"><a class="header" href="#module-6-openapi--hateoas">Module 6: OpenAPI &amp; HATEOAS</a></h3>
 <ul>
 <li><strong>Prerequisites:</strong> Module 5.</li>
@@ -4110,6 +4149,22 @@ cargo test
 <li><strong>Expected Output:</strong> Swagger UI at <code>/docs</code> showing full schema. Paginated responses with <code>_links</code>.</li>
 <li><strong>Pitfalls:</strong> Using types that don’t implement <code>Schema</code> (like raw <code>serde_json::Value</code>) inside response structs.</li>
 </ul>
+<h4 id="-knowledge-check-5"><a class="header" href="#-knowledge-check-5">🧠 Knowledge Check</a></h4>
+<ol>
+<li>What does <code>#[derive(Schema)]</code> do?</li>
+<li>Where is the Swagger UI served by default?</li>
+<li>What is HATEOAS and why is it useful?</li>
+</ol>
+<h3 id="-phase-2-capstone-the-secure-blog-engine"><a class="header" href="#-phase-2-capstone-the-secure-blog-engine">🏆 Phase 2 Capstone: “The Secure Blog Engine”</a></h3>
+<p><strong>Objective:</strong> Enhance the Todo API into a Blog Engine.
+<strong>Requirements:</strong></p>
+<ul>
+<li>Add <code>Post</code> resource with title, content, and author.</li>
+<li>Validate that titles are not empty and content is at least 10 chars.</li>
+<li>Add pagination to <code>GET /posts</code>.</li>
+<li>Enable Swagger UI to visualize the API.</li>
+</ul>
+<hr>
 <h2 id="phase-3-advanced-features"><a class="header" href="#phase-3-advanced-features">Phase 3: Advanced Features</a></h2>
 <p><strong>Goal:</strong> Security, Real-time, and Production readiness.</p>
 <h3 id="module-7-authentication-jwt"><a class="header" href="#module-7-authentication-jwt">Module 7: Authentication (JWT)</a></h3>
@@ -4120,6 +4175,12 @@ cargo test
 <li><strong>Expected Output:</strong> Protected routes return <code>401 Unauthorized</code> without a valid token.</li>
 <li><strong>Pitfalls:</strong> Hardcoding secrets. Not checking token expiration.</li>
 </ul>
+<h4 id="-knowledge-check-6"><a class="header" href="#-knowledge-check-6">🧠 Knowledge Check</a></h4>
+<ol>
+<li>What is the role of the <code>AuthUser</code> extractor?</li>
+<li>How do you protect a route with JWT?</li>
+<li>Where should you store the JWT secret?</li>
+</ol>
 <h3 id="module-8-websockets--real-time"><a class="header" href="#module-8-websockets--real-time">Module 8: WebSockets &amp; Real-time</a></h3>
 <ul>
 <li><strong>Prerequisites:</strong> Phase 2.</li>
@@ -4128,37 +4189,41 @@ cargo test
 <li><strong>Expected Output:</strong> Multiple clients connected via WS receiving messages in real-time.</li>
 <li><strong>Pitfalls:</strong> Blocking the WebSocket loop with long-running synchronous tasks.</li>
 </ul>
-<h3 id="module-9-production-readiness"><a class="header" href="#module-9-production-readiness">Module 9: Production Readiness</a></h3>
+<h4 id="-knowledge-check-7"><a class="header" href="#-knowledge-check-7">🧠 Knowledge Check</a></h4>
+<ol>
+<li>How do you upgrade an HTTP request to a WebSocket connection?</li>
+<li>Can you share state between HTTP handlers and WebSocket handlers?</li>
+<li>What happens if a WebSocket handler panics?</li>
+</ol>
+<h3 id="module-9-production-readiness--deployment"><a class="header" href="#module-9-production-readiness--deployment">Module 9: Production Readiness &amp; Deployment</a></h3>
 <ul>
 <li><strong>Prerequisites:</strong> Phase 3.</li>
-<li><strong>Reading:</strong> <a href="#production-tuning">Production Tuning</a>, <a href="#resilience-patterns">Resilience</a>.</li>
-<li><strong>Task:</strong> Add <code>RateLimitLayer</code>, <code>CompressionLayer</code>, and <code>TimeoutLayer</code>.</li>
-<li><strong>Expected Output:</strong> An API that handles load gracefully and rejects abuse.</li>
+<li><strong>Reading:</strong> <a href="#production-tuning">Production Tuning</a>, <a href="#resilience-patterns">Resilience</a>, <a href="#deployment">Deployment</a>.</li>
+<li><strong>Task:</strong>
+<ol>
+<li>Add <code>RateLimitLayer</code>, <code>CompressionLayer</code>, and <code>TimeoutLayer</code>.</li>
+<li>Use <code>cargo rustapi deploy docker</code> to generate a Dockerfile.</li>
+</ol>
+</li>
+<li><strong>Expected Output:</strong> A resilient API ready for deployment.</li>
 <li><strong>Pitfalls:</strong> Setting timeouts too low for slow operations.</li>
 </ul>
-<h2 id="knowledge-check"><a class="header" href="#knowledge-check">Knowledge Check</a></h2>
+<h4 id="-knowledge-check-8"><a class="header" href="#-knowledge-check-8">🧠 Knowledge Check</a></h4>
 <ol>
-<li><strong>Q:</strong> Which extractor consumes the request body?
-<ul>
-<li><strong>A:</strong> <code>Json&lt;T&gt;</code>, <code>ValidatedJson&lt;T&gt;</code>, <code>Body</code>.</li>
-</ul>
-</li>
-<li><strong>Q:</strong> How do you share a database connection pool across handlers?
-<ul>
-<li><strong>A:</strong> Use the <code>State&lt;T&gt;</code> extractor and initialize it in <code>RustApi::new().with_state(state)</code>.</li>
-</ul>
-</li>
-<li><strong>Q:</strong> What is the purpose of <code>derive(Schema)</code>?
-<ul>
-<li><strong>A:</strong> It generates the OpenAPI schema definition for the struct, allowing it to be documented in Swagger UI.</li>
-</ul>
-</li>
-<li><strong>Q:</strong> How do you handle pagination links automatically?
-<ul>
-<li><strong>A:</strong> Return <code>ResourceCollection&lt;T&gt;</code> and call <code>.with_pagination()</code>.</li>
-</ul>
-</li>
+<li>Why is rate limiting important?</li>
+<li>What command generates a production Dockerfile?</li>
+<li>How do you enable compression for responses?</li>
 </ol>
+<h3 id="-phase-3-capstone-the-real-time-collaboration-tool"><a class="header" href="#-phase-3-capstone-the-real-time-collaboration-tool">🏆 Phase 3 Capstone: “The Real-Time Collaboration Tool”</a></h3>
+<p><strong>Objective:</strong> Build a real-time collaborative note-taking app.
+<strong>Requirements:</strong></p>
+<ul>
+<li><strong>Auth:</strong> Users must log in to edit notes.</li>
+<li><strong>Real-time:</strong> Changes to a note are broadcast to all viewers via WebSockets.</li>
+<li><strong>Resilience:</strong> Rate limit API requests to prevent abuse.</li>
+<li><strong>Deployment:</strong> specify a <code>Dockerfile</code> for the application.</li>
+</ul>
+<hr>
 <h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
 <ul>
 <li>Explore the <a href="https://github.com/Tuntii/rustapi-rs-examples">Examples Repository</a>.</li>
