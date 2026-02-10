@@ -249,7 +249,7 @@ Each example includes:
 | [JWT Authentication](../recipes/jwt_auth.md) | `auth-api` |
 | [CSRF Protection](../recipes/csrf_protection.md) | `auth-api`, `middleware-chain` |
 | [Database Integration](../recipes/db_integration.md) | `sqlx-crud`, `event-sourcing` |
-| [File Uploads](../recipes/file_uploads.md) | `file-upload` (coming soon) |
+| [File Uploads](../recipes/file_uploads.md) | `file-upload` |
 | [Custom Middleware](../recipes/custom_middleware.md) | `middleware-chain` |
 | [Real-time Chat](../recipes/websockets.md) | `websocket` |
 | [Production Tuning](../recipes/high_performance.md) | `microservices-advanced` |
