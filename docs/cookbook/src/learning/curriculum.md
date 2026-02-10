@@ -151,7 +151,7 @@ This curriculum is designed to take you from a RustAPI beginner to an advanced u
 - **Auth:** Users must log in to edit notes.
 - **Real-time:** Changes to a note are broadcast to all viewers via WebSockets.
 - **Resilience:** Rate limit API requests to prevent abuse.
-- **Deployment:** specific a `Dockerfile` for the application.
+- **Deployment:** specify a `Dockerfile` for the application.
 
 ---
 
