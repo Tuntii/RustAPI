@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-096afc7e.js";
+            window.path_to_searchindex_js = "searchindex-15a19e5a.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-95a3f79e.js"></script>
+        <script src="toc-f2fd3c30.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -905,6 +905,7 @@ async fn e2e_test() {
 <li><strong><a href="#rustapi-core-the-engine">rustapi-core</a></strong>: The Engine</li>
 <li><strong><a href="#rustapi-macros-the-magic">rustapi-macros</a></strong>: The Magic</li>
 <li><strong><a href="#rustapi-validate-the-gatekeeper">rustapi-validate</a></strong>: The Gatekeeper</li>
+<li><strong><a href="#rustapi-grpc-the-bridge">rustapi-grpc</a></strong>: The Bridge</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="rustapi-core-the-engine"><a class="header" href="#rustapi-core-the-engine">rustapi-core: The Engine</a></h1>
@@ -1541,6 +1542,53 @@ let app = RustApi::new()
 <li>Use <code>mpsc</code> channels for direct messaging.</li>
 </ol>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="rustapi-grpc-the-bridge"><a class="header" href="#rustapi-grpc-the-bridge">rustapi-grpc: The Bridge</a></h1>
+<p><strong>Lens</strong>: “The Bridge”<br><strong>Philosophy</strong>: “HTTP and gRPC, one runtime.”</p>
+<p><code>rustapi-grpc</code> is an optional crate that helps you run a RustAPI HTTP server and a Tonic gRPC server in the same process.</p>
+<h2 id="what-you-get"><a class="header" href="#what-you-get">What You Get</a></h2>
+<ul>
+<li><code>run_concurrently(http, grpc)</code> for running two server futures side-by-side.</li>
+<li><code>run_rustapi_and_grpc(app, http_addr, grpc)</code> convenience helper.</li>
+<li><code>run_rustapi_and_grpc_with_shutdown(app, http_addr, signal, grpc_with_shutdown)</code> for graceful shared shutdown.</li>
+<li>Re-exports of <code>tonic</code> and <code>prost</code>.</li>
+</ul>
+<h2 id="enable-it"><a class="header" href="#enable-it">Enable It</a></h2>
+<pre><code class="language-toml">[dependencies]
+rustapi-rs = { version = "0.1.335", features = ["grpc"] }
+</code></pre>
+<h2 id="basic-usage"><a class="header" href="#basic-usage">Basic Usage</a></h2>
+<pre><code class="language-rust ignore">use rustapi_rs::grpc::{run_rustapi_and_grpc, tonic};
+use rustapi_rs::prelude::*;
+
+#[rustapi_rs::get("/health")]
+async fn health() -&gt; &amp;'static str { "ok" }
+
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    let http_app = RustApi::new().route("/health", get(health));
+
+    let grpc_addr = "127.0.0.1:50051".parse()?;
+    let grpc_server = tonic::transport::Server::builder()
+        .add_service(MyGreeterServer::new(MyGreeter::default()))
+        .serve(grpc_addr);
+
+    run_rustapi_and_grpc(http_app, "127.0.0.1:8080", grpc_server).await?;
+    Ok(())
+}</code></pre>
+<h2 id="graceful-shutdown"><a class="header" href="#graceful-shutdown">Graceful Shutdown</a></h2>
+<pre><code class="language-rust ignore">use rustapi_rs::grpc::{run_rustapi_and_grpc_with_shutdown, tonic};
+
+run_rustapi_and_grpc_with_shutdown(
+    http_app,
+    "127.0.0.1:8080",
+    tokio::signal::ctrl_c(),
+    move |shutdown| {
+        tonic::transport::Server::builder()
+            .add_service(MyGreeterServer::new(MyGreeter::default()))
+            .serve_with_shutdown("127.0.0.1:50051".parse().unwrap(), shutdown)
+    },
+).await?;</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="rustapi-view-the-artist"><a class="header" href="#rustapi-view-the-artist">rustapi-view: The Artist</a></h1>
 <p><strong>Lens</strong>: “The Artist”
 <strong>Philosophy</strong>: “Server-side rendering with modern tools.”</p>
@@ -1695,7 +1743,7 @@ rustapi-testing = { version = "0.1.335" }
 </code></pre>
 <h2 id="the-testclient"><a class="header" href="#the-testclient">The <code>TestClient</code></a></h2>
 <p>Integration testing is often slow and painful because it involves spinning up a server, waiting for ports, and managing child processes. <code>TestClient</code> solves this by wrapping your <code>RustApi</code> application and executing requests directly against the service layer.</p>
-<h3 id="basic-usage"><a class="header" href="#basic-usage">Basic Usage</a></h3>
+<h3 id="basic-usage-1"><a class="header" href="#basic-usage-1">Basic Usage</a></h3>
 <pre><code class="language-rust ignore">use rustapi_rs::prelude::*;
 use rustapi_testing::TestClient;
 
