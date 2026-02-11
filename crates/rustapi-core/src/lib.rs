@@ -93,6 +93,7 @@ pub mod __private {
     pub use crate::auto_schema::AUTO_SCHEMAS;
     pub use linkme;
     pub use rustapi_openapi;
+    pub use rustapi_validate;
 }
 
 // Public API

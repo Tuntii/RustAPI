@@ -15,6 +15,7 @@
 //! expanded macro output for debugging purposes.
 
 use proc_macro::TokenStream;
+use proc_macro_crate::{crate_name, FoundCrate};
 use quote::quote;
 use std::collections::HashSet;
 use syn::{
@@ -928,10 +929,117 @@ fn expr_to_string_vec(expr: &Expr) -> Vec<String> {
     }
 }
 
+/// Determine the path to rustapi_validate based on the user's dependencies.
+///
+/// Checks for (in order):
+/// 1. `rustapi-rs` → `::rustapi_rs::__private::rustapi_validate`
+/// 2. `rustapi-validate` → `::rustapi_validate`
+///
+/// This allows the Validate derive macro to work in both user projects
+/// (which depend on rustapi-rs) and internal crates (which depend on
+/// rustapi-validate directly).
+fn get_validate_path() -> proc_macro2::TokenStream {
+    let rustapi_rs_found = crate_name("rustapi-rs").or_else(|_| crate_name("rustapi_rs"));
+
+    if let Ok(found) = rustapi_rs_found {
+        match found {
+            FoundCrate::Itself => {
+                quote! { crate::__private::rustapi_validate }
+            }
+            FoundCrate::Name(name) => {
+                let normalized = name.replace('-', "_");
+                let ident = syn::Ident::new(&normalized, proc_macro2::Span::call_site());
+                quote! { ::#ident::__private::rustapi_validate }
+            }
+        }
+    } else if let Ok(found) =
+        crate_name("rustapi-validate").or_else(|_| crate_name("rustapi_validate"))
+    {
+        match found {
+            FoundCrate::Itself => quote! { crate },
+            FoundCrate::Name(name) => {
+                let normalized = name.replace('-', "_");
+                let ident = syn::Ident::new(&normalized, proc_macro2::Span::call_site());
+                quote! { ::#ident }
+            }
+        }
+    } else {
+        // Default fallback
+        quote! { ::rustapi_validate }
+    }
+}
+
+/// Determine the path to rustapi_core based on the user's dependencies.
+///
+/// Checks for (in order):
+/// 1. `rustapi-rs` (which re-exports rustapi-core via glob)
+/// 2. `rustapi-core` directly
+fn get_core_path() -> proc_macro2::TokenStream {
+    let rustapi_rs_found = crate_name("rustapi-rs").or_else(|_| crate_name("rustapi_rs"));
+
+    if let Ok(found) = rustapi_rs_found {
+        match found {
+            FoundCrate::Itself => quote! { crate },
+            FoundCrate::Name(name) => {
+                let normalized = name.replace('-', "_");
+                let ident = syn::Ident::new(&normalized, proc_macro2::Span::call_site());
+                quote! { ::#ident }
+            }
+        }
+    } else if let Ok(found) =
+        crate_name("rustapi-core").or_else(|_| crate_name("rustapi_core"))
+    {
+        match found {
+            FoundCrate::Itself => quote! { crate },
+            FoundCrate::Name(name) => {
+                let normalized = name.replace('-', "_");
+                let ident = syn::Ident::new(&normalized, proc_macro2::Span::call_site());
+                quote! { ::#ident }
+            }
+        }
+    } else {
+        quote! { ::rustapi_core }
+    }
+}
+
+/// Determine the path to async_trait based on the user's dependencies.
+///
+/// Checks for (in order):
+/// 1. `rustapi-rs` → `::rustapi_rs::__private::async_trait`
+/// 2. `async-trait` directly
+fn get_async_trait_path() -> proc_macro2::TokenStream {
+    let rustapi_rs_found = crate_name("rustapi-rs").or_else(|_| crate_name("rustapi_rs"));
+
+    if let Ok(found) = rustapi_rs_found {
+        match found {
+            FoundCrate::Itself => {
+                quote! { crate::__private::async_trait }
+            }
+            FoundCrate::Name(name) => {
+                let normalized = name.replace('-', "_");
+                let ident = syn::Ident::new(&normalized, proc_macro2::Span::call_site());
+                quote! { ::#ident::__private::async_trait }
+            }
+        }
+    } else if let Ok(found) = crate_name("async-trait").or_else(|_| crate_name("async_trait")) {
+        match found {
+            FoundCrate::Itself => quote! { crate },
+            FoundCrate::Name(name) => {
+                let normalized = name.replace('-', "_");
+                let ident = syn::Ident::new(&normalized, proc_macro2::Span::call_site());
+                quote! { ::#ident }
+            }
+        }
+    } else {
+        quote! { ::async_trait }
+    }
+}
+
 fn generate_rule_validation(
     field_name: &str,
     _field_type: &Type,
     rule: &ValidationRuleInfo,
+    validate_path: &proc_macro2::TokenStream,
 ) -> proc_macro2::TokenStream {
     let field_ident = syn::Ident::new(field_name, proc_macro2::Span::call_site());
     let field_name_str = field_name;
@@ -943,7 +1051,7 @@ fn generate_rule_validation(
         let group_names = rule.groups.iter().map(|g| g.as_str());
         quote! {
             {
-                let rule_groups = [#(::rustapi_validate::v2::ValidationGroup::from(#group_names)),*];
+                let rule_groups = [#(#validate_path::v2::ValidationGroup::from(#group_names)),*];
                 rule_groups.iter().any(|g| g.matches(&group))
             }
         }
@@ -958,8 +1066,8 @@ fn generate_rule_validation(
                 .unwrap_or_default();
             quote! {
                 {
-                    let rule = ::rustapi_validate::v2::EmailRule::new() #message;
-                    if let Err(e) = ::rustapi_validate::v2::ValidationRule::validate(&rule, &self.#field_ident) {
+                    let rule = #validate_path::v2::EmailRule::new() #message;
+                    if let Err(e) = #validate_path::v2::ValidationRule::validate(&rule, &self.#field_ident) {
                         errors.add(#field_name_str, e);
                     }
                 }
@@ -984,17 +1092,17 @@ fn generate_rule_validation(
 
             let rule_creation = match (min, max) {
                 (Some(min), Some(max)) => {
-                    quote! { ::rustapi_validate::v2::LengthRule::new(#min, #max) }
+                    quote! { #validate_path::v2::LengthRule::new(#min, #max) }
                 }
-                (Some(min), None) => quote! { ::rustapi_validate::v2::LengthRule::min(#min) },
-                (None, Some(max)) => quote! { ::rustapi_validate::v2::LengthRule::max(#max) },
-                (None, None) => quote! { ::rustapi_validate::v2::LengthRule::new(0, usize::MAX) },
+                (Some(min), None) => quote! { #validate_path::v2::LengthRule::min(#min) },
+                (None, Some(max)) => quote! { #validate_path::v2::LengthRule::max(#max) },
+                (None, None) => quote! { #validate_path::v2::LengthRule::new(0, usize::MAX) },
             };
 
             quote! {
                 {
                     let rule = #rule_creation #message;
-                    if let Err(e) = ::rustapi_validate::v2::ValidationRule::validate(&rule, &self.#field_ident) {
+                    if let Err(e) = #validate_path::v2::ValidationRule::validate(&rule, &self.#field_ident) {
                         errors.add(#field_name_str, e);
                     }
                 }
@@ -1022,15 +1130,15 @@ fn generate_rule_validation(
                 (Some(min), Some(max)) => {
                     let min_lit: proc_macro2::TokenStream = min.parse().unwrap();
                     let max_lit: proc_macro2::TokenStream = max.parse().unwrap();
-                    quote! { ::rustapi_validate::v2::RangeRule::new(#min_lit, #max_lit) }
+                    quote! { #validate_path::v2::RangeRule::new(#min_lit, #max_lit) }
                 }
                 (Some(min), None) => {
                     let min_lit: proc_macro2::TokenStream = min.parse().unwrap();
-                    quote! { ::rustapi_validate::v2::RangeRule::min(#min_lit) }
+                    quote! { #validate_path::v2::RangeRule::min(#min_lit) }
                 }
                 (None, Some(max)) => {
                     let max_lit: proc_macro2::TokenStream = max.parse().unwrap();
-                    quote! { ::rustapi_validate::v2::RangeRule::max(#max_lit) }
+                    quote! { #validate_path::v2::RangeRule::max(#max_lit) }
                 }
                 (None, None) => {
                     return quote! {};
@@ -1040,7 +1148,7 @@ fn generate_rule_validation(
             quote! {
                 {
                     let rule = #rule_creation #message;
-                    if let Err(e) = ::rustapi_validate::v2::ValidationRule::validate(&rule, &self.#field_ident) {
+                    if let Err(e) = #validate_path::v2::ValidationRule::validate(&rule, &self.#field_ident) {
                         errors.add(#field_name_str, e);
                     }
                 }
@@ -1061,8 +1169,8 @@ fn generate_rule_validation(
 
             quote! {
                 {
-                    let rule = ::rustapi_validate::v2::RegexRule::new(#pattern) #message;
-                    if let Err(e) = ::rustapi_validate::v2::ValidationRule::validate(&rule, &self.#field_ident) {
+                    let rule = #validate_path::v2::RegexRule::new(#pattern) #message;
+                    if let Err(e) = #validate_path::v2::ValidationRule::validate(&rule, &self.#field_ident) {
                         errors.add(#field_name_str, e);
                     }
                 }
@@ -1076,8 +1184,8 @@ fn generate_rule_validation(
                 .unwrap_or_default();
             quote! {
                 {
-                    let rule = ::rustapi_validate::v2::UrlRule::new() #message;
-                    if let Err(e) = ::rustapi_validate::v2::ValidationRule::validate(&rule, &self.#field_ident) {
+                    let rule = #validate_path::v2::UrlRule::new() #message;
+                    if let Err(e) = #validate_path::v2::ValidationRule::validate(&rule, &self.#field_ident) {
                         errors.add(#field_name_str, e);
                     }
                 }
@@ -1091,8 +1199,8 @@ fn generate_rule_validation(
                 .unwrap_or_default();
             quote! {
                 {
-                    let rule = ::rustapi_validate::v2::RequiredRule::new() #message;
-                    if let Err(e) = ::rustapi_validate::v2::ValidationRule::validate(&rule, &self.#field_ident) {
+                    let rule = #validate_path::v2::RequiredRule::new() #message;
+                    if let Err(e) = #validate_path::v2::ValidationRule::validate(&rule, &self.#field_ident) {
                         errors.add(#field_name_str, e);
                     }
                 }
@@ -1106,8 +1214,8 @@ fn generate_rule_validation(
                 .unwrap_or_default();
             quote! {
                 {
-                    let rule = ::rustapi_validate::v2::CreditCardRule::new() #message;
-                    if let Err(e) = ::rustapi_validate::v2::ValidationRule::validate(&rule, &self.#field_ident) {
+                    let rule = #validate_path::v2::CreditCardRule::new() #message;
+                    if let Err(e) = #validate_path::v2::ValidationRule::validate(&rule, &self.#field_ident) {
                         errors.add(#field_name_str, e);
                     }
                 }
@@ -1118,11 +1226,11 @@ fn generate_rule_validation(
             let v6 = rule.params.iter().any(|(k, _)| k == "v6");
 
             let rule_creation = if v4 && !v6 {
-                quote! { ::rustapi_validate::v2::IpRule::v4() }
+                quote! { #validate_path::v2::IpRule::v4() }
             } else if !v4 && v6 {
-                quote! { ::rustapi_validate::v2::IpRule::v6() }
+                quote! { #validate_path::v2::IpRule::v6() }
             } else {
-                quote! { ::rustapi_validate::v2::IpRule::new() }
+                quote! { #validate_path::v2::IpRule::new() }
             };
 
             let message = rule
@@ -1134,7 +1242,7 @@ fn generate_rule_validation(
             quote! {
                 {
                     let rule = #rule_creation #message;
-                    if let Err(e) = ::rustapi_validate::v2::ValidationRule::validate(&rule, &self.#field_ident) {
+                    if let Err(e) = #validate_path::v2::ValidationRule::validate(&rule, &self.#field_ident) {
                         errors.add(#field_name_str, e);
                     }
                 }
@@ -1148,8 +1256,8 @@ fn generate_rule_validation(
                 .unwrap_or_default();
             quote! {
                 {
-                    let rule = ::rustapi_validate::v2::PhoneRule::new() #message;
-                    if let Err(e) = ::rustapi_validate::v2::ValidationRule::validate(&rule, &self.#field_ident) {
+                    let rule = #validate_path::v2::PhoneRule::new() #message;
+                    if let Err(e) = #validate_path::v2::ValidationRule::validate(&rule, &self.#field_ident) {
                         errors.add(#field_name_str, e);
                     }
                 }
@@ -1171,8 +1279,8 @@ fn generate_rule_validation(
 
             quote! {
                 {
-                    let rule = ::rustapi_validate::v2::ContainsRule::new(#needle) #message;
-                    if let Err(e) = ::rustapi_validate::v2::ValidationRule::validate(&rule, &self.#field_ident) {
+                    let rule = #validate_path::v2::ContainsRule::new(#needle) #message;
+                    if let Err(e) = #validate_path::v2::ValidationRule::validate(&rule, &self.#field_ident) {
                         errors.add(#field_name_str, e);
                     }
                 }
@@ -1195,6 +1303,7 @@ fn generate_rule_validation(
 fn generate_async_rule_validation(
     field_name: &str,
     rule: &ValidationRuleInfo,
+    validate_path: &proc_macro2::TokenStream,
 ) -> proc_macro2::TokenStream {
     let field_ident = syn::Ident::new(field_name, proc_macro2::Span::call_site());
     let field_name_str = field_name;
@@ -1206,7 +1315,7 @@ fn generate_async_rule_validation(
         let group_names = rule.groups.iter().map(|g| g.as_str());
         quote! {
             {
-                let rule_groups = [#(::rustapi_validate::v2::ValidationGroup::from(#group_names)),*];
+                let rule_groups = [#(#validate_path::v2::ValidationGroup::from(#group_names)),*];
                 rule_groups.iter().any(|g| g.matches(&group))
             }
         }
@@ -1234,8 +1343,8 @@ fn generate_async_rule_validation(
 
             quote! {
                 {
-                    let rule = ::rustapi_validate::v2::AsyncUniqueRule::new(#table, #column) #message;
-                    if let Err(e) = ::rustapi_validate::v2::AsyncValidationRule::validate_async(&rule, &self.#field_ident, ctx).await {
+                    let rule = #validate_path::v2::AsyncUniqueRule::new(#table, #column) #message;
+                    if let Err(e) = #validate_path::v2::AsyncValidationRule::validate_async(&rule, &self.#field_ident, ctx).await {
                         errors.add(#field_name_str, e);
                     }
                 }
@@ -1262,8 +1371,8 @@ fn generate_async_rule_validation(
 
             quote! {
                 {
-                    let rule = ::rustapi_validate::v2::AsyncExistsRule::new(#table, #column) #message;
-                    if let Err(e) = ::rustapi_validate::v2::AsyncValidationRule::validate_async(&rule, &self.#field_ident, ctx).await {
+                    let rule = #validate_path::v2::AsyncExistsRule::new(#table, #column) #message;
+                    if let Err(e) = #validate_path::v2::AsyncValidationRule::validate_async(&rule, &self.#field_ident, ctx).await {
                         errors.add(#field_name_str, e);
                     }
                 }
@@ -1284,8 +1393,8 @@ fn generate_async_rule_validation(
 
             quote! {
                 {
-                    let rule = ::rustapi_validate::v2::AsyncApiRule::new(#endpoint) #message;
-                    if let Err(e) = ::rustapi_validate::v2::AsyncValidationRule::validate_async(&rule, &self.#field_ident, ctx).await {
+                    let rule = #validate_path::v2::AsyncApiRule::new(#endpoint) #message;
+                    if let Err(e) = #validate_path::v2::AsyncValidationRule::validate_async(&rule, &self.#field_ident, ctx).await {
                         errors.add(#field_name_str, e);
                     }
                 }
@@ -1307,7 +1416,7 @@ fn generate_async_rule_validation(
                 let func: syn::Path = syn::parse_str(&function_path).unwrap();
                 let message_handling = if let Some(msg) = &rule.message {
                     quote! {
-                        let e = ::rustapi_validate::v2::RuleError::new("custom_async", #msg);
+                        let e = #validate_path::v2::RuleError::new("custom_async", #msg);
                         errors.add(#field_name_str, e);
                     }
                 } else {
@@ -1396,6 +1505,11 @@ pub fn derive_validate(input: TokenStream) -> TokenStream {
         }
     };
 
+    // Resolve crate paths dynamically based on the caller's dependencies
+    let validate_path = get_validate_path();
+    let core_path = get_core_path();
+    let async_trait_path = get_async_trait_path();
+
     // Collect sync and async validation code for each field
     let mut sync_validations = Vec::new();
     let mut async_validations = Vec::new();
@@ -1409,10 +1523,10 @@ pub fn derive_validate(input: TokenStream) -> TokenStream {
         for rule in &rules {
             if is_async_rule(rule) {
                 has_async_rules = true;
-                let validation = generate_async_rule_validation(&field_name, rule);
+                let validation = generate_async_rule_validation(&field_name, rule, &validate_path);
                 async_validations.push(validation);
             } else {
-                let validation = generate_rule_validation(&field_name, field_type, rule);
+                let validation = generate_rule_validation(&field_name, field_type, rule, &validate_path);
                 sync_validations.push(validation);
             }
         }
@@ -1420,9 +1534,9 @@ pub fn derive_validate(input: TokenStream) -> TokenStream {
 
     // Generate the Validate impl
     let validate_impl = quote! {
-        impl #impl_generics ::rustapi_validate::v2::Validate for #name #ty_generics #where_clause {
-            fn validate_with_group(&self, group: ::rustapi_validate::v2::ValidationGroup) -> Result<(), ::rustapi_validate::v2::ValidationErrors> {
-                let mut errors = ::rustapi_validate::v2::ValidationErrors::new();
+        impl #impl_generics #validate_path::v2::Validate for #name #ty_generics #where_clause {
+            fn validate_with_group(&self, group: #validate_path::v2::ValidationGroup) -> Result<(), #validate_path::v2::ValidationErrors> {
+                let mut errors = #validate_path::v2::ValidationErrors::new();
 
                 #(#sync_validations)*
 
@@ -1434,10 +1548,10 @@ pub fn derive_validate(input: TokenStream) -> TokenStream {
     // Generate the AsyncValidate impl if there are async rules
     let async_validate_impl = if has_async_rules {
         quote! {
-            #[::async_trait::async_trait]
-            impl #impl_generics ::rustapi_validate::v2::AsyncValidate for #name #ty_generics #where_clause {
-                async fn validate_async_with_group(&self, ctx: &::rustapi_validate::v2::ValidationContext, group: ::rustapi_validate::v2::ValidationGroup) -> Result<(), ::rustapi_validate::v2::ValidationErrors> {
-                    let mut errors = ::rustapi_validate::v2::ValidationErrors::new();
+            #[#async_trait_path::async_trait]
+            impl #impl_generics #validate_path::v2::AsyncValidate for #name #ty_generics #where_clause {
+                async fn validate_async_with_group(&self, ctx: &#validate_path::v2::ValidationContext, group: #validate_path::v2::ValidationGroup) -> Result<(), #validate_path::v2::ValidationErrors> {
+                    let mut errors = #validate_path::v2::ValidationErrors::new();
 
                     #(#async_validations)*
 
@@ -1448,9 +1562,9 @@ pub fn derive_validate(input: TokenStream) -> TokenStream {
     } else {
         // Provide a default AsyncValidate impl that just returns Ok
         quote! {
-            #[::async_trait::async_trait]
-            impl #impl_generics ::rustapi_validate::v2::AsyncValidate for #name #ty_generics #where_clause {
-                async fn validate_async_with_group(&self, _ctx: &::rustapi_validate::v2::ValidationContext, _group: ::rustapi_validate::v2::ValidationGroup) -> Result<(), ::rustapi_validate::v2::ValidationErrors> {
+            #[#async_trait_path::async_trait]
+            impl #impl_generics #validate_path::v2::AsyncValidate for #name #ty_generics #where_clause {
+                async fn validate_async_with_group(&self, _ctx: &#validate_path::v2::ValidationContext, _group: #validate_path::v2::ValidationGroup) -> Result<(), #validate_path::v2::ValidationErrors> {
                     Ok(())
                 }
             }
@@ -1458,14 +1572,13 @@ pub fn derive_validate(input: TokenStream) -> TokenStream {
     };
 
     // Generate the Validatable impl for rustapi-core integration (exposed via rustapi-rs)
-    // We use ::rustapi_core path because this macro is used in crates that might not depend on rustapi-rs directly
-    // (like rustapi-validate tests), but usually have access to rustapi-core (e.g. via dev-dependencies).
+    // Paths are resolved dynamically so this works from both rustapi-rs and internal crates.
     let validatable_impl = quote! {
-        impl #impl_generics ::rustapi_core::validation::Validatable for #name #ty_generics #where_clause {
-            fn do_validate(&self) -> Result<(), ::rustapi_core::ApiError> {
-                match ::rustapi_validate::v2::Validate::validate(self) {
+        impl #impl_generics #core_path::validation::Validatable for #name #ty_generics #where_clause {
+            fn do_validate(&self) -> Result<(), #core_path::ApiError> {
+                match #validate_path::v2::Validate::validate(self) {
                     Ok(_) => Ok(()),
-                    Err(e) => Err(::rustapi_core::validation::convert_v2_errors(e)),
+                    Err(e) => Err(#core_path::validation::convert_v2_errors(e)),
                 }
             }
         }

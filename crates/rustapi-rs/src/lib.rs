@@ -64,6 +64,16 @@ pub use rustapi_core::*;
 // Re-export macros
 pub use rustapi_macros::*;
 
+/// Private module for macro internals - DO NOT USE DIRECTLY
+///
+/// This module re-exports internal crates needed by derive macros.
+/// It shadows rustapi_core::__private from the glob re-export above.
+#[doc(hidden)]
+pub mod __private {
+    pub use rustapi_core::__private::*;
+    pub use async_trait;
+}
+
 // Re-export extras (feature-gated)
 #[cfg(feature = "jwt")]
 pub use rustapi_extras::jwt;
