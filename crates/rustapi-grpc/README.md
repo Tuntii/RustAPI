@@ -9,13 +9,54 @@
 - `run_rustapi_and_grpc_with_shutdown(app, http_addr, signal, grpc_with_shutdown)`: shared shutdown signal for both servers.
 - Re-exports: `tonic`, `prost`.
 
-## Example
+## Usage
+
+### Via `rustapi-rs` (recommended)
+
+Add to your `Cargo.toml`:
+
+```toml
+[dependencies]
+rustapi-rs = { version = "0.1", features = ["grpc"] }
+```
+
+Then import via the `grpc` module:
 
 ```rust,ignore
 use rustapi_rs::grpc::{run_rustapi_and_grpc, tonic};
 use rustapi_rs::prelude::*;
 
 #[rustapi_rs::get("/health")]
+async fn health() -> &'static str { "ok" }
+```
+
+### Direct `rustapi-grpc` usage
+
+Add to your `Cargo.toml`:
+
+```toml
+[dependencies]
+rustapi-grpc = "0.1"
+rustapi-core = "0.1"
+```
+
+Then import directly:
+
+```rust,ignore
+use rustapi_grpc::{run_rustapi_and_grpc, tonic};
+use rustapi_core::{get, RustApi};
+
+#[rustapi_core::get("/health")]
+async fn health() -> &'static str { "ok" }
+```
+
+## Example
+
+```rust,ignore
+use rustapi_grpc::{run_rustapi_and_grpc, tonic};
+use rustapi_core::{get, RustApi};
+
+#[rustapi_core::get("/health")]
 async fn health() -> &'static str { "ok" }
 
 #[tokio::main]
@@ -35,7 +76,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 ## Shared shutdown (Ctrl+C)
 
 ```rust,ignore
-use rustapi_rs::grpc::{run_rustapi_and_grpc_with_shutdown, tonic};
+use rustapi_grpc::{run_rustapi_and_grpc_with_shutdown, tonic};
 
 let grpc_addr = "127.0.0.1:50051".parse()?;
 

@@ -7,11 +7,13 @@
 //!
 //! ## Quick start
 //!
-//! ```rust,ignore
-//! use rustapi_rs::grpc::{run_rustapi_and_grpc, tonic};
-//! use rustapi_rs::prelude::*;
+//! When using `rustapi-grpc` directly:
 //!
-//! #[rustapi_rs::get("/health")]
+//! ```rust,ignore
+//! use rustapi_grpc::{run_rustapi_and_grpc, tonic};
+//! use rustapi_core::{get, RustApi};
+//!
+//! #[rustapi_core::get("/health")]
 //! async fn health() -> &'static str { "ok" }
 //!
 //! #[tokio::main]
@@ -26,6 +28,17 @@
 //!     run_rustapi_and_grpc(http_app, "127.0.0.1:8080", grpc_server).await?;
 //!     Ok(())
 //! }
+//! ```
+//!
+//! Or use via `rustapi-rs` with the `grpc` feature:
+//!
+//! ```rust,ignore
+//! use rustapi_rs::grpc::{run_rustapi_and_grpc, tonic};
+//! use rustapi_rs::prelude::*;
+//!
+//! #[rustapi_rs::get("/health")]
+//! async fn health() -> &'static str { "ok" }
+//! // ... rest of example
 //! ```
 
 #![warn(missing_docs)]
@@ -107,10 +120,10 @@ where
 /// # Example
 ///
 /// ```rust,ignore
-/// use rustapi_rs::grpc::{run_rustapi_and_grpc_with_shutdown, tonic};
-/// use rustapi_rs::prelude::*;
+/// use rustapi_grpc::{run_rustapi_and_grpc_with_shutdown, tonic};
+/// use rustapi_core::{get, RustApi};
 ///
-/// #[rustapi_rs::get("/health")]
+/// #[rustapi_core::get("/health")]
 /// async fn health() -> &'static str { "ok" }
 ///
 /// #[tokio::main]

@@ -14,7 +14,7 @@ readme = "README.md"
 
 [dependencies]
 rustapi-core = { workspace = true }
-tokio = { workspace = true, features = ["macros"] }
+tokio = { workspace = true, features = ["rt", "sync", "macros"] }
 tonic = { workspace = true, features = ["transport"] }
 prost = { workspace = true }
 
