@@ -51,7 +51,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 futures-util = "0.3"
 bytes = "1.5"
-matchit = "0.7"  # Radix tree router
+matchit = "0.8"  # Radix tree router
 pin-project-lite = "0.2"
 async-trait = "0.1"
 
