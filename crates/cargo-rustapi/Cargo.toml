@@ -46,7 +46,7 @@ tracing-subscriber = { workspace = true }
 anyhow = "1.0"
 
 [dev-dependencies]
-tempfile = "3.10"
+tempfile = "3.25"
 assert_cmd = "2.0"
 predicates = "3.1"
 
