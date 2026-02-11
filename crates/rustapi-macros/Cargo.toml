@@ -21,3 +21,7 @@ proc-macro-crate = "3.1"
 
 # Note: async-trait is used in generated code, not in the macro itself
 # Users need to have async-trait available when using the Validate derive
+
+[dev-dependencies]
+api = { package = "rustapi-rs", path = "../rustapi-rs", default-features = false }
+serde = { workspace = true, features = ["derive"] }

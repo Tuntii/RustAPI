@@ -3098,6 +3098,8 @@ dependencies = [
  "proc-macro-crate",
  "proc-macro2",
  "quote",
+ "rustapi-rs",
+ "serde",
  "serde_json",
  "syn 2.0.114",
 ]

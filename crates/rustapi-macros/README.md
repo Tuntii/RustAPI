@@ -20,6 +20,9 @@ Registers a function as a route handler.
 - `#[rustapi_rs::head("/health")]`
 - `#[rustapi_rs::options("/cors")]`
 
+Dependency rename is supported. If you rename `rustapi-rs` to `api` in `Cargo.toml`,
+you can use the same macros as `#[api::get(...)]`, `#[api::post(...)]`, etc.
+
 ### OpenAPI Metadata
 Enrich your auto-generated documentation.
 

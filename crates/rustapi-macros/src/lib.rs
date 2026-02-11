@@ -26,6 +26,27 @@ use syn::{
 mod api_error;
 mod derive_schema;
 
+/// Determine the path to the RustAPI facade crate (`rustapi-rs`).
+///
+/// This supports dependency renaming, for example:
+/// `api = { package = "rustapi-rs", version = "..." }`.
+fn get_rustapi_path() -> proc_macro2::TokenStream {
+    let rustapi_rs_found = crate_name("rustapi-rs").or_else(|_| crate_name("rustapi_rs"));
+
+    if let Ok(found) = rustapi_rs_found {
+        match found {
+            FoundCrate::Itself => quote! { crate },
+            FoundCrate::Name(name) => {
+                let normalized = name.replace('-', "_");
+                let ident = syn::Ident::new(&normalized, proc_macro2::Span::call_site());
+                quote! { ::#ident }
+            }
+        }
+    } else {
+        quote! { ::rustapi_rs }
+    }
+}
+
 /// Derive macro for OpenAPI Schema trait
 ///
 /// # Example
@@ -58,6 +79,7 @@ pub fn derive_schema(input: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn schema(_attr: TokenStream, item: TokenStream) -> TokenStream {
     let input = parse_macro_input!(item as syn::Item);
+    let rustapi_path = get_rustapi_path();
 
     let (ident, generics) = match &input {
         syn::Item::Struct(s) => (&s.ident, &s.generics),
@@ -90,10 +112,10 @@ pub fn schema(_attr: TokenStream, item: TokenStream) -> TokenStream {
         #input
 
         #[allow(non_upper_case_globals)]
-        #[::rustapi_rs::__private::linkme::distributed_slice(::rustapi_rs::__private::AUTO_SCHEMAS)]
-        #[linkme(crate = ::rustapi_rs::__private::linkme)]
-        static #registrar_ident: fn(&mut ::rustapi_rs::__private::rustapi_openapi::OpenApiSpec) =
-            |spec: &mut ::rustapi_rs::__private::rustapi_openapi::OpenApiSpec| {
+        #[#rustapi_path::__private::linkme::distributed_slice(#rustapi_path::__private::AUTO_SCHEMAS)]
+        #[linkme(crate = #rustapi_path::__private::linkme)]
+        static #registrar_ident: fn(&mut #rustapi_path::__private::rustapi_openapi::OpenApiSpec) =
+            |spec: &mut #rustapi_path::__private::rustapi_openapi::OpenApiSpec| {
                 spec.register_in_place::<#ident>();
             };
     };
@@ -439,6 +461,7 @@ pub fn main(_attr: TokenStream, item: TokenStream) -> TokenStream {
 fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) -> TokenStream {
     let path = parse_macro_input!(attr as LitStr);
     let input = parse_macro_input!(item as ItemFn);
+    let rustapi_path = get_rustapi_path();
 
     let fn_name = &input.sig.ident;
     let fn_vis = &input.vis;
@@ -470,12 +493,12 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
 
     // Pick the right route helper function based on method
     let route_helper = match method {
-        "GET" => quote!(::rustapi_rs::get_route),
-        "POST" => quote!(::rustapi_rs::post_route),
-        "PUT" => quote!(::rustapi_rs::put_route),
-        "PATCH" => quote!(::rustapi_rs::patch_route),
-        "DELETE" => quote!(::rustapi_rs::delete_route),
-        _ => quote!(::rustapi_rs::get_route),
+        "GET" => quote!(#rustapi_path::get_route),
+        "POST" => quote!(#rustapi_path::post_route),
+        "PUT" => quote!(#rustapi_path::put_route),
+        "PATCH" => quote!(#rustapi_path::patch_route),
+        "DELETE" => quote!(#rustapi_path::delete_route),
+        _ => quote!(#rustapi_path::get_route),
     };
 
     // Auto-detect path parameters from function arguments
@@ -567,7 +590,7 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
 
         // Route info function - creates a Route for this handler
         #[doc(hidden)]
-        #fn_vis fn #route_fn_name() -> ::rustapi_rs::Route {
+        #fn_vis fn #route_fn_name() -> #rustapi_path::Route {
             #route_helper(#path_value, #fn_name)
                 #chained_calls
         }
@@ -575,22 +598,22 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
         // Auto-register route with linkme
         #[doc(hidden)]
         #[allow(non_upper_case_globals)]
-        #[::rustapi_rs::__private::linkme::distributed_slice(::rustapi_rs::__private::AUTO_ROUTES)]
-        #[linkme(crate = ::rustapi_rs::__private::linkme)]
-        static #auto_route_name: fn() -> ::rustapi_rs::Route = #route_fn_name;
+        #[#rustapi_path::__private::linkme::distributed_slice(#rustapi_path::__private::AUTO_ROUTES)]
+        #[linkme(crate = #rustapi_path::__private::linkme)]
+        static #auto_route_name: fn() -> #rustapi_path::Route = #route_fn_name;
 
         // Auto-register referenced schemas with linkme (best-effort)
         #[doc(hidden)]
         #[allow(non_snake_case)]
-        fn #schema_reg_fn_name(spec: &mut ::rustapi_rs::__private::rustapi_openapi::OpenApiSpec) {
+        fn #schema_reg_fn_name(spec: &mut #rustapi_path::__private::rustapi_openapi::OpenApiSpec) {
             #( spec.register_in_place::<#schema_types>(); )*
         }
 
         #[doc(hidden)]
         #[allow(non_upper_case_globals)]
-        #[::rustapi_rs::__private::linkme::distributed_slice(::rustapi_rs::__private::AUTO_SCHEMAS)]
-        #[linkme(crate = ::rustapi_rs::__private::linkme)]
-        static #auto_schema_name: fn(&mut ::rustapi_rs::__private::rustapi_openapi::OpenApiSpec) = #schema_reg_fn_name;
+        #[#rustapi_path::__private::linkme::distributed_slice(#rustapi_path::__private::AUTO_SCHEMAS)]
+        #[linkme(crate = #rustapi_path::__private::linkme)]
+        static #auto_schema_name: fn(&mut #rustapi_path::__private::rustapi_openapi::OpenApiSpec) = #schema_reg_fn_name;
     };
 
     debug_output(&format!("{} {}", method, path_value), &expanded);
@@ -1638,6 +1661,7 @@ pub fn derive_typed_path(input: TokenStream) -> TokenStream {
     let input = parse_macro_input!(input as DeriveInput);
     let name = &input.ident;
     let generics = &input.generics;
+    let rustapi_path = get_rustapi_path();
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
     // Find the #[typed_path("...")] attribute
@@ -1702,7 +1726,7 @@ pub fn derive_typed_path(input: TokenStream) -> TokenStream {
     }
 
     let expanded = quote! {
-        impl #impl_generics ::rustapi_rs::prelude::TypedPath for #name #ty_generics #where_clause {
+        impl #impl_generics #rustapi_path::prelude::TypedPath for #name #ty_generics #where_clause {
             const PATH: &'static str = #path;
 
             fn to_uri(&self) -> String {

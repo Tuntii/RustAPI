@@ -25,6 +25,13 @@ Add RustAPI to your `Cargo.toml`:
 rustapi-rs = "0.1.335"
 ```
 
+You can also rename the crate if you prefer shorter macro paths:
+
+```toml
+[dependencies]
+api = { package = "rustapi-rs", version = "0.1.335" }
+```
+
 Or with specific features:
 
 ```toml
@@ -143,6 +150,9 @@ The `#[rustapi_rs::get]` macro:
 - Registers the route at compile time
 - Generates OpenAPI documentation
 - Works with `RustApi::auto()` for zero-config routing
+
+Route macros also work through dependency aliases, e.g. `#[api::get("/")]`
+when `rustapi-rs` is renamed to `api` in `Cargo.toml`.
 
 ### 4. Auto Configuration
 

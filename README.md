@@ -94,6 +94,20 @@ async fn main() {
 }
 ```
 
+Prefer a shorter macro prefix? You can rename the crate in `Cargo.toml` and use the same macros:
+
+```toml
+[dependencies]
+api = { package = "rustapi-rs", version = "0.1.335" }
+```
+
+```rust
+use api::prelude::*;
+
+#[api::get("/users")]
+async fn list_users() -> &'static str { "ok" }
+```
+
 **That's it.** You get:
 *   ✅ **Swagger UI** at `/docs`
 *   ✅ **Input Validation**
