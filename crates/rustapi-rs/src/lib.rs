@@ -59,6 +59,9 @@
 //! rustapi-rs = { version = "0.1.300", features = ["jwt", "cors"] }
 //! ```
 
+// Allow proc-macro expansions to refer to this crate via `::rustapi_rs`.
+extern crate self as rustapi_rs;
+
 // Re-export core functionality
 pub use rustapi_core::*;
 

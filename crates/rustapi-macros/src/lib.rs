@@ -35,7 +35,9 @@ fn get_rustapi_path() -> proc_macro2::TokenStream {
 
     if let Ok(found) = rustapi_rs_found {
         match found {
-            FoundCrate::Itself => quote! { crate },
+            // `FoundCrate::Itself` can occur for examples/benches inside the rustapi-rs package.
+            // Use an absolute crate path so generated code also works in those targets.
+            FoundCrate::Itself => quote! { ::rustapi_rs },
             FoundCrate::Name(name) => {
                 let normalized = name.replace('-', "_");
                 let ident = syn::Ident::new(&normalized, proc_macro2::Span::call_site());

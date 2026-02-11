@@ -7,7 +7,7 @@ use tempfile::tempdir;
 
 /// Helper to get the cargo-rustapi binary
 fn cargo_rustapi() -> Command {
-    Command::cargo_bin("cargo-rustapi").expect("Failed to find cargo-rustapi binary")
+    assert_cmd::cargo::cargo_bin_cmd!("cargo-rustapi")
 }
 
 mod new_command {
