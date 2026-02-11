@@ -12,6 +12,7 @@ members = [
     "crates/rustapi-view",
     "crates/rustapi-testing",
     "crates/rustapi-jobs",
+    "crates/rustapi-grpc",
     "crates/cargo-rustapi",
 ]
 
@@ -79,6 +80,10 @@ criterion = { version = "0.5", features = ["html_reports"] }
 tokio-tungstenite = "0.24"
 tungstenite = "0.24"
 
+# gRPC
+tonic = "0.14"
+prost = "0.14"
+
 # Template engine
 tera = "1.19"
 
@@ -100,6 +105,7 @@ rustapi-ws = { path = "crates/rustapi-ws", version = "0.1.335" }
 rustapi-view = { path = "crates/rustapi-view", version = "0.1.335" }
 rustapi-testing = { path = "crates/rustapi-testing", version = "0.1.335" }
 rustapi-jobs = { path = "crates/rustapi-jobs", version = "0.1.335" }
+rustapi-grpc = { path = "crates/rustapi-grpc", version = "0.1.335" }
 
 # HTTP/3 (QUIC)
 quinn = "0.11"

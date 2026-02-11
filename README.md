@@ -106,14 +106,16 @@ async fn main() {
 *   ✅ **WebSocket**: Full permessage-deflate negotiation and compression
 *   ✅ **OpenAPI**: Improved reference integrity and native validation docs
 *   ✅ **Async Validation**: Deep integration with application state for complex rules
+*   ✅ **gRPC Foundation**: New optional `rustapi-grpc` crate with Tonic/Prost integration and side-by-side HTTP + gRPC runners (`run_rustapi_and_grpc`, `run_rustapi_and_grpc_with_shutdown`)
+*   ✅ **CLI DX Update**: `cargo rustapi new` interactive feature selection now includes `grpc`
 
 ## 🗺️ Public Roadmap: Next 30 Days
 
 We build in public. Here is our immediate focus for **February 2026**:
 
-*   [ ] **Visual Status Page**: Automatic health dashboard for all endpoints.
-*   [ ] **gRPC Integration**: First-class support via Tonic.
-*   [ ] **Distributed Tracing**: One-line OpenTelemetry setup.
+*   [x] **Visual Status Page**: Automatic health dashboard for all endpoints.
+*   [x] **gRPC Integration (Foundation)**: First-class optional crate via Tonic (`rustapi-grpc`) with RustAPI facade-level feature flag support.
+*   [x] **Distributed Tracing**: One-line OpenTelemetry setup.
 *   [ ] **RustAPI Cloud**: One-click deploy to major cloud providers.
 
 ## 📚 Documentation
@@ -122,6 +124,7 @@ We moved our detailed architecture, recipes, and deep-dives to the **[Cookbook](
 
 *   [System Architecture & Diagrams](docs/cookbook/src/architecture/system_overview.md)
 *   [Performance Benchmarks](docs/cookbook/src/concepts/performance.md)
+*   [gRPC Integration Guide](docs/cookbook/src/crates/rustapi_grpc.md)
 *   [Full Examples](crates/rustapi-rs/examples/)
 
 ---
