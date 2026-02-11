@@ -19,6 +19,7 @@ rustapi-extras = { workspace = true, optional = true }
 rustapi-toon = { workspace = true, optional = true }
 rustapi-ws = { workspace = true, optional = true }
 rustapi-view = { workspace = true, optional = true }
+rustapi-grpc = { workspace = true, optional = true }
 rustapi-validate = { workspace = true }
 async-trait = { workspace = true }
 
@@ -68,6 +69,9 @@ ws = ["dep:rustapi-ws"]
 # Template engine support
 view = ["dep:rustapi-view"]
 
+# gRPC support
+grpc = ["dep:rustapi-grpc"]
+
 # New Phase 11 & Observability features
 timeout = ["dep:rustapi-extras", "rustapi-extras/timeout"]
 guard = ["dep:rustapi-extras", "rustapi-extras/guard"]
@@ -87,4 +91,4 @@ replay = ["dep:rustapi-extras", "rustapi-extras/replay"]
 
 # Meta features
 extras = ["jwt", "cors", "rate-limit"]
-full = ["extras", "config", "cookies", "sqlx", "toon", "insight", "compression", "ws", "view", "timeout", "guard", "logging", "circuit-breaker", "security-headers", "api-key", "cache", "dedup", "sanitization", "otel", "structured-logging", "replay", "legacy-validator"]
+full = ["extras", "config", "cookies", "sqlx", "toon", "insight", "compression", "ws", "view", "grpc", "timeout", "guard", "logging", "circuit-breaker", "security-headers", "api-key", "cache", "dedup", "sanitization", "otel", "structured-logging", "replay", "legacy-validator"]

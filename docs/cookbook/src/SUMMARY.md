@@ -21,6 +21,7 @@
     - [rustapi-extras: The Toolbox](crates/rustapi_extras.md)
     - [rustapi-toon: The Diplomat](crates/rustapi_toon.md)
     - [rustapi-ws: The Live Wire](crates/rustapi_ws.md)
+    - [rustapi-grpc: The Bridge](crates/rustapi_grpc.md)
     - [rustapi-view: The Artist](crates/rustapi_view.md)
     - [rustapi-jobs: The Workhorse](crates/rustapi_jobs.md)
     - [rustapi-testing: The Auditor](crates/rustapi_testing.md)

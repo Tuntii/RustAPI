@@ -90,10 +90,19 @@ pub async fn new_project(mut args: NewArgs) -> Result<()> {
     } else if args.yes {
         vec![]
     } else {
-        let available = ["jwt", "cors", "rate-limit", "config", "toon", "ws", "view"];
+        let available = [
+            "jwt",
+            "cors",
+            "rate-limit",
+            "config",
+            "toon",
+            "ws",
+            "view",
+            "grpc",
+        ];
         let defaults = match template {
-            ProjectTemplate::Full => vec![true, true, true, true, false, false, false],
-            ProjectTemplate::Web => vec![false, false, false, false, false, false, true],
+            ProjectTemplate::Full => vec![true, true, true, true, false, false, false, false],
+            ProjectTemplate::Web => vec![false, false, false, false, false, false, true, false],
             _ => vec![false; available.len()],
         };
 

@@ -1,0 +1,23 @@
+[package]
+name = "rustapi-grpc"
+description = "gRPC integration helpers for RustAPI powered by Tonic"
+documentation = "https://docs.rs/rustapi-grpc"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords = ["web", "framework", "api", "grpc", "tonic"]
+categories = ["web-programming::http-server", "network-programming"]
+rust-version.workspace = true
+readme = "README.md"
+
+[dependencies]
+rustapi-core = { workspace = true }
+tokio = { workspace = true, features = ["macros"] }
+tonic = { workspace = true, features = ["transport"] }
+prost = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }
+tonic-health = "0.14"

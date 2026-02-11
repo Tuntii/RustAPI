@@ -8,3 +8,4 @@ RustAPI is a collection of focused, interoperable crates. Each crate has a speci
 - **[rustapi-core](rustapi_core.md)**: The Engine
 - **[rustapi-macros](rustapi_macros.md)**: The Magic
 - **[rustapi-validate](rustapi_validation.md)**: The Gatekeeper
+- **[rustapi-grpc](rustapi_grpc.md)**: The Bridge

@@ -28,7 +28,7 @@ walkdir = "2.5"
 toml_edit = "0.22"
 
 # Async
-tokio = { workspace = true, features = ["process", "fs"] }
+tokio = { workspace = true, features = ["process", "fs", "macros", "rt-multi-thread", "time", "signal"] }
 
 # Serialization
 serde = { workspace = true }

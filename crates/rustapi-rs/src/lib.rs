@@ -49,6 +49,7 @@
 //! - `config` - Configuration management with `.env` file support
 //! - `cookies` - Cookie parsing extractor
 //! - `sqlx` - SQLx database error conversion to ApiError
+//! - `grpc` - Tonic-based gRPC integration helpers
 //! - `legacy-validator` - Compatibility mode for `validator::Validate`
 //! - `extras` - Meta feature enabling jwt, cors, and rate-limit
 //! - `full` - All optional features enabled
@@ -222,6 +223,15 @@ pub mod view {
     pub use rustapi_view::*;
 }
 
+// Re-export gRPC support (feature-gated)
+#[cfg(feature = "grpc")]
+pub mod grpc {
+    //! gRPC integration helpers powered by Tonic.
+    //!
+    //! Use this module to run RustAPI HTTP and gRPC servers side-by-side.
+    pub use rustapi_grpc::*;
+}
+
 /// Prelude module - import everything you need with `use rustapi_rs::prelude::*`
 pub mod prelude {
     // Core types
@@ -364,6 +374,12 @@ pub mod prelude {
     // View/Template types (feature-gated)
     #[cfg(feature = "view")]
     pub use rustapi_view::{ContextBuilder, Templates, TemplatesConfig, View};
+
+    // gRPC integration (feature-gated)
+    #[cfg(feature = "grpc")]
+    pub use rustapi_grpc::{
+        run_concurrently, run_rustapi_and_grpc, run_rustapi_and_grpc_with_shutdown,
+    };
 }
 
 #[cfg(test)]
