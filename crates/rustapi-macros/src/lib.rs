@@ -986,9 +986,7 @@ fn get_core_path() -> proc_macro2::TokenStream {
                 quote! { ::#ident }
             }
         }
-    } else if let Ok(found) =
-        crate_name("rustapi-core").or_else(|_| crate_name("rustapi_core"))
-    {
+    } else if let Ok(found) = crate_name("rustapi-core").or_else(|_| crate_name("rustapi_core")) {
         match found {
             FoundCrate::Itself => quote! { crate },
             FoundCrate::Name(name) => {
@@ -1526,7 +1524,8 @@ pub fn derive_validate(input: TokenStream) -> TokenStream {
                 let validation = generate_async_rule_validation(&field_name, rule, &validate_path);
                 async_validations.push(validation);
             } else {
-                let validation = generate_rule_validation(&field_name, field_type, rule, &validate_path);
+                let validation =
+                    generate_rule_validation(&field_name, field_type, rule, &validate_path);
                 sync_validations.push(validation);
             }
         }

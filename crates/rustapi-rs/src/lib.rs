@@ -70,8 +70,8 @@ pub use rustapi_macros::*;
 /// It shadows rustapi_core::__private from the glob re-export above.
 #[doc(hidden)]
 pub mod __private {
-    pub use rustapi_core::__private::*;
     pub use async_trait;
+    pub use rustapi_core::__private::*;
 }
 
 // Re-export extras (feature-gated)
