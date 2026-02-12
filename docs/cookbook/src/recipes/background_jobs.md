@@ -23,7 +23,7 @@ A job consists of a data structure (the payload) and an implementation of the `J
 use rustapi_jobs::{Job, JobContext, Result};
 use serde::{Deserialize, Serialize};
 use async_trait::async_trait;
-use std::fmt::Debug;
+
 
 // 1. Define the job payload
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -140,9 +140,10 @@ struct RegisterRequest {
 
 `rustapi-jobs` handles failures automatically. If your `execute` method returns an `Err`, the job will be:
 1. Marked as failed.
-2. Scheduled for retry with **exponential backoff**.
-3. Retried up to `max_attempts` (default is configurable per enqueue).
+2. Optionally scheduled for retry with **exponential backoff** if retries are enabled.
+3. Retried up to `max_attempts` when you configure it via `EnqueueOptions`.
 
+By default, `EnqueueOptions::new()` sets `max_attempts` to `0`, so a failed job will **not** be retried unless you explicitly opt in by calling `.max_attempts(...)` with a value greater than the current `attempts` count.
 To customize retry behavior, use `enqueue_opts`:
 
 ```rust,no_run

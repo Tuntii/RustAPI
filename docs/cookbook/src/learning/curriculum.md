@@ -151,7 +151,7 @@ This curriculum is designed to take you from a RustAPI beginner to an advanced u
 - **Task:**
     1. Implement a job that sends a "Welcome" email (simulated) when a user registers.
     2. Write an integration test using `TestClient` to verify the registration endpoint.
-- **Expected Output:** Registration returns 200 immediately; console logs show "Sending email..." shortly after. Tests pass.
+- **Expected Output:** Registration returns 200 immediately; console logs show "Sending welcome email to ..." shortly after. Tests pass.
 - **Pitfalls:** Forgetting to start the job worker loop.
 
 #### 🧠 Knowledge Check
