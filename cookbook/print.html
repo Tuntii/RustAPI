@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-15a19e5a.js";
+            window.path_to_searchindex_js = "searchindex-6cb794e1.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-f2fd3c30.js"></script>
+        <script src="toc-3404fad6.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -2584,6 +2584,161 @@ if let Some(ct) = field.content_type() {
 }
 <span class="boring">}</span></code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="background-jobs"><a class="header" href="#background-jobs">Background Jobs</a></h1>
+<p>RustAPI provides a robust background job processing system through the <code>rustapi-jobs</code> crate. This allows you to offload time-consuming tasks (like sending emails, processing images, or generating reports) from the main request/response cycle, keeping your API fast and responsive.</p>
+<h2 id="setup-2"><a class="header" href="#setup-2">Setup</a></h2>
+<p>First, add <code>rustapi-jobs</code> to your <code>Cargo.toml</code>. Since <code>rustapi-jobs</code> is not re-exported by the main crate by default, you must include it explicitly.</p>
+<pre><code class="language-toml">[dependencies]
+rustapi-rs = "0.1"
+rustapi-jobs = "0.1"
+serde = { version = "1.0", features = ["derive"] }
+async-trait = "0.1"
+tokio = { version = "1.0", features = ["full"] }
+</code></pre>
+<h2 id="defining-a-job"><a class="header" href="#defining-a-job">Defining a Job</a></h2>
+<p>A job consists of a data structure (the payload) and an implementation of the <code>Job</code> trait.</p>
+<pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_jobs::{Job, JobContext, Result};
+use serde::{Deserialize, Serialize};
+use async_trait::async_trait;
+
+
+// 1. Define the job payload
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct WelcomeEmailData {
+    pub user_id: String,
+    pub email: String,
+}
+
+// 2. Define the job handler struct
+#[derive(Clone)]
+pub struct WelcomeEmailJob;
+
+// 3. Implement the Job trait
+#[async_trait]
+impl Job for WelcomeEmailJob {
+    // Unique name for the job type
+    const NAME: &amp;'static str = "send_welcome_email";
+
+    // The payload type
+    type Data = WelcomeEmailData;
+
+    async fn execute(&amp;self, ctx: JobContext, data: Self::Data) -&gt; Result&lt;()&gt; {
+        println!("Processing job {} (attempt {})", ctx.job_id, ctx.attempt);
+        println!("Sending welcome email to {} ({})", data.email, data.user_id);
+
+        // Simulate work
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+
+        Ok(())
+    }
+}
+<span class="boring">}</span></code></pre>
+<h2 id="registering-and-running-the-queue"><a class="header" href="#registering-and-running-the-queue">Registering and Running the Queue</a></h2>
+<p>In your main application setup, you need to:</p>
+<ol>
+<li>Initialize the backend (Memory, Redis, or Postgres).</li>
+<li>Create the <code>JobQueue</code>.</li>
+<li>Register your job handlers.</li>
+<li>Start the worker loop in a background task.</li>
+<li>Add the <code>JobQueue</code> to your application state so handlers can use it.</li>
+</ol>
+<pre class="playground"><code class="language-rust no_run">use rustapi_rs::prelude::*;
+use rustapi_jobs::{JobQueue, InMemoryBackend};
+// use crate::jobs::{WelcomeEmailJob, WelcomeEmailData}; // Import your job
+
+#[tokio::main]
+async fn main() -&gt; std::io::Result&lt;()&gt; {
+    // 1. Initialize backend
+    // For production, use Redis or Postgres backend
+    let backend = InMemoryBackend::new();
+
+    // 2. Create queue
+    let queue = JobQueue::new(backend);
+
+    // 3. Register jobs
+    // You must register an instance of the job handler
+    queue.register_job(WelcomeEmailJob).await;
+
+    // 4. Start worker in background
+    let queue_for_worker = queue.clone();
+    tokio::spawn(async move {
+        if let Err(e) = queue_for_worker.start_worker().await {
+            eprintln!("Worker failed: {}", e);
+        }
+    });
+
+    // 5. Build application
+    RustApi::auto()
+        .with_state(queue) // Inject queue into state
+        .serve("127.0.0.1:3000")
+        .await
+}</code></pre>
+<h2 id="enqueueing-jobs"><a class="header" href="#enqueueing-jobs">Enqueueing Jobs</a></h2>
+<p>You can now inject the <code>JobQueue</code> into your request handlers using the <code>State</code> extractor and enqueue jobs.</p>
+<pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+use rustapi_jobs::JobQueue;
+
+#[rustapi::post("/register")]
+async fn register_user(
+    State(queue): State&lt;JobQueue&gt;,
+    Json(payload): Json&lt;RegisterRequest&gt;,
+) -&gt; Result&lt;impl IntoResponse, ApiError&gt; {
+    // ... logic to create user in DB ...
+    let user_id = "user_123".to_string(); // Simulated ID
+
+    // Enqueue the background job
+    // The queue will handle serialization and persistence
+    queue.enqueue::&lt;WelcomeEmailJob&gt;(WelcomeEmailData {
+        user_id,
+        email: payload.email,
+    }).await.map_err(|e| ApiError::InternalServerError(e.to_string()))?;
+
+    Ok(Json(json!({
+        "status": "registered",
+        "message": "Welcome email will be sent shortly"
+    })))
+}
+
+#[derive(Deserialize)]
+struct RegisterRequest {
+    username: String,
+    email: String,
+}
+<span class="boring">}</span></code></pre>
+<h2 id="resilience-and-retries"><a class="header" href="#resilience-and-retries">Resilience and Retries</a></h2>
+<p><code>rustapi-jobs</code> handles failures automatically. If your <code>execute</code> method returns an <code>Err</code>, the job will be:</p>
+<ol>
+<li>Marked as failed.</li>
+<li>Optionally scheduled for retry with <strong>exponential backoff</strong> if retries are enabled.</li>
+<li>Retried up to <code>max_attempts</code> when you configure it via <code>EnqueueOptions</code>.</li>
+</ol>
+<p>By default, <code>EnqueueOptions::new()</code> sets <code>max_attempts</code> to <code>0</code>, so a failed job will <strong>not</strong> be retried unless you explicitly opt in by calling <code>.max_attempts(...)</code> with a value greater than the current <code>attempts</code> count.
+To customize retry behavior, use <code>enqueue_opts</code>:</p>
+<pre class="playground"><code class="language-rust no_run"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_jobs::EnqueueOptions;
+
+queue.enqueue_opts::&lt;WelcomeEmailJob&gt;(
+    data,
+    EnqueueOptions::new()
+        .max_attempts(5) // Retry up to 5 times
+        .delay(std::time::Duration::from_secs(60)) // Initial delay
+).await?;
+<span class="boring">}</span></code></pre>
+<h2 id="backends-1"><a class="header" href="#backends-1">Backends</a></h2>
+<p>While <code>InMemoryBackend</code> is great for testing and simple apps, production systems should use persistent backends:</p>
+<ul>
+<li><strong>Redis</strong>: High performance, good for volatile queues. Enable <code>redis</code> feature in <code>rustapi-jobs</code>.</li>
+<li><strong>Postgres</strong>: Best for reliability and transactional safety. Enable <code>postgres</code> feature.</li>
+</ul>
+<pre><code class="language-toml"># In Cargo.toml
+rustapi-jobs = { version = "0.1", features = ["redis"] }
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="custom-middleware"><a class="header" href="#custom-middleware">Custom Middleware</a></h1>
 <p><strong>Problem</strong>: You need to execute code before or after every request (e.g., logging, authentication, metrics) or modify the response.</p>
 <h2 id="solution-2"><a class="header" href="#solution-2">Solution</a></h2>
@@ -4262,12 +4417,32 @@ cargo test
 <li>What command generates a production Dockerfile?</li>
 <li>How do you enable compression for responses?</li>
 </ol>
+<h3 id="module-10-background-jobs--testing"><a class="header" href="#module-10-background-jobs--testing">Module 10: Background Jobs &amp; Testing</a></h3>
+<ul>
+<li><strong>Prerequisites:</strong> Phase 3.</li>
+<li><strong>Reading:</strong> <a href="#background-jobs">Background Jobs Recipe</a>, <a href="#testing-strategy">Testing Strategy</a>.</li>
+<li><strong>Task:</strong>
+<ol>
+<li>Implement a job that sends a “Welcome” email (simulated) when a user registers.</li>
+<li>Write an integration test using <code>TestClient</code> to verify the registration endpoint.</li>
+</ol>
+</li>
+<li><strong>Expected Output:</strong> Registration returns 200 immediately; console logs show “Sending welcome email to …” shortly after. Tests pass.</li>
+<li><strong>Pitfalls:</strong> Forgetting to start the job worker loop.</li>
+</ul>
+<h4 id="-knowledge-check-9"><a class="header" href="#-knowledge-check-9">🧠 Knowledge Check</a></h4>
+<ol>
+<li>Why use background jobs for email sending?</li>
+<li>Which backend is suitable for local development?</li>
+<li>How do you enqueue a job from a handler?</li>
+</ol>
 <h3 id="-phase-3-capstone-the-real-time-collaboration-tool"><a class="header" href="#-phase-3-capstone-the-real-time-collaboration-tool">🏆 Phase 3 Capstone: “The Real-Time Collaboration Tool”</a></h3>
 <p><strong>Objective:</strong> Build a real-time collaborative note-taking app.
 <strong>Requirements:</strong></p>
 <ul>
 <li><strong>Auth:</strong> Users must log in to edit notes.</li>
 <li><strong>Real-time:</strong> Changes to a note are broadcast to all viewers via WebSockets.</li>
+<li><strong>Jobs:</strong> When a note is deleted, schedule a background job to archive it (simulate archive).</li>
 <li><strong>Resilience:</strong> Rate limit API requests to prevent abuse.</li>
 <li><strong>Deployment:</strong> specify a <code>Dockerfile</code> for the application.</li>
 </ul>

@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-15a19e5a.js";
+            window.path_to_searchindex_js = "../searchindex-6cb794e1.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-f2fd3c30.js"></script>
+        <script src="../toc-3404fad6.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -341,12 +341,32 @@
 <li>What command generates a production Dockerfile?</li>
 <li>How do you enable compression for responses?</li>
 </ol>
+<h3 id="module-10-background-jobs--testing"><a class="header" href="#module-10-background-jobs--testing">Module 10: Background Jobs &amp; Testing</a></h3>
+<ul>
+<li><strong>Prerequisites:</strong> Phase 3.</li>
+<li><strong>Reading:</strong> <a href="../recipes/background_jobs.html">Background Jobs Recipe</a>, <a href="../concepts/testing.html">Testing Strategy</a>.</li>
+<li><strong>Task:</strong>
+<ol>
+<li>Implement a job that sends a “Welcome” email (simulated) when a user registers.</li>
+<li>Write an integration test using <code>TestClient</code> to verify the registration endpoint.</li>
+</ol>
+</li>
+<li><strong>Expected Output:</strong> Registration returns 200 immediately; console logs show “Sending welcome email to …” shortly after. Tests pass.</li>
+<li><strong>Pitfalls:</strong> Forgetting to start the job worker loop.</li>
+</ul>
+<h4 id="-knowledge-check-9"><a class="header" href="#-knowledge-check-9">🧠 Knowledge Check</a></h4>
+<ol>
+<li>Why use background jobs for email sending?</li>
+<li>Which backend is suitable for local development?</li>
+<li>How do you enqueue a job from a handler?</li>
+</ol>
 <h3 id="-phase-3-capstone-the-real-time-collaboration-tool"><a class="header" href="#-phase-3-capstone-the-real-time-collaboration-tool">🏆 Phase 3 Capstone: “The Real-Time Collaboration Tool”</a></h3>
 <p><strong>Objective:</strong> Build a real-time collaborative note-taking app.
 <strong>Requirements:</strong></p>
 <ul>
 <li><strong>Auth:</strong> Users must log in to edit notes.</li>
 <li><strong>Real-time:</strong> Changes to a note are broadcast to all viewers via WebSockets.</li>
+<li><strong>Jobs:</strong> When a note is deleted, schedule a background job to archive it (simulate archive).</li>
 <li><strong>Resilience:</strong> Rate limit API requests to prevent abuse.</li>
 <li><strong>Deployment:</strong> specify a <code>Dockerfile</code> for the application.</li>
 </ul>
