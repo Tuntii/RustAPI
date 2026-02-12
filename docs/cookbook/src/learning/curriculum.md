@@ -145,11 +145,26 @@ This curriculum is designed to take you from a RustAPI beginner to an advanced u
 2. What command generates a production Dockerfile?
 3. How do you enable compression for responses?
 
+### Module 10: Background Jobs & Testing
+- **Prerequisites:** Phase 3.
+- **Reading:** [Background Jobs Recipe](../recipes/background_jobs.md), [Testing Strategy](../concepts/testing.md).
+- **Task:**
+    1. Implement a job that sends a "Welcome" email (simulated) when a user registers.
+    2. Write an integration test using `TestClient` to verify the registration endpoint.
+- **Expected Output:** Registration returns 200 immediately; console logs show "Sending email..." shortly after. Tests pass.
+- **Pitfalls:** Forgetting to start the job worker loop.
+
+#### 🧠 Knowledge Check
+1. Why use background jobs for email sending?
+2. Which backend is suitable for local development?
+3. How do you enqueue a job from a handler?
+
 ### 🏆 Phase 3 Capstone: "The Real-Time Collaboration Tool"
 **Objective:** Build a real-time collaborative note-taking app.
 **Requirements:**
 - **Auth:** Users must log in to edit notes.
 - **Real-time:** Changes to a note are broadcast to all viewers via WebSockets.
+- **Jobs:** When a note is deleted, schedule a background job to archive it (simulate archive).
 - **Resilience:** Rate limit API requests to prevent abuse.
 - **Deployment:** specify a `Dockerfile` for the application.
 

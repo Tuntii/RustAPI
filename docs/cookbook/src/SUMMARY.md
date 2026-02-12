@@ -34,6 +34,7 @@
     - [CSRF Protection](recipes/csrf_protection.md)
     - [Database Integration](recipes/db_integration.md)
     - [File Uploads](recipes/file_uploads.md)
+    - [Background Jobs](recipes/background_jobs.md)
     - [Custom Middleware](recipes/custom_middleware.md)
     - [Real-time Chat](recipes/websockets.md)
     - [Production Tuning](recipes/high_performance.md)
