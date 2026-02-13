@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-be543932.js";
+            window.path_to_searchindex_js = "../searchindex-e70b65f0.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-a7fbd70d.js"></script>
@@ -182,11 +182,11 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="jwt-authentication"><a class="header" href="#jwt-authentication">JWT Authentication</a></h1>
-<p>Authentication is critical for almost every API. RustAPI provides a built-in, production-ready JWT authentication system via the <code>jwt</code> feature.</p>
+<p>Authentication is critical for almost every API. RustAPI provides a built-in, production-ready JWT authentication system via the <code>extras-jwt</code> feature.</p>
 <h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
-<p>Enable the <code>jwt</code> feature in your <code>Cargo.toml</code>:</p>
+<p>Enable the <code>extras-jwt</code> feature in your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["jwt"] }
+rustapi-rs = { version = "0.1.335", features = ["extras-jwt"] }
 serde = { version = "1", features = ["derive"] }
 </code></pre>
 <h2 id="1-define-claims"><a class="header" href="#1-define-claims">1. Define Claims</a></h2>

@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-be543932.js";
+            window.path_to_searchindex_js = "searchindex-e70b65f0.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-a7fbd70d.js"></script>
@@ -733,7 +733,7 @@ struct AppState {
 </thead>
 <tbody>
 <tr><td><strong>RustAPI</strong></td><td><strong>~185,000</strong></td><td><strong>~0.54ms</strong></td><td><strong>~8MB</strong></td></tr>
-<tr><td><strong>RustAPI + simd-json</strong></td><td><strong>~220,000</strong></td><td><strong>~0.45ms</strong></td><td><strong>~8MB</strong></td></tr>
+<tr><td><strong>RustAPI + core-simd-json</strong></td><td><strong>~220,000</strong></td><td><strong>~0.45ms</strong></td><td><strong>~8MB</strong></td></tr>
 <tr><td>Actix-web</td><td>~178,000</td><td>~0.56ms</td><td>~10MB</td></tr>
 <tr><td>Axum</td><td>~165,000</td><td>~0.61ms</td><td>~12MB</td></tr>
 <tr><td>Rocket</td><td>~95,000</td><td>~1.05ms</td><td>~15MB</td></tr>
@@ -761,7 +761,7 @@ struct AppState {
 <tr><th>Optimization</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td>⚡ <strong>SIMD-JSON</strong></td><td>2-4x faster JSON parsing with <code>simd-json</code> feature</td></tr>
+<tr><td>⚡ <strong>SIMD-JSON</strong></td><td>2-4x faster JSON parsing with <code>core-simd-json</code> feature</td></tr>
 <tr><td>🔄 <strong>Zero-copy parsing</strong></td><td>Direct memory access for path/query params</td></tr>
 <tr><td>📦 <strong>SmallVec PathParams</strong></td><td>Stack-optimized path parameters</td></tr>
 <tr><td>🎯 <strong>Compile-time dispatch</strong></td><td>All extractors resolved at compile time</td></tr>
@@ -2042,11 +2042,11 @@ async fn get_user(Path(id): Path&lt;i64&gt;) -&gt; Json&lt;Resource&lt;User&gt;&
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="jwt-authentication"><a class="header" href="#jwt-authentication">JWT Authentication</a></h1>
-<p>Authentication is critical for almost every API. RustAPI provides a built-in, production-ready JWT authentication system via the <code>jwt</code> feature.</p>
+<p>Authentication is critical for almost every API. RustAPI provides a built-in, production-ready JWT authentication system via the <code>extras-jwt</code> feature.</p>
 <h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
-<p>Enable the <code>jwt</code> feature in your <code>Cargo.toml</code>:</p>
+<p>Enable the <code>extras-jwt</code> feature in your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["jwt"] }
+rustapi-rs = { version = "0.1.335", features = ["extras-jwt"] }
 serde = { version = "1", features = ["derive"] }
 </code></pre>
 <h2 id="1-define-claims"><a class="header" href="#1-define-claims">1. Define Claims</a></h2>
@@ -4342,14 +4342,14 @@ RustApi::auto()
 <tr><td><code>State&lt;T&gt;</code> extractor</td><td><code>crud-api</code>, <code>auth-api</code>, <code>sqlx-crud</code></td></tr>
 <tr><td><code>Json&lt;T&gt;</code> extractor</td><td><code>crud-api</code>, <code>auth-api</code>, <code>graphql-api</code></td></tr>
 <tr><td><code>ValidatedJson&lt;T&gt;</code></td><td><code>auth-api</code>, <code>crud-api</code></td></tr>
-<tr><td>JWT (<code>jwt</code> feature)</td><td><code>auth-api</code>, <code>microservices</code></td></tr>
-<tr><td>CORS (<code>cors</code> feature)</td><td><code>middleware-chain</code>, <code>auth-api</code></td></tr>
+<tr><td>JWT (<code>extras-jwt</code> feature)</td><td><code>auth-api</code>, <code>microservices</code></td></tr>
+<tr><td>CORS (<code>extras-cors</code> feature)</td><td><code>middleware-chain</code>, <code>auth-api</code></td></tr>
 <tr><td>Rate Limiting</td><td><code>rate-limit-demo</code>, <code>auth-api</code></td></tr>
-<tr><td>WebSockets (<code>ws</code> feature)</td><td><code>websocket</code>, <code>graphql-api</code></td></tr>
-<tr><td>TOON (<code>toon</code> feature)</td><td><code>toon-api</code>, <code>mcp-server</code></td></tr>
+<tr><td>WebSockets (<code>protocol-ws</code> feature)</td><td><code>websocket</code>, <code>graphql-api</code></td></tr>
+<tr><td>TOON (<code>protocol-toon</code> feature)</td><td><code>toon-api</code>, <code>mcp-server</code></td></tr>
 <tr><td>OAuth2 (<code>oauth2-client</code>)</td><td><code>auth-api</code> (extended)</td></tr>
 <tr><td>Circuit Breaker</td><td><code>microservices</code></td></tr>
-<tr><td>Replay (<code>replay</code> feature)</td><td><code>microservices</code> (conceptual)</td></tr>
+<tr><td>Replay (<code>extras-replay</code> feature)</td><td><code>microservices</code> (conceptual)</td></tr>
 <tr><td>OpenTelemetry (<code>otel</code>)</td><td><code>microservices-advanced</code></td></tr>
 <tr><td>OpenAPI/Swagger</td><td>All examples</td></tr>
 </tbody>

@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-be543932.js";
+            window.path_to_searchindex_js = "../searchindex-e70b65f0.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-a7fbd70d.js"></script>
@@ -268,7 +268,7 @@ struct AppState {
 </thead>
 <tbody>
 <tr><td><strong>RustAPI</strong></td><td><strong>~185,000</strong></td><td><strong>~0.54ms</strong></td><td><strong>~8MB</strong></td></tr>
-<tr><td><strong>RustAPI + simd-json</strong></td><td><strong>~220,000</strong></td><td><strong>~0.45ms</strong></td><td><strong>~8MB</strong></td></tr>
+<tr><td><strong>RustAPI + core-simd-json</strong></td><td><strong>~220,000</strong></td><td><strong>~0.45ms</strong></td><td><strong>~8MB</strong></td></tr>
 <tr><td>Actix-web</td><td>~178,000</td><td>~0.56ms</td><td>~10MB</td></tr>
 <tr><td>Axum</td><td>~165,000</td><td>~0.61ms</td><td>~12MB</td></tr>
 <tr><td>Rocket</td><td>~95,000</td><td>~1.05ms</td><td>~15MB</td></tr>
@@ -296,7 +296,7 @@ struct AppState {
 <tr><th>Optimization</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td>⚡ <strong>SIMD-JSON</strong></td><td>2-4x faster JSON parsing with <code>simd-json</code> feature</td></tr>
+<tr><td>⚡ <strong>SIMD-JSON</strong></td><td>2-4x faster JSON parsing with <code>core-simd-json</code> feature</td></tr>
 <tr><td>🔄 <strong>Zero-copy parsing</strong></td><td>Direct memory access for path/query params</td></tr>
 <tr><td>📦 <strong>SmallVec PathParams</strong></td><td>Stack-optimized path parameters</td></tr>
 <tr><td>🎯 <strong>Compile-time dispatch</strong></td><td>All extractors resolved at compile time</td></tr>
