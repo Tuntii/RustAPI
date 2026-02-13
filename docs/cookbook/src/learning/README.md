@@ -190,14 +190,14 @@ Find examples by the RustAPI features they demonstrate:
 | `State<T>` extractor | `crud-api`, `auth-api`, `sqlx-crud` |
 | `Json<T>` extractor | `crud-api`, `auth-api`, `graphql-api` |
 | `ValidatedJson<T>` | `auth-api`, `crud-api` |
-| JWT (`jwt` feature) | `auth-api`, `microservices` |
-| CORS (`cors` feature) | `middleware-chain`, `auth-api` |
+| JWT (`extras-jwt` feature) | `auth-api`, `microservices` |
+| CORS (`extras-cors` feature) | `middleware-chain`, `auth-api` |
 | Rate Limiting | `rate-limit-demo`, `auth-api` |
-| WebSockets (`ws` feature) | `websocket`, `graphql-api` |
-| TOON (`toon` feature) | `toon-api`, `mcp-server` |
+| WebSockets (`protocol-ws` feature) | `websocket`, `graphql-api` |
+| TOON (`protocol-toon` feature) | `toon-api`, `mcp-server` |
 | OAuth2 (`oauth2-client`) | `auth-api` (extended) |
 | Circuit Breaker | `microservices` |
-| Replay (`replay` feature) | `microservices` (conceptual) |
+| Replay (`extras-replay` feature) | `microservices` (conceptual) |
 | OpenTelemetry (`otel`) | `microservices-advanced` |
 | OpenAPI/Swagger | All examples |
 

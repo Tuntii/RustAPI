@@ -6,6 +6,7 @@
 
 /// Result of path validation
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[allow(dead_code)]
 pub enum PathValidationError {
     /// Path must start with '/'
     MustStartWithSlash { path: String },
@@ -151,6 +152,7 @@ impl std::error::Error for PathValidationError {}
 /// assert!(validate_path("/users/{}").is_err()); // Empty parameter
 /// assert!(validate_path("/users/{123}").is_err()); // Parameter starts with digit
 /// ```
+#[allow(dead_code)]
 pub fn validate_path(path: &str) -> Result<(), PathValidationError> {
     // Path must start with /
     if !path.starts_with('/') {
@@ -250,6 +252,7 @@ pub fn validate_path(path: &str) -> Result<(), PathValidationError> {
 }
 
 /// Check if a path is valid (convenience function)
+#[allow(dead_code)]
 pub fn is_valid_path(path: &str) -> bool {
     validate_path(path).is_ok()
 }

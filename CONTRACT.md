@@ -41,6 +41,8 @@ Do not depend on internal crate APIs for long-term compatibility.
   - explicit migration path in docs/release notes
 - Minimum deprecation window before removal: 2 minor releases.
 - Removals occur only in major releases.
+- Current compatibility window for legacy aliases introduced in this cycle:
+  - First eligible removal: `v0.3.0` (assuming deprecation introduced in `v0.1.x`).
 
 ## 5. Feature Flag Policy
 
@@ -54,6 +56,10 @@ Do not depend on internal crate APIs for long-term compatibility.
   - `extras-all`
   - `full`
 - Legacy aliases may exist temporarily for migration but must be treated as deprecated and eventually removed on a published timeline.
+- Published timeline for this migration set:
+  - `v0.1.x`: aliases available, deprecation warnings/documentation.
+  - `v0.2.x`: aliases still available, migration reminders.
+  - `v0.3.0+`: aliases may be removed.
 
 ## 6. Internal Leakage Rule
 

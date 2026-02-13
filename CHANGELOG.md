@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Facade-first CORE stabilization**:
+  - `rustapi-rs` public surface is now explicitly curated (`core`, `protocol`, `extras`, `prelude`).
+  - Internal wiring moved behind `rustapi_rs::__private` for macro/runtime integration.
+  - `rustapi-core` internal modules tightened (`pub(crate)`/private where applicable).
+  - `Handler` trait sealed to prevent external implementation leakage.
+- **Feature taxonomy refresh**:
+  - Canonical naming is now `core-*`, `protocol-*`, `extras-*`.
+  - Meta features standardized: `core`, `protocol-all`, `extras-all`, `full`.
+  - Legacy feature names remain as compatibility aliases and are deprecated.
+
+### Added
+- **Public API governance**:
+  - Snapshot files under `api/public/` for `rustapi-rs` (default + all-features).
+  - New CI workflow `.github/workflows/public-api.yml`:
+    - snapshot drift check
+    - PR label gate requiring `breaking` or `feature` when snapshot changes.
+- **Compatibility contract**:
+  - New `CONTRACT.md` defining SemVer, MSRV (1.78), deprecation and feature policies.
+
+### Deprecated
+- Legacy facade paths and feature aliases are soft-deprecated and scheduled for removal no earlier than two minor releases after announcement.
+
 ## [0.1.300] - 2026-02-06
 
 ### Added
