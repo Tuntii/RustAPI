@@ -30,8 +30,8 @@ jobs:
 
       - name: Generate current snapshots
         run: |
-          cargo public-api -p rustapi-rs -s > /tmp/rustapi-rs.default.txt
-          cargo public-api -p rustapi-rs --all-features -s > /tmp/rustapi-rs.all-features.txt
+          cargo +stable public-api --manifest-path crates/rustapi-rs/Cargo.toml -s > /tmp/rustapi-rs.default.txt
+          cargo +stable public-api --manifest-path crates/rustapi-rs/Cargo.toml --all-features -s > /tmp/rustapi-rs.all-features.txt
 
       - name: Check snapshot drift
         run: |
