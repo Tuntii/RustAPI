@@ -6,7 +6,7 @@
 
 ## Prerequisites
 
-- Rust 1.75 or later
+- Rust 1.78 or later (MSRV)
 - Cargo (comes with Rust)
 
 ```bash
@@ -36,23 +36,25 @@ Or with specific features:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.335", features = ["jwt", "cors", "toon", "ws", "view"] }
+rustapi-rs = { version = "0.1.335", features = ["extras-jwt", "extras-cors", "protocol-toon", "protocol-ws", "protocol-view"] }
 ```
 
 ### Available Features
 
 | Feature | Description |
 |---------|-------------|
-| `swagger-ui` | Swagger UI at `/docs` (enabled by default) |
-| `jwt` | JWT authentication |
-| `cors` | CORS middleware |
-| `rate-limit` | IP-based rate limiting |
-| `toon` | LLM-optimized TOON format |
-| `ws` | WebSocket support |
-| `view` | Template engine (Tera) |
-| `simd-json` | 2-4x faster JSON parsing |
-| `audit` | GDPR/SOC2 audit logging |
-| `full` | All features |
+| `core` | Default stable core (`core-openapi`, `core-tracing`) |
+| `core-openapi` | OpenAPI + docs endpoint support |
+| `core-tracing` | Tracing middleware and instrumentation |
+| `protocol-toon` | LLM-optimized TOON format |
+| `protocol-ws` | WebSocket support |
+| `protocol-view` | Template engine (Tera) |
+| `protocol-grpc` | gRPC bridge helpers |
+| `extras-jwt` | JWT authentication |
+| `extras-cors` | CORS middleware |
+| `extras-rate-limit` | IP-based rate limiting |
+| `extras-config` | Environment/config helpers |
+| `full` | `core + protocol-all + extras-all` |
 
 ---
 
@@ -368,11 +370,11 @@ ApiError::internal("message")         // 500
 ### CORS
 
 ```toml
-rustapi-rs = { version = "0.1.335", features = ["cors"] }
+rustapi-rs = { version = "0.1.335", features = ["extras-cors"] }
 ```
 
 ```rust
-use rustapi_rs::middleware::CorsLayer;
+use rustapi_rs::extras::cors::CorsLayer;
 
 RustApi::new()
     .layer(CorsLayer::permissive())  // Allow all origins
@@ -389,12 +391,11 @@ RustApi::new()
 ### JWT Authentication
 
 ```toml
-rustapi-rs = { version = "0.1.335", features = ["jwt"] }
+rustapi-rs = { version = "0.1.335", features = ["extras-jwt"] }
 ```
 
 ```rust
-use rustapi_rs::middleware::JwtLayer;
-use rustapi_rs::extract::AuthUser;
+use rustapi_rs::extras::jwt::{AuthUser, JwtLayer};
 
 #[derive(Serialize, Deserialize)]
 struct Claims {
@@ -411,7 +412,7 @@ RustApi::new()
 
 async fn protected(user: AuthUser<Claims>) -> Json<Response> {
     Json(Response {
-        message: format!("Hello, {}", user.claims.sub)
+        message: format!("Hello, {}", user.0.sub)
     })
 }
 ```
@@ -419,11 +420,11 @@ async fn protected(user: AuthUser<Claims>) -> Json<Response> {
 ### Rate Limiting
 
 ```toml
-rustapi-rs = { version = "0.1.335", features = ["rate-limit"] }
+rustapi-rs = { version = "0.1.335", features = ["extras-rate-limit"] }
 ```
 
 ```rust
-use rustapi_rs::middleware::RateLimitLayer;
+use rustapi_rs::extras::rate_limit::RateLimitLayer;
 
 RustApi::new()
     .layer(RateLimitLayer::new(100, Duration::from_secs(60)))  // 100 req/min
@@ -437,11 +438,11 @@ RustApi::new()
 ## TOON Format (LLM Optimization)
 
 ```toml
-rustapi-rs = { version = "0.1.335", features = ["toon"] }
+rustapi-rs = { version = "0.1.335", features = ["protocol-toon"] }
 ```
 
 ```rust
-use rustapi_rs::toon::{Toon, LlmResponse, AcceptHeader};
+use rustapi_rs::protocol::toon::{Toon, LlmResponse, AcceptHeader};
 
 // Direct TOON response
 #[rustapi_rs::get("/ai/users")]
@@ -468,11 +469,11 @@ Response includes token counting headers:
 Real-time bidirectional communication:
 
 ```toml
-rustapi-rs = { version = "0.1.335", features = ["ws"] }
+rustapi-rs = { version = "0.1.335", features = ["protocol-ws"] }
 ```
 
 ```rust
-use rustapi_rs::ws::{WebSocket, WebSocketUpgrade, WebSocketStream, Message};
+use rustapi_rs::protocol::ws::{WebSocket, WebSocketUpgrade, WebSocketStream, Message};
 
 #[rustapi_rs::get("/ws")]
 async fn websocket(ws: WebSocket) -> WebSocketUpgrade {
@@ -505,7 +506,7 @@ websocat ws://localhost:8080/ws
 Server-side HTML rendering with Tera:
 
 ```toml
-rustapi-rs = { version = "0.1.335", features = ["view"] }
+rustapi-rs = { version = "0.1.335", features = ["protocol-view"] }
 ```
 
 Create a template file `templates/index.html`:
@@ -521,7 +522,7 @@ Create a template file `templates/index.html`:
 
 Use in your handler:
 ```rust
-use rustapi_rs::view::{Templates, View, TemplatesConfig};
+use rustapi_rs::protocol::view::{Templates, View, TemplatesConfig};
 
 #[tokio::main]
 async fn main() {
@@ -572,7 +573,7 @@ cargo rustapi new my-api --interactive
 cargo rustapi watch
 
 # Add features or dependencies
-cargo rustapi add cors jwt
+cargo rustapi add extras-cors extras-jwt
 
 # Check environment health
 cargo rustapi doctor
@@ -704,10 +705,10 @@ struct AnyBody { ... }
 
 ### Swagger UI not showing
 
-Check that the `swagger-ui` feature is enabled (it's on by default):
+Check that `core-openapi` is enabled (it is included in the default `core` feature):
 
 ```toml
-rustapi-rs = { version = "0.1.335", features = ["swagger-ui"] }
+rustapi-rs = { version = "0.1.335", features = ["core-openapi"] }
 ```
 
 ### CLI Commands Not Working

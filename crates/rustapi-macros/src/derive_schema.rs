@@ -6,7 +6,7 @@ use syn::{Data, DataEnum, DataStruct, Fields, Ident};
 /// Determine the path to rustapi_openapi module based on the user's dependencies.
 ///
 /// This function checks if the user's Cargo.toml has:
-/// 1. `rustapi-rs` - use `::rustapi_rs::prelude::rustapi_openapi`
+/// 1. `rustapi-rs` - use `::rustapi_rs::__private::openapi`
 /// 2. `rustapi-openapi` - use `::rustapi_openapi` directly
 ///
 /// This allows the Schema derive macro to work in both:
@@ -21,13 +21,13 @@ fn get_openapi_path() -> TokenStream {
         match found {
             FoundCrate::Itself => {
                 // We're in rustapi-rs itself
-                quote! { crate::prelude::rustapi_openapi }
+                quote! { ::rustapi_rs::__private::openapi }
             }
             FoundCrate::Name(name) => {
                 // Normalize to underscore for use in code
                 let normalized = name.replace('-', "_");
                 let ident = syn::Ident::new(&normalized, proc_macro2::Span::call_site());
-                quote! { ::#ident::prelude::rustapi_openapi }
+                quote! { ::#ident::__private::openapi }
             }
         }
     } else if let Ok(found) =
@@ -47,11 +47,11 @@ fn get_openapi_path() -> TokenStream {
         }
     } else {
         // Default fallback - assume rustapi_rs is available (most common case)
-        quote! { ::rustapi_rs::prelude::rustapi_openapi }
+        quote! { ::rustapi_rs::__private::openapi }
     }
 }
 
-/// Get serde_json path - either from rustapi_rs::prelude or directly
+/// Get serde_json path - either from rustapi_rs::__private or directly
 fn get_serde_json_path() -> TokenStream {
     // Try both hyphenated and underscored versions
     let rustapi_rs_found = crate_name("rustapi-rs").or_else(|_| crate_name("rustapi_rs"));
@@ -59,12 +59,12 @@ fn get_serde_json_path() -> TokenStream {
     if let Ok(found) = rustapi_rs_found {
         match found {
             FoundCrate::Itself => {
-                quote! { crate::prelude::serde_json }
+                quote! { ::rustapi_rs::__private::serde_json }
             }
             FoundCrate::Name(name) => {
                 let normalized = name.replace('-', "_");
                 let ident = syn::Ident::new(&normalized, proc_macro2::Span::call_site());
-                quote! { ::#ident::prelude::serde_json }
+                quote! { ::#ident::__private::serde_json }
             }
         }
     } else {

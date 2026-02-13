@@ -77,7 +77,7 @@ RUSTAPI_ENV=development
 # Database (if using sqlx)
 # DATABASE_URL=postgres://user:pass@localhost/db
 
-# JWT Secret (if using jwt feature)
+# JWT Secret (if using extras-jwt feature)
 # JWT_SECRET=your-secret-key-here
 
 # Logging

@@ -37,6 +37,11 @@ We believe that writing high-performance, type-safe web APIs in Rust shouldn't r
     - **Templating**: Tera view engine.
     - **Jobs**: Background task processing (Redis/Postgres).
 
+Feature taxonomy on the facade:
+- `core-*`: core runtime and HTTP behavior (`core-openapi`, `core-tracing`, etc.)
+- `protocol-*`: optional protocol crates (`protocol-toon`, `protocol-ws`, `protocol-view`, `protocol-grpc`)
+- `extras-*`: optional production middleware/integrations (`extras-jwt`, `extras-cors`, etc.)
+
 ## 📦 Quick Start
 
 Add `rustapi-rs` to your `Cargo.toml`.

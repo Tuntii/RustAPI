@@ -91,14 +91,14 @@ pub async fn new_project(mut args: NewArgs) -> Result<()> {
         vec![]
     } else {
         let available = [
-            "jwt",
-            "cors",
-            "rate-limit",
-            "config",
-            "toon",
-            "ws",
-            "view",
-            "grpc",
+            "extras-jwt",
+            "extras-cors",
+            "extras-rate-limit",
+            "extras-config",
+            "protocol-toon",
+            "protocol-ws",
+            "protocol-view",
+            "protocol-grpc",
         ];
         let defaults = match template {
             ProjectTemplate::Full => vec![true, true, true, true, false, false, false, false],
@@ -183,12 +183,10 @@ pub async fn new_project(mut args: NewArgs) -> Result<()> {
         style("http://localhost:8080").cyan()
     );
 
-    if features.iter().any(|f| f == "swagger-ui") || template == ProjectTemplate::Full {
-        println!(
-            "API docs available at {}",
-            style("http://localhost:8080/docs").cyan()
-        );
-    }
+    println!(
+        "API docs available at {}",
+        style("http://localhost:8080/docs").cyan()
+    );
 
     Ok(())
 }

@@ -7,10 +7,10 @@ use tokio::fs;
 pub async fn generate(name: &str, features: &[String]) -> Result<()> {
     // Add recommended features for full template
     let mut all_features: Vec<String> = vec![
-        "jwt".to_string(),
-        "cors".to_string(),
-        "rate-limit".to_string(),
-        "config".to_string(),
+        "extras-jwt".to_string(),
+        "extras-cors".to_string(),
+        "extras-rate-limit".to_string(),
+        "extras-config".to_string(),
     ];
 
     // Add user-specified features
