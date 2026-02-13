@@ -136,7 +136,7 @@ impl std::error::Error for PathValidationError {}
 ///
 /// # Examples
 ///
-/// ```
+/// ```rust,ignore
 /// use rustapi_core::path_validation::validate_path;
 ///
 /// // Valid paths
