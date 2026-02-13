@@ -33,6 +33,7 @@
     - [JWT Authentication](recipes/jwt_auth.md)
     - [CSRF Protection](recipes/csrf_protection.md)
     - [Database Integration](recipes/db_integration.md)
+    - [Testing & Mocking](recipes/testing.md)
     - [File Uploads](recipes/file_uploads.md)
     - [Background Jobs](recipes/background_jobs.md)
     - [Custom Middleware](recipes/custom_middleware.md)

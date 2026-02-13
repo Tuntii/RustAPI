@@ -170,6 +170,67 @@ This curriculum is designed to take you from a RustAPI beginner to an advanced u
 
 ---
 
+## Phase 4: Enterprise Scale
+
+**Goal:** Build observable, resilient, and high-performance distributed systems.
+
+### Module 11: Observability
+- **Prerequisites:** Phase 3.
+- **Reading:** [Observability (Extras)](../crates/rustapi_extras.md#observability), [Structured Logging](../crates/rustapi_extras.md#structured-logging).
+- **Task:**
+    1. Enable `structured-logging` and `otel` features.
+    2. Configure tracing to export spans to Jaeger (or console for dev).
+    3. Add custom metrics for "active_users" and "jobs_processed".
+- **Expected Output:** Logs are JSON formatted with trace IDs. Metrics endpoint exposes Prometheus data.
+- **Pitfalls:** High cardinality in metric labels (e.g., using user IDs as labels).
+
+#### 🧠 Knowledge Check
+1. What is the difference between logging and tracing?
+2. How do you correlate logs across microservices?
+3. What is the standard format for structured logs in RustAPI?
+
+### Module 12: Resilience & Security
+- **Prerequisites:** Phase 3.
+- **Reading:** [Resilience Patterns](../recipes/resilience.md), [Time-Travel Debugging](../recipes/replay.md).
+- **Task:**
+    1. Wrap an external API call with a `CircuitBreaker`.
+    2. Implement `RetryLayer` for transient failures.
+    3. (Optional) Use `ReplayLayer` to record and replay a tricky bug scenario.
+- **Expected Output:** System degrades gracefully when external service is down. Replay file captures the exact request sequence.
+- **Pitfalls:** Infinite retry loops or retrying non-idempotent operations.
+
+#### 🧠 Knowledge Check
+1. What state does a Circuit Breaker have when it stops traffic?
+2. Why is jitter important in retry strategies?
+3. How does Time-Travel Debugging help with "Heisenbugs"?
+
+### Module 13: High Performance
+- **Prerequisites:** Phase 3.
+- **Reading:** [HTTP/3 (QUIC)](../recipes/http3_quic.md), [Performance Tuning](../recipes/high_performance.md).
+- **Task:**
+    1. Enable `http3` feature and generate self-signed certs.
+    2. Serve traffic over QUIC.
+    3. Implement response caching for a heavy computation endpoint.
+- **Expected Output:** Browser/Client connects via HTTP/3. Repeated requests are served instantly from cache.
+- **Pitfalls:** Caching private user data without proper keys.
+
+#### 🧠 Knowledge Check
+1. What transport protocol does HTTP/3 use?
+2. How does `simd-json` improve performance?
+3. When should you *not* use caching?
+
+### 🏆 Phase 4 Capstone: "The High-Scale Event Platform"
+**Objective:** Architect a system capable of handling thousands of events per second.
+**Requirements:**
+- **Ingestion:** HTTP/3 endpoint receiving JSON events.
+- **Processing:** Push events to a `rustapi-jobs` queue (Redis backend).
+- **Storage:** Workers process events and store aggregates in a database.
+- **Observability:** Full tracing from ingestion to storage.
+- **Resilience:** Circuit breakers on database writes.
+- **Testing:** Load test the ingestion endpoint (e.g., with k6 or similar) and observe metrics.
+
+---
+
 ## Next Steps
 
 *   Explore the [Examples Repository](https://github.com/Tuntii/rustapi-rs-examples).
