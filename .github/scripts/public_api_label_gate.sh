@@ -15,8 +15,18 @@ if [[ -z "$changed_snapshots" ]]; then
   exit 0
 fi
 
-labels=",${PR_LABELS:-},"
-if [[ "$labels" == *",breaking,"* || "$labels" == *",feature,"* ]]; then
+# Collect labels from env first, then fall back to GitHub event payload.
+labels_csv="${PR_LABELS:-}"
+if [[ -z "$labels_csv" && -n "${GITHUB_EVENT_PATH:-}" && -f "${GITHUB_EVENT_PATH}" ]]; then
+  if command -v jq >/dev/null 2>&1; then
+    labels_csv="$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH" 2>/dev/null | paste -sd ',' -)"
+  fi
+fi
+
+labels_normalized=",$(echo "$labels_csv" | tr '[:upper:]' '[:lower:]'),"
+echo "Detected PR labels: ${labels_csv:-<none>}"
+
+if [[ "$labels_normalized" == *",breaking,"* || "$labels_normalized" == *",feature,"* ]]; then
   echo "Public API snapshots changed and required label is present."
   exit 0
 fi
