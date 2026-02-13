@@ -26,6 +26,9 @@ jobs:
       - name: Install Nightly Toolchain (for rustdoc JSON)
         uses: dtolnay/rust-toolchain@nightly
 
+      - name: Ensure nightly is installed
+        run: rustup toolchain install nightly --profile minimal
+
       - name: Install cargo-public-api
         uses: taiki-e/install-action@v2
         with:
