@@ -23,6 +23,9 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install Nightly Toolchain (for rustdoc JSON)
+        uses: dtolnay/rust-toolchain@nightly
+
       - name: Install cargo-public-api
         uses: taiki-e/install-action@v2
         with:
