@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-6cb794e1.js";
+            window.path_to_searchindex_js = "../searchindex-be543932.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-3404fad6.js"></script>
+        <script src="../toc-a7fbd70d.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -182,80 +182,128 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="file-uploads"><a class="header" href="#file-uploads">File Uploads</a></h1>
-<p>Handling file uploads efficiently is crucial. RustAPI allows you to stream <code>Multipart</code> data, meaning you can handle 1GB uploads without using 1GB of RAM.</p>
+<p>Handling file uploads efficiently is crucial for modern applications. RustAPI provides a <code>Multipart</code> extractor that allows you to stream uploads, enabling you to handle large files (e.g., 1GB+) without consuming proportional RAM.</p>
 <h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
+<p>Add <code>uuid</code> and <code>tokio</code> with <code>fs</code> features to your <code>Cargo.toml</code>.</p>
 <pre><code class="language-toml">[dependencies]
 rustapi-rs = "0.1.335"
 tokio = { version = "1", features = ["fs", "io-util"] }
 uuid = { version = "1", features = ["v4"] }
 </code></pre>
-<h2 id="streaming-upload-handler"><a class="header" href="#streaming-upload-handler">Streaming Upload Handler</a></h2>
-<p>This handler reads the incoming stream part-by-part and writes it directly to disk (or S3).</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use rustapi_rs::prelude::*;
-use rustapi_rs::extract::Multipart;
+<h2 id="streaming-upload-example"><a class="header" href="#streaming-upload-example">Streaming Upload Example</a></h2>
+<p>Here is a complete, runnable example of a file upload server that streams files to a <code>./uploads</code> directory.</p>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+use rustapi_rs::extract::{Multipart, DefaultBodyLimit};
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
+use std::path::Path;
 
-async fn upload_file(mut multipart: Multipart) -&gt; Result&lt;StatusCode, ApiError&gt; {
-    // Iterate over the fields
-    while let Some(field) = multipart.next_field().await.map_err(|_| ApiError::BadRequest)? {
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    // Ensure uploads directory exists
+    tokio::fs::create_dir_all("./uploads").await?;
+
+    println!("Starting Upload Server at http://127.0.0.1:8080");
+
+    RustApi::new()
+        .route("/upload", post(upload_handler))
+        // Increase body limit to 1GB (default is usually 2MB)
+        .layer(DefaultBodyLimit::max(1024 * 1024 * 1024))
+        .run("127.0.0.1:8080")
+        .await
+}
+
+async fn upload_handler(mut multipart: Multipart) -&gt; Result&lt;Json&lt;UploadResponse&gt;&gt; {
+    let mut uploaded_files = Vec::new();
+
+    // Iterate over the fields in the multipart form
+    while let Some(mut field) = multipart.next_field().await.map_err(|_| ApiError::bad_request("Invalid multipart"))? {
         
-        let name = field.name().unwrap_or("file").to_string();
         let file_name = field.file_name().unwrap_or("unknown.bin").to_string();
         let content_type = field.content_type().unwrap_or("application/octet-stream").to_string();
 
-        println!("Uploading: {} ({})", file_name, content_type);
+        // ⚠️ Security: Never trust the user-provided filename directly!
+        // It could contain paths like "../../../etc/passwd".
+        // Always generate a safe filename or sanitize inputs.
+        let safe_filename = format!("{}-{}", uuid::Uuid::new_v4(), file_name);
+        let path = Path::new("./uploads").join(&amp;safe_filename);
 
-        // Security: Create a safe random filename to prevent overwrites or path traversal
-        let new_filename = format!("{}-{}", uuid::Uuid::new_v4(), file_name);
-        let path = std::path::Path::new("./uploads").join(new_filename);
+        println!("Streaming file: {} -&gt; {:?}", file_name, path);
 
         // Open destination file
-        let mut file = File::create(&amp;path).await.map_err(|e| ApiError::InternalServerError(e.to_string()))?;
+        let mut file = File::create(&amp;path).await.map_err(|e| ApiError::internal(e.to_string()))?;
 
-        // Write stream to file chunk by chunk
-        // In RustAPI/Axum multipart, `field.bytes()` loads the whole field into memory.
-        // To stream efficiently, we use `field.chunk()`:
-        
-        while let Some(chunk) = field.chunk().await.map_err(|_| ApiError::BadRequest)? {
-             file.write_all(&amp;chunk).await.map_err(|e| ApiError::InternalServerError(e.to_string()))?;
+        // Stream the field content chunk-by-chunk
+        // This is memory efficient even for large files.
+        while let Some(chunk) = field.chunk().await.map_err(|_| ApiError::bad_request("Stream error"))? {
+             file.write_all(&amp;chunk).await.map_err(|e| ApiError::internal(e.to_string()))?;
         }
+
+        uploaded_files.push(FileResult {
+            original_name: file_name,
+            stored_name: safe_filename,
+            content_type,
+        });
     }
 
-    Ok(StatusCode::CREATED)
+    Ok(Json(UploadResponse {
+        message: "Upload successful".into(),
+        files: uploaded_files,
+    }))
 }
-<span class="boring">}</span></code></pre>
-<h2 id="handling-constraints"><a class="header" href="#handling-constraints">Handling Constraints</a></h2>
-<p>You should always set limits to prevent DoS attacks.</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use rustapi_rs::extract::DefaultBodyLimit;
 
-let app = RustApi::new()
-    .route("/upload", post(upload_file))
-    // Limit request body to 10MB
-    .layer(DefaultBodyLimit::max(10 * 1024 * 1024));
-<span class="boring">}</span></code></pre>
-<h2 id="validating-content-type"><a class="header" href="#validating-content-type">Validating Content Type</a></h2>
-<p>Never trust the <code>Content-Type</code> header sent by the client implicitly for security (e.g., executing a PHP script uploaded as an image).</p>
-<p>Verify the “magic bytes” of the file content itself if strictly needed, or ensure uploaded files are stored in a non-executable directory (or S3 bucket).</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>// Simple check on the header (not fully secure but good UX)
-if let Some(ct) = field.content_type() {
-    if !ct.starts_with("image/") {
-        return Err(ApiError::BadRequest("Only images are allowed".into()));
-    }
+#[derive(Serialize, Schema)]
+struct UploadResponse {
+    message: String,
+    files: Vec&lt;FileResult&gt;,
 }
-<span class="boring">}</span></code></pre>
+
+#[derive(Serialize, Schema)]
+struct FileResult {
+    original_name: String,
+    stored_name: String,
+    content_type: String,
+}</code></pre>
+<h2 id="key-concepts"><a class="header" href="#key-concepts">Key Concepts</a></h2>
+<h3 id="1-streaming-vs-buffering"><a class="header" href="#1-streaming-vs-buffering">1. Streaming vs Buffering</a></h3>
+<p>By default, some frameworks load the entire file into RAM. RustAPI’s <code>Multipart</code> allows you to process the stream incrementally using <code>field.chunk()</code>.</p>
+<ul>
+<li><strong>Buffering</strong>: <code>field.bytes().await</code> (Load all into RAM - simple but dangerous for large files)</li>
+<li><strong>Streaming</strong>: <code>field.chunk().await</code> (Load small chunks - scalable)</li>
+</ul>
+<h3 id="2-body-limits"><a class="header" href="#2-body-limits">2. Body Limits</a></h3>
+<p>The default request body limit is often small (e.g., 2MB) to prevent DoS attacks. You must explicitly increase this limit for file upload routes using <code>DefaultBodyLimit::max(size)</code>.</p>
+<h3 id="3-security"><a class="header" href="#3-security">3. Security</a></h3>
+<ul>
+<li><strong>Path Traversal</strong>: Malicious users can send filenames like <code>../../system32/cmd.exe</code>. Always rename files or sanitize filenames strictly.</li>
+<li><strong>Content Type Validation</strong>: The <code>Content-Type</code> header is client-controlled and can be spoofed. Do not rely on it for security execution checks (e.g., preventing <code>.php</code> execution).</li>
+<li><strong>Executable Permissions</strong>: Store uploads in a directory where script execution is disabled.</li>
+</ul>
+<h2 id="testing-with-curl"><a class="header" href="#testing-with-curl">Testing with cURL</a></h2>
+<p>You can test this endpoint using <code>curl</code>:</p>
+<pre><code class="language-bash">curl -X POST http://localhost:8080/upload \
+  -F "file1=@./image.png" \
+  -F "file2=@./document.pdf"
+</code></pre>
+<p>Response:</p>
+<pre><code class="language-json">{
+  "message": "Upload successful",
+  "files": [
+    {
+      "original_name": "image.png",
+      "stored_name": "550e8400-e29b-41d4-a716-446655440000-image.png",
+      "content_type": "image/png"
+    },
+    ...
+  ]
+}
+</code></pre>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../recipes/db_integration.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../recipes/testing.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
@@ -269,7 +317,7 @@ if let Some(ct) = field.content_type() {
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../recipes/db_integration.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../recipes/testing.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 

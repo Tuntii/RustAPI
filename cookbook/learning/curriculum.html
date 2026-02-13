@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-6cb794e1.js";
+            window.path_to_searchindex_js = "../searchindex-be543932.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-3404fad6.js"></script>
+        <script src="../toc-a7fbd70d.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -369,6 +369,80 @@
 <li><strong>Jobs:</strong> When a note is deleted, schedule a background job to archive it (simulate archive).</li>
 <li><strong>Resilience:</strong> Rate limit API requests to prevent abuse.</li>
 <li><strong>Deployment:</strong> specify a <code>Dockerfile</code> for the application.</li>
+</ul>
+<hr>
+<h2 id="phase-4-enterprise-scale"><a class="header" href="#phase-4-enterprise-scale">Phase 4: Enterprise Scale</a></h2>
+<p><strong>Goal:</strong> Build observable, resilient, and high-performance distributed systems.</p>
+<h3 id="module-11-observability"><a class="header" href="#module-11-observability">Module 11: Observability</a></h3>
+<ul>
+<li><strong>Prerequisites:</strong> Phase 3.</li>
+<li><strong>Reading:</strong> <a href="../crates/rustapi_extras.html#observability">Observability (Extras)</a>, <a href="../crates/rustapi_extras.html#structured-logging">Structured Logging</a>.</li>
+<li><strong>Task:</strong>
+<ol>
+<li>Enable <code>structured-logging</code> and <code>otel</code> features.</li>
+<li>Configure tracing to export spans to Jaeger (or console for dev).</li>
+<li>Add custom metrics for “active_users” and “jobs_processed”.</li>
+</ol>
+</li>
+<li><strong>Expected Output:</strong> Logs are JSON formatted with trace IDs. Metrics endpoint exposes Prometheus data.</li>
+<li><strong>Pitfalls:</strong> High cardinality in metric labels (e.g., using user IDs as labels).</li>
+</ul>
+<h4 id="-knowledge-check-10"><a class="header" href="#-knowledge-check-10">🧠 Knowledge Check</a></h4>
+<ol>
+<li>What is the difference between logging and tracing?</li>
+<li>How do you correlate logs across microservices?</li>
+<li>What is the standard format for structured logs in RustAPI?</li>
+</ol>
+<h3 id="module-12-resilience--security"><a class="header" href="#module-12-resilience--security">Module 12: Resilience &amp; Security</a></h3>
+<ul>
+<li><strong>Prerequisites:</strong> Phase 3.</li>
+<li><strong>Reading:</strong> <a href="../recipes/resilience.html">Resilience Patterns</a>, <a href="../recipes/replay.html">Time-Travel Debugging</a>.</li>
+<li><strong>Task:</strong>
+<ol>
+<li>Wrap an external API call with a <code>CircuitBreaker</code>.</li>
+<li>Implement <code>RetryLayer</code> for transient failures.</li>
+<li>(Optional) Use <code>ReplayLayer</code> to record and replay a tricky bug scenario.</li>
+</ol>
+</li>
+<li><strong>Expected Output:</strong> System degrades gracefully when external service is down. Replay file captures the exact request sequence.</li>
+<li><strong>Pitfalls:</strong> Infinite retry loops or retrying non-idempotent operations.</li>
+</ul>
+<h4 id="-knowledge-check-11"><a class="header" href="#-knowledge-check-11">🧠 Knowledge Check</a></h4>
+<ol>
+<li>What state does a Circuit Breaker have when it stops traffic?</li>
+<li>Why is jitter important in retry strategies?</li>
+<li>How does Time-Travel Debugging help with “Heisenbugs”?</li>
+</ol>
+<h3 id="module-13-high-performance"><a class="header" href="#module-13-high-performance">Module 13: High Performance</a></h3>
+<ul>
+<li><strong>Prerequisites:</strong> Phase 3.</li>
+<li><strong>Reading:</strong> <a href="../recipes/http3_quic.html">HTTP/3 (QUIC)</a>, <a href="../recipes/high_performance.html">Performance Tuning</a>.</li>
+<li><strong>Task:</strong>
+<ol>
+<li>Enable <code>http3</code> feature and generate self-signed certs.</li>
+<li>Serve traffic over QUIC.</li>
+<li>Implement response caching for a heavy computation endpoint.</li>
+</ol>
+</li>
+<li><strong>Expected Output:</strong> Browser/Client connects via HTTP/3. Repeated requests are served instantly from cache.</li>
+<li><strong>Pitfalls:</strong> Caching private user data without proper keys.</li>
+</ul>
+<h4 id="-knowledge-check-12"><a class="header" href="#-knowledge-check-12">🧠 Knowledge Check</a></h4>
+<ol>
+<li>What transport protocol does HTTP/3 use?</li>
+<li>How does <code>simd-json</code> improve performance?</li>
+<li>When should you <em>not</em> use caching?</li>
+</ol>
+<h3 id="-phase-4-capstone-the-high-scale-event-platform"><a class="header" href="#-phase-4-capstone-the-high-scale-event-platform">🏆 Phase 4 Capstone: “The High-Scale Event Platform”</a></h3>
+<p><strong>Objective:</strong> Architect a system capable of handling thousands of events per second.
+<strong>Requirements:</strong></p>
+<ul>
+<li><strong>Ingestion:</strong> HTTP/3 endpoint receiving JSON events.</li>
+<li><strong>Processing:</strong> Push events to a <code>rustapi-jobs</code> queue (Redis backend).</li>
+<li><strong>Storage:</strong> Workers process events and store aggregates in a database.</li>
+<li><strong>Observability:</strong> Full tracing from ingestion to storage.</li>
+<li><strong>Resilience:</strong> Circuit breakers on database writes.</li>
+<li><strong>Testing:</strong> Load test the ingestion endpoint (e.g., with k6 or similar) and observe metrics.</li>
 </ul>
 <hr>
 <h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>

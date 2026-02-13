@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-6cb794e1.js";
+            window.path_to_searchindex_js = "searchindex-be543932.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-3404fad6.js"></script>
+        <script src="toc-a7fbd70d.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -2514,75 +2514,251 @@ impl UserRepository for PostgresRepo {
 }
 <span class="boring">}</span></code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="file-uploads"><a class="header" href="#file-uploads">File Uploads</a></h1>
-<p>Handling file uploads efficiently is crucial. RustAPI allows you to stream <code>Multipart</code> data, meaning you can handle 1GB uploads without using 1GB of RAM.</p>
+<h1 id="testing-strategies"><a class="header" href="#testing-strategies">Testing Strategies</a></h1>
+<p>RustAPI provides robust tools for testing your application, ensuring reliability from unit tests to full integration scenarios.</p>
 <h2 id="dependencies-2"><a class="header" href="#dependencies-2">Dependencies</a></h2>
+<p>Add <code>rustapi-testing</code> to your <code>Cargo.toml</code>. It is usually added as a dev-dependency.</p>
+<pre><code class="language-toml">[dev-dependencies]
+rustapi-testing = "0.1.335"
+tokio = { version = "1", features = ["full"] }
+</code></pre>
+<h2 id="integration-testing-with-testclient"><a class="header" href="#integration-testing-with-testclient">Integration Testing with TestClient</a></h2>
+<p>The <code>TestClient</code> allows you to test your API handlers without binding to a network port. It interacts directly with the service layer, making tests fast and deterministic.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+use rustapi_testing::TestClient;
+
+#[rustapi_rs::get("/hello")]
+async fn hello() -&gt; &amp;'static str {
+    "Hello, World!"
+}
+
+#[tokio::test]
+async fn test_hello_endpoint() {
+    // 1. Build your application
+    let app = RustApi::new().route("/hello", get(hello));
+
+    // 2. Create a TestClient
+    let client = TestClient::new(app);
+
+    // 3. Send requests
+    let response = client.get("/hello").send().await;
+
+    // 4. Assert response
+    assert_eq!(response.status(), 200);
+    assert_eq!(response.text().await, "Hello, World!");
+}
+<span class="boring">}</span></code></pre>
+<h3 id="testing-json-apis-1"><a class="header" href="#testing-json-apis-1">Testing JSON APIs</a></h3>
+<p><code>TestClient</code> has built-in support for JSON serialization and deserialization.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Serialize, Deserialize, PartialEq, Debug)]
+struct User {
+    id: u64,
+    name: String,
+}
+
+#[rustapi_rs::post("/users")]
+async fn create_user(Json(user): Json&lt;User&gt;) -&gt; Json&lt;User&gt; {
+    Json(user)
+}
+
+#[tokio::test]
+async fn test_create_user() {
+    let app = RustApi::new().route("/users", post(create_user));
+    let client = TestClient::new(app);
+
+    let new_user = User { id: 1, name: "Alice".into() };
+
+    let response = client.post("/users")
+        .json(&amp;new_user)
+        .send()
+        .await;
+
+    assert_eq!(response.status(), 200);
+
+    let returned_user: User = response.json().await;
+    assert_eq!(returned_user, new_user);
+}
+<span class="boring">}</span></code></pre>
+<h2 id="mocking-external-services"><a class="header" href="#mocking-external-services">Mocking External Services</a></h2>
+<p>When your API calls external services (e.g., payment gateways, third-party APIs), you should mock them in tests to avoid network calls and ensure reproducibility.</p>
+<p><code>rustapi-testing</code> provides <code>MockServer</code> for this purpose.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_testing::{MockServer, MockResponse};
+
+#[tokio::test]
+async fn test_external_integration() {
+    // 1. Start a mock server
+    let mock_server = MockServer::start().await;
+
+    // 2. Define an expectation
+    mock_server.expect(
+        rustapi_testing::RequestMatcher::new()
+            .method("GET")
+            .path("/external-data")
+    ).respond_with(
+        MockResponse::new()
+            .status(200)
+            .body(r#"{"data": "mocked"}"#)
+    ).await;
+
+    // 3. Use the mock server's URL in your app configuration
+    let mock_url = mock_server.url("/external-data");
+
+    // Simulating your app logic calling the external service
+    let client = reqwest::Client::new();
+    let res = client.get(&amp;mock_url).send().await.unwrap();
+
+    assert_eq!(res.status(), 200);
+    let body = res.text().await.unwrap();
+    assert_eq!(body, r#"{"data": "mocked"}"#);
+}
+<span class="boring">}</span></code></pre>
+<h2 id="testing-authenticated-routes"><a class="header" href="#testing-authenticated-routes">Testing Authenticated Routes</a></h2>
+<p>You can simulate authenticated requests by setting headers directly on the <code>TestClient</code> request builder.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[tokio::test]
+async fn test_protected_route() {
+    let app = RustApi::new().route("/protected", get(protected_handler));
+    let client = TestClient::new(app);
+
+    let response = client.get("/protected")
+        .header("Authorization", "Bearer valid_token")
+        .send()
+        .await;
+
+    assert_eq!(response.status(), 200);
+}
+<span class="boring">}</span></code></pre>
+<h2 id="best-practices-3"><a class="header" href="#best-practices-3">Best Practices</a></h2>
+<ol>
+<li><strong>Keep Tests Independent</strong>: Each test should setup its own app instance and state. <code>TestClient</code> is lightweight enough for this.</li>
+<li><strong>Mock I/O</strong>: Use <code>MockServer</code> for HTTP, and in-memory implementations for databases (e.g., <code>sqlite::memory:</code>) or traits for logic.</li>
+<li><strong>Test Edge Cases</strong>: Don’t just test the “happy path”. Test validation errors, 404s, and error handling.</li>
+</ol>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="file-uploads"><a class="header" href="#file-uploads">File Uploads</a></h1>
+<p>Handling file uploads efficiently is crucial for modern applications. RustAPI provides a <code>Multipart</code> extractor that allows you to stream uploads, enabling you to handle large files (e.g., 1GB+) without consuming proportional RAM.</p>
+<h2 id="dependencies-3"><a class="header" href="#dependencies-3">Dependencies</a></h2>
+<p>Add <code>uuid</code> and <code>tokio</code> with <code>fs</code> features to your <code>Cargo.toml</code>.</p>
 <pre><code class="language-toml">[dependencies]
 rustapi-rs = "0.1.335"
 tokio = { version = "1", features = ["fs", "io-util"] }
 uuid = { version = "1", features = ["v4"] }
 </code></pre>
-<h2 id="streaming-upload-handler"><a class="header" href="#streaming-upload-handler">Streaming Upload Handler</a></h2>
-<p>This handler reads the incoming stream part-by-part and writes it directly to disk (or S3).</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use rustapi_rs::prelude::*;
-use rustapi_rs::extract::Multipart;
+<h2 id="streaming-upload-example"><a class="header" href="#streaming-upload-example">Streaming Upload Example</a></h2>
+<p>Here is a complete, runnable example of a file upload server that streams files to a <code>./uploads</code> directory.</p>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+use rustapi_rs::extract::{Multipart, DefaultBodyLimit};
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
+use std::path::Path;
 
-async fn upload_file(mut multipart: Multipart) -&gt; Result&lt;StatusCode, ApiError&gt; {
-    // Iterate over the fields
-    while let Some(field) = multipart.next_field().await.map_err(|_| ApiError::BadRequest)? {
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    // Ensure uploads directory exists
+    tokio::fs::create_dir_all("./uploads").await?;
+
+    println!("Starting Upload Server at http://127.0.0.1:8080");
+
+    RustApi::new()
+        .route("/upload", post(upload_handler))
+        // Increase body limit to 1GB (default is usually 2MB)
+        .layer(DefaultBodyLimit::max(1024 * 1024 * 1024))
+        .run("127.0.0.1:8080")
+        .await
+}
+
+async fn upload_handler(mut multipart: Multipart) -&gt; Result&lt;Json&lt;UploadResponse&gt;&gt; {
+    let mut uploaded_files = Vec::new();
+
+    // Iterate over the fields in the multipart form
+    while let Some(mut field) = multipart.next_field().await.map_err(|_| ApiError::bad_request("Invalid multipart"))? {
         
-        let name = field.name().unwrap_or("file").to_string();
         let file_name = field.file_name().unwrap_or("unknown.bin").to_string();
         let content_type = field.content_type().unwrap_or("application/octet-stream").to_string();
 
-        println!("Uploading: {} ({})", file_name, content_type);
+        // ⚠️ Security: Never trust the user-provided filename directly!
+        // It could contain paths like "../../../etc/passwd".
+        // Always generate a safe filename or sanitize inputs.
+        let safe_filename = format!("{}-{}", uuid::Uuid::new_v4(), file_name);
+        let path = Path::new("./uploads").join(&amp;safe_filename);
 
-        // Security: Create a safe random filename to prevent overwrites or path traversal
-        let new_filename = format!("{}-{}", uuid::Uuid::new_v4(), file_name);
-        let path = std::path::Path::new("./uploads").join(new_filename);
+        println!("Streaming file: {} -&gt; {:?}", file_name, path);
 
         // Open destination file
-        let mut file = File::create(&amp;path).await.map_err(|e| ApiError::InternalServerError(e.to_string()))?;
+        let mut file = File::create(&amp;path).await.map_err(|e| ApiError::internal(e.to_string()))?;
 
-        // Write stream to file chunk by chunk
-        // In RustAPI/Axum multipart, `field.bytes()` loads the whole field into memory.
-        // To stream efficiently, we use `field.chunk()`:
-        
-        while let Some(chunk) = field.chunk().await.map_err(|_| ApiError::BadRequest)? {
-             file.write_all(&amp;chunk).await.map_err(|e| ApiError::InternalServerError(e.to_string()))?;
+        // Stream the field content chunk-by-chunk
+        // This is memory efficient even for large files.
+        while let Some(chunk) = field.chunk().await.map_err(|_| ApiError::bad_request("Stream error"))? {
+             file.write_all(&amp;chunk).await.map_err(|e| ApiError::internal(e.to_string()))?;
         }
+
+        uploaded_files.push(FileResult {
+            original_name: file_name,
+            stored_name: safe_filename,
+            content_type,
+        });
     }
 
-    Ok(StatusCode::CREATED)
+    Ok(Json(UploadResponse {
+        message: "Upload successful".into(),
+        files: uploaded_files,
+    }))
 }
-<span class="boring">}</span></code></pre>
-<h2 id="handling-constraints"><a class="header" href="#handling-constraints">Handling Constraints</a></h2>
-<p>You should always set limits to prevent DoS attacks.</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use rustapi_rs::extract::DefaultBodyLimit;
 
-let app = RustApi::new()
-    .route("/upload", post(upload_file))
-    // Limit request body to 10MB
-    .layer(DefaultBodyLimit::max(10 * 1024 * 1024));
-<span class="boring">}</span></code></pre>
-<h2 id="validating-content-type"><a class="header" href="#validating-content-type">Validating Content Type</a></h2>
-<p>Never trust the <code>Content-Type</code> header sent by the client implicitly for security (e.g., executing a PHP script uploaded as an image).</p>
-<p>Verify the “magic bytes” of the file content itself if strictly needed, or ensure uploaded files are stored in a non-executable directory (or S3 bucket).</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>// Simple check on the header (not fully secure but good UX)
-if let Some(ct) = field.content_type() {
-    if !ct.starts_with("image/") {
-        return Err(ApiError::BadRequest("Only images are allowed".into()));
-    }
+#[derive(Serialize, Schema)]
+struct UploadResponse {
+    message: String,
+    files: Vec&lt;FileResult&gt;,
 }
-<span class="boring">}</span></code></pre>
+
+#[derive(Serialize, Schema)]
+struct FileResult {
+    original_name: String,
+    stored_name: String,
+    content_type: String,
+}</code></pre>
+<h2 id="key-concepts"><a class="header" href="#key-concepts">Key Concepts</a></h2>
+<h3 id="1-streaming-vs-buffering"><a class="header" href="#1-streaming-vs-buffering">1. Streaming vs Buffering</a></h3>
+<p>By default, some frameworks load the entire file into RAM. RustAPI’s <code>Multipart</code> allows you to process the stream incrementally using <code>field.chunk()</code>.</p>
+<ul>
+<li><strong>Buffering</strong>: <code>field.bytes().await</code> (Load all into RAM - simple but dangerous for large files)</li>
+<li><strong>Streaming</strong>: <code>field.chunk().await</code> (Load small chunks - scalable)</li>
+</ul>
+<h3 id="2-body-limits"><a class="header" href="#2-body-limits">2. Body Limits</a></h3>
+<p>The default request body limit is often small (e.g., 2MB) to prevent DoS attacks. You must explicitly increase this limit for file upload routes using <code>DefaultBodyLimit::max(size)</code>.</p>
+<h3 id="3-security"><a class="header" href="#3-security">3. Security</a></h3>
+<ul>
+<li><strong>Path Traversal</strong>: Malicious users can send filenames like <code>../../system32/cmd.exe</code>. Always rename files or sanitize filenames strictly.</li>
+<li><strong>Content Type Validation</strong>: The <code>Content-Type</code> header is client-controlled and can be spoofed. Do not rely on it for security execution checks (e.g., preventing <code>.php</code> execution).</li>
+<li><strong>Executable Permissions</strong>: Store uploads in a directory where script execution is disabled.</li>
+</ul>
+<h2 id="testing-with-curl"><a class="header" href="#testing-with-curl">Testing with cURL</a></h2>
+<p>You can test this endpoint using <code>curl</code>:</p>
+<pre><code class="language-bash">curl -X POST http://localhost:8080/upload \
+  -F "file1=@./image.png" \
+  -F "file2=@./document.pdf"
+</code></pre>
+<p>Response:</p>
+<pre><code class="language-json">{
+  "message": "Upload successful",
+  "files": [
+    {
+      "original_name": "image.png",
+      "stored_name": "550e8400-e29b-41d4-a716-446655440000-image.png",
+      "content_type": "image/png"
+    },
+    ...
+  ]
+}
+</code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="background-jobs"><a class="header" href="#background-jobs">Background Jobs</a></h1>
 <p>RustAPI provides a robust background job processing system through the <code>rustapi-jobs</code> crate. This allows you to offload time-consuming tasks (like sending emails, processing images, or generating reports) from the main request/response cycle, keeping your API fast and responsive.</p>
@@ -2865,7 +3041,7 @@ Response::from_parts(parts, body)
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="real-time-chat-websockets"><a class="header" href="#real-time-chat-websockets">Real-time Chat (WebSockets)</a></h1>
 <p>WebSockets allow full-duplex communication between the client and server. RustAPI leverages the <code>rustapi-ws</code> crate (based on <code>tungstenite</code> and <code>tokio</code>) to make this easy.</p>
-<h2 id="dependencies-3"><a class="header" href="#dependencies-3">Dependencies</a></h2>
+<h2 id="dependencies-4"><a class="header" href="#dependencies-4">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
 rustapi-ws = "0.1.335"
 tokio = { version = "1", features = ["sync"] }
@@ -4445,6 +4621,80 @@ cargo test
 <li><strong>Jobs:</strong> When a note is deleted, schedule a background job to archive it (simulate archive).</li>
 <li><strong>Resilience:</strong> Rate limit API requests to prevent abuse.</li>
 <li><strong>Deployment:</strong> specify a <code>Dockerfile</code> for the application.</li>
+</ul>
+<hr>
+<h2 id="phase-4-enterprise-scale"><a class="header" href="#phase-4-enterprise-scale">Phase 4: Enterprise Scale</a></h2>
+<p><strong>Goal:</strong> Build observable, resilient, and high-performance distributed systems.</p>
+<h3 id="module-11-observability"><a class="header" href="#module-11-observability">Module 11: Observability</a></h3>
+<ul>
+<li><strong>Prerequisites:</strong> Phase 3.</li>
+<li><strong>Reading:</strong> <a href="#observability">Observability (Extras)</a>, <a href="#structured-logging">Structured Logging</a>.</li>
+<li><strong>Task:</strong>
+<ol>
+<li>Enable <code>structured-logging</code> and <code>otel</code> features.</li>
+<li>Configure tracing to export spans to Jaeger (or console for dev).</li>
+<li>Add custom metrics for “active_users” and “jobs_processed”.</li>
+</ol>
+</li>
+<li><strong>Expected Output:</strong> Logs are JSON formatted with trace IDs. Metrics endpoint exposes Prometheus data.</li>
+<li><strong>Pitfalls:</strong> High cardinality in metric labels (e.g., using user IDs as labels).</li>
+</ul>
+<h4 id="-knowledge-check-10"><a class="header" href="#-knowledge-check-10">🧠 Knowledge Check</a></h4>
+<ol>
+<li>What is the difference between logging and tracing?</li>
+<li>How do you correlate logs across microservices?</li>
+<li>What is the standard format for structured logs in RustAPI?</li>
+</ol>
+<h3 id="module-12-resilience--security"><a class="header" href="#module-12-resilience--security">Module 12: Resilience &amp; Security</a></h3>
+<ul>
+<li><strong>Prerequisites:</strong> Phase 3.</li>
+<li><strong>Reading:</strong> <a href="#resilience-patterns">Resilience Patterns</a>, <a href="#replay-time-travel-debugging">Time-Travel Debugging</a>.</li>
+<li><strong>Task:</strong>
+<ol>
+<li>Wrap an external API call with a <code>CircuitBreaker</code>.</li>
+<li>Implement <code>RetryLayer</code> for transient failures.</li>
+<li>(Optional) Use <code>ReplayLayer</code> to record and replay a tricky bug scenario.</li>
+</ol>
+</li>
+<li><strong>Expected Output:</strong> System degrades gracefully when external service is down. Replay file captures the exact request sequence.</li>
+<li><strong>Pitfalls:</strong> Infinite retry loops or retrying non-idempotent operations.</li>
+</ul>
+<h4 id="-knowledge-check-11"><a class="header" href="#-knowledge-check-11">🧠 Knowledge Check</a></h4>
+<ol>
+<li>What state does a Circuit Breaker have when it stops traffic?</li>
+<li>Why is jitter important in retry strategies?</li>
+<li>How does Time-Travel Debugging help with “Heisenbugs”?</li>
+</ol>
+<h3 id="module-13-high-performance"><a class="header" href="#module-13-high-performance">Module 13: High Performance</a></h3>
+<ul>
+<li><strong>Prerequisites:</strong> Phase 3.</li>
+<li><strong>Reading:</strong> <a href="#http3-quic-support">HTTP/3 (QUIC)</a>, <a href="#production-tuning">Performance Tuning</a>.</li>
+<li><strong>Task:</strong>
+<ol>
+<li>Enable <code>http3</code> feature and generate self-signed certs.</li>
+<li>Serve traffic over QUIC.</li>
+<li>Implement response caching for a heavy computation endpoint.</li>
+</ol>
+</li>
+<li><strong>Expected Output:</strong> Browser/Client connects via HTTP/3. Repeated requests are served instantly from cache.</li>
+<li><strong>Pitfalls:</strong> Caching private user data without proper keys.</li>
+</ul>
+<h4 id="-knowledge-check-12"><a class="header" href="#-knowledge-check-12">🧠 Knowledge Check</a></h4>
+<ol>
+<li>What transport protocol does HTTP/3 use?</li>
+<li>How does <code>simd-json</code> improve performance?</li>
+<li>When should you <em>not</em> use caching?</li>
+</ol>
+<h3 id="-phase-4-capstone-the-high-scale-event-platform"><a class="header" href="#-phase-4-capstone-the-high-scale-event-platform">🏆 Phase 4 Capstone: “The High-Scale Event Platform”</a></h3>
+<p><strong>Objective:</strong> Architect a system capable of handling thousands of events per second.
+<strong>Requirements:</strong></p>
+<ul>
+<li><strong>Ingestion:</strong> HTTP/3 endpoint receiving JSON events.</li>
+<li><strong>Processing:</strong> Push events to a <code>rustapi-jobs</code> queue (Redis backend).</li>
+<li><strong>Storage:</strong> Workers process events and store aggregates in a database.</li>
+<li><strong>Observability:</strong> Full tracing from ingestion to storage.</li>
+<li><strong>Resilience:</strong> Circuit breakers on database writes.</li>
+<li><strong>Testing:</strong> Load test the ingestion endpoint (e.g., with k6 or similar) and observe metrics.</li>
 </ul>
 <hr>
 <h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
