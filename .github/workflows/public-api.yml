@@ -24,7 +24,9 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install cargo-public-api
-        uses: taiki-e/install-action@cargo-public-api
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-public-api
 
       - name: Generate current snapshots
         run: |
