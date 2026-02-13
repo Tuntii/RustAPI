@@ -67,9 +67,15 @@ use rustapi_rs::prelude::*;
 
 Responsibilities:
 - Re-export all public types from internal crates
-- Manage feature flags (`jwt`, `cors`, `toon`, etc.)
+- Manage feature flags (`core-*`, `protocol-*`, `extras-*`)
 - Provide version stability guarantees
 - Documentation entry point
+
+Facade module layout:
+- `rustapi_rs::core` - Stable routing/handler/extractor/response/middleware surface.
+- `rustapi_rs::protocol` - Optional protocol modules (`toon`, `ws`, `view`, `grpc`, `http3`).
+- `rustapi_rs::extras` - Optional production middleware/integration modules.
+- `rustapi_rs::__private` - Macro/runtime wiring (not part of public contract).
 
 ```rust
 // rustapi-rs/src/lib.rs (simplified)
@@ -83,17 +89,17 @@ pub mod prelude {
     pub use rustapi_openapi::Schema;
     pub use rustapi_validate::Validate;
     
-    #[cfg(feature = "toon")]
-    pub use rustapi_toon::{Toon, LlmResponse, AcceptHeader};
+    #[cfg(feature = "protocol-toon")]
+    pub use crate::protocol::toon::{Toon, LlmResponse, AcceptHeader};
     
-    #[cfg(feature = "jwt")]
-    pub use rustapi_extras::jwt::*;
+    #[cfg(feature = "extras-jwt")]
+    pub use crate::extras::jwt::*;
     
-    #[cfg(feature = "ws")]
-    pub use rustapi_ws::{WebSocket, WebSocketUpgrade, WebSocketStream, Message, Broadcast};
+    #[cfg(feature = "protocol-ws")]
+    pub use crate::protocol::ws::{WebSocket, WebSocketUpgrade, WebSocketStream, Message, Broadcast};
     
-    #[cfg(feature = "view")]
-    pub use rustapi_view::{Templates, View, ContextBuilder};
+    #[cfg(feature = "protocol-view")]
+    pub use crate::protocol::view::{Templates, View, ContextBuilder};
 }
 ```
 
@@ -168,7 +174,7 @@ struct User {
 Features:
 - Native v2 validation engine is the default (`rustapi_macros::Validate`)
 - `ValidatedJson<T>` and `AsyncValidatedJson<T>` extractors
-- Legacy `validator` compatibility is optional via `legacy-validator`
+- Legacy `validator` compatibility is optional via `core-legacy-validator`
 - Automatic 422 responses with field errors
 - Custom validation rules
 
@@ -213,12 +219,12 @@ Headers provided by `LlmResponse`:
 
 | Component | Feature Flag | Purpose |
 |-----------|--------------|---------|
-| JWT Auth | `jwt` | `AuthUser<T>` extractor, `JwtLayer` |
-| CORS | `cors` | `CorsLayer` with builder |
-| Rate Limit | `rate-limit` | IP-based throttling |
+| JWT Auth | `extras-jwt` | `AuthUser<T>` extractor, `JwtLayer` |
+| CORS | `extras-cors` | `CorsLayer` with builder |
+| Rate Limit | `extras-rate-limit` | IP-based throttling |
 | Body Limit | default | Max request body size |
 | Request ID | default | Unique request tracking |
-| **Audit Logging** | `audit` | GDPR/SOC2 compliance logging |
+| **Replay** | `extras-replay` | Request capture + replay diagnostics |
 | **Circuit Breaker** | default | Fault tolerance patterns |
 | **Retry** | default | Automatic retry with backoff |
 
@@ -529,7 +535,7 @@ async fn test_with_mock_db() {
 
 | Area | Technique | Expected Gain |
 |------|-----------|---------------|
-| JSON Parsing | `simd-json` feature flag | 2-4x faster |
+| JSON Parsing | `core-simd-json` feature flag | 2-4x faster |
 | Path Params | `SmallVec<[_; 4]>` | Stack-optimized, fewer allocations |
 | Tracing | Conditional compilation | 10-20% less overhead |
 | String Handling | Path borrowing | Fewer copies |
@@ -664,14 +670,15 @@ The facade pattern is the key: `rustapi-rs` provides a stable surface, while int
   - `cargo-rustapi`: CLI tool.
 - **Internal/Support Crates**:
   - `rustapi-core`, `rustapi-macros`, `rustapi-validate`;
-  - `rustapi-openapi`, `rustapi-extras`, `rustapi-toon`;
+  - `rustapi-openapi`, `rustapi-extras`, `rustapi-toon`, `rustapi-grpc`;
   - `rustapi-ws`, `rustapi-view`, `rustapi-testing`, `rustapi-jobs`.
 
 ### Semver Policy
 
-- **Current Status**: 0.x (Unstable).
-- **Policy**: Public API changes may occur. `rustapi-rs` versions will follow SemVer, but internal crate versions (`rustapi-core` etc.) are synchronized but treated as implementation details.
+- **Facade Contract**: `rustapi-rs` is the compatibility boundary and follows strict SemVer rules.
+- **Internal Crates**: implementation details; APIs may change without facade guarantees.
+- **Source of truth**: see `CONTRACT.md` for SemVer/MSRV/deprecation policy.
 
 ### Workspace Members
 
-11 Library Crates + 2 Bench suites + 1 CLI (`crates/cargo-rustapi`).
+12 Library Crates + 2 Bench suites + 1 CLI (`crates/cargo-rustapi`).

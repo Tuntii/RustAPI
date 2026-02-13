@@ -62,8 +62,14 @@ use std::future::Future;
 use std::marker::PhantomData;
 use std::pin::Pin;
 
+mod sealed {
+    pub trait Sealed {}
+
+    impl<T> Sealed for T where T: Clone + Send + Sync + Sized + 'static {}
+}
+
 /// Trait representing an async handler function
-pub trait Handler<T>: Clone + Send + Sync + Sized + 'static {
+pub trait Handler<T>: sealed::Sealed + Clone + Send + Sync + Sized + 'static {
     /// The response type
     type Future: Future<Output = Response> + Send + 'static;
 

@@ -27,6 +27,12 @@ RustAPI is an ergonomic web framework for Rust, inspired by FastAPI's developer 
 > *"API surface is ours, engines can change."*
 
 RustAPI provides a stable, ergonomic public API. Internal dependencies (`hyper`, `tokio`, `validator`) are implementation details that can be upgraded without breaking your code.
+The stable contract lives in `rustapi-rs`; internal crates are not compatibility targets.
+
+Feature taxonomy:
+- `core-*` for framework core behavior.
+- `protocol-*` for optional protocol integrations.
+- `extras-*` for optional production middleware/integrations.
 
 ## Getting Started
 

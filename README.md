@@ -114,6 +114,22 @@ async fn list_users() -> &'static str { "ok" }
 *   ✅ **Multi-threaded Runtime**
 *   ✅ **Zero Config**
 
+## Feature Taxonomy (Stable)
+
+RustAPI now groups features into three namespaces:
+
+| Namespace | Purpose | Examples |
+|:--|:--|:--|
+| `core-*` | Core framework capabilities | `core-openapi`, `core-tracing`, `core-http3` |
+| `protocol-*` | Optional protocol crates | `protocol-toon`, `protocol-ws`, `protocol-view`, `protocol-grpc` |
+| `extras-*` | Optional production middleware/integrations | `extras-jwt`, `extras-cors`, `extras-rate-limit`, `extras-replay` |
+
+Meta features:
+- `core` (default)
+- `protocol-all`
+- `extras-all`
+- `full = core + protocol-all + extras-all`
+
 ## ✨ Latest Release Highlights (v0.1.335)
 
 *   ✅ **Dual-Stack Runtime**: Simultaneous HTTP/1.1 (TCP) and HTTP/3 (QUIC/UDP) support

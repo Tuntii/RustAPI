@@ -49,6 +49,7 @@ pub fn from_slice<T: DeserializeOwned>(slice: &[u8]) -> Result<T, JsonError> {
 /// This variant allows simd-json to parse in-place without copying,
 /// providing maximum performance.
 #[cfg(feature = "simd-json")]
+#[allow(dead_code)]
 pub fn from_slice_mut<T: DeserializeOwned>(slice: &mut [u8]) -> Result<T, JsonError> {
     simd_json::from_slice(slice).map_err(JsonError::SimdJson)
 }
@@ -57,6 +58,7 @@ pub fn from_slice_mut<T: DeserializeOwned>(slice: &mut [u8]) -> Result<T, JsonEr
 ///
 /// Falls back to standard implementation when simd-json is disabled.
 #[cfg(not(feature = "simd-json"))]
+#[allow(dead_code)]
 pub fn from_slice_mut<T: DeserializeOwned>(slice: &mut [u8]) -> Result<T, JsonError> {
     serde_json::from_slice(slice).map_err(JsonError::SerdeJson)
 }
@@ -65,6 +67,7 @@ pub fn from_slice_mut<T: DeserializeOwned>(slice: &mut [u8]) -> Result<T, JsonEr
 ///
 /// Uses pre-allocated buffer with estimated capacity for better performance.
 #[cfg(feature = "simd-json")]
+#[allow(dead_code)]
 pub fn to_vec<T: Serialize>(value: &T) -> Result<Vec<u8>, JsonError> {
     simd_json::to_vec(value).map_err(JsonError::SimdJson)
 }
@@ -73,6 +76,7 @@ pub fn to_vec<T: Serialize>(value: &T) -> Result<Vec<u8>, JsonError> {
 ///
 /// Uses pre-allocated buffer with estimated capacity for better performance.
 #[cfg(not(feature = "simd-json"))]
+#[allow(dead_code)]
 pub fn to_vec<T: Serialize>(value: &T) -> Result<Vec<u8>, JsonError> {
     serde_json::to_vec(value).map_err(JsonError::SerdeJson)
 }
@@ -106,6 +110,7 @@ pub fn to_vec_with_capacity<T: Serialize>(
 }
 
 /// Serialize a value to a pretty-printed JSON byte vector.
+#[allow(dead_code)]
 pub fn to_vec_pretty<T: Serialize>(value: &T) -> Result<Vec<u8>, JsonError> {
     serde_json::to_vec_pretty(value).map_err(JsonError::SerdeJson)
 }

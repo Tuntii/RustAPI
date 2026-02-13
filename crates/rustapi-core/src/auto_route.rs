@@ -67,6 +67,7 @@ pub fn collect_auto_routes() -> Vec<Route> {
 /// Get the count of auto-registered routes without collecting them.
 ///
 /// Useful for debugging and logging.
+#[allow(dead_code)]
 pub fn auto_route_count() -> usize {
     AUTO_ROUTES.len()
 }

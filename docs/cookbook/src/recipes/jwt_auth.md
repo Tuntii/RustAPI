@@ -1,14 +1,14 @@
 # JWT Authentication
 
-Authentication is critical for almost every API. RustAPI provides a built-in, production-ready JWT authentication system via the `jwt` feature.
+Authentication is critical for almost every API. RustAPI provides a built-in, production-ready JWT authentication system via the `extras-jwt` feature.
 
 ## Dependencies
 
-Enable the `jwt` feature in your `Cargo.toml`:
+Enable the `extras-jwt` feature in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.335", features = ["jwt"] }
+rustapi-rs = { version = "0.1.335", features = ["extras-jwt"] }
 serde = { version = "1", features = ["derive"] }
 ```
 

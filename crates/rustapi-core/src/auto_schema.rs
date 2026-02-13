@@ -21,6 +21,7 @@ pub fn apply_auto_schemas(spec: &mut rustapi_openapi::OpenApiSpec) {
 }
 
 /// Get the count of auto-registered schema registration functions.
+#[allow(dead_code)]
 pub fn auto_schema_count() -> usize {
     AUTO_SCHEMAS.len()
 }

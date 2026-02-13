@@ -90,7 +90,7 @@ mod new_command {
                 "--template",
                 "minimal",
                 "--features",
-                "jwt,cors",
+                "extras-jwt,extras-cors",
                 "--yes",
             ])
             .assert()
@@ -99,8 +99,8 @@ mod new_command {
         let cargo_content =
             fs::read_to_string(project_path.join("Cargo.toml")).expect("Failed to read Cargo.toml");
         assert!(
-            cargo_content.contains("jwt") && cargo_content.contains("cors"),
-            "Cargo.toml should include jwt and cors features"
+            cargo_content.contains("extras-jwt") && cargo_content.contains("extras-cors"),
+            "Cargo.toml should include extras-jwt and extras-cors features"
         );
     }
 

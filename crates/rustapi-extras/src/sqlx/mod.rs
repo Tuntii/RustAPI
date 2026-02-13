@@ -48,8 +48,18 @@
 //! }
 //! ```
 
+#[cfg(any(
+    feature = "sqlx-postgres",
+    feature = "sqlx-mysql",
+    feature = "sqlx-sqlite"
+))]
 use rustapi_core::health::{HealthCheck, HealthCheckBuilder, HealthStatus};
 use rustapi_core::ApiError;
+#[cfg(any(
+    feature = "sqlx-postgres",
+    feature = "sqlx-mysql",
+    feature = "sqlx-sqlite"
+))]
 use std::sync::Arc;
 use std::time::Duration;
 use thiserror::Error;

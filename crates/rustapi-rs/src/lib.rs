@@ -1,386 +1,334 @@
 //! # RustAPI
 //!
-//! A FastAPI-like web framework for Rust.
-//!
-//! RustAPI combines Rust's performance and safety with FastAPI's "just write business logic"
-//! approach. It provides automatic OpenAPI documentation, declarative validation, and
-//! a developer-friendly experience.
-//!
-//! ## Quick Start
-//!
-//! ```rust,ignore
-//! use rustapi_rs::prelude::*;
-//!
-//! #[derive(Serialize, Schema)]
-//! struct Hello {
-//!     message: String,
-//! }
-//!
-//! async fn hello() -> Json<Hello> {
-//!     Json(Hello {
-//!         message: "Hello, World!".to_string(),
-//!     })
-//! }
-//!
-//! #[tokio::main]
-//! async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
-//!     RustApi::new()
-//!         .route("/", get(hello))
-//!         .run("127.0.0.1:8080")
-//!         .await
-//! }
-//! ```
-//!
-//! ## Features
-//!
-//! - **DX-First**: Minimal boilerplate, intuitive API
-//! - **Type-Safe**: Compile-time route and schema validation
-//! - **Auto Documentation**: OpenAPI + Swagger UI out of the box
-//! - **Declarative Validation**: Pydantic-style validation on structs
-//! - **Batteries Included**: JWT, CORS, rate limiting (optional features)
-//!
-//! ## Optional Features
-//!
-//! Enable these features in your `Cargo.toml`:
-//!
-//! - `jwt` - JWT authentication middleware and `AuthUser<T>` extractor
-//! - `cors` - CORS middleware with builder pattern configuration
-//! - `rate-limit` - IP-based rate limiting middleware
-//! - `config` - Configuration management with `.env` file support
-//! - `cookies` - Cookie parsing extractor
-//! - `sqlx` - SQLx database error conversion to ApiError
-//! - `grpc` - Tonic-based gRPC integration helpers
-//! - `legacy-validator` - Compatibility mode for `validator::Validate`
-//! - `extras` - Meta feature enabling jwt, cors, and rate-limit
-//! - `full` - All optional features enabled
-//!
-//! ```toml
-//! [dependencies]
-//! rustapi-rs = { version = "0.1.300", features = ["jwt", "cors"] }
-//! ```
+//! Public facade crate for RustAPI.
 
-// Allow proc-macro expansions to refer to this crate via `::rustapi_rs`.
 extern crate self as rustapi_rs;
 
-// Re-export core functionality
-pub use rustapi_core::*;
-
-// Re-export macros
+// Re-export all procedural macros from rustapi-macros.
 pub use rustapi_macros::*;
 
-/// Private module for macro internals - DO NOT USE DIRECTLY
-///
-/// This module re-exports internal crates needed by derive macros.
-/// It shadows rustapi_core::__private from the glob re-export above.
+/// Macro/runtime internals. Not part of the public compatibility contract.
 #[doc(hidden)]
 pub mod __private {
     pub use async_trait;
-    pub use rustapi_core::__private::*;
+    pub use rustapi_core as core;
+    pub use rustapi_core::__private::{linkme, AUTO_ROUTES, AUTO_SCHEMAS};
+    pub use rustapi_openapi as openapi;
+    pub use rustapi_validate as validate;
+    pub use serde_json;
 }
 
-// Re-export extras (feature-gated)
-#[cfg(feature = "jwt")]
+/// Stable core surface exposed by the facade.
+pub mod core {
+    pub use rustapi_core::collect_auto_routes;
+    pub use rustapi_core::validation::Validatable;
+    pub use rustapi_core::{
+        delete, delete_route, get, get_route, patch, patch_route, post, post_route, put, put_route,
+        route, serve_dir, sse_response, ApiError, AsyncValidatedJson, Body, BodyLimitLayer,
+        BodyStream, BodyVariant, ClientIp, Created, Environment, Extension, FieldError,
+        FromRequest, FromRequestParts, Handler, HandlerService, HeaderValue, Headers, Html,
+        IntoResponse, Json, KeepAlive, MethodRouter, Multipart, MultipartConfig, MultipartField,
+        NoContent, Path, Query, Redirect, Request, RequestId, RequestIdLayer, Response,
+        ResponseBody, Result, Route, RouteHandler, RouteMatch, Router, RustApi, RustApiConfig, Sse,
+        SseEvent, State, StaticFile, StaticFileConfig, StatusCode, StreamBody, TracingLayer, Typed,
+        TypedPath, UploadedFile, ValidatedJson, WithStatus,
+    };
+
+    pub use rustapi_core::get_environment;
+
+    #[cfg(any(feature = "core-cookies", feature = "cookies"))]
+    pub use rustapi_core::Cookies;
+
+    #[cfg(any(feature = "core-compression", feature = "compression"))]
+    pub use rustapi_core::CompressionLayer;
+
+    #[cfg(any(feature = "core-compression", feature = "compression"))]
+    pub use rustapi_core::middleware::{CompressionAlgorithm, CompressionConfig};
+
+    #[cfg(any(feature = "core-http3", feature = "protocol-http3", feature = "http3"))]
+    pub use rustapi_core::{Http3Config, Http3Server};
+}
+
+// Backward-compatible root re-exports.
+pub use core::*;
+
+/// Optional protocol integrations grouped under a stable namespace.
+pub mod protocol {
+    #[cfg(any(feature = "protocol-toon", feature = "toon"))]
+    pub mod toon {
+        pub use rustapi_toon::*;
+    }
+
+    #[cfg(any(feature = "protocol-ws", feature = "ws"))]
+    pub mod ws {
+        pub use rustapi_ws::*;
+    }
+
+    #[cfg(any(feature = "protocol-view", feature = "view"))]
+    pub mod view {
+        pub use rustapi_view::*;
+    }
+
+    #[cfg(any(feature = "protocol-grpc", feature = "grpc"))]
+    pub mod grpc {
+        pub use rustapi_grpc::*;
+    }
+
+    #[cfg(any(feature = "core-http3", feature = "protocol-http3", feature = "http3"))]
+    pub mod http3 {
+        pub use rustapi_core::{Http3Config, Http3Server};
+    }
+}
+
+/// Optional extras grouped under a stable namespace.
+pub mod extras {
+    #[cfg(any(feature = "extras-jwt", feature = "jwt"))]
+    pub mod jwt {
+        pub use rustapi_extras::jwt;
+        pub use rustapi_extras::{
+            create_token, AuthUser, JwtError, JwtLayer, JwtValidation, ValidatedClaims,
+        };
+    }
+
+    #[cfg(any(feature = "extras-cors", feature = "cors"))]
+    pub mod cors {
+        pub use rustapi_extras::cors;
+        pub use rustapi_extras::{AllowedOrigins, CorsLayer};
+    }
+
+    #[cfg(any(feature = "extras-rate-limit", feature = "rate-limit"))]
+    pub mod rate_limit {
+        pub use rustapi_extras::rate_limit;
+        pub use rustapi_extras::RateLimitLayer;
+    }
+
+    #[cfg(any(feature = "extras-config", feature = "config"))]
+    pub mod config {
+        pub use rustapi_extras::config;
+        pub use rustapi_extras::{
+            env_or, env_parse, load_dotenv, load_dotenv_from, require_env, Config, ConfigError,
+            Environment,
+        };
+    }
+
+    #[cfg(any(feature = "extras-sqlx", feature = "sqlx"))]
+    pub mod sqlx {
+        pub use rustapi_extras::{convert_sqlx_error, SqlxErrorExt};
+    }
+
+    #[cfg(any(feature = "extras-insight", feature = "insight"))]
+    pub mod insight {
+        pub use rustapi_extras::insight;
+    }
+
+    #[cfg(any(feature = "extras-timeout", feature = "timeout"))]
+    pub mod timeout {
+        pub use rustapi_extras::timeout;
+    }
+
+    #[cfg(any(feature = "extras-guard", feature = "guard"))]
+    pub mod guard {
+        pub use rustapi_extras::guard;
+    }
+
+    #[cfg(any(feature = "extras-logging", feature = "logging"))]
+    pub mod logging {
+        pub use rustapi_extras::logging;
+    }
+
+    #[cfg(any(feature = "extras-circuit-breaker", feature = "circuit-breaker"))]
+    pub mod circuit_breaker {
+        pub use rustapi_extras::circuit_breaker;
+    }
+
+    #[cfg(any(feature = "extras-retry", feature = "retry"))]
+    pub mod retry {
+        pub use rustapi_extras::retry;
+    }
+
+    #[cfg(any(feature = "extras-security-headers", feature = "security-headers"))]
+    pub mod security_headers {
+        pub use rustapi_extras::security_headers;
+    }
+
+    #[cfg(any(feature = "extras-api-key", feature = "api-key"))]
+    pub mod api_key {
+        pub use rustapi_extras::api_key;
+    }
+
+    #[cfg(any(feature = "extras-cache", feature = "cache"))]
+    pub mod cache {
+        pub use rustapi_extras::cache;
+    }
+
+    #[cfg(any(feature = "extras-dedup", feature = "dedup"))]
+    pub mod dedup {
+        pub use rustapi_extras::dedup;
+    }
+
+    #[cfg(any(feature = "extras-sanitization", feature = "sanitization"))]
+    pub mod sanitization {
+        pub use rustapi_extras::sanitization;
+    }
+
+    #[cfg(any(feature = "extras-otel", feature = "otel"))]
+    pub mod otel {
+        pub use rustapi_extras::otel;
+    }
+
+    #[cfg(any(feature = "extras-structured-logging", feature = "structured-logging"))]
+    pub mod structured_logging {
+        pub use rustapi_extras::structured_logging;
+    }
+
+    #[cfg(any(feature = "extras-replay", feature = "replay"))]
+    pub mod replay {
+        pub use rustapi_extras::replay;
+    }
+}
+
+// Legacy root module aliases.
+#[cfg(any(feature = "protocol-toon", feature = "toon"))]
+#[deprecated(note = "Use rustapi_rs::protocol::toon instead")]
+pub mod toon {
+    pub use crate::protocol::toon::*;
+}
+
+#[cfg(any(feature = "protocol-ws", feature = "ws"))]
+#[deprecated(note = "Use rustapi_rs::protocol::ws instead")]
+pub mod ws {
+    pub use crate::protocol::ws::*;
+}
+
+#[cfg(any(feature = "protocol-view", feature = "view"))]
+#[deprecated(note = "Use rustapi_rs::protocol::view instead")]
+pub mod view {
+    pub use crate::protocol::view::*;
+}
+
+#[cfg(any(feature = "protocol-grpc", feature = "grpc"))]
+#[deprecated(note = "Use rustapi_rs::protocol::grpc instead")]
+pub mod grpc {
+    pub use crate::protocol::grpc::*;
+}
+
+// Legacy root extras re-exports for compatibility.
+#[cfg(any(feature = "extras-jwt", feature = "jwt"))]
 pub use rustapi_extras::jwt;
-#[cfg(feature = "jwt")]
+#[cfg(any(feature = "extras-jwt", feature = "jwt"))]
 pub use rustapi_extras::{
     create_token, AuthUser, JwtError, JwtLayer, JwtValidation, ValidatedClaims,
 };
 
-#[cfg(feature = "cors")]
+#[cfg(any(feature = "extras-cors", feature = "cors"))]
 pub use rustapi_extras::cors;
-#[cfg(feature = "cors")]
+#[cfg(any(feature = "extras-cors", feature = "cors"))]
 pub use rustapi_extras::{AllowedOrigins, CorsLayer};
 
-#[cfg(feature = "rate-limit")]
+#[cfg(any(feature = "extras-rate-limit", feature = "rate-limit"))]
 pub use rustapi_extras::rate_limit;
-#[cfg(feature = "rate-limit")]
+#[cfg(any(feature = "extras-rate-limit", feature = "rate-limit"))]
 pub use rustapi_extras::RateLimitLayer;
 
-#[cfg(feature = "config")]
+#[cfg(any(feature = "extras-config", feature = "config"))]
 pub use rustapi_extras::config;
-#[cfg(feature = "config")]
+#[cfg(any(feature = "extras-config", feature = "config"))]
 pub use rustapi_extras::{
-    env_or, env_parse, load_dotenv, load_dotenv_from, require_env, Config, ConfigError, Environment,
+    env_or, env_parse, load_dotenv, load_dotenv_from, require_env, Config, ConfigError,
+    Environment as ExtrasEnvironment,
 };
 
-#[cfg(feature = "sqlx")]
+#[cfg(any(feature = "extras-sqlx", feature = "sqlx"))]
 pub use rustapi_extras::{convert_sqlx_error, SqlxErrorExt};
 
-// Re-export Phase 11 & Observability Features
-#[cfg(feature = "timeout")]
+#[cfg(any(feature = "extras-api-key", feature = "api-key"))]
+pub use rustapi_extras::api_key;
+#[cfg(any(feature = "extras-cache", feature = "cache"))]
+pub use rustapi_extras::cache;
+#[cfg(any(feature = "extras-circuit-breaker", feature = "circuit-breaker"))]
+pub use rustapi_extras::circuit_breaker;
+#[cfg(any(feature = "extras-dedup", feature = "dedup"))]
+pub use rustapi_extras::dedup;
+#[cfg(any(feature = "extras-guard", feature = "guard"))]
+pub use rustapi_extras::guard;
+#[cfg(any(feature = "extras-logging", feature = "logging"))]
+pub use rustapi_extras::logging;
+#[cfg(any(feature = "extras-otel", feature = "otel"))]
+pub use rustapi_extras::otel;
+#[cfg(any(feature = "extras-replay", feature = "replay"))]
+pub use rustapi_extras::replay;
+#[cfg(any(feature = "extras-retry", feature = "retry"))]
+pub use rustapi_extras::retry;
+#[cfg(any(feature = "extras-sanitization", feature = "sanitization"))]
+pub use rustapi_extras::sanitization;
+#[cfg(any(feature = "extras-security-headers", feature = "security-headers"))]
+pub use rustapi_extras::security_headers;
+#[cfg(any(feature = "extras-structured-logging", feature = "structured-logging"))]
+pub use rustapi_extras::structured_logging;
+#[cfg(any(feature = "extras-timeout", feature = "timeout"))]
 pub use rustapi_extras::timeout;
 
-#[cfg(feature = "guard")]
-pub use rustapi_extras::guard;
-
-#[cfg(feature = "logging")]
-pub use rustapi_extras::logging;
-
-#[cfg(feature = "circuit-breaker")]
-pub use rustapi_extras::circuit_breaker;
-
-#[cfg(feature = "retry")]
-pub use rustapi_extras::retry;
-
-#[cfg(feature = "security-headers")]
-pub use rustapi_extras::security_headers;
-
-#[cfg(feature = "api-key")]
-pub use rustapi_extras::api_key;
-
-#[cfg(feature = "cache")]
-pub use rustapi_extras::cache;
-
-#[cfg(feature = "dedup")]
-pub use rustapi_extras::dedup;
-
-#[cfg(feature = "sanitization")]
-pub use rustapi_extras::sanitization;
-
-#[cfg(feature = "otel")]
-pub use rustapi_extras::otel;
-
-#[cfg(feature = "structured-logging")]
-pub use rustapi_extras::structured_logging;
-
-// Replay (time-travel debugging)
-#[cfg(feature = "replay")]
-pub use rustapi_extras::replay;
-
-// Re-export TOON (feature-gated)
-#[cfg(feature = "toon")]
-pub mod toon {
-    //! TOON (Token-Oriented Object Notation) support
-    //!
-    //! TOON is a compact format for LLM communication that reduces token usage by 20-40%.
-    //!
-    //! # Example
-    //!
-    //! ```rust,ignore
-    //! use rustapi_rs::toon::{Toon, Negotiate, AcceptHeader};
-    //!
-    //! // As extractor
-    //! async fn handler(Toon(data): Toon<MyType>) -> impl IntoResponse { ... }
-    //!
-    //! // As response
-    //! async fn handler() -> Toon<MyType> { Toon(my_data) }
-    //!
-    //! // Content negotiation (returns JSON or TOON based on Accept header)
-    //! async fn handler(accept: AcceptHeader) -> Negotiate<MyType> {
-    //!     Negotiate::new(my_data, accept.preferred)
-    //! }
-    //! ```
-    pub use rustapi_toon::*;
-}
-
-// Re-export WebSocket support (feature-gated)
-#[cfg(feature = "ws")]
-pub mod ws {
-    //! WebSocket support for real-time bidirectional communication
-    //!
-    //! This module provides WebSocket functionality through the `WebSocket` extractor,
-    //! enabling real-time communication patterns like chat, live updates, and streaming.
-    //!
-    //! # Example
-    //!
-    //! ```rust,ignore
-    //! use rustapi_rs::ws::{WebSocket, Message};
-    //!
-    //! async fn websocket_handler(ws: WebSocket) -> impl IntoResponse {
-    //!     ws.on_upgrade(|mut socket| async move {
-    //!         while let Some(Ok(msg)) = socket.recv().await {
-    //!             if let Message::Text(text) = msg {
-    //!                 socket.send(Message::Text(format!("Echo: {}", text))).await.ok();
-    //!             }
-    //!         }
-    //!     })
-    //! }
-    //! ```
-    pub use rustapi_ws::*;
-}
-
-// Re-export View/Template support (feature-gated)
-#[cfg(feature = "view")]
-pub mod view {
-    //! Template engine support for server-side rendering
-    //!
-    //! This module provides Tera-based templating with the `View<T>` response type,
-    //! enabling server-side HTML rendering with template inheritance and context.
-    //!
-    //! # Example
-    //!
-    //! ```rust,ignore
-    //! use rustapi_rs::view::{Templates, View, ContextBuilder};
-    //!
-    //! #[derive(Clone)]
-    //! struct AppState {
-    //!     templates: Templates,
-    //! }
-    //!
-    //! async fn index(State(state): State<AppState>) -> View<()> {
-    //!     View::new(&state.templates, "index.html")
-    //!         .with("title", "Home")
-    //!         .with("message", "Welcome!")
-    //! }
-    //! ```
-    pub use rustapi_view::*;
-}
-
-// Re-export gRPC support (feature-gated)
-#[cfg(feature = "grpc")]
-pub mod grpc {
-    //! gRPC integration helpers powered by Tonic.
-    //!
-    //! Use this module to run RustAPI HTTP and gRPC servers side-by-side.
-    pub use rustapi_grpc::*;
-}
-
-/// Prelude module - import everything you need with `use rustapi_rs::prelude::*`
+/// Prelude module: `use rustapi_rs::prelude::*`.
 pub mod prelude {
-    // Core types
-    pub use rustapi_core::validation::Validatable;
-    pub use rustapi_core::{
-        delete,
-        delete_route,
-        get,
-        get_route,
-        patch,
-        patch_route,
-        post,
-        post_route,
-        put,
-        put_route,
-        serve_dir,
-        sse_response,
-        // Error handling
-        ApiError,
-        AsyncValidatedJson,
-        Body,
-        ClientIp,
-        Created,
-        Extension,
-        HeaderValue,
-        Headers,
-        Html,
-        // Response types
-        IntoResponse,
-        // Extractors
-        Json,
-        KeepAlive,
-        // Multipart
-        Multipart,
-        MultipartConfig,
-        MultipartField,
-        NoContent,
-        Path,
-        Query,
-        Redirect,
-        // Request context
-        Request,
-        // Middleware
-        RequestId,
-        RequestIdLayer,
-        Response,
-        Result,
-        // Route type for macro-based routing
-        Route,
-        // Router
-        Router,
-        // App builder
-        RustApi,
-        RustApiConfig,
-        // Streaming responses
-        Sse,
-        SseEvent,
-        State,
-        // Static files
-        StaticFile,
-        StaticFileConfig,
-        StatusCode,
-        StreamBody,
-        TracingLayer,
-        Typed,
-        TypedPath,
-        UploadedFile,
-        ValidatedJson,
-        WithStatus,
+    pub use crate::core::Validatable;
+    pub use crate::core::{
+        delete, delete_route, get, get_route, patch, patch_route, post, post_route, put, put_route,
+        route, serve_dir, sse_response, ApiError, AsyncValidatedJson, Body, BodyLimitLayer,
+        ClientIp, Created, Extension, HeaderValue, Headers, Html, IntoResponse, Json, KeepAlive,
+        Multipart, MultipartConfig, MultipartField, NoContent, Path, Query, Redirect, Request,
+        RequestId, RequestIdLayer, Response, Result, Route, Router, RustApi, RustApiConfig, Sse,
+        SseEvent, State, StaticFile, StaticFileConfig, StatusCode, StreamBody, TracingLayer, Typed,
+        TypedPath, UploadedFile, ValidatedJson, WithStatus,
     };
 
-    // Compression middleware (feature-gated in core)
-    #[cfg(feature = "compression")]
-    pub use rustapi_core::middleware::{CompressionAlgorithm, CompressionConfig};
-    #[cfg(feature = "compression")]
-    pub use rustapi_core::CompressionLayer;
+    #[cfg(any(feature = "core-compression", feature = "compression"))]
+    pub use crate::core::{CompressionAlgorithm, CompressionConfig, CompressionLayer};
 
-    // Cookies extractor (feature-gated in core)
-    #[cfg(feature = "cookies")]
-    pub use rustapi_core::Cookies;
+    #[cfg(any(feature = "core-cookies", feature = "cookies"))]
+    pub use crate::core::Cookies;
 
-    // Re-export the route! macro
-    pub use rustapi_core::route;
-
-    // Re-export TypedPath derive macro
     pub use rustapi_macros::ApiError;
+    pub use rustapi_macros::Schema;
     pub use rustapi_macros::TypedPath;
 
-    // Re-export validation - use validator derive macro directly
     pub use rustapi_validate::v2::AsyncValidate;
     pub use rustapi_validate::v2::Validate as V2Validate;
-    #[cfg(feature = "legacy-validator")]
+
+    #[cfg(any(feature = "core-legacy-validator", feature = "legacy-validator"))]
     pub use validator::Validate;
 
-    // Re-export OpenAPI schema derive
-    pub use rustapi_openapi::Schema;
-
-    // Re-export crates needed by Schema derive macro
-    // These are required for the macro-generated code to compile
-    pub use rustapi_openapi;
-    pub use serde_json;
-
-    // Re-export commonly used external types
     pub use serde::{Deserialize, Serialize};
     pub use tracing::{debug, error, info, trace, warn};
 
-    // JWT types (feature-gated)
-    #[cfg(feature = "jwt")]
-    pub use rustapi_extras::{
-        create_token, AuthUser, JwtError, JwtLayer, JwtValidation, ValidatedClaims,
-    };
+    #[cfg(any(feature = "extras-jwt", feature = "jwt"))]
+    pub use crate::{create_token, AuthUser, JwtError, JwtLayer, JwtValidation, ValidatedClaims};
 
-    // CORS types (feature-gated)
-    #[cfg(feature = "cors")]
-    pub use rustapi_extras::{AllowedOrigins, CorsLayer};
+    #[cfg(any(feature = "extras-cors", feature = "cors"))]
+    pub use crate::{AllowedOrigins, CorsLayer};
 
-    // Rate limiting types (feature-gated)
-    #[cfg(feature = "rate-limit")]
-    pub use rustapi_extras::RateLimitLayer;
+    #[cfg(any(feature = "extras-rate-limit", feature = "rate-limit"))]
+    pub use crate::RateLimitLayer;
 
-    // Configuration types (feature-gated)
-    #[cfg(feature = "config")]
-    pub use rustapi_extras::{
+    #[cfg(any(feature = "extras-config", feature = "config"))]
+    pub use crate::{
         env_or, env_parse, load_dotenv, load_dotenv_from, require_env, Config, ConfigError,
-        Environment,
+        ExtrasEnvironment,
     };
 
-    // SQLx types (feature-gated)
-    #[cfg(feature = "sqlx")]
-    pub use rustapi_extras::{convert_sqlx_error, SqlxErrorExt};
+    #[cfg(any(feature = "extras-sqlx", feature = "sqlx"))]
+    pub use crate::{convert_sqlx_error, SqlxErrorExt};
 
-    // TOON types (feature-gated)
-    #[cfg(feature = "toon")]
-    pub use rustapi_toon::{AcceptHeader, LlmResponse, Negotiate, OutputFormat, Toon};
+    #[cfg(any(feature = "protocol-toon", feature = "toon"))]
+    pub use crate::protocol::toon::{AcceptHeader, LlmResponse, Negotiate, OutputFormat, Toon};
 
-    // WebSocket types (feature-gated)
-    #[cfg(feature = "ws")]
-    pub use rustapi_ws::{Broadcast, Message, WebSocket, WebSocketStream};
+    #[cfg(any(feature = "protocol-ws", feature = "ws"))]
+    pub use crate::protocol::ws::{Broadcast, Message, WebSocket, WebSocketStream};
 
-    // View/Template types (feature-gated)
-    #[cfg(feature = "view")]
-    pub use rustapi_view::{ContextBuilder, Templates, TemplatesConfig, View};
+    #[cfg(any(feature = "protocol-view", feature = "view"))]
+    pub use crate::protocol::view::{ContextBuilder, Templates, TemplatesConfig, View};
 
-    // gRPC integration (feature-gated)
-    #[cfg(feature = "grpc")]
-    pub use rustapi_grpc::{
+    #[cfg(any(feature = "protocol-grpc", feature = "grpc"))]
+    pub use crate::protocol::grpc::{
         run_concurrently, run_rustapi_and_grpc, run_rustapi_and_grpc_with_shutdown,
     };
 }
@@ -391,7 +339,6 @@ mod tests {
 
     #[test]
     fn prelude_imports_work() {
-        // This test ensures prelude exports compile correctly
         let _: fn() -> Result<()> = || Ok(());
     }
 }

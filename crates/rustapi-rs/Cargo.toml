@@ -39,56 +39,105 @@ doc-comment = "0.3"
 uuid = { workspace = true, features = ["serde", "v4"] }
 
 [features]
-default = ["swagger-ui", "tracing"]
-swagger-ui = ["rustapi-core/swagger-ui", "rustapi-openapi/swagger-ui"]
+default = ["core"]
 
-# Performance features
-simd-json = ["rustapi-core/simd-json"]
-tracing = ["rustapi-core/tracing"]
-legacy-validator = ["dep:validator", "rustapi-core/legacy-validator"]
+# Canonical core features
+core = ["core-openapi", "core-tracing"]
+core-openapi = ["rustapi-core/swagger-ui", "rustapi-openapi/swagger-ui"]
+core-tracing = ["rustapi-core/tracing"]
+core-simd-json = ["rustapi-core/simd-json"]
+core-legacy-validator = ["dep:validator", "rustapi-core/legacy-validator"]
+core-compression = ["rustapi-core/compression"]
+core-compression-brotli = ["rustapi-core/compression-brotli"]
+core-cookies = ["dep:rustapi-extras", "rustapi-extras/cookies", "rustapi-core/cookies"]
+core-http3 = ["rustapi-core/http3"]
+core-http3-dev = ["rustapi-core/http3-dev"]
 
-# Compression middleware
-compression = ["rustapi-core/compression"]
-compression-brotli = ["rustapi-core/compression-brotli"]
+# Canonical protocol features
+protocol-toon = ["dep:rustapi-toon"]
+protocol-ws = ["dep:rustapi-ws"]
+protocol-view = ["dep:rustapi-view"]
+protocol-grpc = ["dep:rustapi-grpc"]
+protocol-http3 = ["core-http3"]
+protocol-http3-dev = ["core-http3-dev"]
+protocol-all = ["protocol-toon", "protocol-ws", "protocol-view", "protocol-grpc"]
 
-# Security and utility features (from rustapi-extras)
-jwt = ["dep:rustapi-extras", "rustapi-extras/jwt"]
-cors = ["dep:rustapi-extras", "rustapi-extras/cors"]
-rate-limit = ["dep:rustapi-extras", "rustapi-extras/rate-limit"]
-config = ["dep:rustapi-extras", "rustapi-extras/config"]
-cookies = ["dep:rustapi-extras", "rustapi-extras/cookies", "rustapi-core/cookies"]
-sqlx = ["dep:rustapi-extras", "rustapi-extras/sqlx"]
-insight = ["dep:rustapi-extras", "rustapi-extras/insight"]
+# Canonical extras features
+extras-jwt = ["dep:rustapi-extras", "rustapi-extras/jwt"]
+extras-cors = ["dep:rustapi-extras", "rustapi-extras/cors"]
+extras-rate-limit = ["dep:rustapi-extras", "rustapi-extras/rate-limit"]
+extras-config = ["dep:rustapi-extras", "rustapi-extras/config"]
+extras-sqlx = ["dep:rustapi-extras", "rustapi-extras/sqlx"]
+extras-insight = ["dep:rustapi-extras", "rustapi-extras/insight"]
+extras-timeout = ["dep:rustapi-extras", "rustapi-extras/timeout"]
+extras-guard = ["dep:rustapi-extras", "rustapi-extras/guard"]
+extras-logging = ["dep:rustapi-extras", "rustapi-extras/logging"]
+extras-circuit-breaker = ["dep:rustapi-extras", "rustapi-extras/circuit-breaker"]
+extras-retry = ["dep:rustapi-extras", "rustapi-extras/retry"]
+extras-security-headers = ["dep:rustapi-extras", "rustapi-extras/security-headers"]
+extras-api-key = ["dep:rustapi-extras", "rustapi-extras/api-key"]
+extras-cache = ["dep:rustapi-extras", "rustapi-extras/cache"]
+extras-dedup = ["dep:rustapi-extras", "rustapi-extras/dedup"]
+extras-sanitization = ["dep:rustapi-extras", "rustapi-extras/sanitization"]
+extras-otel = ["dep:rustapi-extras", "rustapi-extras/otel"]
+extras-structured-logging = ["dep:rustapi-extras", "rustapi-extras/structured-logging"]
+extras-replay = ["dep:rustapi-extras", "rustapi-extras/replay"]
+extras-all = [
+    "extras-jwt",
+    "extras-cors",
+    "extras-rate-limit",
+    "extras-config",
+    "extras-sqlx",
+    "extras-insight",
+    "extras-timeout",
+    "extras-guard",
+    "extras-logging",
+    "extras-circuit-breaker",
+    "extras-retry",
+    "extras-security-headers",
+    "extras-api-key",
+    "extras-cache",
+    "extras-dedup",
+    "extras-sanitization",
+    "extras-otel",
+    "extras-structured-logging",
+    "extras-replay",
+]
 
-# TOON format support
-toon = ["dep:rustapi-toon"]
+# Legacy feature aliases (kept for migration compatibility)
+swagger-ui = ["core-openapi"]
+tracing = ["core-tracing"]
+simd-json = ["core-simd-json"]
+legacy-validator = ["core-legacy-validator"]
+compression = ["core-compression"]
+compression-brotli = ["core-compression-brotli"]
+cookies = ["core-cookies"]
+http3 = ["protocol-http3"]
+http3-dev = ["protocol-http3-dev"]
+toon = ["protocol-toon"]
+ws = ["protocol-ws"]
+view = ["protocol-view"]
+grpc = ["protocol-grpc"]
+jwt = ["extras-jwt"]
+cors = ["extras-cors"]
+rate-limit = ["extras-rate-limit"]
+config = ["extras-config"]
+sqlx = ["extras-sqlx"]
+insight = ["extras-insight"]
+timeout = ["extras-timeout"]
+guard = ["extras-guard"]
+logging = ["extras-logging"]
+circuit-breaker = ["extras-circuit-breaker"]
+retry = ["extras-retry"]
+security-headers = ["extras-security-headers"]
+api-key = ["extras-api-key"]
+cache = ["extras-cache"]
+dedup = ["extras-dedup"]
+sanitization = ["extras-sanitization"]
+otel = ["extras-otel"]
+structured-logging = ["extras-structured-logging"]
+replay = ["extras-replay"]
+extras = ["extras-jwt", "extras-cors", "extras-rate-limit"]
 
-# WebSocket support
-ws = ["dep:rustapi-ws"]
-
-# Template engine support
-view = ["dep:rustapi-view"]
-
-# gRPC support
-grpc = ["dep:rustapi-grpc"]
-
-# New Phase 11 & Observability features
-timeout = ["dep:rustapi-extras", "rustapi-extras/timeout"]
-guard = ["dep:rustapi-extras", "rustapi-extras/guard"]
-logging = ["dep:rustapi-extras", "rustapi-extras/logging"]
-circuit-breaker = ["dep:rustapi-extras", "rustapi-extras/circuit-breaker"]
-retry = ["dep:rustapi-extras", "rustapi-extras/retry"]
-security-headers = ["dep:rustapi-extras", "rustapi-extras/security-headers"]
-api-key = ["dep:rustapi-extras", "rustapi-extras/api-key"]
-cache = ["dep:rustapi-extras", "rustapi-extras/cache"]
-dedup = ["dep:rustapi-extras", "rustapi-extras/dedup"]
-sanitization = ["dep:rustapi-extras", "rustapi-extras/sanitization"]
-otel = ["dep:rustapi-extras", "rustapi-extras/otel"]
-structured-logging = ["dep:rustapi-extras", "rustapi-extras/structured-logging"]
-
-# Replay (time-travel debugging)
-replay = ["dep:rustapi-extras", "rustapi-extras/replay"]
-
-# Meta features
-extras = ["jwt", "cors", "rate-limit"]
-full = ["extras", "config", "cookies", "sqlx", "toon", "insight", "compression", "ws", "view", "grpc", "timeout", "guard", "logging", "circuit-breaker", "security-headers", "api-key", "cache", "dedup", "sanitization", "otel", "structured-logging", "replay", "legacy-validator"]
+# Canonical aggregate
+full = ["core", "protocol-all", "extras-all", "core-legacy-validator"]

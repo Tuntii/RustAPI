@@ -80,7 +80,7 @@ Performance is not a guessing game. Below are results from our internal benchmar
 | Framework | Requests/sec | Latency (avg) | Memory |
 |-----------|--------------|---------------|--------|
 | **RustAPI** | **~185,000** | **~0.54ms** | **~8MB** |
-| **RustAPI + simd-json** | **~220,000** | **~0.45ms** | **~8MB** |
+| **RustAPI + core-simd-json** | **~220,000** | **~0.45ms** | **~8MB** |
 | Actix-web | ~178,000 | ~0.56ms | ~10MB |
 | Axum | ~165,000 | ~0.61ms | ~12MB |
 | Rocket | ~95,000 | ~1.05ms | ~15MB |
@@ -105,7 +105,7 @@ cd benches
 
 | Optimization | Description |
 |--------------|-------------|
-| ⚡ **SIMD-JSON** | 2-4x faster JSON parsing with `simd-json` feature |
+| ⚡ **SIMD-JSON** | 2-4x faster JSON parsing with `core-simd-json` feature |
 | 🔄 **Zero-copy parsing** | Direct memory access for path/query params |
 | 📦 **SmallVec PathParams** | Stack-optimized path parameters |
 | 🎯 **Compile-time dispatch** | All extractors resolved at compile time |

@@ -117,16 +117,16 @@ rustapi-rs = "0.1.335"
 rustapi-rs = { version = "0.1.335", features = ["full"] }
 
 # Pick what you need
-rustapi-rs = { version = "0.1.335", features = ["jwt", "cors", "toon"] }
+rustapi-rs = { version = "0.1.335", features = ["extras-jwt", "extras-cors", "protocol-toon"] }
 ```
 
 | Feature | What You Get |
 |---------|--------------|
-| `jwt` | JWT authentication with `AuthUser<T>` extractor |
-| `cors` | CORS middleware with builder pattern |
-| `rate-limit` | IP-based rate limiting |
-| `toon` | LLM-optimized TOON format |
-| `swagger-ui` | Auto-generated `/docs` endpoint |
+| `extras-jwt` | JWT authentication with `AuthUser<T>` extractor |
+| `extras-cors` | CORS middleware with builder pattern |
+| `extras-rate-limit` | IP-based rate limiting |
+| `protocol-toon` | LLM-optimized TOON format |
+| `core-openapi` | Auto-generated `/docs` endpoint |
 | `full` | All features enabled |
 
 ### 5. 🤖 LLM-First Design
@@ -219,7 +219,7 @@ async fn handler(Json(body): Json<T>) -> Json<R>
 
 ### Short Term (v0.x)
 - Polish existing features
-- Performance optimizations (simd-json, better allocations)
+- Performance optimizations (`core-simd-json`, better allocations)
 - More middleware (compression, static files)
 
 ### Medium Term (v1.0)

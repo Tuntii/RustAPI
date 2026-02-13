@@ -51,9 +51,9 @@
 //! full framework experience with all features and re-exports.
 
 mod app;
-pub mod auto_route;
+mod auto_route;
 pub use auto_route::collect_auto_routes;
-pub mod auto_schema;
+mod auto_schema;
 pub use auto_schema::apply_auto_schemas;
 mod error;
 mod extract;
@@ -63,11 +63,11 @@ pub mod health;
 #[cfg(feature = "http3")]
 pub mod http3;
 pub mod interceptor;
-pub mod json;
+pub(crate) mod json;
 pub mod middleware;
 pub mod multipart;
-pub mod path_params;
-pub mod path_validation;
+pub(crate) mod path_params;
+pub(crate) mod path_validation;
 #[cfg(feature = "replay")]
 pub mod replay;
 mod request;
@@ -121,6 +121,7 @@ pub use middleware::{BodyLimitLayer, RequestId, RequestIdLayer, TracingLayer, DE
 #[cfg(feature = "metrics")]
 pub use middleware::{MetricsLayer, MetricsResponse};
 pub use multipart::{Multipart, MultipartConfig, MultipartField, UploadedFile};
+pub use path_params::PathParams;
 pub use request::{BodyVariant, Request};
 pub use response::{
     Body as ResponseBody, Created, Html, IntoResponse, NoContent, Redirect, Response, WithStatus,

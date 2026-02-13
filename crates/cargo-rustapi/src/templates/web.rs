@@ -5,13 +5,13 @@ use anyhow::Result;
 use tokio::fs;
 
 pub async fn generate(name: &str, features: &[String]) -> Result<()> {
-    // Add view feature
+    // Add the protocol-view feature for template rendering support
     let mut all_features = features.to_vec();
-    if !all_features.contains(&"view".to_string()) {
-        all_features.push("view".to_string());
+    if !all_features.contains(&"protocol-view".to_string()) {
+        all_features.push("protocol-view".to_string());
     }
 
-    // Cargo.toml - rustapi-view is accessed through rustapi-rs when "view" feature is enabled
+    // Cargo.toml - rustapi-view is accessed through rustapi-rs when protocol-view is enabled
     let cargo_toml = format!(
         r#"[package]
 name = "{name}"
@@ -39,7 +39,7 @@ tracing-subscriber = {{ version = "0.3", features = ["env-filter"] }}
     let main_rs = r#"mod handlers;
 
 use rustapi_rs::prelude::*;
-use rustapi_rs::view::Templates;
+use rustapi_rs::protocol::view::Templates;
 
 #[rustapi_rs::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
@@ -76,7 +76,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let handlers_mod = r#"//! Page handlers
 
 use rustapi_rs::prelude::*;
-use rustapi_rs::view::{Templates, View};
+use rustapi_rs::protocol::view::{Templates, View};
 use serde::Serialize;
 
 #[derive(Serialize)]

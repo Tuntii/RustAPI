@@ -180,7 +180,7 @@ Checks `X-Forwarded-For`, `X-Real-IP`, then socket address.
 
 ### `AuthUser<T>` (JWT)
 
-Extract authenticated user claims (requires `jwt` feature).
+Extract authenticated user claims (requires `extras-jwt` feature).
 
 ```rust
 use rustapi_rs::extract::AuthUser;
@@ -627,7 +627,7 @@ Token-Oriented Object Notation for LLM optimization.
 ### Basic Usage
 
 ```rust
-use rustapi_rs::toon::Toon;
+use rustapi_rs::protocol::toon::Toon;
 
 #[rustapi_rs::get("/ai/users")]
 async fn ai_users() -> Toon<UsersResponse> {
@@ -638,7 +638,7 @@ async fn ai_users() -> Toon<UsersResponse> {
 ### Content Negotiation
 
 ```rust
-use rustapi_rs::toon::{LlmResponse, AcceptHeader};
+use rustapi_rs::protocol::toon::{LlmResponse, AcceptHeader};
 
 #[rustapi_rs::get("/users")]
 async fn users(accept: AcceptHeader) -> LlmResponse<UsersResponse> {
@@ -685,12 +685,12 @@ users[(id:1,name:Alice,email:alice@example.com)(id:2,name:Bob,email:bob@example.
 
 ## WebSocket
 
-Real-time bidirectional communication support (requires `ws` feature).
+Real-time bidirectional communication support (requires `protocol-ws` feature).
 
 ### Basic WebSocket Handler
 
 ```rust
-use rustapi_rs::ws::{WebSocket, WebSocketUpgrade, WebSocketStream, Message};
+use rustapi_rs::protocol::ws::{WebSocket, WebSocketUpgrade, WebSocketStream, Message};
 
 #[rustapi_rs::get("/ws")]
 async fn websocket(ws: WebSocket) -> WebSocketUpgrade {
@@ -733,7 +733,7 @@ async fn handle_connection(mut stream: WebSocketStream) {
 For pub/sub patterns (chat rooms, live updates):
 
 ```rust
-use rustapi_rs::ws::{Broadcast, Message};
+use rustapi_rs::protocol::ws::{Broadcast, Message};
 use std::sync::Arc;
 
 #[tokio::main]
@@ -810,12 +810,12 @@ async fn websocket(
 
 ## Template Engine
 
-Server-side HTML rendering with Tera templates (requires `view` feature).
+Server-side HTML rendering with Tera templates (requires `protocol-view` feature).
 
 ### Setup
 
 ```rust
-use rustapi_rs::view::{Templates, TemplatesConfig};
+use rustapi_rs::protocol::view::{Templates, TemplatesConfig};
 
 #[tokio::main]
 async fn main() {
@@ -835,7 +835,7 @@ async fn main() {
 ### Basic Template Rendering
 
 ```rust
-use rustapi_rs::view::{Templates, View};
+use rustapi_rs::protocol::view::{Templates, View};
 
 #[rustapi_rs::get("/")]
 async fn home(templates: Templates) -> View<()> {
@@ -864,7 +864,7 @@ async fn user_page(
 ### Template with Extra Context
 
 ```rust
-use rustapi_rs::view::{Templates, View, ContextBuilder};
+use rustapi_rs::protocol::view::{Templates, View, ContextBuilder};
 
 #[rustapi_rs::get("/dashboard")]
 async fn dashboard(templates: Templates) -> View<DashboardData> {
@@ -1162,17 +1162,20 @@ rustapi-rs = { version = "0.1.335", features = ["full"] }
 
 | Feature | Description |
 |---------|-------------|
-| `swagger-ui` | Swagger UI (default) |
-| `jwt` | JWT authentication |
-| `cors` | CORS middleware |
-| `rate-limit` | Rate limiting |
-| `toon` | TOON format |
-| `cookies` | Cookie extraction |
-| `ws` | WebSocket support |
-| `view` | Template engine (Tera) |
-| `simd-json` | 2-4x faster JSON parsing |
-| `audit` | GDPR/SOC2 audit logging |
-| `full` | All features |
+| `core` | Default stable core (`core-openapi`, `core-tracing`) |
+| `core-openapi` | OpenAPI + docs endpoint support |
+| `core-tracing` | Tracing middleware and instrumentation |
+| `core-simd-json` | 2-4x faster JSON parsing |
+| `core-cookies` | Cookie extraction |
+| `protocol-toon` | TOON format |
+| `protocol-ws` | WebSocket support |
+| `protocol-view` | Template engine (Tera) |
+| `protocol-grpc` | gRPC bridge helpers |
+| `extras-jwt` | JWT authentication |
+| `extras-cors` | CORS middleware |
+| `extras-rate-limit` | Rate limiting |
+| `extras-replay` | Request replay tooling |
+| `full` | `core + protocol-all + extras-all` |
 
 ---
 
@@ -1282,10 +1285,10 @@ let events = store.query()
 
 ## Performance Tips
 
-### 1. Use `simd-json` (when available)
+### 1. Use `core-simd-json` (when available)
 
 ```toml
-rustapi-rs = { version = "0.1.335", features = ["simd-json"] }
+rustapi-rs = { version = "0.1.335", features = ["core-simd-json"] }
 ```
 
 2-4x faster JSON parsing.

@@ -116,8 +116,8 @@ pub fn schema(_attr: TokenStream, item: TokenStream) -> TokenStream {
         #[allow(non_upper_case_globals)]
         #[#rustapi_path::__private::linkme::distributed_slice(#rustapi_path::__private::AUTO_SCHEMAS)]
         #[linkme(crate = #rustapi_path::__private::linkme)]
-        static #registrar_ident: fn(&mut #rustapi_path::__private::rustapi_openapi::OpenApiSpec) =
-            |spec: &mut #rustapi_path::__private::rustapi_openapi::OpenApiSpec| {
+        static #registrar_ident: fn(&mut #rustapi_path::__private::openapi::OpenApiSpec) =
+            |spec: &mut #rustapi_path::__private::openapi::OpenApiSpec| {
                 spec.register_in_place::<#ident>();
             };
     };
@@ -607,7 +607,7 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
         // Auto-register referenced schemas with linkme (best-effort)
         #[doc(hidden)]
         #[allow(non_snake_case)]
-        fn #schema_reg_fn_name(spec: &mut #rustapi_path::__private::rustapi_openapi::OpenApiSpec) {
+        fn #schema_reg_fn_name(spec: &mut #rustapi_path::__private::openapi::OpenApiSpec) {
             #( spec.register_in_place::<#schema_types>(); )*
         }
 
@@ -615,7 +615,7 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
         #[allow(non_upper_case_globals)]
         #[#rustapi_path::__private::linkme::distributed_slice(#rustapi_path::__private::AUTO_SCHEMAS)]
         #[linkme(crate = #rustapi_path::__private::linkme)]
-        static #auto_schema_name: fn(&mut #rustapi_path::__private::rustapi_openapi::OpenApiSpec) = #schema_reg_fn_name;
+        static #auto_schema_name: fn(&mut #rustapi_path::__private::openapi::OpenApiSpec) = #schema_reg_fn_name;
     };
 
     debug_output(&format!("{} {}", method, path_value), &expanded);
@@ -969,12 +969,12 @@ fn get_validate_path() -> proc_macro2::TokenStream {
     if let Ok(found) = rustapi_rs_found {
         match found {
             FoundCrate::Itself => {
-                quote! { crate::__private::rustapi_validate }
+                quote! { ::rustapi_rs::__private::validate }
             }
             FoundCrate::Name(name) => {
                 let normalized = name.replace('-', "_");
                 let ident = syn::Ident::new(&normalized, proc_macro2::Span::call_site());
-                quote! { ::#ident::__private::rustapi_validate }
+                quote! { ::#ident::__private::validate }
             }
         }
     } else if let Ok(found) =
@@ -1004,11 +1004,11 @@ fn get_core_path() -> proc_macro2::TokenStream {
 
     if let Ok(found) = rustapi_rs_found {
         match found {
-            FoundCrate::Itself => quote! { crate },
+            FoundCrate::Itself => quote! { ::rustapi_rs::__private::core },
             FoundCrate::Name(name) => {
                 let normalized = name.replace('-', "_");
                 let ident = syn::Ident::new(&normalized, proc_macro2::Span::call_site());
-                quote! { ::#ident }
+                quote! { ::#ident::__private::core }
             }
         }
     } else if let Ok(found) = crate_name("rustapi-core").or_else(|_| crate_name("rustapi_core")) {
@@ -1036,7 +1036,7 @@ fn get_async_trait_path() -> proc_macro2::TokenStream {
     if let Ok(found) = rustapi_rs_found {
         match found {
             FoundCrate::Itself => {
-                quote! { crate::__private::async_trait }
+                quote! { ::rustapi_rs::__private::async_trait }
             }
             FoundCrate::Name(name) => {
                 let normalized = name.replace('-', "_");
