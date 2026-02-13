@@ -113,7 +113,7 @@ h3 = "0.0.8"
 h3-quinn = "0.0.10"
 rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }
 rustls-pemfile = "2.2"
-rcgen = "0.13"
+rcgen = "0.14"
 
 # ============================================
 # Release Profile - Maximum Performance
