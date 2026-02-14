@@ -38,16 +38,17 @@
     - [Background Jobs](recipes/background_jobs.md)
     - [Custom Middleware](recipes/custom_middleware.md)
     - [Real-time Chat](recipes/websockets.md)
+    - [Server-Side Rendering (SSR)](recipes/server_side_rendering.md)
+    - [AI Integration (TOON)](recipes/ai_integration.md)
     - [Production Tuning](recipes/high_performance.md)
     - [Resilience Patterns](recipes/resilience.md)
     - [Time-Travel Debugging (Replay)](recipes/replay.md)
     - [Deployment](recipes/deployment.md)
     - [HTTP/3 (QUIC)](recipes/http3_quic.md)
+    - [gRPC Integration](recipes/grpc_integration.md)
     - [Automatic Status Page](recipes/status_page.md)
 
 - [Troubleshooting: Common Gotchas](troubleshooting.md)
 
 - [Part V: Learning & Examples](learning/README.md)
     - [Structured Curriculum](learning/curriculum.md)
-
-
