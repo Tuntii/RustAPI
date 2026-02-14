@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-e70b65f0.js";
+            window.path_to_searchindex_js = "../searchindex-28c26c68.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-a7fbd70d.js"></script>
+        <script src="../toc-419af644.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -443,6 +443,59 @@
 <li><strong>Observability:</strong> Full tracing from ingestion to storage.</li>
 <li><strong>Resilience:</strong> Circuit breakers on database writes.</li>
 <li><strong>Testing:</strong> Load test the ingestion endpoint (e.g., with k6 or similar) and observe metrics.</li>
+</ul>
+<hr>
+<h2 id="phase-5-specialized-skills"><a class="header" href="#phase-5-specialized-skills">Phase 5: Specialized Skills</a></h2>
+<p><strong>Goal:</strong> Master integration with AI, gRPC, and server-side rendering.</p>
+<h3 id="module-14-server-side-rendering-ssr"><a class="header" href="#module-14-server-side-rendering-ssr">Module 14: Server-Side Rendering (SSR)</a></h3>
+<ul>
+<li><strong>Prerequisites:</strong> Phase 2.</li>
+<li><strong>Reading:</strong> <a href="../recipes/server_side_rendering.html">SSR Recipe</a>.</li>
+<li><strong>Task:</strong> Create a dashboard showing system status using <code>rustapi-view</code>.</li>
+<li><strong>Expected Output:</strong> HTML page rendered with Tera templates, displaying dynamic data.</li>
+<li><strong>Pitfalls:</strong> Forgetting to create the <code>templates/</code> directory.</li>
+</ul>
+<h4 id="-knowledge-check-13"><a class="header" href="#-knowledge-check-13">🧠 Knowledge Check</a></h4>
+<ol>
+<li>Which template engine does RustAPI use?</li>
+<li>How do you pass data to a template?</li>
+<li>How does template reloading work in debug mode?</li>
+</ol>
+<h3 id="module-15-grpc-microservices"><a class="header" href="#module-15-grpc-microservices">Module 15: gRPC Microservices</a></h3>
+<ul>
+<li><strong>Prerequisites:</strong> Phase 3.</li>
+<li><strong>Reading:</strong> <a href="../recipes/grpc_integration.html">gRPC Recipe</a>.</li>
+<li><strong>Task:</strong> Run a gRPC service alongside your HTTP API that handles internal user lookups.</li>
+<li><strong>Expected Output:</strong> Both servers running; HTTP endpoint calls gRPC method (simulated).</li>
+<li><strong>Pitfalls:</strong> Port conflicts if not configured correctly.</li>
+</ul>
+<h4 id="-knowledge-check-14"><a class="header" href="#-knowledge-check-14">🧠 Knowledge Check</a></h4>
+<ol>
+<li>Which crate provides gRPC helpers for RustAPI?</li>
+<li>Can HTTP and gRPC share the same Tokio runtime?</li>
+<li>Why might you want to run both in the same process?</li>
+</ol>
+<h3 id="module-16-ai-integration-toon"><a class="header" href="#module-16-ai-integration-toon">Module 16: AI Integration (TOON)</a></h3>
+<ul>
+<li><strong>Prerequisites:</strong> Phase 2.</li>
+<li><strong>Reading:</strong> <a href="../recipes/ai_integration.html">AI Integration Recipe</a>.</li>
+<li><strong>Task:</strong> Create an endpoint that returns standard JSON for browsers but TOON for <code>Accept: application/toon</code>.</li>
+<li><strong>Expected Output:</strong> <code>curl</code> requests with different headers return different formats.</li>
+<li><strong>Pitfalls:</strong> Not checking the <code>Accept</code> header in client code.</li>
+</ul>
+<h4 id="-knowledge-check-15"><a class="header" href="#-knowledge-check-15">🧠 Knowledge Check</a></h4>
+<ol>
+<li>What is TOON and why is it useful for LLMs?</li>
+<li>How does <code>LlmResponse</code> decide which format to return?</li>
+<li>How much token usage can TOON save on average?</li>
+</ol>
+<h3 id="-phase-5-capstone-the-intelligent-dashboard"><a class="header" href="#-phase-5-capstone-the-intelligent-dashboard">🏆 Phase 5 Capstone: “The Intelligent Dashboard”</a></h3>
+<p><strong>Objective:</strong> Combine SSR, gRPC, and AI features.
+<strong>Requirements:</strong></p>
+<ul>
+<li><strong>Backend:</strong> Retrieve stats via gRPC from a “worker” service.</li>
+<li><strong>Frontend:</strong> Render a dashboard using SSR.</li>
+<li><strong>AI Agent:</strong> Expose a TOON endpoint for an AI agent to query the system status.</li>
 </ul>
 <hr>
 <h2 id="next-steps"><a class="header" href="#next-steps">Next Steps</a></h2>
