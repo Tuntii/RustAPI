@@ -69,7 +69,7 @@ async fn main() {
     let app = RustApi::new().route("/users", get(get_users));
 
     println!("Server running on http://127.0.0.1:3000");
-    RustApi::serve("127.0.0.1:3000", app).await.unwrap();
+    app.run("127.0.0.1:3000").await.unwrap();
 }
 ```
 

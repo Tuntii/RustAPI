@@ -107,7 +107,7 @@ async fn main() {
     let app = RustApi::new().route("/", get(index));
 
     println!("Listening on http://localhost:3000");
-    RustApi::serve("0.0.0.0:3000", app).await.unwrap();
+    app.run("0.0.0.0:3000").await.unwrap();
 }
 ```
 
