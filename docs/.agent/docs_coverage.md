@@ -16,7 +16,11 @@
 | Observability | `crates/rustapi_extras.md` | `rustapi-extras/src/telemetry` | OK |
 | **Jobs** | | | |
 | Job Queue (Crate) | `crates/rustapi_jobs.md` | `rustapi-jobs` | OK |
-| Background Jobs (Recipe) | `recipes/background_jobs.md` | `rustapi-jobs` | NEW |
+| Background Jobs (Recipe) | `recipes/background_jobs.md` | `rustapi-jobs` | OK |
+| **Integrations** | | | |
+| gRPC | `recipes/grpc_integration.md` | `rustapi-grpc` | NEW |
+| SSR | `recipes/server_side_rendering.md` | `rustapi-view` | NEW |
+| AI / TOON | `recipes/ai_integration.md` | `rustapi-toon` | NEW |
 | **Learning** | | | |
 | Structured Path | `learning/curriculum.md` | N/A | OK |
 | **Recipes** | | | |

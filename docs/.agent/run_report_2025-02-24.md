@@ -65,3 +65,42 @@ This run focuses on "Enterprise Scale" documentation, testing strategies, and im
 ## 4. Open Questions / TODOs
 - **Status Page**: `recipes/status_page.md` exists but might need more visibility in the Learning Path (maybe in Module 11?).
 - **Observability**: A dedicated recipe for OpenTelemetry setup would be beneficial (currently covered in crate docs).
+
+---
+
+# Docs Maintenance Run Report: 2025-02-24 (Run 3)
+
+## 1. Version Detection
+- **Repo Version**: `v0.1.335` (Unchanged)
+- **Result**: Continuing with Continuous Improvement phase.
+
+## 2. Changes Summary
+This run focuses on "Specialized Skills" covering gRPC integration, Server-Side Rendering (SSR), and AI integration (TOON).
+
+### New Content
+- **Cookbook Recipe**: `docs/cookbook/src/recipes/grpc_integration.md` - Guide for running HTTP and gRPC services side-by-side.
+- **Cookbook Recipe**: `docs/cookbook/src/recipes/server_side_rendering.md` - Guide for using `rustapi-view` with Tera templates.
+- **Cookbook Recipe**: `docs/cookbook/src/recipes/ai_integration.md` - Guide for using `rustapi-toon` for LLM-optimized responses.
+- **Learning Path Phase**: Added "Phase 5: Specialized Skills" to `docs/cookbook/src/learning/curriculum.md`.
+
+### Updates
+- **Cookbook Summary**: Added new recipes to `docs/cookbook/src/SUMMARY.md`.
+- **Docs Coverage**: Updated `docs/.agent/docs_coverage.md` to include new integrations.
+
+## 3. Improvement Details
+- **Learning Path**:
+  - Added Modules 14 (SSR), 15 (gRPC), 16 (AI Integration).
+  - Added "Phase 5 Capstone: The Intelligent Dashboard".
+- **gRPC Recipe**:
+  - Detailed `rustapi-grpc` usage with `tonic`.
+  - Example of shared shutdown logic.
+- **SSR Recipe**:
+  - Example of `View` and `Context` usage.
+  - Template structure and inheritance.
+- **AI Recipe**:
+  - Explanation of TOON format and token savings.
+  - Example of `LlmResponse` and content negotiation.
+
+## 4. Open Questions / TODOs
+- **gRPC Multiplexing**: A more advanced guide on running HTTP and gRPC on the same port using `tower` would be valuable.
+- **Tera Filters**: Documenting how to add custom filters to the Tera instance in `rustapi-view`.

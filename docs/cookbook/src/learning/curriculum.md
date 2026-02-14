@@ -231,6 +231,55 @@ This curriculum is designed to take you from a RustAPI beginner to an advanced u
 
 ---
 
+## Phase 5: Specialized Skills
+
+**Goal:** Master integration with AI, gRPC, and server-side rendering.
+
+### Module 14: Server-Side Rendering (SSR)
+- **Prerequisites:** Phase 2.
+- **Reading:** [SSR Recipe](../recipes/server_side_rendering.md).
+- **Task:** Create a dashboard showing system status using `rustapi-view`.
+- **Expected Output:** HTML page rendered with Tera templates, displaying dynamic data.
+- **Pitfalls:** Forgetting to create the `templates/` directory.
+
+#### 🧠 Knowledge Check
+1. Which template engine does RustAPI use?
+2. How do you pass data to a template?
+3. How does template reloading work in debug mode?
+
+### Module 15: gRPC Microservices
+- **Prerequisites:** Phase 3.
+- **Reading:** [gRPC Recipe](../recipes/grpc_integration.md).
+- **Task:** Run a gRPC service alongside your HTTP API that handles internal user lookups.
+- **Expected Output:** Both servers running; HTTP endpoint calls gRPC method (simulated).
+- **Pitfalls:** Port conflicts if not configured correctly.
+
+#### 🧠 Knowledge Check
+1. Which crate provides gRPC helpers for RustAPI?
+2. Can HTTP and gRPC share the same Tokio runtime?
+3. Why might you want to run both in the same process?
+
+### Module 16: AI Integration (TOON)
+- **Prerequisites:** Phase 2.
+- **Reading:** [AI Integration Recipe](../recipes/ai_integration.md).
+- **Task:** Create an endpoint that returns standard JSON for browsers but TOON for `Accept: application/toon`.
+- **Expected Output:** `curl` requests with different headers return different formats.
+- **Pitfalls:** Not checking the `Accept` header in client code.
+
+#### 🧠 Knowledge Check
+1. What is TOON and why is it useful for LLMs?
+2. How does `LlmResponse` decide which format to return?
+3. How much token usage can TOON save on average?
+
+### 🏆 Phase 5 Capstone: "The Intelligent Dashboard"
+**Objective:** Combine SSR, gRPC, and AI features.
+**Requirements:**
+- **Backend:** Retrieve stats via gRPC from a "worker" service.
+- **Frontend:** Render a dashboard using SSR.
+- **AI Agent:** Expose a TOON endpoint for an AI agent to query the system status.
+
+---
+
 ## Next Steps
 
 *   Explore the [Examples Repository](https://github.com/Tuntii/rustapi-rs-examples).

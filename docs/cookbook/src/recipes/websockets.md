@@ -86,10 +86,10 @@ async fn main() {
     let state = Arc::new(AppState { tx });
 
     let app = RustApi::new()
-        .route("/ws", get(ws_handler))
-        .with_state(state);
+        .state(state)
+        .route("/ws", get(ws_handler));
 
-    RustApi::serve("0.0.0.0:3000", app).await.unwrap();
+    app.run("0.0.0.0:3000").await.unwrap();
 }
 ```
 
