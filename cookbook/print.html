@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-28c26c68.js";
+            window.path_to_searchindex_js = "searchindex-80324fc0.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-419af644.js"></script>
@@ -1869,14 +1869,24 @@ server.expect(RequestMatcher::new(Method::POST, "/charge"))
 <h2 id="table-of-contents"><a class="header" href="#table-of-contents">Table of Contents</a></h2>
 <ul>
 <li><a href="#creating-resources">Creating Resources</a></li>
+<li><a href="#pagination--hateoas">Pagination &amp; HATEOAS</a></li>
 <li><a href="#jwt-authentication">JWT Authentication</a></li>
+<li><a href="#csrf-protection-1">CSRF Protection</a></li>
 <li><a href="#database-integration">Database Integration</a></li>
+<li><a href="#testing-strategies">Testing &amp; Mocking</a></li>
 <li><a href="#file-uploads">File Uploads</a></li>
+<li><a href="#background-jobs">Background Jobs</a></li>
 <li><a href="#custom-middleware">Custom Middleware</a></li>
 <li><a href="#real-time-chat-websockets">Real-time Chat</a></li>
+<li><a href="#server-side-rendering-ssr">Server-Side Rendering (SSR)</a></li>
+<li><a href="#ai-integration">AI Integration (TOON)</a></li>
 <li><a href="#production-tuning">Production Tuning</a></li>
+<li><a href="#resilience-patterns">Resilience Patterns</a></li>
+<li><a href="#replay-time-travel-debugging">Time-Travel Debugging (Replay)</a></li>
 <li><a href="#deployment">Deployment</a></li>
 <li><a href="#http3-quic-support">HTTP/3 (QUIC)</a></li>
+<li><a href="#grpc-integration">gRPC Integration</a></li>
+<li><a href="#automatic-status-page">Automatic Status Page</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="creating-resources"><a class="header" href="#creating-resources">Creating Resources</a></h1>
@@ -3158,7 +3168,6 @@ serde = { version = "1.0", features = ["derive"] }
 &lt;head&gt;
     &lt;meta charset="UTF-8"&gt;
     &lt;title&gt;{% block title %}My App{% endblock %}&lt;/title&gt;
-    &lt;link rel="stylesheet" href="/assets/style.css"&gt;
 &lt;/head&gt;
 &lt;body&gt;
     &lt;nav&gt;
@@ -3171,7 +3180,7 @@ serde = { version = "1.0", features = ["derive"] }
     &lt;/main&gt;
 
     &lt;footer&gt;
-        &amp;copy; 2025 RustAPI
+        &amp;copy; 2026 RustAPI
     &lt;/footer&gt;
 &lt;/body&gt;
 &lt;/html&gt;
@@ -3197,9 +3206,9 @@ serde = { version = "1.0", features = ["derive"] }
 {% endblock %}
 </code></pre>
 <h2 id="handling-requests"><a class="header" href="#handling-requests">Handling Requests</a></h2>
-<p>In your <code>main.rs</code>, use the <code>View</code> type and <code>Context</code>.</p>
+<p>In your <code>main.rs</code>, initialize the <code>Templates</code> engine and inject it into the application state. Handlers can then extract it using <code>State&lt;Templates&gt;</code>.</p>
 <pre class="playground"><code class="language-rust no_run">use rustapi_rs::prelude::*;
-use rustapi_view::{View, Context};
+use rustapi_view::{View, Templates};
 use serde::Serialize;
 
 #[derive(Serialize)]
@@ -3208,46 +3217,53 @@ struct User {
     is_admin: bool,
 }
 
+#[derive(Serialize)]
+struct HomeContext {
+    app_name: String,
+    user: User,
+    items: Vec&lt;String&gt;,
+}
+
 #[rustapi_rs::get("/")]
-async fn index() -&gt; View {
-    // 1. Create context
-    let mut ctx = Context::new();
-
-    // 2. Insert data
-    ctx.insert("app_name", "My Awesome App");
-
-    let user = User {
-        name: "Alice".to_string(),
-        is_admin: true,
+async fn index(templates: State&lt;Templates&gt;) -&gt; View&lt;HomeContext&gt; {
+    let context = HomeContext {
+        app_name: "My Awesome App".to_string(),
+        user: User {
+            name: "Alice".to_string(),
+            is_admin: true,
+        },
+        items: vec!["Apple".to_string(), "Banana".to_string(), "Cherry".to_string()],
     };
-    ctx.insert("user", &amp;user);
 
-    ctx.insert("items", &amp;vec!["Apple", "Banana", "Cherry"]);
-
-    // 3. Render template
-    // RustAPI automatically loads templates from the "templates" directory
-    View::new("index.html", ctx)
+    // Render the "index.html" template with the context
+    View::render(&amp;templates, "index.html", context).await
 }
 
 #[tokio::main]
-async fn main() {
-    // No special setup needed for View, it's auto-configured if the crate is present
-    // and the "templates" directory exists.
-    let app = RustApi::new().route("/", get(index));
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    // 1. Initialize Template Engine
+    // Loads all .html files from the "templates" directory
+    let templates = Templates::new("templates/**/*.html")?;
+
+    // 2. Add to State
+    let app = RustApi::new()
+        .state(templates)
+        .route("/", get(index));
 
     println!("Listening on http://localhost:3000");
     app.run("0.0.0.0:3000").await.unwrap();
+
+    Ok(())
 }</code></pre>
 <h2 id="template-reloading"><a class="header" href="#template-reloading">Template Reloading</a></h2>
 <p>In <strong>Debug</strong> mode (<code>cargo run</code>), <code>rustapi-view</code> automatically reloads templates from disk on every request. This means you can edit your <code>.html</code> files and refresh the browser to see changes instantly without recompiling.</p>
 <p>In <strong>Release</strong> mode (<code>cargo run --release</code>), templates are compiled and cached for maximum performance.</p>
 <h2 id="asset-serving"><a class="header" href="#asset-serving">Asset Serving</a></h2>
-<p>To serve CSS, JS, and images, use <code>ServeDir</code> from <code>tower-http</code> (re-exported or available via <code>rustapi-extras</code> if configured, or just standard tower).</p>
-<pre><code class="language-rust ignore">use tower_http::services::ServeDir;
-
-let app = RustApi::new()
+<p>To serve CSS, JS, and images, use <code>serve_static</code> on the <code>RustApi</code> builder.</p>
+<pre><code class="language-rust ignore">let app = RustApi::new()
+    .state(templates)
     .route("/", get(index))
-    .nest_service("/assets", ServeDir::new("assets"));</code></pre>
+    .serve_static("/assets", "assets"); // Serves files from ./assets at /assets</code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="ai-integration"><a class="header" href="#ai-integration">AI Integration</a></h1>
 <p>RustAPI offers native support for building AI-friendly APIs using the <code>rustapi-toon</code> crate. This allows you to serve optimized content for Large Language Models (LLMs) while maintaining standard JSON responses for traditional clients.</p>
