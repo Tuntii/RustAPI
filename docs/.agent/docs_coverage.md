@@ -18,11 +18,12 @@
 | Job Queue (Crate) | `crates/rustapi_jobs.md` | `rustapi-jobs` | OK |
 | Background Jobs (Recipe) | `recipes/background_jobs.md` | `rustapi-jobs` | OK |
 | **Integrations** | | | |
-| gRPC | `recipes/grpc_integration.md` | `rustapi-grpc` | NEW |
-| SSR | `recipes/server_side_rendering.md` | `rustapi-view` | NEW |
-| AI / TOON | `recipes/ai_integration.md` | `rustapi-toon` | NEW |
+| gRPC | `recipes/grpc_integration.md` | `rustapi-grpc` | OK |
+| SSR | `recipes/server_side_rendering.md` | `rustapi-view` | OK |
+| AI / TOON | `recipes/ai_integration.md` | `rustapi-toon` | OK |
 | **Learning** | | | |
 | Structured Path | `learning/curriculum.md` | N/A | OK |
 | **Recipes** | | | |
 | File Uploads | `recipes/file_uploads.md` | `rustapi-core` | OK |
 | Deployment | `recipes/deployment.md` | `cargo-rustapi` | OK |
+| Testing | `recipes/testing.md` | `rustapi-testing` | OK |

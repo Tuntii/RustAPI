@@ -1,5 +1,5 @@
 {
   "last_processed_ref": "v0.1.335",
-  "date": "2025-02-24",
-  "notes": "Added Phase 5 (Specialized Skills) to Learning Path, and created recipes for gRPC, SSR, and AI Integration."
+  "date": "2026-02-15",
+  "notes": "Fixed critical inaccuracy in SSR recipe. Updated recipes index to be comprehensive. Verified docs coverage."
 }
