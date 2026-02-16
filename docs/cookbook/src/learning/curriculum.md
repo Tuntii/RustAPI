@@ -107,19 +107,37 @@ This curriculum is designed to take you from a RustAPI beginner to an advanced u
 
 **Goal:** Security, Real-time, and Production readiness.
 
-### Module 7: Authentication (JWT)
+### Module 7: Authentication (JWT & OAuth2)
 - **Prerequisites:** Phase 2.
-- **Reading:** [JWT Auth Recipe](../recipes/jwt_auth.md).
-- **Task:** Implement a login route that returns a JWT. Protect user routes with `AuthUser` extractor.
+- **Reading:** [JWT Auth Recipe](../recipes/jwt_auth.md), [OAuth2 Client](../recipes/oauth2_client.md).
+- **Task:**
+    1. Implement a login route that returns a JWT.
+    2. Protect user routes with `AuthUser` extractor.
+    3. (Optional) Implement "Login with Google" using `OAuth2Client`.
 - **Expected Output:** Protected routes return `401 Unauthorized` without a valid token.
 - **Pitfalls:** Hardcoding secrets. Not checking token expiration.
 
 #### 🧠 Knowledge Check
 1. What is the role of the `AuthUser` extractor?
-2. How do you protect a route with JWT?
+2. How does OAuth2 PKCE improve security?
 3. Where should you store the JWT secret?
 
-### Module 8: WebSockets & Real-time
+### Module 8: Advanced Middleware
+- **Prerequisites:** Module 7.
+- **Reading:** [Advanced Middleware](../recipes/advanced_middleware.md).
+- **Task:**
+    1. Apply `RateLimitLayer` to your login endpoint (10 requests/minute).
+    2. Add `DedupLayer` to a payment endpoint.
+    3. Cache the response of a public "stats" endpoint.
+- **Expected Output:** Sending 11 login attempts results in `429 Too Many Requests`.
+- **Pitfalls:** Caching responses that contain user-specific data.
+
+#### 🧠 Knowledge Check
+1. What header indicates when the rate limit resets?
+2. Why is request deduplication important for payments?
+3. Which requests are typically safe to cache?
+
+### Module 9: WebSockets & Real-time
 - **Prerequisites:** Phase 2.
 - **Reading:** [WebSockets Recipe](../recipes/websockets.md).
 - **Task:** Create a chat endpoint where users can broadcast messages.
@@ -131,21 +149,21 @@ This curriculum is designed to take you from a RustAPI beginner to an advanced u
 2. Can you share state between HTTP handlers and WebSocket handlers?
 3. What happens if a WebSocket handler panics?
 
-### Module 9: Production Readiness & Deployment
+### Module 10: Production Readiness & Deployment
 - **Prerequisites:** Phase 3.
 - **Reading:** [Production Tuning](../recipes/high_performance.md), [Resilience](../recipes/resilience.md), [Deployment](../recipes/deployment.md).
 - **Task:**
-    1. Add `RateLimitLayer`, `CompressionLayer`, and `TimeoutLayer`.
+    1. Add `CompressionLayer`, and `TimeoutLayer`.
     2. Use `cargo rustapi deploy docker` to generate a Dockerfile.
 - **Expected Output:** A resilient API ready for deployment.
 - **Pitfalls:** Setting timeouts too low for slow operations.
 
 #### 🧠 Knowledge Check
-1. Why is rate limiting important?
+1. Why is timeout middleware important?
 2. What command generates a production Dockerfile?
 3. How do you enable compression for responses?
 
-### Module 10: Background Jobs & Testing
+### Module 11: Background Jobs & Testing
 - **Prerequisites:** Phase 3.
 - **Reading:** [Background Jobs Recipe](../recipes/background_jobs.md), [Testing Strategy](../concepts/testing.md).
 - **Task:**
@@ -162,7 +180,7 @@ This curriculum is designed to take you from a RustAPI beginner to an advanced u
 ### 🏆 Phase 3 Capstone: "The Real-Time Collaboration Tool"
 **Objective:** Build a real-time collaborative note-taking app.
 **Requirements:**
-- **Auth:** Users must log in to edit notes.
+- **Auth:** Users must log in (JWT or OAuth2) to edit notes.
 - **Real-time:** Changes to a note are broadcast to all viewers via WebSockets.
 - **Jobs:** When a note is deleted, schedule a background job to archive it (simulate archive).
 - **Resilience:** Rate limit API requests to prevent abuse.
@@ -174,22 +192,22 @@ This curriculum is designed to take you from a RustAPI beginner to an advanced u
 
 **Goal:** Build observable, resilient, and high-performance distributed systems.
 
-### Module 11: Observability
+### Module 12: Observability & Auditing
 - **Prerequisites:** Phase 3.
-- **Reading:** [Observability (Extras)](../crates/rustapi_extras.md#observability), [Structured Logging](../crates/rustapi_extras.md#structured-logging).
+- **Reading:** [Observability (Extras)](../crates/rustapi_extras.md#observability), [Audit Logging](../recipes/audit_logging.md).
 - **Task:**
-    1. Enable `structured-logging` and `otel` features.
-    2. Configure tracing to export spans to Jaeger (or console for dev).
-    3. Add custom metrics for "active_users" and "jobs_processed".
-- **Expected Output:** Logs are JSON formatted with trace IDs. Metrics endpoint exposes Prometheus data.
-- **Pitfalls:** High cardinality in metric labels (e.g., using user IDs as labels).
+    1. Enable `structured-logging` and `otel`.
+    2. Configure tracing to export spans.
+    3. Implement `AuditStore` and log a "User Login" event with IP address.
+- **Expected Output:** Logs are JSON formatted. Audit log contains a new entry for every login.
+- **Pitfalls:** High cardinality in metric labels.
 
 #### 🧠 Knowledge Check
-1. What is the difference between logging and tracing?
-2. How do you correlate logs across microservices?
-3. What is the standard format for structured logs in RustAPI?
+1. What is the difference between logging and auditing?
+2. Which fields are required in an `AuditEvent`?
+3. How does structured logging aid debugging?
 
-### Module 12: Resilience & Security
+### Module 13: Resilience & Security
 - **Prerequisites:** Phase 3.
 - **Reading:** [Resilience Patterns](../recipes/resilience.md), [Time-Travel Debugging](../recipes/replay.md).
 - **Task:**
@@ -204,7 +222,7 @@ This curriculum is designed to take you from a RustAPI beginner to an advanced u
 2. Why is jitter important in retry strategies?
 3. How does Time-Travel Debugging help with "Heisenbugs"?
 
-### Module 13: High Performance
+### Module 14: High Performance
 - **Prerequisites:** Phase 3.
 - **Reading:** [HTTP/3 (QUIC)](../recipes/http3_quic.md), [Performance Tuning](../recipes/high_performance.md).
 - **Task:**
@@ -226,6 +244,7 @@ This curriculum is designed to take you from a RustAPI beginner to an advanced u
 - **Processing:** Push events to a `rustapi-jobs` queue (Redis backend).
 - **Storage:** Workers process events and store aggregates in a database.
 - **Observability:** Full tracing from ingestion to storage.
+- **Audit:** Log all configuration changes to the system.
 - **Resilience:** Circuit breakers on database writes.
 - **Testing:** Load test the ingestion endpoint (e.g., with k6 or similar) and observe metrics.
 
@@ -235,7 +254,7 @@ This curriculum is designed to take you from a RustAPI beginner to an advanced u
 
 **Goal:** Master integration with AI, gRPC, and server-side rendering.
 
-### Module 14: Server-Side Rendering (SSR)
+### Module 15: Server-Side Rendering (SSR)
 - **Prerequisites:** Phase 2.
 - **Reading:** [SSR Recipe](../recipes/server_side_rendering.md).
 - **Task:** Create a dashboard showing system status using `rustapi-view`.
@@ -247,7 +266,7 @@ This curriculum is designed to take you from a RustAPI beginner to an advanced u
 2. How do you pass data to a template?
 3. How does template reloading work in debug mode?
 
-### Module 15: gRPC Microservices
+### Module 16: gRPC Microservices
 - **Prerequisites:** Phase 3.
 - **Reading:** [gRPC Recipe](../recipes/grpc_integration.md).
 - **Task:** Run a gRPC service alongside your HTTP API that handles internal user lookups.
@@ -259,7 +278,7 @@ This curriculum is designed to take you from a RustAPI beginner to an advanced u
 2. Can HTTP and gRPC share the same Tokio runtime?
 3. Why might you want to run both in the same process?
 
-### Module 16: AI Integration (TOON)
+### Module 17: AI Integration (TOON)
 - **Prerequisites:** Phase 2.
 - **Reading:** [AI Integration Recipe](../recipes/ai_integration.md).
 - **Task:** Create an endpoint that returns standard JSON for browsers but TOON for `Accept: application/toon`.
