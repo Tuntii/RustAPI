@@ -1,15 +1,25 @@
 # Documentation Inventory
 
-| File | Purpose | Owner Crate | Status |
-|------|---------|-------------|--------|
-| `README.md` | Project overview, key features, quick start | Root | OK |
-| `docs/README.md` | Documentation landing page | Docs | OK |
-| `docs/cookbook/src/SUMMARY.md` | Cookbook navigation structure | Docs | OK |
-| `docs/cookbook/src/getting_started/installation.md` | Installation instructions | Docs | OK |
-| `docs/cookbook/src/learning/README.md` | Learning path entry point | Docs | OK |
-| `docs/cookbook/src/recipes/*.md` | Specific implementation guides | Docs | OK |
-| `docs/cookbook/src/recipes/advanced_middleware.md` | Recipe for Rate Limit, Dedup, Cache | Docs | OK |
-| `docs/cookbook/src/recipes/audit_logging.md` | Recipe for Audit Logging | Docs | OK |
-| `docs/cookbook/src/recipes/oauth2_client.md` | Recipe for OAuth2 Client | Docs | OK |
-| `crates/rustapi-core/src/hateoas.rs` | API Reference for HATEOAS | rustapi-core | OK |
-| `crates/rustapi-core/src/extract.rs` | API Reference for Extractors | rustapi-core | OK |
+| File Path | Purpose | Last Updated Version | Owner Crate | Status |
+|-----------|---------|----------------------|-------------|--------|
+| `docs/README.md` | Main entry point | 0.1.335 | rustapi-rs | OK |
+| `docs/GETTING_STARTED.md` | Quick start guide | 0.1.335 | rustapi-rs | OK |
+| `docs/ARCHITECTURE.md` | High-level architecture | 0.1.335 | rustapi-core | OK |
+| `docs/FEATURES.md` | Feature list | 0.1.335 | rustapi-rs | OK |
+| `docs/PHILOSOPHY.md` | Design philosophy | 0.1.335 | rustapi-rs | OK |
+| `docs/native_openapi.md` | Native OpenAPI details | 0.1.335 | rustapi-openapi | OK |
+| `docs/cookbook/src/SUMMARY.md` | Cookbook ToC | 0.1.335 | rustapi-rs | Needs Update |
+| `docs/cookbook/src/introduction.md` | Cookbook Intro | 0.1.335 | rustapi-rs | OK |
+| `docs/cookbook/src/troubleshooting.md` | Common issues | 0.1.335 | rustapi-rs | OK |
+| `docs/cookbook/src/learning/curriculum.md` | Learning Path | 0.1.335 | rustapi-rs | Needs Update |
+| `docs/cookbook/src/recipes/db_integration.md` | Database recipe | 0.1.335 | rustapi-rs | Needs Update |
+| `docs/cookbook/src/recipes/file_uploads.md` | File upload recipe | 0.1.335 | rustapi-core | OK |
+| `docs/cookbook/src/recipes/compression.md` | Compression recipe | 0.1.335 | rustapi-core | OK |
+| `docs/cookbook/src/recipes/openapi_refs.md` | OpenAPI Refs recipe | 0.1.335 | rustapi-openapi | OK |
+| `docs/cookbook/src/recipes/http3_quic.md` | HTTP/3 recipe | 0.1.335 | rustapi-core | OK |
+| `docs/cookbook/src/recipes/jwt_auth.md` | JWT Auth recipe | 0.1.335 | rustapi-extras | OK |
+| `docs/cookbook/src/recipes/websockets.md` | WebSocket recipe | 0.1.335 | rustapi-ws | OK |
+| `docs/cookbook/src/recipes/server_side_rendering.md` | SSR recipe | 0.1.335 | rustapi-view | OK |
+| `docs/cookbook/src/recipes/grpc_integration.md` | gRPC recipe | 0.1.335 | rustapi-grpc | OK |
+| `docs/cookbook/src/recipes/background_jobs.md` | Jobs recipe | 0.1.335 | rustapi-jobs | OK |
+| `docs/cookbook/src/recipes/ai_integration.md` | AI/TOON recipe | 0.1.335 | rustapi-toon | OK |

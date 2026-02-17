@@ -69,6 +69,18 @@ This curriculum is designed to take you from a RustAPI beginner to an advanced u
 2. Which extractor retrieves the application state?
 3. Why should you use `Arc` for shared state?
 
+### Module 4.5: Database Integration
+- **Prerequisites:** Module 4.
+- **Reading:** [Database Integration](../recipes/db_integration.md).
+- **Task:** Replace the in-memory `Mutex<Vec<User>>` with a PostgreSQL connection pool (`sqlx::PgPool`).
+- **Expected Output:** Data persists across server restarts.
+- **Pitfalls:** Blocking the async runtime with synchronous DB drivers (use `sqlx` or `tokio-postgres`).
+
+#### 🧠 Knowledge Check
+1. Why is connection pooling important?
+2. How do you share a DB pool across handlers?
+3. What is the benefit of compile-time query checking in SQLx?
+
 ### Module 5: Validation
 - **Prerequisites:** Module 4.
 - **Reading:** [Validation](../crates/rustapi_validation.md).
@@ -81,17 +93,41 @@ This curriculum is designed to take you from a RustAPI beginner to an advanced u
 2. What HTTP status code is returned on validation failure?
 3. How do you combine JSON extraction and validation?
 
+### Module 5.5: Error Handling
+- **Prerequisites:** Module 5.
+- **Reading:** [Error Handling](../concepts/errors.md).
+- **Task:** Create a custom `ApiError` enum and implement `IntoResponse`. Return robust error messages.
+- **Expected Output:** `GET /users/999` returns `404 Not Found` with a structured JSON error body.
+- **Pitfalls:** Exposing internal database errors (like SQL strings) to the client.
+
+#### 🧠 Knowledge Check
+1. What is the standard error type in RustAPI?
+2. How do you mask internal errors in production?
+3. What is the purpose of the `error_id` field?
+
 ### Module 6: OpenAPI & HATEOAS
 - **Prerequisites:** Module 5.
-- **Reading:** [OpenAPI](../crates/rustapi_openapi.md), [Pagination Recipe](../recipes/pagination.md).
-- **Task:** Add `#[derive(Schema)]` to all DTOs. Implement pagination for `GET /users`.
-- **Expected Output:** Swagger UI at `/docs` showing full schema. Paginated responses with `_links`.
-- **Pitfalls:** Using types that don't implement `Schema` (like raw `serde_json::Value`) inside response structs.
+- **Reading:** [OpenAPI](../crates/rustapi_openapi.md), [OpenAPI Refs](../recipes/openapi_refs.md), [Pagination Recipe](../recipes/pagination.md).
+- **Task:** Add `#[derive(Schema)]` to all DTOs. Use `#[derive(Schema)]` on a shared struct and reference it in multiple places.
+- **Expected Output:** Swagger UI at `/docs` showing full schema with shared components.
+- **Pitfalls:** Recursive schemas without `Box` or `Option`.
 
 #### 🧠 Knowledge Check
 1. What does `#[derive(Schema)]` do?
-2. Where is the Swagger UI served by default?
+2. How does RustAPI handle shared schema components?
 3. What is HATEOAS and why is it useful?
+
+### Module 6.5: File Uploads & Multipart
+- **Prerequisites:** Module 6.
+- **Reading:** [File Uploads](../recipes/file_uploads.md).
+- **Task:** Create an endpoint `POST /upload` that accepts a file and saves it to disk.
+- **Expected Output:** `curl -F file=@image.png` uploads the file.
+- **Pitfalls:** Loading large files entirely into memory (use streaming).
+
+#### 🧠 Knowledge Check
+1. Which extractor is used for file uploads?
+2. Why should you use `field.chunk()` instead of `field.bytes()`?
+3. How do you increase the request body size limit?
 
 ### 🏆 Phase 2 Capstone: "The Secure Blog Engine"
 **Objective:** Enhance the Todo API into a Blog Engine.
@@ -224,18 +260,18 @@ This curriculum is designed to take you from a RustAPI beginner to an advanced u
 
 ### Module 14: High Performance
 - **Prerequisites:** Phase 3.
-- **Reading:** [HTTP/3 (QUIC)](../recipes/http3_quic.md), [Performance Tuning](../recipes/high_performance.md).
+- **Reading:** [HTTP/3 (QUIC)](../recipes/http3_quic.md), [Performance Tuning](../recipes/high_performance.md), [Compression](../recipes/compression.md).
 - **Task:**
     1. Enable `http3` feature and generate self-signed certs.
     2. Serve traffic over QUIC.
-    3. Implement response caching for a heavy computation endpoint.
-- **Expected Output:** Browser/Client connects via HTTP/3. Repeated requests are served instantly from cache.
-- **Pitfalls:** Caching private user data without proper keys.
+    3. Add `CompressionLayer` to compress large responses.
+- **Expected Output:** Browser/Client connects via HTTP/3. Responses have `content-encoding: gzip`.
+- **Pitfalls:** Compressing small responses (waste of CPU) or already compressed data (images).
 
 #### 🧠 Knowledge Check
 1. What transport protocol does HTTP/3 use?
 2. How does `simd-json` improve performance?
-3. When should you *not* use caching?
+3. Why shouldn't you compress JPEG images?
 
 ### 🏆 Phase 4 Capstone: "The High-Scale Event Platform"
 **Objective:** Architect a system capable of handling thousands of events per second.
