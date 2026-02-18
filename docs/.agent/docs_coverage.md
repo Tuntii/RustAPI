@@ -1,32 +1,22 @@
 # Docs Coverage Map
 
-| Feature | Documentation | Code Location | Status |
-|---------|---------------|---------------|--------|
-| **Core** | | | |
-| Routing | `concepts/handlers.md` | `rustapi-macros` | OK |
-| Extractors | `concepts/handlers.md` | `rustapi-core/src/extract.rs` | OK |
-| State | `concepts/handlers.md` | `rustapi-core/src/extract.rs` | OK |
-| Validation | `crates/rustapi_validate.md` | `rustapi-validate` | OK |
-| **HATEOAS** | | | |
-| Pagination | `recipes/pagination.md` | `rustapi-core/src/hateoas.rs` | OK |
-| Links | `recipes/pagination.md` | `rustapi-core/src/hateoas.rs` | OK |
-| **Extras** | | | |
-| Auth (JWT) | `recipes/jwt_auth.md` | `rustapi-extras/src/jwt` | OK |
-| Auth (OAuth2) | `recipes/oauth2_client.md` | `rustapi-extras/src/oauth2` | OK |
-| Security | `recipes/csrf_protection.md` | `rustapi-extras/src/security` | OK |
-| Observability | `crates/rustapi_extras.md` | `rustapi-extras/src/telemetry` | OK |
-| Audit Logging | `recipes/audit_logging.md` | `rustapi-extras/src/audit` | OK |
-| Middleware (Advanced) | `recipes/advanced_middleware.md` | `rustapi-extras/src/{rate_limit, dedup, cache}` | OK |
-| **Jobs** | | | |
-| Job Queue (Crate) | `crates/rustapi_jobs.md` | `rustapi-jobs` | OK |
-| Background Jobs (Recipe) | `recipes/background_jobs.md` | `rustapi-jobs` | OK |
-| **Integrations** | | | |
-| gRPC | `recipes/grpc_integration.md` | `rustapi-grpc` | OK |
-| SSR | `recipes/server_side_rendering.md` | `rustapi-view` | OK |
-| AI / TOON | `recipes/ai_integration.md` | `rustapi-toon` | OK |
-| **Learning** | | | |
-| Structured Path | `learning/curriculum.md` | N/A | OK |
-| **Recipes** | | | |
-| File Uploads | `recipes/file_uploads.md` | `rustapi-core` | OK |
-| Deployment | `recipes/deployment.md` | `cargo-rustapi` | OK |
-| Testing | `recipes/testing.md` | `rustapi-testing` | OK |
+| Feature Area | Documentation Page | Source Code (Key Crates) | Status | Notes |
+|--------------|-------------------|--------------------------|--------|-------|
+| **Core Routing** | `concepts/handlers.md` | `rustapi-core` | OK | |
+| **Extractors** | `concepts/handlers.md` | `rustapi-core` | OK | `Body`, `Json`, `Path`, `Query`, `State` |
+| **Validation** | `crates/rustapi_validate.md` | `rustapi-validate` | OK | `#[derive(Validate)]`, `ValidatedJson` |
+| **OpenAPI** | `crates/rustapi_openapi.md` | `rustapi-openapi` | OK | `#[derive(Schema)]` |
+| **WebSocket** | `recipes/websockets.md` | `rustapi-ws` | OK | Upgrade handling, broadcasting |
+| **Database** | `recipes/db_integration.md` | `rustapi-core` | OK | Added pooling, transactions, testing |
+| **File Uploads** | `recipes/file_uploads.md` | `rustapi-core` | OK | Fixed code example |
+| **Compression** | `recipes/compression.md` | `rustapi-core` | OK | Recipe created |
+| **Authentication** | `recipes/jwt_auth.md`, `recipes/oauth2_client.md` | `rustapi-extras` | OK | JWT, OAuth2 |
+| **Observability** | `crates/rustapi_extras.md`, `recipes/audit_logging.md` | `rustapi-extras` | OK | Tracing, Metrics, Audit |
+| **Resilience** | `recipes/resilience.md` | `rustapi-extras` | OK | Circuit Breaker, Retry, Timeout |
+| **Background Jobs** | `recipes/background_jobs.md` | `rustapi-jobs` | OK | Job queue, workers |
+| **Testing** | `concepts/testing.md` | `rustapi-testing` | OK | `TestClient`, Mocking |
+| **SSR** | `recipes/server_side_rendering.md` | `rustapi-view` | OK | Tera integration |
+| **gRPC** | `recipes/grpc_integration.md` | `rustapi-grpc` | OK | Tonic integration |
+| **AI / TOON** | `recipes/ai_integration.md` | `rustapi-toon` | OK | TOON format |
+| **HTTP/3** | `recipes/http3_quic.md` | `rustapi-core` | OK | QUIC support |
+| **OpenAPI Refs** | `recipes/openapi_refs.md` | `rustapi-openapi` | OK | Modular schemas, Refs created |
