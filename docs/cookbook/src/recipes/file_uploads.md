@@ -19,7 +19,7 @@ Here is a complete, runnable example of a file upload server that streams files 
 
 ```rust
 use rustapi_rs::prelude::*;
-use rustapi_rs::extract::{Multipart, DefaultBodyLimit};
+use rustapi_rs::extract::Multipart;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 use std::path::Path;
@@ -32,9 +32,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     println!("Starting Upload Server at http://127.0.0.1:8080");
 
     RustApi::new()
+        // Increase body limit to 1GB (default is 1MB)
+        .body_limit(1024 * 1024 * 1024)
         .route("/upload", post(upload_handler))
-        // Increase body limit to 1GB (default is usually 2MB)
-        .layer(DefaultBodyLimit::max(1024 * 1024 * 1024))
         .run("127.0.0.1:8080")
         .await
 }
@@ -100,7 +100,7 @@ By default, some frameworks load the entire file into RAM. RustAPI's `Multipart`
 - **Streaming**: `field.chunk().await` (Load small chunks - scalable)
 
 ### 2. Body Limits
-The default request body limit is often small (e.g., 2MB) to prevent DoS attacks. You must explicitly increase this limit for file upload routes using `DefaultBodyLimit::max(size)`.
+The default request body limit is often small (e.g., 1MB) to prevent DoS attacks. You must explicitly increase this limit for file upload routes using `.body_limit(size)`.
 
 ### 3. Security
 - **Path Traversal**: Malicious users can send filenames like `../../system32/cmd.exe`. Always rename files or sanitize filenames strictly.

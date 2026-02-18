@@ -12,6 +12,8 @@ sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres",
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 dotenvy = "0.15"
+# Make sure async-trait is enabled if using traits for repositories
+async-trait = "0.1"
 ```
 
 ## 1. Setup Connection Pool
@@ -21,7 +23,9 @@ Create the pool once at startup and share it via `State`.
 ```rust
 use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
+use rustapi_rs::prelude::*;
 
+#[derive(Clone)]
 pub struct AppState {
     pub db: sqlx::PgPool,
 }
@@ -31,9 +35,11 @@ async fn main() {
     dotenvy::dotenv().ok();
     let db_url = std::env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
-    // Create a connection pool
+    // Create a connection pool with proper configuration
     let pool = PgPoolOptions::new()
-        .max_connections(5)
+        .max_connections(50) // Adjust based on your DB capabilities
+        .min_connections(5)
+        .acquire_timeout(std::time::Duration::from_secs(3))
         .connect(&db_url)
         .await
         .expect("Failed to connect to DB");
@@ -44,13 +50,14 @@ async fn main() {
         .await
         .expect("Failed to migrate");
 
-    let state = Arc::new(AppState { db: pool });
+    let state = AppState { db: pool };
 
-    let app = RustApi::new()
+    RustApi::new()
+        .state(state) // Inject state
         .route("/users", post(create_user))
-        .with_state(state);
-
-    RustApi::serve("0.0.0.0:3000", app).await.unwrap();
+        .run("0.0.0.0:3000")
+        .await
+        .unwrap();
 }
 ```
 
@@ -61,13 +68,13 @@ Extract the `State` to get access to the pool.
 ```rust
 use rustapi_rs::prelude::*;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Schema)]
 struct CreateUser {
     username: String,
     email: String,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Schema)]
 struct User {
     id: i32,
     username: String,
@@ -75,9 +82,9 @@ struct User {
 }
 
 async fn create_user(
-    State(state): State<Arc<AppState>>,
+    State(state): State<AppState>,
     Json(payload): Json<CreateUser>,
-) -> Result<(StatusCode, Json<User>), ApiError> {
+) -> Result<Json<User>, ApiError> {
     
     // SQLx query macro performs compile-time checking!
     let record = sqlx::query_as!(
@@ -88,15 +95,69 @@ async fn create_user(
     )
     .fetch_one(&state.db)
     .await
-    .map_err(|e| ApiError::InternalServerError(e.to_string()))?;
+    .map_err(map_sql_error)?;
 
-    Ok((StatusCode::CREATED, Json(record)))
+    Ok(Json(record))
+}
+
+fn map_sql_error(err: sqlx::Error) -> ApiError {
+    match err {
+        sqlx::Error::RowNotFound => ApiError::not_found("Resource not found"),
+        sqlx::Error::Database(db_err) => {
+            // Check for unique constraint violation (Postgres error 23505)
+            if db_err.code().as_deref() == Some("23505") {
+                 return ApiError::conflict("Resource already exists");
+            }
+            ApiError::internal(db_err.message())
+        }
+        _ => {
+            tracing::error!("Database error: {:?}", err);
+            ApiError::internal("Internal Server Error")
+        }
+    }
 }
 ```
 
-## 3. Dependency Injection for Testing
+## 3. Transactions
 
-To make testing easier, define a trait for your database operations. This allows you to swap the real DB for a mock.
+For operations that modify multiple tables, use transactions to ensure data integrity.
+
+```rust
+async fn transfer_funds(
+    State(state): State<AppState>,
+    Json(payload): Json<TransferRequest>,
+) -> Result<Json<TransferResult>, ApiError> {
+
+    // Start a transaction
+    let mut tx = state.db.begin().await.map_err(map_sql_error)?;
+
+    // Deduct from sender
+    let sender = sqlx::query!("UPDATE accounts SET balance = balance - $1 WHERE id = $2 RETURNING balance", payload.amount, payload.from_id)
+        .fetch_one(&mut *tx)
+        .await
+        .map_err(map_sql_error)?;
+
+    if sender.balance < 0 {
+        // Rollback implicitly by returning error (tx dropped)
+        return Err(ApiError::bad_request("Insufficient funds"));
+    }
+
+    // Add to receiver
+    sqlx::query!("UPDATE accounts SET balance = balance + $1 WHERE id = $2", payload.amount, payload.to_id)
+        .execute(&mut *tx)
+        .await
+        .map_err(map_sql_error)?;
+
+    // Commit transaction
+    tx.commit().await.map_err(map_sql_error)?;
+
+    Ok(Json(TransferResult { success: true }))
+}
+```
+
+## 4. Repository Pattern (Advanced)
+
+To isolate DB logic and make testing easier, define a trait.
 
 ```rust
 #[async_trait]
@@ -110,36 +171,34 @@ pub struct PostgresRepo(sqlx::PgPool);
 #[async_trait]
 impl UserRepository for PostgresRepo {
     async fn create(&self, username: &str, email: &str) -> anyhow::Result<User> {
-        // ... impl ...
+        let user = sqlx::query_as!(
+            User,
+            "INSERT INTO users (username, email) VALUES ($1, $2) RETURNING id, username, email",
+            username,
+            email
+        )
+        .fetch_one(&self.0)
+        .await?;
+        Ok(user)
     }
 }
-```
 
-Then update your state to hold the trait object:
-
-```rust
+// In your AppState
+#[derive(Clone)]
 struct AppState {
-    // Dyn dispatch allows swapping impls at runtime
-    db: Arc<dyn UserRepository>,
+    users: Arc<dyn UserRepository>,
 }
 ```
 
-## Error Handling
-
-Don't expose raw SQL errors to users. Map them to your `ApiError` type.
+This allows you to implement a `MockUserRepository` for unit tests without spinning up a real database.
 
 ```rust
-impl From<sqlx::Error> for ApiError {
-    fn from(err: sqlx::Error) -> Self {
-        match err {
-            sqlx::Error::RowNotFound => ApiError::NotFound("Resource not found".into()),
-            _ => {
-                // Log the real error internally
-                tracing::error!("Database error: {:?}", err);
-                // Return generic error to user
-                ApiError::InternalServerError
-            }
-        }
+struct MockUserRepository;
+
+#[async_trait]
+impl UserRepository for MockUserRepository {
+    async fn create(&self, _u: &str, _e: &str) -> anyhow::Result<User> {
+        Ok(User { id: 1, username: "mock".into(), email: "mock@test.com".into() })
     }
 }
 ```

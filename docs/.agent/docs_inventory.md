@@ -1,15 +1,17 @@
 # Documentation Inventory
 
-| File | Purpose | Owner Crate | Status |
-|------|---------|-------------|--------|
-| `README.md` | Project overview, key features, quick start | Root | OK |
-| `docs/README.md` | Documentation landing page | Docs | OK |
-| `docs/cookbook/src/SUMMARY.md` | Cookbook navigation structure | Docs | OK |
-| `docs/cookbook/src/getting_started/installation.md` | Installation instructions | Docs | OK |
-| `docs/cookbook/src/learning/README.md` | Learning path entry point | Docs | OK |
-| `docs/cookbook/src/recipes/*.md` | Specific implementation guides | Docs | OK |
-| `docs/cookbook/src/recipes/advanced_middleware.md` | Recipe for Rate Limit, Dedup, Cache | Docs | OK |
-| `docs/cookbook/src/recipes/audit_logging.md` | Recipe for Audit Logging | Docs | OK |
-| `docs/cookbook/src/recipes/oauth2_client.md` | Recipe for OAuth2 Client | Docs | OK |
-| `crates/rustapi-core/src/hateoas.rs` | API Reference for HATEOAS | rustapi-core | OK |
-| `crates/rustapi-core/src/extract.rs` | API Reference for Extractors | rustapi-core | OK |
+| File Path | Purpose | Last Updated | Owner Crate | Gaps |
+|-----------|---------|--------------|-------------|------|
+| `docs/README.md` | Index / Entry Point | v0.1.335 | Workspace | None |
+| `docs/GETTING_STARTED.md` | Quick start guide | v0.1.335 | Workspace | None |
+| `docs/ARCHITECTURE.md` | High-level architecture | v0.1.335 | Workspace | None |
+| `docs/FEATURES.md` | Feature list | v0.1.335 | Workspace | None |
+| `docs/PHILOSOPHY.md` | Design philosophy | v0.1.335 | Workspace | None |
+| `docs/native_openapi.md` | OpenAPI implementation details | v0.1.335 | rustapi-openapi | None |
+| `docs/cookbook/src/introduction.md` | Cookbook Intro | v0.1.335 | Workspace | None |
+| `docs/cookbook/src/troubleshooting.md` | Troubleshooting | v0.1.335 | Workspace | None |
+| `docs/cookbook/src/learning/curriculum.md` | Learning Path | v0.1.335 | Workspace | Updated with Modules 4.5, 5.5, 6.5, 14 |
+| `docs/cookbook/src/recipes/db_integration.md` | DB Recipe | v0.1.335 | rustapi-core | Expanded (pooling, testing) |
+| `docs/cookbook/src/recipes/file_uploads.md` | Upload Recipe | v0.1.335 | rustapi-core | Code example fixed |
+| `docs/cookbook/src/recipes/compression.md` | Compression Recipe | v0.1.335 | rustapi-core | Created |
+| `docs/cookbook/src/recipes/openapi_refs.md` | OpenAPI Refs Recipe | v0.1.335 | rustapi-openapi | Created |

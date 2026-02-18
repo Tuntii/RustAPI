@@ -1,5 +1,5 @@
 {
   "last_processed_ref": "v0.1.335",
-  "date": "2026-02-16",
-  "notes": "Added recipes for Advanced Middleware, Audit Logging, and OAuth2 Client. Updated Learning Path to include these features."
+  "date": "2026-02-17",
+  "notes": "Added recipes for Compression and OpenAPI Refs. Expanded DB Integration and File Uploads. Updated Learning Path with new modules."
 }
