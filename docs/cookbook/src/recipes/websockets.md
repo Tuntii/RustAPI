@@ -7,19 +7,20 @@ WebSockets allow full-duplex communication between the client and server. RustAP
 ```toml
 [dependencies]
 rustapi-ws = "0.1.335"
-tokio = { version = "1", features = ["sync"] }
+tokio = { version = "1", features = ["sync", "macros"] }
 futures = "0.3"
 ```
 
 ## The Upgrade Handler
 
-WebSocket connections start as HTTP requests. We "upgrade" them.
+WebSocket connections start as HTTP requests. We "upgrade" them using the `WebSocket` extractor.
 
 ```rust
-use rustapi_ws::{WebSocket, WebSocketUpgrade, Message};
+use rustapi_ws::{WebSocket, WebSocketStream, Message};
 use rustapi_rs::prelude::*;
 use std::sync::Arc;
 use tokio::sync::broadcast;
+use futures::stream::StreamExt;
 
 // Shared state for broadcasting messages to all connected clients
 pub struct AppState {
@@ -27,7 +28,7 @@ pub struct AppState {
 }
 
 async fn ws_handler(
-    ws: WebSocketUpgrade,
+    ws: WebSocket,
     State(state): State<Arc<AppState>>,
 ) -> impl IntoResponse {
     // Finalize the upgrade and spawn the socket handler
@@ -38,9 +39,7 @@ async fn ws_handler(
 ## Handling the Connection
 
 ```rust
-use futures::{sink::SinkExt, stream::StreamExt};
-
-async fn handle_socket(socket: WebSocket, state: Arc<AppState>) {
+async fn handle_socket(socket: WebSocketStream, state: Arc<AppState>) {
     // Split the socket into a sender and receiver
     let (mut sender, mut receiver) = socket.split();
 
@@ -51,7 +50,7 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>) {
     let mut send_task = tokio::spawn(async move {
         while let Ok(msg) = rx.recv().await {
             // If the client disconnects, this will fail and we break
-            if sender.send(Message::Text(msg)).await.is_err() {
+            if sender.send(Message::text(msg)).await.is_err() {
                 break;
             }
         }
@@ -60,10 +59,14 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>) {
     // Handle incoming messages from THIS client
     let mut recv_task = tokio::spawn(async move {
         while let Some(Ok(msg)) = receiver.next().await {
-            if let Message::Text(text) = msg {
-                println!("Received message: {}", text);
-                // Broadcast it to everyone else
-                let _ = state.tx.send(format!("User says: {}", text));
+            match msg {
+                Message::Text(text) => {
+                    println!("Received message: {}", text);
+                    // Broadcast it to everyone else
+                    let _ = state.tx.send(format!("User says: {}", text));
+                }
+                Message::Close(_) => break,
+                _ => {}
             }
         }
     });
@@ -95,7 +98,7 @@ async fn main() {
 
 ## Client-Side Testing
 
-You can simpler use JavaScript in the browser console:
+You can simply use JavaScript in the browser console:
 
 ```javascript
 let ws = new WebSocket("ws://localhost:3000/ws");
@@ -104,11 +107,11 @@ ws.onmessage = (event) => {
     console.log("Message from server:", event.data);
 };
 
-ws.send("Hello form JS!");
+ws.send("Hello from JS!");
 ```
 
 ## Advanced Patterns
 
-1. **User Authentication**: Use the same `AuthUser` extractor in the `ws_handler`. If authentication fails, return an error *before* upgrading.
+1. **User Authentication**: Use the same `AuthUser` extractor in the `ws_handler`. If authentication fails, return an error *before* calling `ws.on_upgrade`.
 2. **Ping/Pong**: Browsers and Load Balancers kill idle connections. Implement a heartbeat mechanism to keep the connection alive.
     - `rustapi-ws` handles low-level ping/pong frames automatically in many cases, but application-level pings are also robust.

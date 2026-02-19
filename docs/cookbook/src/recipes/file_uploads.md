@@ -1,6 +1,6 @@
 # File Uploads
 
-Handling file uploads efficiently is crucial for modern applications. RustAPI provides a `Multipart` extractor that allows you to stream uploads, enabling you to handle large files (e.g., 1GB+) without consuming proportional RAM.
+Handling file uploads is a common requirement. RustAPI provides a `Multipart` extractor to parse `multipart/form-data` requests.
 
 ## Dependencies
 
@@ -13,15 +13,13 @@ tokio = { version = "1", features = ["fs", "io-util"] }
 uuid = { version = "1", features = ["v4"] }
 ```
 
-## Streaming Upload Example
+## Buffered Upload Example
 
-Here is a complete, runnable example of a file upload server that streams files to a `./uploads` directory.
+RustAPI's `Multipart` extractor currently buffers the entire request body into memory before parsing. This means it is suitable for small to medium file uploads (e.g., images, documents) but care must be taken with very large files to avoid running out of RAM.
 
 ```rust
 use rustapi_rs::prelude::*;
-use rustapi_core::multipart::Multipart;
-use tokio::fs::File;
-use tokio::io::AsyncWriteExt;
+use rustapi_rs::extract::{Multipart, DefaultBodyLimit};
 use std::path::Path;
 
 #[tokio::main]
@@ -35,6 +33,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         // Increase body limit to 1GB (default is usually 1MB)
         .body_limit(1024 * 1024 * 1024)
         .route("/upload", post(upload_handler))
+        // Increase body limit to 50MB (default is usually 2MB)
+        // ⚠️ IMPORTANT: Since Multipart buffers the whole body,
+        // setting this too high can exhaust server memory.
+        .layer(DefaultBodyLimit::max(50 * 1024 * 1024))
         .run("127.0.0.1:8080")
         .await
 }
@@ -56,8 +58,13 @@ async fn upload_handler(mut multipart: Multipart) -> Result<Json<UploadResponse>
     let mut uploaded_files = Vec::new();
 
     // Iterate over the fields in the multipart form
-    while let Some(mut field) = multipart.next_field().await.map_err(|_| ApiError::bad_request("Invalid multipart"))? {
+    while let Some(field) = multipart.next_field().await.map_err(|_| ApiError::bad_request("Invalid multipart"))? {
         
+        // Skip fields that are not files
+        if !field.is_file() {
+            continue;
+        }
+
         let file_name = field.file_name().unwrap_or("unknown.bin").to_string();
         let content_type = field.content_type().unwrap_or("application/octet-stream").to_string();
 
@@ -65,18 +72,17 @@ async fn upload_handler(mut multipart: Multipart) -> Result<Json<UploadResponse>
         // It could contain paths like "../../../etc/passwd".
         // Always generate a safe filename or sanitize inputs.
         let safe_filename = format!("{}-{}", uuid::Uuid::new_v4(), file_name);
+
+        // Option 1: Use the helper method (sanitizes filename automatically)
+        // field.save_to("./uploads", Some(&safe_filename)).await.map_err(|e| ApiError::internal(e.to_string()))?;
+
+        // Option 2: Manual write (gives you full control)
+        let data = field.bytes().await.map_err(|e| ApiError::internal(e.to_string()))?;
         let path = Path::new("./uploads").join(&safe_filename);
 
-        println!("Streaming file: {} -> {:?}", file_name, path);
+        tokio::fs::write(&path, &data).await.map_err(|e| ApiError::internal(e.to_string()))?;
 
-        // Open destination file
-        let mut file = File::create(&path).await.map_err(|e| ApiError::internal(e.to_string()))?;
-
-        // Stream the field content chunk-by-chunk
-        // This is memory efficient even for large files.
-        while let Some(chunk) = field.chunk().await.map_err(|_| ApiError::bad_request("Stream error"))? {
-             file.write_all(&chunk).await.map_err(|e| ApiError::internal(e.to_string()))?;
-        }
+        println!("Saved file: {} -> {:?}", file_name, path);
 
         uploaded_files.push(FileResult {
             original_name: file_name,
@@ -94,13 +100,14 @@ async fn upload_handler(mut multipart: Multipart) -> Result<Json<UploadResponse>
 
 ## Key Concepts
 
-### 1. Streaming vs Buffering
-By default, some frameworks load the entire file into RAM. RustAPI's `Multipart` allows you to process the stream incrementally using `field.chunk()`.
-- **Buffering**: `field.bytes().await` (Load all into RAM - simple but dangerous for large files)
-- **Streaming**: `field.chunk().await` (Load small chunks - scalable)
+### 1. Buffering
+RustAPI loads the entire `multipart/form-data` body into memory.
+- **Pros**: Simple API, easy to work with.
+- **Cons**: High memory usage for concurrent large uploads.
+- **Mitigation**: Set a reasonable `DefaultBodyLimit` (e.g., 10MB - 100MB) to prevent DoS attacks.
 
 ### 2. Body Limits
-The default request body limit is often small (e.g., 1MB) to prevent DoS attacks. You must explicitly increase this limit for file upload routes using `RustApi::new().body_limit(size)`. This applies globally to the application instance. If you need different limits for different routes, consider creating separate router instances or using a custom layer.
+The default request body limit is small (2MB) to prevent attacks. You **must** explicitly increase this limit for file upload routes using `.layer(DefaultBodyLimit::max(size_in_bytes))`.
 
 ### 3. Security
 - **Path Traversal**: Malicious users can send filenames like `../../system32/cmd.exe`. Always rename files or sanitize filenames strictly.

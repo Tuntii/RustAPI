@@ -13,6 +13,9 @@ This curriculum is designed to take you from a RustAPI beginner to an advanced u
 - **Expected Output:** A running server that responds to `GET /` with "Hello World".
 - **Pitfalls:** Not enabling `tokio` features if setting up manually.
 
+#### 🛠️ Mini Project: "The Echo Server"
+Create a new endpoint `POST /echo` that accepts any text body and returns it back to the client. This verifies your setup handles basic I/O correctly.
+
 #### 🧠 Knowledge Check
 1. What command scaffolds a new RustAPI project?
 2. Which feature flag is required for the async runtime?
@@ -25,6 +28,9 @@ This curriculum is designed to take you from a RustAPI beginner to an advanced u
 - **Expected Output:** Endpoints that return static JSON data.
 - **Pitfalls:** Forgetting to register routes in `main.rs` if not using auto-discovery.
 
+#### 🛠️ Mini Project: "The Calculator"
+Create an endpoint `GET /add?a=5&b=10` that returns `{"result": 15}`. This practices query parameter extraction and JSON responses.
+
 #### 🧠 Knowledge Check
 1. Which macro is used to define a GET handler?
 2. How do you return a JSON response from a handler?
@@ -36,6 +42,9 @@ This curriculum is designed to take you from a RustAPI beginner to an advanced u
 - **Task:** Use `Path`, `Query`, and `Json` extractors to handle dynamic input.
 - **Expected Output:** `GET /users/{id}` returns the ID. `POST /users` echoes the JSON body.
 - **Pitfalls:** Consuming the body twice (e.g., using `Json` and `Body` in the same handler).
+
+#### 🛠️ Mini Project: "The User Registry"
+Create a `POST /register` endpoint that accepts a JSON body `{"username": "...", "age": ...}` and returns a welcome message using the username. Use the `Json` extractor.
 
 #### 🧠 Knowledge Check
 1. Which extractor is used for URL parameters like `/users/:id`?

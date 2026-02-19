@@ -19,12 +19,23 @@
 | Sync Validation | `docs/cookbook/src/crates/rustapi_validate.md` | `rustapi-validate/src/lib.rs` (`Validate`) | OK |
 | Async Validation | `docs/cookbook/src/crates/rustapi_validate.md` | `rustapi-validate/src/v2/mod.rs` (`AsyncValidate`) | OK |
 | **Extras** | | | |
-| JWT Auth | `docs/cookbook/src/recipes/jwt_auth.md` | `rustapi-extras/src/jwt.rs` (`JwtLayer`) | OK |
-| OAuth2 | `docs/cookbook/src/recipes/oauth2_client.md` | `rustapi-extras/src/oauth2.rs` (`OAuth2Client`) | OK |
-| Database | `docs/cookbook/src/recipes/db_integration.md` | N/A (Integration pattern) | Needs Update |
-| **Ecosystem** | | | |
-| WebSockets | `docs/cookbook/src/recipes/websockets.md` | `rustapi-ws/src/lib.rs` (`WebSocketUpgrade`) | OK |
-| SSR (View) | `docs/cookbook/src/recipes/server_side_rendering.md` | `rustapi-view/src/lib.rs` (`View`) | OK |
-| gRPC | `docs/cookbook/src/recipes/grpc_integration.md` | `rustapi-grpc/src/lib.rs` (`TonicServer`) | OK |
-| Jobs | `docs/cookbook/src/recipes/background_jobs.md` | `rustapi-jobs/src/lib.rs` (`Job`) | OK |
-| TOON (AI) | `docs/cookbook/src/recipes/ai_integration.md` | `rustapi-toon/src/lib.rs` (`LlmResponse`) | OK |
+| Auth (JWT) | `recipes/jwt_auth.md` | `rustapi-extras/src/jwt` | OK |
+| Auth (OAuth2) | `recipes/oauth2_client.md` | `rustapi-extras/src/oauth2` | OK |
+| Security | `recipes/csrf_protection.md` | `rustapi-extras/src/security` | OK |
+| Observability | `crates/rustapi_extras.md` | `rustapi-extras/src/telemetry` | OK |
+| Audit Logging | `recipes/audit_logging.md` | `rustapi-extras/src/audit` | OK |
+| Middleware (Advanced) | `recipes/advanced_middleware.md` | `rustapi-extras/src/{rate_limit, dedup, cache}` | OK |
+| **Jobs** | | | |
+| Job Queue (Crate) | `crates/rustapi_jobs.md` | `rustapi-jobs` | OK |
+| Background Jobs (Recipe) | `recipes/background_jobs.md` | `rustapi-jobs` | OK |
+| **Integrations** | | | |
+| gRPC | `recipes/grpc_integration.md` | `rustapi-grpc` | OK |
+| SSR | `recipes/server_side_rendering.md` | `rustapi-view` | OK |
+| AI / TOON | `recipes/ai_integration.md` | `rustapi-toon` | OK |
+| WebSockets | `recipes/websockets.md` | `rustapi-ws` | Updated |
+| **Learning** | | | |
+| Structured Path | `learning/curriculum.md` | N/A | Updated (Mini Projects) |
+| **Recipes** | | | |
+| File Uploads | `recipes/file_uploads.md` | `rustapi-core` | Updated (Buffered) |
+| Deployment | `recipes/deployment.md` | `cargo-rustapi` | OK |
+| Testing | `recipes/testing.md` | `rustapi-testing` | OK |
