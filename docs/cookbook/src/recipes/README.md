@@ -13,6 +13,7 @@ Each recipe follows a simple structure:
 
 - [Creating Resources](crud_resource.md)
 - [Pagination & HATEOAS](pagination.md)
+- [OpenAPI & Schemas](openapi_refs.md)
 - [JWT Authentication](jwt_auth.md)
 - [CSRF Protection](csrf_protection.md)
 - [Database Integration](db_integration.md)
@@ -24,6 +25,7 @@ Each recipe follows a simple structure:
 - [Server-Side Rendering (SSR)](server_side_rendering.md)
 - [AI Integration (TOON)](ai_integration.md)
 - [Production Tuning](high_performance.md)
+- [Response Compression](compression.md)
 - [Resilience Patterns](resilience.md)
 - [Time-Travel Debugging (Replay)](replay.md)
 - [Deployment](deployment.md)

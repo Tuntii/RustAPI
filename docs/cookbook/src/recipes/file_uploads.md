@@ -30,6 +30,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     println!("Starting Upload Server at http://127.0.0.1:8080");
 
     RustApi::new()
+        // Increase body limit to 1GB (default is usually 1MB)
+        .body_limit(1024 * 1024 * 1024)
         .route("/upload", post(upload_handler))
         // Increase body limit to 50MB (default is usually 2MB)
         // ⚠️ IMPORTANT: Since Multipart buffers the whole body,
@@ -37,6 +39,19 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .layer(DefaultBodyLimit::max(50 * 1024 * 1024))
         .run("127.0.0.1:8080")
         .await
+}
+
+#[derive(Serialize, Schema)]
+struct UploadResponse {
+    message: String,
+    files: Vec<FileResult>,
+}
+
+#[derive(Serialize, Schema)]
+struct FileResult {
+    original_name: String,
+    stored_name: String,
+    content_type: String,
 }
 
 async fn upload_handler(mut multipart: Multipart) -> Result<Json<UploadResponse>> {
@@ -80,19 +95,6 @@ async fn upload_handler(mut multipart: Multipart) -> Result<Json<UploadResponse>
         message: "Upload successful".into(),
         files: uploaded_files,
     }))
-}
-
-#[derive(Serialize, Schema)]
-struct UploadResponse {
-    message: String,
-    files: Vec<FileResult>,
-}
-
-#[derive(Serialize, Schema)]
-struct FileResult {
-    original_name: String,
-    stored_name: String,
-    content_type: String,
 }
 ```
 
