@@ -19,7 +19,7 @@ Here is a complete, runnable example of a file upload server that streams files 
 
 ```rust
 use rustapi_rs::prelude::*;
-use rustapi_rs::extract::{Multipart, DefaultBodyLimit};
+use rustapi_core::multipart::Multipart;
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
 use std::path::Path;
@@ -32,11 +32,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     println!("Starting Upload Server at http://127.0.0.1:8080");
 
     RustApi::new()
+        // Increase body limit to 1GB (default is usually 1MB)
+        .body_limit(1024 * 1024 * 1024)
         .route("/upload", post(upload_handler))
-        // Increase body limit to 1GB (default is usually 2MB)
-        .layer(DefaultBodyLimit::max(1024 * 1024 * 1024))
         .run("127.0.0.1:8080")
         .await
+}
+
+#[derive(Serialize, Schema)]
+struct UploadResponse {
+    message: String,
+    files: Vec<FileResult>,
+}
+
+#[derive(Serialize, Schema)]
+struct FileResult {
+    original_name: String,
+    stored_name: String,
+    content_type: String,
 }
 
 async fn upload_handler(mut multipart: Multipart) -> Result<Json<UploadResponse>> {
@@ -77,19 +90,6 @@ async fn upload_handler(mut multipart: Multipart) -> Result<Json<UploadResponse>
         files: uploaded_files,
     }))
 }
-
-#[derive(Serialize, Schema)]
-struct UploadResponse {
-    message: String,
-    files: Vec<FileResult>,
-}
-
-#[derive(Serialize, Schema)]
-struct FileResult {
-    original_name: String,
-    stored_name: String,
-    content_type: String,
-}
 ```
 
 ## Key Concepts
@@ -100,7 +100,7 @@ By default, some frameworks load the entire file into RAM. RustAPI's `Multipart`
 - **Streaming**: `field.chunk().await` (Load small chunks - scalable)
 
 ### 2. Body Limits
-The default request body limit is often small (e.g., 2MB) to prevent DoS attacks. You must explicitly increase this limit for file upload routes using `DefaultBodyLimit::max(size)`.
+The default request body limit is often small (e.g., 1MB) to prevent DoS attacks. You must explicitly increase this limit for file upload routes using `RustApi::new().body_limit(size)`. This applies globally to the application instance. If you need different limits for different routes, consider creating separate router instances or using a custom layer.
 
 ### 3. Security
 - **Path Traversal**: Malicious users can send filenames like `../../system32/cmd.exe`. Always rename files or sanitize filenames strictly.
