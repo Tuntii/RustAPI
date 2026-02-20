@@ -94,9 +94,10 @@ async fn main() -> std::io::Result<()> {
 
     // 5. Build application
     RustApi::auto()
-        .with_state(queue) // Inject queue into state
-        .serve("127.0.0.1:3000")
+        .state(queue) // Inject queue into state
+        .run("127.0.0.1:3000")
         .await
+        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
 }
 ```
 
@@ -108,11 +109,17 @@ You can now inject the `JobQueue` into your request handlers using the `State` e
 use rustapi_rs::prelude::*;
 use rustapi_jobs::JobQueue;
 
-#[rustapi::post("/register")]
+#[derive(Deserialize)]
+struct RegisterRequest {
+    username: String,
+    email: String,
+}
+
+#[rustapi_rs::post("/register")]
 async fn register_user(
     State(queue): State<JobQueue>,
     Json(payload): Json<RegisterRequest>,
-) -> Result<impl IntoResponse, ApiError> {
+) -> Result<Json<serde_json::Value>> {
     // ... logic to create user in DB ...
     let user_id = "user_123".to_string(); // Simulated ID
 
@@ -121,18 +128,12 @@ async fn register_user(
     queue.enqueue::<WelcomeEmailJob>(WelcomeEmailData {
         user_id,
         email: payload.email,
-    }).await.map_err(|e| ApiError::InternalServerError(e.to_string()))?;
+    }).await.map_err(|e| ApiError::internal(e.to_string()))?;
 
-    Ok(Json(json!({
+    Ok(Json(serde_json::json!({
         "status": "registered",
         "message": "Welcome email will be sent shortly"
     })))
-}
-
-#[derive(Deserialize)]
-struct RegisterRequest {
-    username: String,
-    email: String,
 }
 ```
 
