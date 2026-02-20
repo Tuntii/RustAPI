@@ -12,6 +12,7 @@
 | HTTP/3 (QUIC) | `docs/cookbook/src/recipes/http3_quic.md` | `rustapi-core/src/http3.rs` (`Http3Server`) | OK |
 | File Uploads | `docs/cookbook/src/recipes/file_uploads.md` | `rustapi-core/src/multipart.rs` (`Multipart`) | OK |
 | Compression | `docs/cookbook/src/recipes/compression.md` | `rustapi-core/src/middleware/compression.rs` (`CompressionLayer`) | OK |
+| Graceful Shutdown | `docs/cookbook/src/recipes/graceful_shutdown.md` | `rustapi-core/src/server.rs` (`run_with_shutdown`) | OK |
 | **OpenAPI** | | | |
 | Schema Derivation | `docs/cookbook/src/crates/rustapi_openapi.md` | `rustapi-macros/src/derive_schema.rs` (`#[derive(Schema)]`) | OK |
 | References ($ref) | `docs/cookbook/src/recipes/openapi_refs.md` | `rustapi-openapi/src/schema.rs` (`SchemaRef`) | OK |
@@ -27,7 +28,7 @@
 | Middleware (Advanced) | `recipes/advanced_middleware.md` | `rustapi-extras/src/{rate_limit, dedup, cache}` | OK |
 | **Jobs** | | | |
 | Job Queue (Crate) | `crates/rustapi_jobs.md` | `rustapi-jobs` | OK |
-| Background Jobs (Recipe) | `recipes/background_jobs.md` | `rustapi-jobs` | OK |
+| Background Jobs (Recipe) | `recipes/background_jobs.md` | `rustapi-jobs` | Updated |
 | **Integrations** | | | |
 | gRPC | `recipes/grpc_integration.md` | `rustapi-grpc` | OK |
 | SSR | `recipes/server_side_rendering.md` | `rustapi-view` | OK |

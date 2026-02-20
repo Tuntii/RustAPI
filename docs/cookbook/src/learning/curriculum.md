@@ -203,6 +203,9 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 - **Expected Output:** A resilient API ready for deployment.
 - **Pitfalls:** Setting timeouts too low for slow operations.
 
+#### 🛠️ Mini Project: "The Graceful Exit"
+Implement `run_with_shutdown` handling `Ctrl+C`. Verify that long-running requests complete successfully when the server receives the signal.
+
 #### 🧠 Knowledge Check
 1. Why is timeout middleware important?
 2. What command generates a production Dockerfile?
