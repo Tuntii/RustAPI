@@ -131,12 +131,12 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 - **Reading:** [File Uploads](../recipes/file_uploads.md).
 - **Task:** Create an endpoint `POST /upload` that accepts a file and saves it to disk.
 - **Expected Output:** `curl -F file=@image.png` uploads the file.
-- **Pitfalls:** Loading large files entirely into memory (use streaming).
+- **Pitfalls:** Multipart uploads are buffered into memory by default. Increase the body limit for large files but be aware of memory usage.
 
 #### 🧠 Knowledge Check
 1. Which extractor is used for file uploads?
-2. Why should you use `field.chunk()` instead of `field.bytes()`?
-3. How do you increase the request body size limit?
+2. Why is it important to set a reasonable `body_limit`?
+3. What happens if you try to upload a file larger than the configured limit?
 
 ### 🏆 Phase 2 Capstone: "The Secure Blog Engine"
 **Objective:** Enhance the Todo API into a Blog Engine.
@@ -191,7 +191,7 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 
 #### 🧠 Knowledge Check
 1. How do you upgrade an HTTP request to a WebSocket connection?
-2. Can you share state between HTTP handlers and WebSocket handlers?
+2. Why must you avoid long-running synchronous operations in the message loop?
 3. What happens if a WebSocket handler panics?
 
 ### Module 10: Production Readiness & Deployment
@@ -287,7 +287,7 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 **Requirements:**
 - **Ingestion:** HTTP/3 endpoint receiving JSON events.
 - **Processing:** Push events to a `rustapi-jobs` queue (Redis backend).
-- **Storage:** Workers process events and store aggregates in a database.
+- **Storage:** Workers process events (simulate archive or aggregation) and store results.
 - **Observability:** Full tracing from ingestion to storage.
 - **Audit:** Log all configuration changes to the system.
 - **Resilience:** Circuit breakers on database writes.

@@ -46,6 +46,7 @@
     - [Production Tuning](recipes/high_performance.md)
     - [Response Compression](recipes/compression.md)
     - [Resilience Patterns](recipes/resilience.md)
+    - [Structured Logging](recipes/structured_logging.md)
     - [Audit Logging](recipes/audit_logging.md)
     - [Time-Travel Debugging (Replay)](recipes/replay.md)
     - [Deployment](recipes/deployment.md)
