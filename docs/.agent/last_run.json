@@ -1,5 +1,5 @@
 {
   "last_processed_ref": "v0.1.335",
-  "date": "2026-02-19",
-  "notes": "Deleted incorrect recipes (tuning, action pattern). Updated File Uploads and WebSockets recipes for accuracy. Expanded Learning Path with mini projects."
+  "date": "2026-02-26",
+  "notes": "Updated File Uploads recipe to correct buffering details and API usage. Added Structured Logging recipe. Improved Learning Path."
 }

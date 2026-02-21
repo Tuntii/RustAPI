@@ -19,7 +19,7 @@ RustAPI's `Multipart` extractor currently buffers the entire request body into m
 
 ```rust
 use rustapi_rs::prelude::*;
-use rustapi_rs::extract::{Multipart, DefaultBodyLimit};
+use rustapi_rs::extract::Multipart;
 use std::path::Path;
 
 #[tokio::main]
@@ -30,13 +30,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     println!("Starting Upload Server at http://127.0.0.1:8080");
 
     RustApi::new()
-        // Increase body limit to 1GB (default is usually 1MB)
-        .body_limit(1024 * 1024 * 1024)
-        .route("/upload", post(upload_handler))
-        // Increase body limit to 50MB (default is usually 2MB)
+        // Increase body limit to 50MB (default is usually 1MB)
         // ⚠️ IMPORTANT: Since Multipart buffers the whole body,
         // setting this too high can exhaust server memory.
-        .layer(DefaultBodyLimit::max(50 * 1024 * 1024))
+        .body_limit(50 * 1024 * 1024)
+        .route("/upload", post(upload_handler))
         .run("127.0.0.1:8080")
         .await
 }
@@ -107,7 +105,7 @@ RustAPI loads the entire `multipart/form-data` body into memory.
 - **Mitigation**: Set a reasonable `DefaultBodyLimit` (e.g., 10MB - 100MB) to prevent DoS attacks.
 
 ### 2. Body Limits
-The default request body limit is small (2MB) to prevent attacks. You **must** explicitly increase this limit for file upload routes using `.layer(DefaultBodyLimit::max(size_in_bytes))`.
+The default request body limit is small (1MB) to prevent attacks. You **must** explicitly increase this limit for file upload routes using `.body_limit(size_in_bytes)`.
 
 ### 3. Security
 - **Path Traversal**: Malicious users can send filenames like `../../system32/cmd.exe`. Always rename files or sanitize filenames strictly.

@@ -9,6 +9,7 @@
 | `docs/cookbook/src/recipes/file_uploads.md` | Recipe for File Uploads | Docs | Updated (Buffered) |
 | `docs/cookbook/src/recipes/websockets.md` | Recipe for Real-time Chat | Docs | Updated (Extractors) |
 | `docs/cookbook/src/recipes/background_jobs.md` | Recipe for Background Jobs | Docs | OK |
+| `docs/cookbook/src/recipes/structured_logging.md` | Recipe for Structured Logging | Docs | New |
 | `docs/cookbook/src/recipes/tuning.md` | Performance Tuning | Docs | DELETED |
 | `docs/cookbook/src/recipes/new_feature.md` | New Feature Guide | Docs | DELETED |
 | `docs/cookbook/src/architecture/action_pattern.md` | Action Pattern Guide | Docs | DELETED |
