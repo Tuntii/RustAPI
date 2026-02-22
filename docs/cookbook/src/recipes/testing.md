@@ -100,10 +100,10 @@ async fn test_external_integration() {
         MockResponse::new()
             .status(200)
             .body(r#"{"data": "mocked"}"#)
-    ).await;
+    );
 
     // 3. Use the mock server's URL in your app configuration
-    let mock_url = mock_server.url("/external-data");
+    let mock_url = format!("{}{}", mock_server.base_url(), "/external-data");
 
     // Simulating your app logic calling the external service
     let client = reqwest::Client::new();
