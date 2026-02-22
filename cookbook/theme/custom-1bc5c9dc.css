@@ -1,0 +1,216 @@
+/* Premium Responsive Theme - RustAPI Cookbook */
+
+/* 1. Define Variables & Defaults (Dark Mode) */
+:root {
+    /* Custom Palette */
+    --premium-bg: #2d3748;
+    --premium-sidebar: #232b38; /* Slightly darker than bg */
+    --premium-text: #f7f9fb;
+    --premium-heading: #f7f9fb;
+    --premium-accent: #e06c3c;
+    --premium-accent-hover: #ff8a65;
+    --premium-border: #607d8b;
+    --premium-code-bg: #1a202c;
+    --premium-link: #e06c3c;
+
+    /* Fonts */
+    --font-primary: 'Inter', system-ui, -apple-system, sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+    /* Override MDBook Standard Variables (Dark Defaults) */
+    --bg: var(--premium-bg);
+    --fg: var(--premium-text);
+    --sidebar-bg: var(--premium-sidebar);
+    --sidebar-fg: var(--premium-text);
+    --sidebar-non-existant: var(--premium-text);
+    --quote-bg: rgba(224, 108, 60, 0.1);
+    --table-header-bg: var(--premium-sidebar);
+    --table-border-color: var(--premium-border);
+}
+
+/* 2. Light Theme Overrides */
+/* Class is usually applied to html tag by mdbook */
+.light,
+.rust {
+    /* Custom Palette - High Contrast */
+    --premium-bg: #f7f9fb;
+    --premium-sidebar: #ffffff;
+    --premium-text: #2d3748;
+    --premium-heading: #1a202c;
+    --premium-accent: #e06c3c;
+    --premium-accent-hover: #d85a2b;
+    --premium-border: #cbd5e1;
+    --premium-code-bg: #e2e8f0;
+    --premium-link: #e06c3c;
+
+    /* Override MDBook Variables for Light Mode */
+    --bg: var(--premium-bg);
+    --fg: var(--premium-text);
+    --sidebar-bg: var(--premium-sidebar);
+    --sidebar-fg: var(--premium-text);
+    --quote-bg: rgba(224, 108, 60, 0.05);
+    --table-header-bg: #fff;
+    --table-border-color: var(--premium-border);
+}
+
+/* 3. Base Styles */
+body {
+    background-color: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-primary);
+}
+
+/* Force Markdown Section Colors */
+.markdown-section {
+    color: var(--fg);
+}
+
+.markdown-section p,
+.markdown-section li,
+.markdown-section table {
+    color: var(--fg);
+}
+
+/* Headings */
+h1,
+h2,
+h3,
+h4 {
+    color: var(--premium-heading);
+    font-weight: 700;
+    margin-top: 2em;
+    font-family: var(--font-mono); /* Geeky font for headers */
+}
+
+h1 {
+    font-size: 2.5em;
+    border-bottom: 2px solid var(--premium-border);
+    padding-bottom: 0.5em;
+    color: var(--premium-accent);
+    display: inline-block;
+}
+
+/* Links */
+a {
+    color: var(--premium-link);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+a:hover {
+    color: var(--premium-accent-hover);
+    text-decoration: underline;
+}
+
+/* Sidebar */
+.sidebar {
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--premium-border);
+}
+
+.sidebar-scrollbox {
+    scrollbar-width: thin;
+    scrollbar-color: var(--premium-border) transparent;
+}
+
+.chapter li.active>a {
+    color: var(--premium-accent);
+    border-left: 2px solid var(--premium-accent);
+    background: rgba(224, 108, 60, 0.1);
+    padding-left: 8px;
+}
+
+.light .chapter li.active>a {
+    background: rgba(224, 108, 60, 0.1);
+}
+
+.chapter a {
+    color: #94a3b8;
+    transition: all 0.2s ease;
+}
+
+.light .chapter a,
+.rust .chapter a {
+    color: #64748b;
+}
+
+.chapter a:hover {
+    color: var(--premium-heading);
+}
+
+/* Code Blocks */
+pre,
+code {
+    background-color: var(--premium-code-bg);
+    border-radius: 0px; /* Sharper, techy look */
+    border: 1px solid var(--premium-border);
+    font-family: var(--font-mono);
+}
+
+pre {
+    padding: 1.5em;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Blockquotes */
+blockquote {
+    background: var(--quote-bg);
+    border-left: 4px solid var(--premium-accent);
+    margin: 1.5em 0;
+    padding: 1em;
+    border-radius: 0 8px 8px 0;
+    color: var(--fg);
+}
+
+/* Tables */
+table {
+    border-collapse: separate;
+    border-spacing: 0;
+    width: 100%;
+    margin: 1.5em 0;
+    border: 1px solid var(--table-border-color);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+th {
+    background-color: var(--table-header-bg);
+    color: var(--premium-heading);
+    font-weight: 600;
+    padding: 12px;
+    border-bottom: 1px solid var(--table-border-color);
+    font-family: var(--font-mono);
+}
+
+td {
+    padding: 12px;
+    border-bottom: 1px solid var(--table-border-color);
+    color: var(--fg);
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+tr:hover td {
+    background-color: rgba(224, 108, 60, 0.05);
+}
+
+/* Scrollbars */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--premium-border);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--premium-accent);
+}
