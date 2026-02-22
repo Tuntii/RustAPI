@@ -1,5 +1,5 @@
 {
   "last_processed_ref": "v0.1.335",
-  "date": "2026-02-19",
-  "notes": "Deleted incorrect recipes (tuning, action pattern). Updated File Uploads and WebSockets recipes for accuracy. Expanded Learning Path with mini projects."
+  "date": "2026-02-23",
+  "notes": "Fixed MockServer examples in testing recipe. Added Graceful Shutdown recipe. Enhanced Learning Path with 'The Email Worker' mini-project."
 }

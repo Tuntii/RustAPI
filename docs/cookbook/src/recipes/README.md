@@ -27,6 +27,7 @@ Each recipe follows a simple structure:
 - [Production Tuning](high_performance.md)
 - [Response Compression](compression.md)
 - [Resilience Patterns](resilience.md)
+- [Graceful Shutdown](graceful_shutdown.md)
 - [Time-Travel Debugging (Replay)](replay.md)
 - [Deployment](deployment.md)
 - [HTTP/3 (QUIC)](http3_quic.md)

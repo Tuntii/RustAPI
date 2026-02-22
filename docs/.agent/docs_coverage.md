@@ -39,3 +39,4 @@
 | File Uploads | `recipes/file_uploads.md` | `rustapi-core` | Updated (Buffered) |
 | Deployment | `recipes/deployment.md` | `cargo-rustapi` | OK |
 | Testing | `recipes/testing.md` | `rustapi-testing` | OK |
+| Graceful Shutdown | `recipes/graceful_shutdown.md` | `rustapi-core/src/server.rs` (`run_with_shutdown`) | OK |

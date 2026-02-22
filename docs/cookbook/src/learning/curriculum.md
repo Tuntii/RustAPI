@@ -212,15 +212,23 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 - **Prerequisites:** Phase 3.
 - **Reading:** [Background Jobs Recipe](../recipes/background_jobs.md), [Testing Strategy](../concepts/testing.md).
 - **Task:**
-    1. Implement a job that sends a "Welcome" email (simulated) when a user registers.
-    2. Write an integration test using `TestClient` to verify the registration endpoint.
-- **Expected Output:** Registration returns 200 immediately; console logs show "Sending welcome email to ..." shortly after. Tests pass.
-- **Pitfalls:** Forgetting to start the job worker loop.
+    1. Implement a job `WelcomeEmailJob` that sends a "Welcome" email (simulated with `tokio::time::sleep`).
+    2. Enqueue this job inside your `POST /register` handler.
+    3. Write an integration test using `TestClient` to verify the registration endpoint.
+- **Expected Output:** Registration returns 200 immediately (low latency); console logs show "Sending welcome email to ..." shortly after (asynchronous). Tests pass.
+- **Pitfalls:** Forgetting to start the job worker loop (`JobWorker::new(queue).run().await`).
+
+#### 🛠️ Mini Project: "The Email Worker"
+Create a system where users can request a "Report".
+1. `POST /reports`: Enqueues a `GenerateReportJob`. Returns `{"job_id": "..."}` immediately.
+2. The job simulates 5 seconds of work and then writes "Report Generated" to a file or log.
+3. (Bonus) Use Redis backend for persistence.
 
 #### 🧠 Knowledge Check
-1. Why use background jobs for email sending?
-2. Which backend is suitable for local development?
+1. Why should you offload email sending to a background job?
+2. Which backend is suitable for local development vs production?
 3. How do you enqueue a job from a handler?
+4. How can you test that a job was enqueued without actually running it?
 
 ### 🏆 Phase 3 Capstone: "The Real-Time Collaboration Tool"
 **Objective:** Build a real-time collaborative note-taking app.
