@@ -1,42 +1,65 @@
-# Docs Coverage Map
+# Documentation Coverage Map
 
-| Feature Area | Documentation Page | Source Code (Key Symbols) | Status |
-|--------------|-------------------|--------------------------|--------|
-| **Core** | | | |
-| Routing | `docs/cookbook/src/concepts/routing.md` | `rustapi-core/src/router.rs` (`Router`) | OK |
-| Handlers | `docs/cookbook/src/concepts/handlers.md` | `rustapi-core/src/handler.rs` (`Handler`) | OK |
-| Extractors | `docs/cookbook/src/concepts/extractors.md` | `rustapi-core/src/extract.rs` (`FromRequest`) | OK |
-| Middleware | `docs/cookbook/src/recipes/custom_middleware.md` | `rustapi-core/src/middleware/mod.rs` (`MiddlewareLayer`) | OK |
-| State | `docs/cookbook/src/concepts/state.md` | `rustapi-core/src/extract.rs` (`State`) | OK |
-| Error Handling | `docs/cookbook/src/concepts/errors.md` | `rustapi-core/src/error.rs` (`ApiError`) | OK |
-| HTTP/3 (QUIC) | `docs/cookbook/src/recipes/http3_quic.md` | `rustapi-core/src/http3.rs` (`Http3Server`) | OK |
-| File Uploads | `docs/cookbook/src/recipes/file_uploads.md` | `rustapi-core/src/multipart.rs` (`Multipart`) | OK |
-| Compression | `docs/cookbook/src/recipes/compression.md` | `rustapi-core/src/middleware/compression.rs` (`CompressionLayer`) | OK |
-| **OpenAPI** | | | |
-| Schema Derivation | `docs/cookbook/src/crates/rustapi_openapi.md` | `rustapi-macros/src/derive_schema.rs` (`#[derive(Schema)]`) | OK |
-| References ($ref) | `docs/cookbook/src/recipes/openapi_refs.md` | `rustapi-openapi/src/schema.rs` (`SchemaRef`) | OK |
-| **Validation** | | | |
-| Sync Validation | `docs/cookbook/src/crates/rustapi_validate.md` | `rustapi-validate/src/lib.rs` (`Validate`) | OK |
-| Async Validation | `docs/cookbook/src/crates/rustapi_validate.md` | `rustapi-validate/src/v2/mod.rs` (`AsyncValidate`) | OK |
-| **Extras** | | | |
-| Auth (JWT) | `recipes/jwt_auth.md` | `rustapi-extras/src/jwt` | OK |
-| Auth (OAuth2) | `recipes/oauth2_client.md` | `rustapi-extras/src/oauth2` | OK |
-| Security | `recipes/csrf_protection.md` | `rustapi-extras/src/security` | OK |
-| Observability | `crates/rustapi_extras.md` | `rustapi-extras/src/telemetry` | OK |
-| Audit Logging | `recipes/audit_logging.md` | `rustapi-extras/src/audit` | OK |
-| Middleware (Advanced) | `recipes/advanced_middleware.md` | `rustapi-extras/src/{rate_limit, dedup, cache}` | OK |
-| **Jobs** | | | |
-| Job Queue (Crate) | `crates/rustapi_jobs.md` | `rustapi-jobs` | OK |
-| Background Jobs (Recipe) | `recipes/background_jobs.md` | `rustapi-jobs` | OK |
-| **Integrations** | | | |
-| gRPC | `recipes/grpc_integration.md` | `rustapi-grpc` | OK |
-| SSR | `recipes/server_side_rendering.md` | `rustapi-view` | OK |
-| AI / TOON | `recipes/ai_integration.md` | `rustapi-toon` | OK |
-| WebSockets | `recipes/websockets.md` | `rustapi-ws` | Updated |
-| **Learning** | | | |
-| Structured Path | `learning/curriculum.md` | N/A | Updated (Mini Projects) |
-| **Recipes** | | | |
-| File Uploads | `recipes/file_uploads.md` | `rustapi-core` | Updated (Buffered) |
-| Deployment | `recipes/deployment.md` | `cargo-rustapi` | OK |
-| Testing | `recipes/testing.md` | `rustapi-testing` | OK |
-| Graceful Shutdown | `recipes/graceful_shutdown.md` | `rustapi-core/src/server.rs` (`run_with_shutdown`) | OK |
+Last Updated: 2026-02-24
+Version: 0.1.335
+
+## Crates Coverage
+
+| Crate | Main Docs | Recipes | Status | Notes |
+|-------|-----------|---------|--------|-------|
+| `rustapi-rs` | `GETTING_STARTED.md`, `README.md` | Many | ✅ OK | Main entry point |
+| `rustapi-core` | `crates/rustapi_core.md` | `file_uploads.md`, `custom_middleware.md` | ✅ OK | Core features covered |
+| `rustapi-extras` | `crates/rustapi_extras.md` | See Features table below | ✅ OK | Extensive feature set |
+| `rustapi-jobs` | `crates/rustapi_jobs.md` | `background_jobs.md` | ✅ OK | |
+| `rustapi-validate` | `crates/rustapi_validation.md` | `learning/curriculum.md` (Module 5) | ✅ OK | |
+| `rustapi-openapi` | `crates/rustapi_openapi.md` | `openapi_refs.md` | ✅ OK | |
+| `rustapi-toon` | `crates/rustapi_toon.md` | `ai_integration.md` | ✅ OK | |
+| `rustapi-ws` | `crates/rustapi_ws.md` | `websockets.md` | ✅ OK | |
+| `rustapi-view` | `crates/rustapi_view.md` | `server_side_rendering.md` | ✅ OK | |
+| `rustapi-testing` | `crates/rustapi_testing.md` | `testing.md` | ✅ OK | |
+| `rustapi-grpc` | `crates/rustapi_grpc.md` | `grpc_integration.md` | ✅ OK | |
+| `rustapi-macros` | `crates/rustapi_macros.md` | N/A | ✅ OK | Internal details |
+| `cargo-rustapi` | `crates/cargo_rustapi.md` | N/A | ✅ OK | CLI tool |
+
+## Features Coverage (rustapi-extras)
+
+| Feature | Docs Location | Status | Notes |
+|---------|---------------|--------|-------|
+| `jwt` | `recipes/jwt_auth.md` | ✅ OK | |
+| `cors` | `crates/rustapi_extras.md` | ⚠️ Basic | Could use a dedicated recipe |
+| `rate-limit` | `recipes/advanced_middleware.md` | ✅ OK | |
+| `csrf` | `recipes/csrf_protection.md` | ✅ OK | |
+| `config` | `crates/rustapi_extras.md` | ⚠️ Basic | Env var loading |
+| `cookies` | `crates/rustapi_extras.md` | ⚠️ Missing | Only brief mention |
+| `sqlx` | `recipes/db_integration.md` | ✅ OK | |
+| `insight` | `crates/rustapi_extras.md` | ✅ OK | Detailed section in crate docs |
+| `timeout` | `recipes/resilience.md` | ✅ OK | |
+| `guard` | `crates/rustapi_extras.md` | ⚠️ Basic | Permission guards |
+| `logging` | `recipes/audit_logging.md` | ✅ OK | Audit logging |
+| `circuit-breaker` | `recipes/resilience.md` | ✅ OK | |
+| `retry` | `recipes/resilience.md` | ✅ OK | |
+| `dedup` | `recipes/advanced_middleware.md` | ✅ OK | |
+| `sanitization` | `crates/rustapi_extras.md` | ⚠️ Basic | |
+| `security-headers` | `recipes/security_headers.md` | ✅ OK | Recipe added 2026-02-24 |
+| `api-key` | `crates/rustapi_extras.md` | ⚠️ Basic | |
+| `cache` | `recipes/advanced_middleware.md` | ✅ OK | |
+| `otel` | `crates/rustapi_extras.md` | ⚠️ Basic | Could use more on integration |
+| `structured-logging`| `crates/rustapi_extras.md` | ⚠️ Basic | |
+| `oauth2-client` | `recipes/oauth2_client.md` | ✅ OK | |
+| `audit` | `recipes/audit_logging.md` | ✅ OK | |
+| `replay` | `recipes/replay.md` | ✅ OK | |
+
+## Missing / Needs Improvement
+
+- **File Uploads**: Needs streaming example (or explicit warning about lack thereof).
+- **Validation**: Manual validation for multipart fields.
+- **Reverse Proxy**: Explicit guide on configuring `RateLimitLayer` for proxies.
+- **Observability**: A full recipe combining `otel`, `structured-logging`, and `insight` would be valuable.
+- **Security**: Dedicated `Security Headers` recipe needed (Planned).
+
+## Plan for 2026-02-24 Run
+
+1.  Update `file_uploads.md` with validation & streaming caveats.
+2.  Update `advanced_middleware.md` with Reverse Proxy info.
+3.  Add `security_headers.md` recipe.
+4.  Enhance Learning Path Module 5.

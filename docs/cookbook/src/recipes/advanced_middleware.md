@@ -45,6 +45,15 @@ The middleware automatically adds standard headers to responses:
 - `X-RateLimit-Remaining`: The number of requests remaining in the current window.
 - `X-RateLimit-Reset`: The timestamp when the window resets.
 
+### Reverse Proxy Configuration
+
+If your API runs behind a reverse proxy (like Nginx, Cloudflare, or AWS ALB), the client IP seen by the application will be the proxy's IP. To fix this, `RateLimitLayer` automatically inspects standard headers:
+
+1.  **`X-Forwarded-For`**: Uses the first IP in the list (the original client).
+2.  **`X-Real-IP`**: Uses the value if present.
+
+**Note**: Ensure your reverse proxy is configured to strip or overwrite these headers from incoming requests to prevent IP spoofing by clients.
+
 ## Request Deduplication
 
 In distributed systems, clients may retry requests that have already been processed (e.g., due to network timeouts). Deduplication ensures that non-idempotent operations (like payments) are processed only once.

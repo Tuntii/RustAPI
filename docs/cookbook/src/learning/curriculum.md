@@ -44,7 +44,7 @@ Create an endpoint `GET /add?a=5&b=10` that returns `{"result": 15}`. This pract
 - **Pitfalls:** Consuming the body twice (e.g., using `Json` and `Body` in the same handler).
 
 #### 🛠️ Mini Project: "The User Registry"
-Create a `POST /register` endpoint that accepts a JSON body `{"username": "...", "age": ...}` and returns a welcome message using the username. Use the `Json` extractor.
+Create a `POST /register` endpoint that accepts a JSON body `{"username": "...", "age": ...}` and returns a welcome message using the username. Use the `Json` extractor. This project will be enhanced in Module 5.
 
 #### 🧠 Knowledge Check
 1. Which extractor is used for URL parameters like `/users/:id`?
@@ -93,9 +93,16 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 ### Module 5: Validation
 - **Prerequisites:** Module 4.
 - **Reading:** [Validation](../crates/rustapi_validation.md).
-- **Task:** Add `#[derive(Validate)]` to your `User` struct. Use `ValidatedJson`.
-- **Expected Output:** Requests with invalid email or short password return `422 Unprocessable Entity`.
+- **Task:** Add `#[derive(Validate)]` to your `User` struct from Module 3's "User Registry". Use `ValidatedJson` extractor instead of `Json`.
+- **Expected Output:** Requests with invalid email or short password return `422 Unprocessable Entity` automatically.
 - **Pitfalls:** Forgetting to add `#[validate]` attributes to struct fields.
+
+#### 🛠️ Mini Project: "The Strict User Registry"
+Upgrade your `POST /register` endpoint:
+1.  Username must be 3-20 characters.
+2.  Email must be a valid email format.
+3.  Age must be >= 18.
+4.  Password (if added) must be complex (regex).
 
 #### 🧠 Knowledge Check
 1. Which trait must a struct implement to be validatable?
@@ -129,13 +136,13 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 ### Module 6.5: File Uploads & Multipart
 - **Prerequisites:** Module 6.
 - **Reading:** [File Uploads](../recipes/file_uploads.md).
-- **Task:** Create an endpoint `POST /upload` that accepts a file and saves it to disk.
-- **Expected Output:** `curl -F file=@image.png` uploads the file.
-- **Pitfalls:** Loading large files entirely into memory (use streaming).
+- **Task:** Create an endpoint `POST /upload` that accepts a file and saves it to disk. Implement manual size validation.
+- **Expected Output:** `curl -F file=@image.png` uploads the file. Large files are rejected.
+- **Pitfalls:** Loading large files entirely into memory (use streaming/manual body handling for big files).
 
 #### 🧠 Knowledge Check
 1. Which extractor is used for file uploads?
-2. Why should you use `field.chunk()` instead of `field.bytes()`?
+2. Why should you check file size manually in the handler loop?
 3. How do you increase the request body size limit?
 
 ### 🏆 Phase 2 Capstone: "The Secure Blog Engine"
@@ -262,18 +269,19 @@ Create a system where users can request a "Report".
 
 ### Module 13: Resilience & Security
 - **Prerequisites:** Phase 3.
-- **Reading:** [Resilience Patterns](../recipes/resilience.md), [Time-Travel Debugging](../recipes/replay.md).
+- **Reading:** [Resilience Patterns](../recipes/resilience.md), [Time-Travel Debugging](../recipes/replay.md), [Security Headers](../recipes/security_headers.md).
 - **Task:**
     1. Wrap an external API call with a `CircuitBreaker`.
     2. Implement `RetryLayer` for transient failures.
-    3. (Optional) Use `ReplayLayer` to record and replay a tricky bug scenario.
-- **Expected Output:** System degrades gracefully when external service is down. Replay file captures the exact request sequence.
+    3. Add `SecurityHeadersLayer` to your application.
+    4. (Optional) Use `ReplayLayer` to record and replay a tricky bug scenario.
+- **Expected Output:** System degrades gracefully when external service is down. Headers like `X-Frame-Options` are present. Replay file captures the exact request sequence.
 - **Pitfalls:** Infinite retry loops or retrying non-idempotent operations.
 
 #### 🧠 Knowledge Check
 1. What state does a Circuit Breaker have when it stops traffic?
 2. Why is jitter important in retry strategies?
-3. How does Time-Travel Debugging help with "Heisenbugs"?
+3. What does `X-Frame-Options: DENY` prevent?
 
 ### Module 14: High Performance
 - **Prerequisites:** Phase 3.

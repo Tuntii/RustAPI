@@ -34,6 +34,7 @@
     - [JWT Authentication](recipes/jwt_auth.md)
     - [OAuth2 Client](recipes/oauth2_client.md)
     - [CSRF Protection](recipes/csrf_protection.md)
+    - [Security Headers](recipes/security_headers.md)
     - [Database Integration](recipes/db_integration.md)
     - [Testing & Mocking](recipes/testing.md)
     - [File Uploads](recipes/file_uploads.md)
