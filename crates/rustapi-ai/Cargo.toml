@@ -1,0 +1,42 @@
+[package]
+name = "rustapi-ai"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation = "https://docs.rs/rustapi-ai"
+keywords.workspace = true
+categories.workspace = true
+rust-version.workspace = true
+description = "AI-Native Backend Runtime for RustAPI — unified facade over context, memory, tools, agents, and LLM routing."
+
+[features]
+default = []
+openai = ["rustapi-llm/openai"]
+anthropic = ["rustapi-llm/anthropic"]
+local = ["rustapi-llm/local"]
+http = ["dep:rustapi-core"]
+redis = ["rustapi-memory/redis"]
+full = ["openai", "anthropic", "local", "http", "redis"]
+
+[dependencies]
+rustapi-context = { workspace = true }
+rustapi-memory = { workspace = true }
+rustapi-tools = { workspace = true }
+rustapi-agent = { workspace = true }
+rustapi-llm = { workspace = true }
+rustapi-core = { workspace = true, optional = true }
+
+async-trait = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true, features = ["sync", "rt"] }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util", "macros", "rt-multi-thread"] }
+bytes = { workspace = true }
+http = { workspace = true }

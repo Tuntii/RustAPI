@@ -1,0 +1,32 @@
+[package]
+name = "rustapi-agent"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation = "https://docs.rs/rustapi-agent"
+keywords.workspace = true
+categories.workspace = true
+rust-version.workspace = true
+description = "Step-based, deterministic agent execution engine with planning, branching, and replay for the RustAPI AI Runtime."
+
+[features]
+default = []
+
+[dependencies]
+rustapi-context = { workspace = true }
+rustapi-tools = { workspace = true }
+rustapi-memory = { workspace = true }
+async-trait = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true, features = ["sync", "time", "rt"] }
+uuid = { workspace = true, features = ["v4"] }
+chrono = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util", "macros", "rt-multi-thread"] }

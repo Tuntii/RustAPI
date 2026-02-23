@@ -1,0 +1,28 @@
+[package]
+name = "rustapi-context"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation = "https://docs.rs/rustapi-context"
+keywords.workspace = true
+categories.workspace = true
+rust-version.workspace = true
+description = "AI-Native request context, execution tracing, cost tracking, and event bus for RustAPI."
+
+[features]
+default = []
+
+[dependencies]
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true, features = ["sync", "time", "rt"] }
+uuid = { workspace = true, features = ["v4", "serde"] }
+chrono = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util", "macros", "rt-multi-thread"] }

@@ -14,6 +14,13 @@ members = [
     "crates/rustapi-jobs",
     "crates/rustapi-grpc",
     "crates/cargo-rustapi",
+    # AI-Native Runtime crates
+    "crates/rustapi-context",
+    "crates/rustapi-memory",
+    "crates/rustapi-tools",
+    "crates/rustapi-agent",
+    "crates/rustapi-llm",
+    "crates/rustapi-ai",
 ]
 
 [workspace.package]
@@ -106,6 +113,17 @@ rustapi-view = { path = "crates/rustapi-view", version = "0.1.335" }
 rustapi-testing = { path = "crates/rustapi-testing", version = "0.1.335" }
 rustapi-jobs = { path = "crates/rustapi-jobs", version = "0.1.335" }
 rustapi-grpc = { path = "crates/rustapi-grpc", version = "0.1.335" }
+
+# AI-Native Runtime crates
+rustapi-context = { path = "crates/rustapi-context", version = "0.1.335" }
+rustapi-memory = { path = "crates/rustapi-memory", version = "0.1.335", default-features = false }
+rustapi-tools = { path = "crates/rustapi-tools", version = "0.1.335" }
+rustapi-agent = { path = "crates/rustapi-agent", version = "0.1.335" }
+rustapi-llm = { path = "crates/rustapi-llm", version = "0.1.335", default-features = false }
+rustapi-ai = { path = "crates/rustapi-ai", version = "0.1.335", default-features = false }
+
+# Time
+chrono = { version = "0.4", features = ["serde"] }
 
 # HTTP/3 (QUIC)
 quinn = "0.11"

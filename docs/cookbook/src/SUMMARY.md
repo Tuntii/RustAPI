@@ -25,6 +25,7 @@
     - [rustapi-view: The Artist](crates/rustapi_view.md)
     - [rustapi-jobs: The Workhorse](crates/rustapi_jobs.md)
     - [rustapi-testing: The Auditor](crates/rustapi_testing.md)
+    - [rustapi-ai: The Brain](crates/rustapi_ai.md)
     - [cargo-rustapi: The Architect](crates/cargo_rustapi.md)
 
 - [Part IV: Recipes](recipes/README.md)
@@ -43,6 +44,7 @@
     - [Real-time Chat](recipes/websockets.md)
     - [Server-Side Rendering (SSR)](recipes/server_side_rendering.md)
     - [AI Integration (TOON)](recipes/ai_integration.md)
+    - [AI-Native Runtime](recipes/ai_native_runtime.md)
     - [Production Tuning](recipes/high_performance.md)
     - [Response Compression](recipes/compression.md)
     - [Resilience Patterns](recipes/resilience.md)

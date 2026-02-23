@@ -1,0 +1,30 @@
+[package]
+name = "rustapi-tools"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation = "https://docs.rs/rustapi-tools"
+keywords.workspace = true
+categories.workspace = true
+rust-version.workspace = true
+description = "Tool registry and declarative execution graph for the RustAPI AI Runtime."
+
+[features]
+default = []
+
+[dependencies]
+rustapi-context = { workspace = true }
+async-trait = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true, features = ["sync", "time", "rt"] }
+uuid = { workspace = true, features = ["v4"] }
+chrono = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util", "macros", "rt-multi-thread"] }

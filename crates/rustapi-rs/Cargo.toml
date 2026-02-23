@@ -20,6 +20,7 @@ rustapi-toon = { workspace = true, optional = true }
 rustapi-ws = { workspace = true, optional = true }
 rustapi-view = { workspace = true, optional = true }
 rustapi-grpc = { workspace = true, optional = true }
+rustapi-ai = { workspace = true, optional = true }
 rustapi-validate = { workspace = true }
 async-trait = { workspace = true }
 
@@ -82,6 +83,16 @@ extras-sanitization = ["dep:rustapi-extras", "rustapi-extras/sanitization"]
 extras-otel = ["dep:rustapi-extras", "rustapi-extras/otel"]
 extras-structured-logging = ["dep:rustapi-extras", "rustapi-extras/structured-logging"]
 extras-replay = ["dep:rustapi-extras", "rustapi-extras/replay"]
+
+# Canonical AI-native features
+ai-core = ["dep:rustapi-ai"]
+ai-http = ["dep:rustapi-ai", "rustapi-ai/http"]
+ai-openai = ["dep:rustapi-ai", "rustapi-ai/openai"]
+ai-anthropic = ["dep:rustapi-ai", "rustapi-ai/anthropic"]
+ai-local = ["dep:rustapi-ai", "rustapi-ai/local"]
+ai-redis = ["dep:rustapi-ai", "rustapi-ai/redis"]
+ai-full = ["ai-core", "ai-http", "ai-openai", "ai-anthropic", "ai-local", "ai-redis"]
+ai = ["ai-core"]
 extras-all = [
     "extras-jwt",
     "extras-cors",
@@ -140,4 +151,4 @@ replay = ["extras-replay"]
 extras = ["extras-jwt", "extras-cors", "extras-rate-limit"]
 
 # Canonical aggregate
-full = ["core", "protocol-all", "extras-all", "core-legacy-validator"]
+full = ["core", "protocol-all", "extras-all", "core-legacy-validator", "ai-full"]

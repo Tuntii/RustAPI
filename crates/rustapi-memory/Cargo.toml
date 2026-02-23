@@ -1,0 +1,34 @@
+[package]
+name = "rustapi-memory"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+documentation = "https://docs.rs/rustapi-memory"
+keywords.workspace = true
+categories.workspace = true
+rust-version.workspace = true
+description = "Pluggable memory layer for the RustAPI AI Runtime — in-memory, Redis, and vector DB backends."
+
+[features]
+default = []
+redis = ["dep:redis"]
+vector = []
+
+[dependencies]
+async-trait = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true, features = ["sync", "time", "rt"] }
+uuid = { workspace = true, features = ["v4", "serde"] }
+chrono = { workspace = true }
+
+# Optional backends
+redis = { version = "0.24", features = ["tokio-comp"], optional = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["test-util", "macros", "rt-multi-thread"] }

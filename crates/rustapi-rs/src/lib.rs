@@ -187,6 +187,19 @@ pub mod extras {
     }
 }
 
+/// AI-Native Runtime: context, memory, tools, agents, LLM routing.
+#[cfg(any(
+    feature = "ai-core",
+    feature = "ai-openai",
+    feature = "ai-anthropic",
+    feature = "ai-local",
+    feature = "ai-full",
+    feature = "ai",
+))]
+pub mod ai {
+    pub use rustapi_ai::*;
+}
+
 // Legacy root module aliases.
 #[cfg(any(feature = "protocol-toon", feature = "toon"))]
 #[deprecated(note = "Use rustapi_rs::protocol::toon instead")]
@@ -331,6 +344,17 @@ pub mod prelude {
     pub use crate::protocol::grpc::{
         run_concurrently, run_rustapi_and_grpc, run_rustapi_and_grpc_with_shutdown,
     };
+
+    // AI-Native Runtime prelude
+    #[cfg(any(
+        feature = "ai-core",
+        feature = "ai-openai",
+        feature = "ai-anthropic",
+        feature = "ai-local",
+        feature = "ai-full",
+        feature = "ai",
+    ))]
+    pub use crate::ai::prelude::*;
 }
 
 #[cfg(test)]
