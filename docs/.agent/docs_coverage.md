@@ -18,6 +18,7 @@
 | **Validation** | | | |
 | Sync Validation | `docs/cookbook/src/crates/rustapi_validate.md` | `rustapi-validate/src/lib.rs` (`Validate`) | OK |
 | Async Validation | `docs/cookbook/src/crates/rustapi_validate.md` | `rustapi-validate/src/v2/mod.rs` (`AsyncValidate`) | OK |
+| Custom Validation | `recipes/custom_validation.md` | `rustapi-validate/src/custom.rs` | OK |
 | **Extras** | | | |
 | Auth (JWT) | `recipes/jwt_auth.md` | `rustapi-extras/src/jwt` | OK |
 | Auth (OAuth2) | `recipes/oauth2_client.md` | `rustapi-extras/src/oauth2` | OK |
@@ -34,9 +35,11 @@
 | AI / TOON | `recipes/ai_integration.md` | `rustapi-toon` | OK |
 | WebSockets | `recipes/websockets.md` | `rustapi-ws` | Updated |
 | **Learning** | | | |
-| Structured Path | `learning/curriculum.md` | N/A | Updated (Mini Projects) |
+| Structured Path | `learning/curriculum.md` | N/A | Enhanced (Tasks & Knowledge Checks) |
 | **Recipes** | | | |
-| File Uploads | `recipes/file_uploads.md` | `rustapi-core` | Updated (Buffered) |
+| File Uploads | `recipes/file_uploads.md` | `rustapi-core` | OK |
 | Deployment | `recipes/deployment.md` | `cargo-rustapi` | OK |
 | Testing | `recipes/testing.md` | `rustapi-testing` | OK |
 | Graceful Shutdown | `recipes/graceful_shutdown.md` | `rustapi-core/src/server.rs` (`run_with_shutdown`) | OK |
+| CI Simulation | `recipes/ci_simulation.md` | `scripts/simulate_ci.ps1` | OK |
+| Maintenance | `recipes/maintenance.md` | `scripts/check_quality.ps1` | OK |

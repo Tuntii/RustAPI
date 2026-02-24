@@ -31,6 +31,7 @@
     - [Creating Resources](recipes/crud_resource.md)
     - [Pagination & HATEOAS](recipes/pagination.md)
     - [OpenAPI & Schemas](recipes/openapi_refs.md)
+    - [Custom Validation](recipes/custom_validation.md)
     - [JWT Authentication](recipes/jwt_auth.md)
     - [OAuth2 Client](recipes/oauth2_client.md)
     - [CSRF Protection](recipes/csrf_protection.md)
@@ -53,6 +54,8 @@
     - [HTTP/3 (QUIC)](recipes/http3_quic.md)
     - [gRPC Integration](recipes/grpc_integration.md)
     - [Automatic Status Page](recipes/status_page.md)
+    - [CI Simulation](recipes/ci_simulation.md)
+    - [Maintenance & Quality](recipes/maintenance.md)
 
 - [Troubleshooting: Common Gotchas](troubleshooting.md)
 

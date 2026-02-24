@@ -9,7 +9,10 @@ This curriculum is designed to take you from a RustAPI beginner to an advanced u
 ### Module 1: Introduction & Setup
 - **Prerequisites:** Rust installed, basic Cargo knowledge.
 - **Reading:** [Installation](../getting_started/installation.md), [Project Structure](../getting_started/structure.md).
-- **Task:** Create a new project using `cargo rustapi new my-api`.
+- **Tasks:**
+    1.  Install the CLI: `cargo install cargo-rustapi`.
+    2.  Create a new project: `cargo rustapi new my-api`.
+    3.  Run the server: `cd my-api && cargo run`.
 - **Expected Output:** A running server that responds to `GET /` with "Hello World".
 - **Pitfalls:** Not enabling `tokio` features if setting up manually.
 
@@ -20,11 +23,15 @@ Create a new endpoint `POST /echo` that accepts any text body and returns it bac
 1. What command scaffolds a new RustAPI project?
 2. Which feature flag is required for the async runtime?
 3. Where is the main entry point of the application typically located?
+4. What happens if you try to run the server without an async runtime?
 
 ### Module 2: Routing & Handlers
 - **Prerequisites:** Module 1.
 - **Reading:** [Handlers & Extractors](../concepts/handlers.md).
-- **Task:** Create routes for `GET /users`, `POST /users`, `GET /users/{id}`.
+- **Tasks:**
+    1.  Define a handler function `async fn get_users() -> impl IntoResponse`.
+    2.  Register the route in `main.rs`: `.route("/users", get(get_users))`.
+    3.  Create a dynamic route `GET /users/:id`.
 - **Expected Output:** Endpoints that return static JSON data.
 - **Pitfalls:** Forgetting to register routes in `main.rs` if not using auto-discovery.
 
@@ -35,11 +42,15 @@ Create an endpoint `GET /add?a=5&b=10` that returns `{"result": 15}`. This pract
 1. Which macro is used to define a GET handler?
 2. How do you return a JSON response from a handler?
 3. What is the return type of a typical handler function?
+4. What trait must a type implement to be returned from a handler?
 
 ### Module 3: Extractors
 - **Prerequisites:** Module 2.
 - **Reading:** [Handlers & Extractors](../concepts/handlers.md).
-- **Task:** Use `Path`, `Query`, and `Json` extractors to handle dynamic input.
+- **Tasks:**
+    1.  Use `Path<u32>` to extract the ID from `/users/:id`.
+    2.  Use `Json<CreateUser>` to extract the body from `POST /users`.
+    3.  Use `Query<Pagination>` to extract `?page=1&size=10`.
 - **Expected Output:** `GET /users/{id}` returns the ID. `POST /users` echoes the JSON body.
 - **Pitfalls:** Consuming the body twice (e.g., using `Json` and `Body` in the same handler).
 
@@ -50,6 +61,7 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 1. Which extractor is used for URL parameters like `/users/:id`?
 2. Which extractor parses the request body as JSON?
 3. Can you use multiple extractors in a single handler?
+4. What happens if the JSON body doesn't match the struct fields?
 
 ### 🏆 Phase 1 Capstone: "The Todo List API"
 **Objective:** Build a simple in-memory Todo List API.
@@ -69,7 +81,10 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 ### Module 4: State Management
 - **Prerequisites:** Phase 1.
 - **Reading:** [State Extractor](../concepts/handlers.md).
-- **Task:** Create an `AppState` struct with a `Mutex<Vec<User>>`. Inject it into handlers.
+- **Tasks:**
+    1.  Define a struct `AppState { users: Mutex<Vec<User>> }`.
+    2.  Initialize it in `main` and wrap in `Arc`.
+    3.  Inject it into handlers using `State<Arc<AppState>>`.
 - **Expected Output:** A stateful API where POST adds a user and GET retrieves it (in-memory).
 - **Pitfalls:** Using `std::sync::Mutex` instead of `tokio::sync::Mutex` in async code (though `std` is fine for simple data).
 
@@ -77,11 +92,15 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 1. How do you inject global state into the application?
 2. Which extractor retrieves the application state?
 3. Why should you use `Arc` for shared state?
+4. What happens if you forget to clone the Arc before passing it to the router?
 
 ### Module 4.5: Database Integration
 - **Prerequisites:** Module 4.
 - **Reading:** [Database Integration](../recipes/db_integration.md).
-- **Task:** Replace the in-memory `Mutex<Vec<User>>` with a PostgreSQL connection pool (`sqlx::PgPool`).
+- **Tasks:**
+    1.  Install `sqlx` with `postgres` feature.
+    2.  Replace the in-memory `Mutex` with `sqlx::PgPool`.
+    3.  Rewrite handlers to query the database.
 - **Expected Output:** Data persists across server restarts.
 - **Pitfalls:** Blocking the async runtime with synchronous DB drivers (use `sqlx` or `tokio-postgres`).
 
@@ -92,8 +111,12 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 
 ### Module 5: Validation
 - **Prerequisites:** Module 4.
-- **Reading:** [Validation](../crates/rustapi_validation.md).
-- **Task:** Add `#[derive(Validate)]` to your `User` struct. Use `ValidatedJson`.
+- **Reading:** [Validation](../crates/rustapi_validation.md), [Custom Validation](../recipes/custom_validation.md).
+- **Tasks:**
+    1.  Add `#[derive(Validate)]` to your `User` struct.
+    2.  Add rules like `#[validate(email)]` and `#[validate(length(min = 8))]`.
+    3.  Use `ValidatedJson` instead of `Json` in your handler.
+    4.  (Advanced) Create a custom validator function.
 - **Expected Output:** Requests with invalid email or short password return `422 Unprocessable Entity`.
 - **Pitfalls:** Forgetting to add `#[validate]` attributes to struct fields.
 
@@ -101,11 +124,15 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 1. Which trait must a struct implement to be validatable?
 2. What HTTP status code is returned on validation failure?
 3. How do you combine JSON extraction and validation?
+4. What is `ValidationContext` used for?
 
 ### Module 5.5: Error Handling
 - **Prerequisites:** Module 5.
 - **Reading:** [Error Handling](../concepts/errors.md).
-- **Task:** Create a custom `ApiError` enum and implement `IntoResponse`. Return robust error messages.
+- **Tasks:**
+    1.  Define an enum `ApiError` with variants like `NotFound`, `InternalServerError`.
+    2.  Implement `IntoResponse` for `ApiError`.
+    3.  Update handlers to return `Result<Json<T>, ApiError>`.
 - **Expected Output:** `GET /users/999` returns `404 Not Found` with a structured JSON error body.
 - **Pitfalls:** Exposing internal database errors (like SQL strings) to the client.
 
@@ -117,7 +144,10 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 ### Module 6: OpenAPI & HATEOAS
 - **Prerequisites:** Module 5.
 - **Reading:** [OpenAPI](../crates/rustapi_openapi.md), [OpenAPI Refs](../recipes/openapi_refs.md), [Pagination Recipe](../recipes/pagination.md).
-- **Task:** Add `#[derive(Schema)]` to all DTOs. Use `#[derive(Schema)]` on a shared struct and reference it in multiple places.
+- **Tasks:**
+    1.  Add `#[derive(Schema)]` to all DTOs.
+    2.  Check the generated Swagger UI at `/docs`.
+    3.  Refactor shared schemas to avoid duplication using `$ref`.
 - **Expected Output:** Swagger UI at `/docs` showing full schema with shared components.
 - **Pitfalls:** Recursive schemas without `Box` or `Option`.
 
@@ -129,7 +159,10 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 ### Module 6.5: File Uploads & Multipart
 - **Prerequisites:** Module 6.
 - **Reading:** [File Uploads](../recipes/file_uploads.md).
-- **Task:** Create an endpoint `POST /upload` that accepts a file and saves it to disk.
+- **Tasks:**
+    1.  Create an endpoint `POST /upload`.
+    2.  Use the `Multipart` extractor to iterate over fields.
+    3.  Save the uploaded file to a temporary directory.
 - **Expected Output:** `curl -F file=@image.png` uploads the file.
 - **Pitfalls:** Loading large files entirely into memory (use streaming).
 
@@ -155,10 +188,10 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 ### Module 7: Authentication (JWT & OAuth2)
 - **Prerequisites:** Phase 2.
 - **Reading:** [JWT Auth Recipe](../recipes/jwt_auth.md), [OAuth2 Client](../recipes/oauth2_client.md).
-- **Task:**
-    1. Implement a login route that returns a JWT.
-    2. Protect user routes with `AuthUser` extractor.
-    3. (Optional) Implement "Login with Google" using `OAuth2Client`.
+- **Tasks:**
+    1.  Implement a `login` handler that verifies credentials and issues a JWT.
+    2.  Create an `AuthUser` extractor that validates the JWT in headers.
+    3.  Apply `AuthUser` to protected routes.
 - **Expected Output:** Protected routes return `401 Unauthorized` without a valid token.
 - **Pitfalls:** Hardcoding secrets. Not checking token expiration.
 
@@ -170,10 +203,10 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 ### Module 8: Advanced Middleware
 - **Prerequisites:** Module 7.
 - **Reading:** [Advanced Middleware](../recipes/advanced_middleware.md).
-- **Task:**
-    1. Apply `RateLimitLayer` to your login endpoint (10 requests/minute).
-    2. Add `DedupLayer` to a payment endpoint.
-    3. Cache the response of a public "stats" endpoint.
+- **Tasks:**
+    1.  Apply `RateLimitLayer` to your login endpoint (10 requests/minute).
+    2.  Add `DedupLayer` to a payment endpoint.
+    3.  Cache the response of a public "stats" endpoint.
 - **Expected Output:** Sending 11 login attempts results in `429 Too Many Requests`.
 - **Pitfalls:** Caching responses that contain user-specific data.
 
@@ -185,7 +218,10 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 ### Module 9: WebSockets & Real-time
 - **Prerequisites:** Phase 2.
 - **Reading:** [WebSockets Recipe](../recipes/websockets.md).
-- **Task:** Create a chat endpoint where users can broadcast messages.
+- **Tasks:**
+    1.  Create a route `/ws` that uses `WebSocketUpgrade`.
+    2.  Implement a message loop that echoes messages back.
+    3.  Implement a broadcast channel to send messages to all connected clients.
 - **Expected Output:** Multiple clients connected via WS receiving messages in real-time.
 - **Pitfalls:** Blocking the WebSocket loop with long-running synchronous tasks.
 
@@ -197,9 +233,10 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 ### Module 10: Production Readiness & Deployment
 - **Prerequisites:** Phase 3.
 - **Reading:** [Production Tuning](../recipes/high_performance.md), [Resilience](../recipes/resilience.md), [Deployment](../recipes/deployment.md).
-- **Task:**
-    1. Add `CompressionLayer`, and `TimeoutLayer`.
-    2. Use `cargo rustapi deploy docker` to generate a Dockerfile.
+- **Tasks:**
+    1.  Add `CompressionLayer` to the router.
+    2.  Add `TimeoutLayer` to prevent hanging requests.
+    3.  Run `cargo rustapi deploy docker` to see the generated Dockerfile.
 - **Expected Output:** A resilient API ready for deployment.
 - **Pitfalls:** Setting timeouts too low for slow operations.
 
@@ -211,10 +248,11 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 ### Module 11: Background Jobs & Testing
 - **Prerequisites:** Phase 3.
 - **Reading:** [Background Jobs Recipe](../recipes/background_jobs.md), [Testing Strategy](../concepts/testing.md).
-- **Task:**
-    1. Implement a job `WelcomeEmailJob` that sends a "Welcome" email (simulated with `tokio::time::sleep`).
-    2. Enqueue this job inside your `POST /register` handler.
-    3. Write an integration test using `TestClient` to verify the registration endpoint.
+- **Tasks:**
+    1.  Implement a job struct `WelcomeEmailJob`.
+    2.  Register the job handler in `main.rs`.
+    3.  Enqueue the job in the registration handler.
+    4.  Write a test using `TestClient`.
 - **Expected Output:** Registration returns 200 immediately (low latency); console logs show "Sending welcome email to ..." shortly after (asynchronous). Tests pass.
 - **Pitfalls:** Forgetting to start the job worker loop (`JobWorker::new(queue).run().await`).
 
@@ -248,10 +286,10 @@ Create a system where users can request a "Report".
 ### Module 12: Observability & Auditing
 - **Prerequisites:** Phase 3.
 - **Reading:** [Observability (Extras)](../crates/rustapi_extras.md#observability), [Audit Logging](../recipes/audit_logging.md).
-- **Task:**
-    1. Enable `structured-logging` and `otel`.
-    2. Configure tracing to export spans.
-    3. Implement `AuditStore` and log a "User Login" event with IP address.
+- **Tasks:**
+    1.  Install `tracing-subscriber`.
+    2.  Initialize `StructuredLoggingLayer`.
+    3.  Implement `AuditStore` and record critical actions.
 - **Expected Output:** Logs are JSON formatted. Audit log contains a new entry for every login.
 - **Pitfalls:** High cardinality in metric labels.
 
@@ -259,14 +297,15 @@ Create a system where users can request a "Report".
 1. What is the difference between logging and auditing?
 2. Which fields are required in an `AuditEvent`?
 3. How does structured logging aid debugging?
+4. What are some supported logging formats in RustAPI?
 
 ### Module 13: Resilience & Security
 - **Prerequisites:** Phase 3.
 - **Reading:** [Resilience Patterns](../recipes/resilience.md), [Time-Travel Debugging](../recipes/replay.md).
-- **Task:**
-    1. Wrap an external API call with a `CircuitBreaker`.
-    2. Implement `RetryLayer` for transient failures.
-    3. (Optional) Use `ReplayLayer` to record and replay a tricky bug scenario.
+- **Tasks:**
+    1.  Wrap an external API call with a `CircuitBreaker`.
+    2.  Implement `RetryLayer` for transient failures.
+    3.  (Optional) Use `ReplayLayer` to record and replay a tricky bug scenario.
 - **Expected Output:** System degrades gracefully when external service is down. Replay file captures the exact request sequence.
 - **Pitfalls:** Infinite retry loops or retrying non-idempotent operations.
 
@@ -278,10 +317,10 @@ Create a system where users can request a "Report".
 ### Module 14: High Performance
 - **Prerequisites:** Phase 3.
 - **Reading:** [HTTP/3 (QUIC)](../recipes/http3_quic.md), [Performance Tuning](../recipes/high_performance.md), [Compression](../recipes/compression.md).
-- **Task:**
-    1. Enable `http3` feature and generate self-signed certs.
-    2. Serve traffic over QUIC.
-    3. Add `CompressionLayer` to compress large responses.
+- **Tasks:**
+    1.  Enable `http3` feature and generate self-signed certs.
+    2.  Serve traffic over QUIC.
+    3.  Add `CompressionLayer` to compress large responses.
 - **Expected Output:** Browser/Client connects via HTTP/3. Responses have `content-encoding: gzip`.
 - **Pitfalls:** Compressing small responses (waste of CPU) or already compressed data (images).
 
@@ -310,7 +349,10 @@ Create a system where users can request a "Report".
 ### Module 15: Server-Side Rendering (SSR)
 - **Prerequisites:** Phase 2.
 - **Reading:** [SSR Recipe](../recipes/server_side_rendering.md).
-- **Task:** Create a dashboard showing system status using `rustapi-view`.
+- **Tasks:**
+    1.  Initialize `Templates` state.
+    2.  Create a `hello.html` template.
+    3.  Render it from a handler using `View::render`.
 - **Expected Output:** HTML page rendered with Tera templates, displaying dynamic data.
 - **Pitfalls:** Forgetting to create the `templates/` directory.
 
@@ -322,7 +364,10 @@ Create a system where users can request a "Report".
 ### Module 16: gRPC Microservices
 - **Prerequisites:** Phase 3.
 - **Reading:** [gRPC Recipe](../recipes/grpc_integration.md).
-- **Task:** Run a gRPC service alongside your HTTP API that handles internal user lookups.
+- **Tasks:**
+    1.  Define a `.proto` file.
+    2.  Implement the gRPC service trait.
+    3.  Run the gRPC server alongside the HTTP server.
 - **Expected Output:** Both servers running; HTTP endpoint calls gRPC method (simulated).
 - **Pitfalls:** Port conflicts if not configured correctly.
 
@@ -334,7 +379,10 @@ Create a system where users can request a "Report".
 ### Module 17: AI Integration (TOON)
 - **Prerequisites:** Phase 2.
 - **Reading:** [AI Integration Recipe](../recipes/ai_integration.md).
-- **Task:** Create an endpoint that returns standard JSON for browsers but TOON for `Accept: application/toon`.
+- **Tasks:**
+    1.  Define a struct that implements `Toon`.
+    2.  Return `LlmResponse<T>` from your handler.
+    3.  Test with `Accept: application/json` and `Accept: application/toon`.
 - **Expected Output:** `curl` requests with different headers return different formats.
 - **Pitfalls:** Not checking the `Accept` header in client code.
 
