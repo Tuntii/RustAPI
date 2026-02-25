@@ -288,9 +288,13 @@ impl SpanGuard {
 
 impl Drop for SpanGuard {
     fn drop(&mut self) {
-        // If not explicitly completed/failed, mark as error and record.
+        // Panic-safety: if the span was not explicitly completed or failed
+        // (e.g. the thread panicked during step execution), record it with an
+        // error status so the trace tree is never left with a dangling
+        // in-progress node.  Explicit complete()/fail() callers use
+        // std::mem::forget to skip this path entirely.
         if self.node.status == TraceStatus::InProgress {
-            self.node.fail("span dropped without completion");
+            self.node.fail("span dropped without completion (likely due to a panic)");
         }
         self.tree.add_root_child(self.node.clone());
     }

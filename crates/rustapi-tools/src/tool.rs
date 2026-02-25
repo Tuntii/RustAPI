@@ -4,8 +4,23 @@ use rustapi_context::{CostDelta, RequestContext};
 use serde::{Deserialize, Serialize};
 
 // ---------------------------------------------------------------------------
-// ToolOutput — result of a tool execution
+// ToolFuture — type alias for async closure return types
 // ---------------------------------------------------------------------------
+
+/// Boxed, `Send`-safe future returned by closure-based tools and steps.
+///
+/// Use this alias to avoid writing out `Pin<Box<dyn Future<...> + Send + '_>>`
+/// in every closure signature:
+///
+/// ```rust,ignore
+/// ClosureTool::new("my_tool", "...", schema, |ctx, input| {
+///     Box::pin(async move { Ok(ToolOutput::value(input)) })
+/// });
+/// ```
+pub type ToolFuture<'a> = std::pin::Pin<
+    Box<dyn std::future::Future<Output = Result<ToolOutput, ToolError>> + Send + 'a>,
+>;
+
 
 /// Result of a single tool execution.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -153,10 +168,7 @@ pub trait Tool: Send + Sync + 'static {
 /// A tool created from a closure, for quick prototyping.
 pub struct ClosureTool<F>
 where
-    F: Fn(&RequestContext, serde_json::Value) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<ToolOutput, ToolError>> + Send + '_>>
-        + Send
-        + Sync
-        + 'static,
+    F: Fn(&RequestContext, serde_json::Value) -> ToolFuture<'_> + Send + Sync + 'static,
 {
     name: String,
     description: String,
@@ -166,10 +178,7 @@ where
 
 impl<F> ClosureTool<F>
 where
-    F: Fn(&RequestContext, serde_json::Value) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<ToolOutput, ToolError>> + Send + '_>>
-        + Send
-        + Sync
-        + 'static,
+    F: Fn(&RequestContext, serde_json::Value) -> ToolFuture<'_> + Send + Sync + 'static,
 {
     /// Create a new closure-based tool.
     pub fn new(
@@ -190,10 +199,7 @@ where
 #[async_trait]
 impl<F> Tool for ClosureTool<F>
 where
-    F: Fn(&RequestContext, serde_json::Value) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<ToolOutput, ToolError>> + Send + '_>>
-        + Send
-        + Sync
-        + 'static,
+    F: Fn(&RequestContext, serde_json::Value) -> ToolFuture<'_> + Send + Sync + 'static,
 {
     fn name(&self) -> &str {
         &self.name

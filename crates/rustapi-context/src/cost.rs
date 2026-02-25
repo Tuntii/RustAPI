@@ -130,9 +130,55 @@ impl CostTracker {
 
     /// Record a cost delta and check budget.
     ///
-    /// Returns `Err(ContextError::BudgetExceeded)` if any limit is breached
-    /// **after** applying the delta (fail-open, then check).
+    /// Returns `Err(ContextError::BudgetExceeded)` if any limit *would be*
+    /// breached by this delta.  The delta is only applied when all checks
+    /// pass, so a rejected call never modifies the running totals.
+    ///
+    /// # Concurrency note
+    /// Budget enforcement uses relaxed atomic reads followed by atomic
+    /// increments, so a TOCTOU race is theoretically possible under very high
+    /// concurrent load.  The design is intentional: the lock-free accounting
+    /// keeps overhead minimal and a slight overshoot under extreme concurrency
+    /// is acceptable.  For hard limits, callers should pair this with an
+    /// external quota gate.
     pub fn record(&self, delta: &CostDelta) -> Result<(), ContextError> {
+        // Pre-check: verify that adding this delta will not breach the budget
+        // *before* touching any counters.
+        if let Some(ref budget) = self.budget {
+            let new_tokens =
+                self.total_tokens() + delta.input_tokens + delta.output_tokens;
+            if let Some(max) = budget.max_tokens {
+                if new_tokens > max {
+                    return Err(ContextError::budget_exceeded(format!(
+                        "Token limit {max} would be exceeded \
+                         (current {}, delta {})",
+                        self.total_tokens(),
+                        delta.input_tokens + delta.output_tokens
+                    )));
+                }
+            }
+            let new_cost = self.total_cost_micros() + delta.cost_micros;
+            if let Some(max) = budget.max_cost_micros {
+                if new_cost > max {
+                    return Err(ContextError::budget_exceeded(format!(
+                        "Cost limit ${:.4} would be exceeded \
+                         (current ${:.4}, delta ${:.4})",
+                        max as f64 / 1_000_000.0,
+                        self.total_cost_micros() as f64 / 1_000_000.0,
+                        delta.cost_micros as f64 / 1_000_000.0
+                    )));
+                }
+            }
+            let new_calls = u64::from(self.api_calls()) + 1;
+            if let Some(max) = budget.max_api_calls {
+                if new_calls > u64::from(max) {
+                    return Err(ContextError::budget_exceeded(format!(
+                        "API call limit {max} would be exceeded ({new_calls} calls)"
+                    )));
+                }
+            }
+        }
+
         self.input_tokens
             .fetch_add(delta.input_tokens, Ordering::Relaxed);
         self.output_tokens
@@ -141,7 +187,7 @@ impl CostTracker {
             .fetch_add(delta.cost_micros, Ordering::Relaxed);
         self.api_calls.fetch_add(1, Ordering::Relaxed);
 
-        self.check_budget()
+        Ok(())
     }
 
     /// Check whether the current totals exceed the budget.

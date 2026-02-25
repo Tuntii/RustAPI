@@ -227,10 +227,10 @@ impl ToolGraph {
                 }
 
                 ToolNode::Parallel { id: _, nodes } => {
-                    // For parallel execution, we need to collect results.
-                    // Since outputs is &mut, we execute sequentially here for safety.
-                    // A production implementation would use JoinSet with per-node output maps.
-                    let mut handles = Vec::new();
+                    // Spawn all child nodes concurrently via JoinSet so results
+                    // are collected as each task finishes rather than in
+                    // submission order.  Any failure aborts the remaining tasks.
+                    let mut set = tokio::task::JoinSet::new();
                     let registry = registry.clone();
                     let ctx = ctx.clone();
 
@@ -238,9 +238,8 @@ impl ToolGraph {
                         let reg = registry.clone();
                         let c = ctx.clone();
                         let node = child_node.clone();
-                        handles.push(tokio::spawn(async move {
+                        set.spawn(async move {
                             let mut local_outputs = HashMap::new();
-                            // We create a temporary graph to execute the child node.
                             let graph = ToolGraph::new("parallel_child", node.clone());
                             match graph
                                 .execute_node(&node, &reg, &c, &mut local_outputs)
@@ -249,15 +248,18 @@ impl ToolGraph {
                                 Ok(()) => Ok(local_outputs),
                                 Err(e) => Err(e),
                             }
-                        }));
+                        });
                     }
 
-                    for handle in handles {
-                        match handle.await {
+                    while let Some(result) = set.join_next().await {
+                        match result {
                             Ok(Ok(local_outputs)) => {
                                 outputs.extend(local_outputs);
                             }
-                            Ok(Err(e)) => return Err(e),
+                            Ok(Err(e)) => {
+                                set.abort_all();
+                                return Err(e);
+                            }
                             Err(e) => {
                                 return Err(ToolError::internal(format!("Join error: {e}")));
                             }
