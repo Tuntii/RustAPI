@@ -7,6 +7,7 @@
 | `docs/cookbook/src/SUMMARY.md` | Cookbook navigation structure | Docs | OK |
 | `docs/cookbook/src/learning/curriculum.md` | Structured learning path | Docs | Updated (Mini Projects) |
 | `docs/cookbook/src/recipes/file_uploads.md` | Recipe for File Uploads | Docs | Updated (Buffered) |
+| `docs/cookbook/src/recipes/validation.md` | Advanced Validation Patterns | Docs | OK |
 | `docs/cookbook/src/recipes/websockets.md` | Recipe for Real-time Chat | Docs | Updated (Extractors) |
 | `docs/cookbook/src/recipes/background_jobs.md` | Recipe for Background Jobs | Docs | OK |
 | `docs/cookbook/src/recipes/tuning.md` | Performance Tuning | Docs | DELETED |

@@ -1,5 +1,5 @@
 {
   "last_processed_ref": "v0.1.335",
-  "date": "2026-02-23",
-  "notes": "Fixed MockServer examples in testing recipe. Added Graceful Shutdown recipe. Enhanced Learning Path with 'The Email Worker' mini-project."
+  "date": "2026-03-01",
+  "notes": "Added Advanced Validation Patterns recipe. Enhanced Learning Path with 'The Live Chat Room' mini-project. Fixed docs for File Uploads and Testing."
 }

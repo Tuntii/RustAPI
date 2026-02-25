@@ -92,7 +92,7 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 
 ### Module 5: Validation
 - **Prerequisites:** Module 4.
-- **Reading:** [Validation](../crates/rustapi_validation.md).
+- **Reading:** [Validation](../crates/rustapi_validation.md), [Advanced Validation Patterns](../recipes/validation.md).
 - **Task:** Add `#[derive(Validate)]` to your `User` struct. Use `ValidatedJson`.
 - **Expected Output:** Requests with invalid email or short password return `422 Unprocessable Entity`.
 - **Pitfalls:** Forgetting to add `#[validate]` attributes to struct fields.
@@ -189,6 +189,12 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 - **Expected Output:** Multiple clients connected via WS receiving messages in real-time.
 - **Pitfalls:** Blocking the WebSocket loop with long-running synchronous tasks.
 
+#### 🛠️ Mini Project: "The Live Chat Room"
+Create a simple chat room where multiple users can connect and send messages.
+1. Use `broadcast::channel` to distribute messages.
+2. Store the `broadcast::Sender` in `AppState`.
+3. (Bonus) Add a "system" message when a user joins or leaves.
+
 #### 🧠 Knowledge Check
 1. How do you upgrade an HTTP request to a WebSocket connection?
 2. Can you share state between HTTP handlers and WebSocket handlers?
@@ -279,7 +285,7 @@ Create a system where users can request a "Report".
 - **Prerequisites:** Phase 3.
 - **Reading:** [HTTP/3 (QUIC)](../recipes/http3_quic.md), [Performance Tuning](../recipes/high_performance.md), [Compression](../recipes/compression.md).
 - **Task:**
-    1. Enable `http3` feature and generate self-signed certs.
+    1. Enable `http3` feature in `Cargo.toml` (`features = ["http3"]`) and generate self-signed certs.
     2. Serve traffic over QUIC.
     3. Add `CompressionLayer` to compress large responses.
 - **Expected Output:** Browser/Client connects via HTTP/3. Responses have `content-encoding: gzip`.

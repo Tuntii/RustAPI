@@ -84,7 +84,7 @@ When your API calls external services (e.g., payment gateways, third-party APIs)
 `rustapi-testing` provides `MockServer` for this purpose.
 
 ```rust
-use rustapi_testing::{MockServer, MockResponse};
+use rustapi_testing::{MockServer, MockResponse, RequestMatcher};
 
 #[tokio::test]
 async fn test_external_integration() {
@@ -93,7 +93,7 @@ async fn test_external_integration() {
 
     // 2. Define an expectation
     mock_server.expect(
-        rustapi_testing::RequestMatcher::new()
+        RequestMatcher::new()
             .method("GET")
             .path("/external-data")
     ).respond_with(
