@@ -56,6 +56,7 @@ pub use auto_route::collect_auto_routes;
 mod auto_schema;
 pub use auto_schema::apply_auto_schemas;
 mod error;
+pub mod events;
 mod extract;
 mod handler;
 pub mod hateoas;
@@ -99,17 +100,21 @@ pub mod __private {
 // Public API
 pub use app::{RustApi, RustApiConfig};
 pub use error::{get_environment, ApiError, Environment, FieldError, Result};
+pub use events::EventBus;
 #[cfg(feature = "cookies")]
 pub use extract::Cookies;
 pub use extract::{
-    AsyncValidatedJson, Body, BodyStream, ClientIp, Extension, FromRequest, FromRequestParts,
-    HeaderValue, Headers, Json, Path, Query, State, Typed, ValidatedJson,
+    AsyncValidatedJson, Body, BodyStream, ClientIp, CursorPaginate, Extension, FromRequest,
+    FromRequestParts, HeaderValue, Headers, Json, Paginate, Path, Query, State, Typed,
+    ValidatedJson,
 };
 pub use handler::{
     delete_route, get_route, patch_route, post_route, put_route, Handler, HandlerService, Route,
     RouteHandler,
 };
-pub use hateoas::{Link, LinkOrArray, Linkable, PageInfo, Resource, ResourceCollection};
+pub use hateoas::{
+    CursorPaginated, Link, LinkOrArray, Linkable, PageInfo, Paginated, Resource, ResourceCollection,
+};
 pub use health::{HealthCheck, HealthCheckBuilder, HealthCheckResult, HealthStatus};
 pub use http::StatusCode;
 #[cfg(feature = "http3")]

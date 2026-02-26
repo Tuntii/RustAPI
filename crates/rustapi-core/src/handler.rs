@@ -350,6 +350,8 @@ pub struct Route {
     /// Custom parameter schemas for OpenAPI (param_name -> schema_type)
     /// Supported types: "uuid", "integer", "string", "boolean", "number"
     pub(crate) param_schemas: std::collections::BTreeMap<String, String>,
+    /// Custom error responses for OpenAPI (status_code -> description)
+    pub(crate) error_responses: Vec<(u16, String)>,
 }
 
 impl Route {
@@ -368,6 +370,7 @@ impl Route {
             handler: into_boxed_handler(handler),
             operation,
             param_schemas: std::collections::BTreeMap::new(),
+            error_responses: Vec::new(),
         }
     }
     /// Set the operation summary
@@ -429,6 +432,56 @@ impl Route {
     /// Get the custom parameter schemas
     pub fn param_schemas(&self) -> &std::collections::BTreeMap<String, String> {
         &self.param_schemas
+    }
+
+    /// Add a typed error response to the OpenAPI specification for this route
+    ///
+    /// This adds an error response entry to the operation's responses map,
+    /// referencing the standard `ErrorSchema` component.
+    ///
+    /// # Arguments
+    ///
+    /// * `status` - HTTP status code (e.g., 404, 403, 409)
+    /// * `description` - Human-readable description of when this error occurs
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// get_route("/users/{id}", get_user)
+    ///     .error_response(404, "User not found")
+    ///     .error_response(403, "Forbidden - insufficient permissions")
+    /// ```
+    pub fn error_response(mut self, status: u16, description: impl Into<String>) -> Self {
+        let desc = description.into();
+        self.error_responses.push((status, desc.clone()));
+
+        // Also add directly to the operation's responses
+        let mut content = std::collections::BTreeMap::new();
+        content.insert(
+            "application/json".to_string(),
+            rustapi_openapi::MediaType {
+                schema: Some(rustapi_openapi::SchemaRef::Ref {
+                    reference: "#/components/schemas/ErrorSchema".to_string(),
+                }),
+                example: None,
+            },
+        );
+
+        self.operation.responses.insert(
+            status.to_string(),
+            rustapi_openapi::ResponseSpec {
+                description: desc,
+                content,
+                headers: std::collections::BTreeMap::new(),
+            },
+        );
+
+        self
+    }
+
+    /// Get the custom error responses
+    pub fn error_responses(&self) -> &[(u16, String)] {
+        &self.error_responses
     }
 }
 
