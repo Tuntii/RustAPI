@@ -25,14 +25,15 @@ pub mod core {
     pub use rustapi_core::{
         delete, delete_route, get, get_route, patch, patch_route, post, post_route, put, put_route,
         route, serve_dir, sse_response, ApiError, AsyncValidatedJson, Body, BodyLimitLayer,
-        BodyStream, BodyVariant, ClientIp, Created, Environment, Extension, FieldError,
-        FromRequest, FromRequestParts, Handler, HandlerService, HeaderValue, Headers, Html,
-        IntoResponse, Json, KeepAlive, MethodRouter, Multipart, MultipartConfig, MultipartField,
-        NoContent, Path, Query, Redirect, Request, RequestId, RequestIdLayer, Response,
-        ResponseBody, Result, Route, RouteHandler, RouteMatch, Router, RustApi, RustApiConfig, Sse,
-        SseEvent, State, StaticFile, StaticFileConfig, StatusCode, StreamBody, TracingLayer, Typed,
-        TypedPath, UploadedFile, ValidatedJson, WithStatus,
+        BodyStream, BodyVariant, ClientIp, Created, CursorPaginate, CursorPaginated, Environment,
+        Extension, FieldError, FromRequest, FromRequestParts, Handler, HandlerService, HeaderValue,
+        Headers, Html, IntoResponse, Json, KeepAlive, MethodRouter, Multipart, MultipartConfig,
+        MultipartField, NoContent, Paginate, Paginated, Path, Query, Redirect, Request, RequestId,
+        RequestIdLayer, Response, ResponseBody, Result, Route, RouteHandler, RouteMatch, Router,
+        RustApi, RustApiConfig, Sse, SseEvent, State, StaticFile, StaticFileConfig, StatusCode,
+        StreamBody, TracingLayer, Typed, TypedPath, UploadedFile, ValidatedJson, WithStatus,
     };
+    pub use rustapi_core::EventBus;
 
     pub use rustapi_core::get_environment;
 
@@ -274,12 +275,14 @@ pub mod prelude {
     pub use crate::core::{
         delete, delete_route, get, get_route, patch, patch_route, post, post_route, put, put_route,
         route, serve_dir, sse_response, ApiError, AsyncValidatedJson, Body, BodyLimitLayer,
-        ClientIp, Created, Extension, HeaderValue, Headers, Html, IntoResponse, Json, KeepAlive,
-        Multipart, MultipartConfig, MultipartField, NoContent, Path, Query, Redirect, Request,
-        RequestId, RequestIdLayer, Response, Result, Route, Router, RustApi, RustApiConfig, Sse,
-        SseEvent, State, StaticFile, StaticFileConfig, StatusCode, StreamBody, TracingLayer, Typed,
-        TypedPath, UploadedFile, ValidatedJson, WithStatus,
+        ClientIp, Created, CursorPaginate, CursorPaginated, Extension, HeaderValue, Headers, Html,
+        IntoResponse, Json, KeepAlive, Multipart, MultipartConfig, MultipartField, NoContent,
+        Paginate, Paginated, Path, Query, Redirect, Request, RequestId, RequestIdLayer, Response,
+        Result, Route, Router, RustApi, RustApiConfig, Sse, SseEvent, State, StaticFile,
+        StaticFileConfig, StatusCode, StreamBody, TracingLayer, Typed, TypedPath, UploadedFile,
+        ValidatedJson, WithStatus,
     };
+    pub use crate::core::EventBus;
 
     #[cfg(any(feature = "core-compression", feature = "compression"))]
     pub use crate::core::{CompressionAlgorithm, CompressionConfig, CompressionLayer};

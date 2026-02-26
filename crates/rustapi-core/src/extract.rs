@@ -1177,6 +1177,186 @@ impl<T: RustApiSchema> RustApiSchema for Query<T> {
     }
 }
 
+// ─── Pagination Extractors ──────────────────────────────────────────────────
+
+/// Default page number (1-indexed)
+const DEFAULT_PAGE: u64 = 1;
+/// Default items per page
+const DEFAULT_PER_PAGE: u64 = 20;
+/// Maximum items per page (prevents abuse)
+const MAX_PER_PAGE: u64 = 100;
+
+/// Offset-based pagination extractor
+///
+/// Extracts pagination parameters from the query string.
+/// Supports `?page=1&per_page=20` (defaults: page=1, per_page=20, max=100).
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use rustapi_core::Paginate;
+///
+/// async fn list_users(paginate: Paginate) -> impl IntoResponse {
+///     let offset = paginate.offset();
+///     let limit = paginate.limit();
+///     // SELECT * FROM users LIMIT $limit OFFSET $offset
+/// }
+/// ```
+#[derive(Debug, Clone, Copy)]
+pub struct Paginate {
+    /// Current page (1-indexed)
+    pub page: u64,
+    /// Items per page (capped at MAX_PER_PAGE)
+    pub per_page: u64,
+}
+
+impl Paginate {
+    /// Create a new Paginate with given page and per_page
+    pub fn new(page: u64, per_page: u64) -> Self {
+        Self {
+            page: page.max(1),
+            per_page: per_page.clamp(1, MAX_PER_PAGE),
+        }
+    }
+
+    /// Calculate the SQL OFFSET value
+    pub fn offset(&self) -> u64 {
+        (self.page - 1) * self.per_page
+    }
+
+    /// Get the LIMIT value (alias for per_page)
+    pub fn limit(&self) -> u64 {
+        self.per_page
+    }
+
+    /// Build a `Paginated<T>` response from this pagination and results
+    pub fn paginate<T>(self, items: Vec<T>, total: u64) -> crate::hateoas::Paginated<T> {
+        crate::hateoas::Paginated {
+            items,
+            page: self.page,
+            per_page: self.per_page,
+            total,
+        }
+    }
+}
+
+impl Default for Paginate {
+    fn default() -> Self {
+        Self {
+            page: DEFAULT_PAGE,
+            per_page: DEFAULT_PER_PAGE,
+        }
+    }
+}
+
+impl FromRequestParts for Paginate {
+    fn from_request_parts(req: &Request) -> Result<Self> {
+        let query = req.query_string().unwrap_or("");
+
+        #[derive(serde::Deserialize)]
+        struct PaginateQuery {
+            page: Option<u64>,
+            per_page: Option<u64>,
+        }
+
+        let params: PaginateQuery = serde_urlencoded::from_str(query).unwrap_or(PaginateQuery {
+            page: None,
+            per_page: None,
+        });
+
+        Ok(Paginate::new(
+            params.page.unwrap_or(DEFAULT_PAGE),
+            params.per_page.unwrap_or(DEFAULT_PER_PAGE),
+        ))
+    }
+}
+
+/// Cursor-based pagination extractor
+///
+/// Extracts cursor pagination parameters from the query string.
+/// Supports `?cursor=abc123&limit=20` (defaults: cursor=None, limit=20, max=100).
+///
+/// Cursor-based pagination is preferred for large datasets or real-time data
+/// where offset-based pagination would skip or duplicate items.
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use rustapi_core::CursorPaginate;
+///
+/// async fn list_events(cursor: CursorPaginate) -> impl IntoResponse {
+///     let limit = cursor.limit();
+///     if let Some(after) = cursor.after() {
+///         // SELECT * FROM events WHERE id > $after ORDER BY id LIMIT $limit
+///     } else {
+///         // SELECT * FROM events ORDER BY id LIMIT $limit
+///     }
+/// }
+/// ```
+#[derive(Debug, Clone)]
+pub struct CursorPaginate {
+    /// Opaque cursor token (None = start from beginning)
+    pub cursor: Option<String>,
+    /// Items per page (capped at MAX_PER_PAGE)
+    pub per_page: u64,
+}
+
+impl CursorPaginate {
+    /// Create a new CursorPaginate
+    pub fn new(cursor: Option<String>, per_page: u64) -> Self {
+        Self {
+            cursor,
+            per_page: per_page.clamp(1, MAX_PER_PAGE),
+        }
+    }
+
+    /// Get the cursor value (if any)
+    pub fn after(&self) -> Option<&str> {
+        self.cursor.as_deref()
+    }
+
+    /// Get the LIMIT value
+    pub fn limit(&self) -> u64 {
+        self.per_page
+    }
+
+    /// Check if this is the first page (no cursor)
+    pub fn is_first_page(&self) -> bool {
+        self.cursor.is_none()
+    }
+}
+
+impl Default for CursorPaginate {
+    fn default() -> Self {
+        Self {
+            cursor: None,
+            per_page: DEFAULT_PER_PAGE,
+        }
+    }
+}
+
+impl FromRequestParts for CursorPaginate {
+    fn from_request_parts(req: &Request) -> Result<Self> {
+        let query = req.query_string().unwrap_or("");
+
+        #[derive(serde::Deserialize)]
+        struct CursorQuery {
+            cursor: Option<String>,
+            limit: Option<u64>,
+        }
+
+        let params: CursorQuery = serde_urlencoded::from_str(query).unwrap_or(CursorQuery {
+            cursor: None,
+            limit: None,
+        });
+
+        Ok(CursorPaginate::new(
+            params.cursor,
+            params.limit.unwrap_or(DEFAULT_PER_PAGE),
+        ))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

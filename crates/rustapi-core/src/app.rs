@@ -1,12 +1,14 @@
 //! RustApi application builder
 
 use crate::error::Result;
+use crate::events::LifecycleHooks;
 use crate::interceptor::{InterceptorChain, RequestInterceptor, ResponseInterceptor};
 use crate::middleware::{BodyLimitLayer, LayerStack, MiddlewareLayer, DEFAULT_BODY_LIMIT};
 use crate::response::IntoResponse;
 use crate::router::{MethodRouter, Router};
 use crate::server::Server;
 use std::collections::BTreeMap;
+use std::future::Future;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 /// Main application builder for RustAPI
@@ -32,6 +34,7 @@ pub struct RustApi {
     layers: LayerStack,
     body_limit: Option<usize>,
     interceptors: InterceptorChain,
+    lifecycle_hooks: LifecycleHooks,
     #[cfg(feature = "http3")]
     http3_config: Option<crate::http3::Http3Config>,
     status_config: Option<crate::status::StatusConfig>,
@@ -60,6 +63,7 @@ impl RustApi {
             layers: LayerStack::new(),
             body_limit: Some(DEFAULT_BODY_LIMIT), // Default 1MB limit
             interceptors: InterceptorChain::new(),
+            lifecycle_hooks: LifecycleHooks::new(),
             #[cfg(feature = "http3")]
             http3_config: None,
             status_config: None,
@@ -296,6 +300,60 @@ impl RustApi {
         let mut app = self;
         app.router = app.router.state(state);
         app
+    }
+
+    /// Register an `on_start` lifecycle hook
+    ///
+    /// The callback runs **after** route registration and **before** the server
+    /// begins accepting connections. Multiple hooks execute in registration order.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// RustApi::new()
+    ///     .on_start(|| async {
+    ///         println!("🚀 Server starting...");
+    ///         // e.g. run DB migrations, warm caches
+    ///     })
+    ///     .run("127.0.0.1:8080")
+    ///     .await
+    /// ```
+    pub fn on_start<F, Fut>(mut self, hook: F) -> Self
+    where
+        F: FnOnce() -> Fut + Send + 'static,
+        Fut: Future<Output = ()> + Send + 'static,
+    {
+        self.lifecycle_hooks
+            .on_start
+            .push(Box::new(move || Box::pin(hook())));
+        self
+    }
+
+    /// Register an `on_shutdown` lifecycle hook
+    ///
+    /// The callback runs **after** the shutdown signal is received and the server
+    /// stops accepting new connections. Multiple hooks execute in registration order.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// RustApi::new()
+    ///     .on_shutdown(|| async {
+    ///         println!("👋 Server shutting down...");
+    ///         // e.g. flush logs, close DB connections
+    ///     })
+    ///     .run_with_shutdown("127.0.0.1:8080", ctrl_c())
+    ///     .await
+    /// ```
+    pub fn on_shutdown<F, Fut>(mut self, hook: F) -> Self
+    where
+        F: FnOnce() -> Fut + Send + 'static,
+        Fut: Future<Output = ()> + Send + 'static,
+    {
+        self.lifecycle_hooks
+            .on_shutdown
+            .push(Box::new(move || Box::pin(hook())));
+        self
     }
 
     /// Register an OpenAPI schema
@@ -955,6 +1013,11 @@ impl RustApi {
             self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
         }
 
+        // Run on_start lifecycle hooks before accepting connections
+        for hook in self.lifecycle_hooks.on_start {
+            hook().await;
+        }
+
         let server = Server::new(self.router, self.layers, self.interceptors);
         server.run(addr).await
     }
@@ -975,8 +1038,23 @@ impl RustApi {
             self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
         }
 
+        // Run on_start lifecycle hooks before accepting connections
+        for hook in self.lifecycle_hooks.on_start {
+            hook().await;
+        }
+
+        // Wrap the shutdown signal to run on_shutdown hooks after signal fires
+        let shutdown_hooks = self.lifecycle_hooks.on_shutdown;
+        let wrapped_signal = async move {
+            signal.await;
+            // Run on_shutdown hooks after the shutdown signal fires
+            for hook in shutdown_hooks {
+                hook().await;
+            }
+        };
+
         let server = Server::new(self.router, self.layers, self.interceptors);
-        server.run_with_shutdown(addr.as_ref(), signal).await
+        server.run_with_shutdown(addr.as_ref(), wrapped_signal).await
     }
 
     /// Get the inner router (for testing or advanced usage)

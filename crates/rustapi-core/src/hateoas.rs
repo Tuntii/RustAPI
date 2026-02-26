@@ -447,6 +447,328 @@ pub trait Linkable: Sized + Serialize + rustapi_openapi::schema::RustApiSchema {
 // Implement Linkable for all Serialize + Schema types
 impl<T: Serialize + rustapi_openapi::schema::RustApiSchema> Linkable for T {}
 
+// ─── Paginated Response ─────────────────────────────────────────────────────
+
+/// Paginated response wrapper with metadata and navigation links.
+///
+/// Automatically generates:
+/// - JSON body with `items`, `meta` (page, per_page, total, total_pages), and `_links`
+/// - RFC 8288 `Link` response headers for first/prev/next/last
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use rustapi_core::{Paginate, Json};
+/// use rustapi_core::hateoas::Paginated;
+///
+/// async fn list_users(paginate: Paginate) -> Paginated<User> {
+///     let users = db.query_users(paginate.offset(), paginate.limit()).await;
+///     let total = db.count_users().await;
+///     paginate.paginate(users, total)
+/// }
+/// ```
+#[derive(Debug, Clone)]
+pub struct Paginated<T> {
+    /// The items for this page
+    pub items: Vec<T>,
+    /// Current page number (1-indexed)
+    pub page: u64,
+    /// Items per page
+    pub per_page: u64,
+    /// Total number of items across all pages
+    pub total: u64,
+}
+
+impl<T> Paginated<T> {
+    /// Create a new paginated response
+    pub fn new(items: Vec<T>, page: u64, per_page: u64, total: u64) -> Self {
+        Self {
+            items,
+            page,
+            per_page,
+            total,
+        }
+    }
+
+    /// Calculate total number of pages
+    pub fn total_pages(&self) -> u64 {
+        if self.per_page == 0 {
+            return 0;
+        }
+        self.total.div_ceil(self.per_page)
+    }
+
+    /// Check if there is a next page
+    pub fn has_next(&self) -> bool {
+        self.page < self.total_pages()
+    }
+
+    /// Check if there is a previous page
+    pub fn has_prev(&self) -> bool {
+        self.page > 1
+    }
+
+    /// Map items to a different type
+    pub fn map<U, F: FnMut(T) -> U>(self, f: F) -> Paginated<U> {
+        Paginated {
+            items: self.items.into_iter().map(f).collect(),
+            page: self.page,
+            per_page: self.per_page,
+            total: self.total,
+        }
+    }
+}
+
+/// JSON representation of paginated response
+#[derive(Serialize)]
+struct PaginatedBody<T: Serialize> {
+    items: Vec<T>,
+    meta: PaginationMeta,
+    #[serde(rename = "_links")]
+    links: PaginationLinks,
+}
+
+#[derive(Serialize)]
+struct PaginationMeta {
+    page: u64,
+    per_page: u64,
+    total: u64,
+    total_pages: u64,
+}
+
+#[derive(Serialize)]
+struct PaginationLinks {
+    #[serde(rename = "self")]
+    self_link: String,
+    first: String,
+    last: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    next: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    prev: Option<String>,
+}
+
+impl<T: Serialize> Paginated<T> {
+    /// Generate RFC 8288 Link header value
+    fn link_header(&self, base_path: &str) -> String {
+        let total_pages = self.total_pages();
+        let mut links = Vec::new();
+
+        // first
+        links.push(format!(
+            "<{}?page=1&per_page={}>; rel=\"first\"",
+            base_path, self.per_page
+        ));
+
+        // last
+        if total_pages > 0 {
+            links.push(format!(
+                "<{}?page={}&per_page={}>; rel=\"last\"",
+                base_path, total_pages, self.per_page
+            ));
+        }
+
+        // prev
+        if self.has_prev() {
+            links.push(format!(
+                "<{}?page={}&per_page={}>; rel=\"prev\"",
+                base_path,
+                self.page - 1,
+                self.per_page
+            ));
+        }
+
+        // next
+        if self.has_next() {
+            links.push(format!(
+                "<{}?page={}&per_page={}>; rel=\"next\"",
+                base_path,
+                self.page + 1,
+                self.per_page
+            ));
+        }
+
+        links.join(", ")
+    }
+
+    /// Build the JSON body with links using a base path
+    fn to_body_with_path(&self, base_path: &str) -> PaginatedBody<&T> {
+        let total_pages = self.total_pages();
+
+        let links = PaginationLinks {
+            self_link: format!("{}?page={}&per_page={}", base_path, self.page, self.per_page),
+            first: format!("{}?page=1&per_page={}", base_path, self.per_page),
+            last: format!(
+                "{}?page={}&per_page={}",
+                base_path,
+                total_pages.max(1),
+                self.per_page
+            ),
+            next: if self.has_next() {
+                Some(format!(
+                    "{}?page={}&per_page={}",
+                    base_path,
+                    self.page + 1,
+                    self.per_page
+                ))
+            } else {
+                None
+            },
+            prev: if self.has_prev() {
+                Some(format!(
+                    "{}?page={}&per_page={}",
+                    base_path,
+                    self.page - 1,
+                    self.per_page
+                ))
+            } else {
+                None
+            },
+        };
+
+        PaginatedBody {
+            items: self.items.iter().collect(),
+            meta: PaginationMeta {
+                page: self.page,
+                per_page: self.per_page,
+                total: self.total,
+                total_pages,
+            },
+            links,
+        }
+    }
+}
+
+impl<T: Serialize + Send> crate::response::IntoResponse for Paginated<T> {
+    fn into_response(self) -> crate::response::Response {
+        // Use a generic base path since we don't have access to the request URI
+        // in IntoResponse. Users can override via ResponseModifier or interceptors.
+        let base_path = "";
+        let link_header = self.link_header(base_path);
+        let body = self.to_body_with_path(base_path);
+
+        let total_count = self.total.to_string();
+
+        match crate::json::to_vec_with_capacity(&body, 512) {
+            Ok(json_bytes) => {
+                let mut response = http::Response::builder()
+                    .status(http::StatusCode::OK)
+                    .header(http::header::CONTENT_TYPE, "application/json")
+                    .header("X-Total-Count", &total_count)
+                    .header("X-Total-Pages", self.total_pages().to_string())
+                    .body(crate::response::Body::from(json_bytes))
+                    .unwrap();
+
+                if !link_header.is_empty() {
+                    response.headers_mut().insert(
+                        http::header::LINK,
+                        http::HeaderValue::from_str(&link_header).unwrap_or_else(|_| {
+                            http::HeaderValue::from_static("")
+                        }),
+                    );
+                }
+
+                response
+            }
+            Err(err) => {
+                crate::error::ApiError::internal(format!(
+                    "Failed to serialize paginated response: {}",
+                    err
+                ))
+                .into_response()
+            }
+        }
+    }
+}
+
+/// Cursor-based paginated response
+///
+/// # Example
+///
+/// ```rust,ignore
+/// use rustapi_core::{CursorPaginate};
+/// use rustapi_core::hateoas::CursorPaginated;
+///
+/// async fn list_events(cursor: CursorPaginate) -> CursorPaginated<Event> {
+///     let limit = cursor.limit();
+///     let events = db.query_events_after(cursor.after(), limit + 1).await;
+///     let has_more = events.len() > limit as usize;
+///     let items: Vec<Event> = events.into_iter().take(limit as usize).collect();
+///     let next_cursor = items.last().map(|e| e.id.to_string());
+///     
+///     CursorPaginated::new(items, next_cursor, has_more)
+/// }
+/// ```
+#[derive(Debug, Clone)]
+pub struct CursorPaginated<T> {
+    /// The items for this page
+    pub items: Vec<T>,
+    /// Cursor pointing to the next page (None = no more pages)
+    pub next_cursor: Option<String>,
+    /// Whether there are more items
+    pub has_more: bool,
+}
+
+impl<T> CursorPaginated<T> {
+    /// Create a new cursor-based paginated response
+    pub fn new(items: Vec<T>, next_cursor: Option<String>, has_more: bool) -> Self {
+        Self {
+            items,
+            next_cursor,
+            has_more,
+        }
+    }
+
+    /// Map items to a different type
+    pub fn map<U, F: FnMut(T) -> U>(self, f: F) -> CursorPaginated<U> {
+        CursorPaginated {
+            items: self.items.into_iter().map(f).collect(),
+            next_cursor: self.next_cursor,
+            has_more: self.has_more,
+        }
+    }
+}
+
+#[derive(Serialize)]
+struct CursorPaginatedBody<T: Serialize> {
+    items: Vec<T>,
+    meta: CursorMeta,
+}
+
+#[derive(Serialize)]
+struct CursorMeta {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    next_cursor: Option<String>,
+    has_more: bool,
+}
+
+impl<T: Serialize + Send> crate::response::IntoResponse for CursorPaginated<T> {
+    fn into_response(self) -> crate::response::Response {
+        let body = CursorPaginatedBody {
+            items: self.items,
+            meta: CursorMeta {
+                next_cursor: self.next_cursor,
+                has_more: self.has_more,
+            },
+        };
+
+        match crate::json::to_vec_with_capacity(&body, 512) {
+            Ok(json_bytes) => http::Response::builder()
+                .status(http::StatusCode::OK)
+                .header(http::header::CONTENT_TYPE, "application/json")
+                .body(crate::response::Body::from(json_bytes))
+                .unwrap(),
+            Err(err) => {
+                crate::error::ApiError::internal(format!(
+                    "Failed to serialize cursor-paginated response: {}",
+                    err
+                ))
+                .into_response()
+            }
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
