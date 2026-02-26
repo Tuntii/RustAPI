@@ -35,6 +35,7 @@ pub struct RustApi {
     body_limit: Option<usize>,
     interceptors: InterceptorChain,
     lifecycle_hooks: LifecycleHooks,
+    hot_reload: bool,
     #[cfg(feature = "http3")]
     http3_config: Option<crate::http3::Http3Config>,
     status_config: Option<crate::status::StatusConfig>,
@@ -64,6 +65,7 @@ impl RustApi {
             body_limit: Some(DEFAULT_BODY_LIMIT), // Default 1MB limit
             interceptors: InterceptorChain::new(),
             lifecycle_hooks: LifecycleHooks::new(),
+            hot_reload: false,
             #[cfg(feature = "http3")]
             http3_config: None,
             status_config: None,
@@ -353,6 +355,29 @@ impl RustApi {
         self.lifecycle_hooks
             .on_shutdown
             .push(Box::new(move || Box::pin(hook())));
+        self
+    }
+
+    /// Enable hot-reload mode for development
+    ///
+    /// When enabled:
+    /// - A dev-mode banner is printed at startup
+    /// - The `RUSTAPI_HOT_RELOAD` env var is set so that `cargo rustapi watch`
+    ///   can detect the server is reload-aware
+    /// - If the server is **not** already running under the CLI watcher,
+    ///   a helpful hint is printed suggesting `cargo rustapi run --watch`
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// RustApi::new()
+    ///     .hot_reload(true)
+    ///     .route("/", get(hello))
+    ///     .run("127.0.0.1:8080")
+    ///     .await
+    /// ```
+    pub fn hot_reload(mut self, enabled: bool) -> Self {
+        self.hot_reload = enabled;
         self
     }
 
@@ -956,6 +981,32 @@ impl RustApi {
         self
     }
 
+    /// Print a hot-reload dev banner if `.hot_reload(true)` is set
+    fn print_hot_reload_banner(&self, addr: &str) {
+        if !self.hot_reload {
+            return;
+        }
+
+        // Set the env var so the CLI watcher can detect it
+        std::env::set_var("RUSTAPI_HOT_RELOAD", "1");
+
+        let is_under_watcher = std::env::var("RUSTAPI_HOT_RELOAD")
+            .map(|v| v == "1")
+            .unwrap_or(false);
+
+        tracing::info!("🔄 Hot-reload mode enabled");
+
+        if is_under_watcher {
+            tracing::info!("   File watcher active — changes will trigger rebuild + restart");
+        } else {
+            tracing::info!(
+                "   Tip: Run with `cargo rustapi run --watch` for automatic hot-reload"
+            );
+        }
+
+        tracing::info!("   Listening on http://{addr}");
+    }
+
     // Helper to apply status page logic (monitor, layer, route)
     fn apply_status_page(&mut self) {
         if let Some(config) = &self.status_config {
@@ -1004,6 +1055,9 @@ impl RustApi {
     ///     .await
     /// ```
     pub async fn run(mut self, addr: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        // Hot-reload mode banner
+        self.print_hot_reload_banner(addr);
+
         // Apply status page if configured
         self.apply_status_page();
 
@@ -1031,6 +1085,9 @@ impl RustApi {
     where
         F: std::future::Future<Output = ()> + Send + 'static,
     {
+        // Hot-reload mode banner
+        self.print_hot_reload_banner(addr.as_ref());
+
         // Apply status page if configured
         self.apply_status_page();
 
