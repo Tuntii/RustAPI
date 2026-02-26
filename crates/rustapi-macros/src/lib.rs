@@ -698,18 +698,16 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
                 }
             } else if ident_str == "errors" {
                 // Parse #[errors(404 = "Not Found", 403 = "Forbidden")]
-                // Integer literals can't be Meta ident keys, so try Meta-based parsing first
-                // (handles named keys like `not_found = "..."`) and fall back to raw token
-                // stream parsing for numeric keys (e.g. `404 = "..."`). This ensures only one
-                // strategy runs per attribute, preventing duplicate entries.
-                let meta_parsed = attr.parse_args_with(
+                if let Ok(error_args) = attr.parse_args_with(
                     syn::punctuated::Punctuated::<Meta, syn::Token![,]>::parse_terminated,
-                );
-                if let Ok(error_args) = meta_parsed {
+                ) {
                     for meta in error_args {
                         if let Meta::NameValue(nv) = &meta {
+                            // The path is the status code (e.g., 404)
+                            // We need to parse it as an integer from the ident
                             let status_str = nv.path.get_ident().map(|i| i.to_string());
                             if let Some(status_key) = status_str {
+                                // Status code may be a name like `not_found` or number-prefixed
                                 if let Expr::Lit(lit) = &nv.value {
                                     if let Lit::Str(s) = &lit.lit {
                                         let desc = s.value();
@@ -725,8 +723,11 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
                             let _ = list;
                         }
                     }
-                } else if let Ok(ts) = attr.parse_args::<proc_macro2::TokenStream>() {
-                    // Fall back to raw token stream for integer keys: #[errors(404 = "Not Found")]
+                }
+                // Also try parsing as direct key-value with integer keys:
+                // #[errors(404 = "Not Found")] - integers can't be Meta idents
+                // So we parse the raw token stream manually
+                if let Ok(ts) = attr.parse_args::<proc_macro2::TokenStream>() {
                     let tokens: Vec<proc_macro2::TokenTree> = ts.into_iter().collect();
                     let mut i = 0;
                     while i < tokens.len() {

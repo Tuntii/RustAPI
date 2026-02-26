@@ -1259,8 +1259,10 @@ impl FromRequestParts for Paginate {
             per_page: Option<u64>,
         }
 
-        let params: PaginateQuery = serde_urlencoded::from_str(query)
-            .map_err(|e| ApiError::bad_request(format!("Invalid pagination parameters: {}", e)))?;
+        let params: PaginateQuery = serde_urlencoded::from_str(query).unwrap_or(PaginateQuery {
+            page: None,
+            per_page: None,
+        });
 
         Ok(Paginate::new(
             params.page.unwrap_or(DEFAULT_PAGE),
@@ -1343,8 +1345,10 @@ impl FromRequestParts for CursorPaginate {
             limit: Option<u64>,
         }
 
-        let params: CursorQuery = serde_urlencoded::from_str(query)
-            .map_err(|e| ApiError::bad_request(format!("Invalid pagination parameters: {}", e)))?;
+        let params: CursorQuery = serde_urlencoded::from_str(query).unwrap_or(CursorQuery {
+            cursor: None,
+            limit: None,
+        });
 
         Ok(CursorPaginate::new(
             params.cursor,
