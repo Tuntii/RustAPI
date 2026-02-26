@@ -1,5 +1,6 @@
 //! Run command for development server
 
+use super::watch::{self, WatchArgs};
 use anyhow::Result;
 use clap::Args;
 use console::style;
@@ -24,6 +25,10 @@ pub struct RunArgs {
     /// Watch for changes and auto-reload (like FastAPI's --reload)
     #[arg(short, long, visible_alias = "reload", alias = "hot")]
     pub watch: bool,
+
+    /// Package to run (for workspace projects)
+    #[arg(short = 'P', long)]
+    pub package: Option<String>,
 }
 
 /// Run the development server
@@ -44,8 +49,31 @@ pub async fn run_dev(args: RunArgs) -> Result<()> {
             style("   Changes to source files will trigger automatic rebuild").dim()
         );
         println!();
-        // Use cargo-watch if available
-        run_with_watch(&args).await
+
+        // Delegate to native watcher
+        let watch_args = WatchArgs {
+            command: "run".to_string(),
+            clear: false,
+            extensions: "rs,toml,html,css,sql".to_string(),
+            watch_paths: vec![
+                "src".to_string(),
+                "templates".to_string(),
+                "migrations".to_string(),
+            ],
+            ignore_paths: vec![
+                ".git".to_string(),
+                "target".to_string(),
+                "node_modules".to_string(),
+            ],
+            delay: 300,
+            quiet: false,
+            no_restart_on_fail: false,
+            poll: false,
+            features: args.features,
+            release: args.release,
+            package: args.package,
+        };
+        watch::watch(watch_args).await
     } else {
         println!(
             "{}",
@@ -64,9 +92,15 @@ async fn run_cargo(args: &RunArgs) -> Result<()> {
         cmd.arg("--release");
     }
 
+    if let Some(pkg) = &args.package {
+        cmd.arg("-p").arg(pkg);
+    }
+
     if let Some(features) = &args.features {
         cmd.arg("--features").arg(features.join(","));
     }
+
+    cmd.env("RUSTAPI_ENV", "development");
 
     cmd.stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
@@ -76,70 +110,6 @@ async fn run_cargo(args: &RunArgs) -> Result<()> {
 
     if !status.success() {
         anyhow::bail!("cargo run failed");
-    }
-
-    Ok(())
-}
-
-async fn run_with_watch(args: &RunArgs) -> Result<()> {
-    // Check if cargo-watch is installed
-    let check = Command::new("cargo")
-        .args(["watch", "--version"])
-        .output()
-        .await;
-
-    if check.is_err() || !check.unwrap().status.success() {
-        println!("{}", style("cargo-watch not found. Installing...").yellow());
-
-        let install = Command::new("cargo")
-            .args(["install", "cargo-watch"])
-            .status()
-            .await?;
-
-        if !install.success() {
-            println!(
-                "{}",
-                style("Failed to install cargo-watch. Running without watch mode.").yellow()
-            );
-            return run_cargo(args).await;
-        }
-    }
-
-    let mut cmd = Command::new("cargo");
-    cmd.arg("watch");
-
-    // Ignore heavy directories for better performance
-    cmd.args([
-        "-i",
-        ".git",
-        "-i",
-        "target",
-        "-i",
-        "node_modules",
-        "-i",
-        "assets",
-    ]);
-
-    // Build the run command string
-    let mut run_cmd = String::from("run");
-    if args.release {
-        run_cmd.push_str(" --release");
-    }
-    if let Some(features) = &args.features {
-        run_cmd.push_str(&format!(" --features {}", features.join(",")));
-    }
-
-    // Pass the command with -x flag
-    cmd.arg("-x").arg(&run_cmd);
-
-    cmd.stdout(Stdio::inherit())
-        .stderr(Stdio::inherit())
-        .stdin(Stdio::inherit());
-
-    let status = cmd.status().await?;
-
-    if !status.success() {
-        anyhow::bail!("cargo watch failed");
     }
 
     Ok(())

@@ -1,12 +1,14 @@
 //! RustApi application builder
 
 use crate::error::Result;
+use crate::events::LifecycleHooks;
 use crate::interceptor::{InterceptorChain, RequestInterceptor, ResponseInterceptor};
 use crate::middleware::{BodyLimitLayer, LayerStack, MiddlewareLayer, DEFAULT_BODY_LIMIT};
 use crate::response::IntoResponse;
 use crate::router::{MethodRouter, Router};
 use crate::server::Server;
 use std::collections::BTreeMap;
+use std::future::Future;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 /// Main application builder for RustAPI
@@ -32,6 +34,8 @@ pub struct RustApi {
     layers: LayerStack,
     body_limit: Option<usize>,
     interceptors: InterceptorChain,
+    lifecycle_hooks: LifecycleHooks,
+    hot_reload: bool,
     #[cfg(feature = "http3")]
     http3_config: Option<crate::http3::Http3Config>,
     status_config: Option<crate::status::StatusConfig>,
@@ -60,6 +64,8 @@ impl RustApi {
             layers: LayerStack::new(),
             body_limit: Some(DEFAULT_BODY_LIMIT), // Default 1MB limit
             interceptors: InterceptorChain::new(),
+            lifecycle_hooks: LifecycleHooks::new(),
+            hot_reload: false,
             #[cfg(feature = "http3")]
             http3_config: None,
             status_config: None,
@@ -296,6 +302,83 @@ impl RustApi {
         let mut app = self;
         app.router = app.router.state(state);
         app
+    }
+
+    /// Register an `on_start` lifecycle hook
+    ///
+    /// The callback runs **after** route registration and **before** the server
+    /// begins accepting connections. Multiple hooks execute in registration order.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// RustApi::new()
+    ///     .on_start(|| async {
+    ///         println!("🚀 Server starting...");
+    ///         // e.g. run DB migrations, warm caches
+    ///     })
+    ///     .run("127.0.0.1:8080")
+    ///     .await
+    /// ```
+    pub fn on_start<F, Fut>(mut self, hook: F) -> Self
+    where
+        F: FnOnce() -> Fut + Send + 'static,
+        Fut: Future<Output = ()> + Send + 'static,
+    {
+        self.lifecycle_hooks
+            .on_start
+            .push(Box::new(move || Box::pin(hook())));
+        self
+    }
+
+    /// Register an `on_shutdown` lifecycle hook
+    ///
+    /// The callback runs **after** the shutdown signal is received and the server
+    /// stops accepting new connections. Multiple hooks execute in registration order.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// RustApi::new()
+    ///     .on_shutdown(|| async {
+    ///         println!("👋 Server shutting down...");
+    ///         // e.g. flush logs, close DB connections
+    ///     })
+    ///     .run_with_shutdown("127.0.0.1:8080", ctrl_c())
+    ///     .await
+    /// ```
+    pub fn on_shutdown<F, Fut>(mut self, hook: F) -> Self
+    where
+        F: FnOnce() -> Fut + Send + 'static,
+        Fut: Future<Output = ()> + Send + 'static,
+    {
+        self.lifecycle_hooks
+            .on_shutdown
+            .push(Box::new(move || Box::pin(hook())));
+        self
+    }
+
+    /// Enable hot-reload mode for development
+    ///
+    /// When enabled:
+    /// - A dev-mode banner is printed at startup
+    /// - The `RUSTAPI_HOT_RELOAD` env var is set so that `cargo rustapi watch`
+    ///   can detect the server is reload-aware
+    /// - If the server is **not** already running under the CLI watcher,
+    ///   a helpful hint is printed suggesting `cargo rustapi run --watch`
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// RustApi::new()
+    ///     .hot_reload(true)
+    ///     .route("/", get(hello))
+    ///     .run("127.0.0.1:8080")
+    ///     .await
+    /// ```
+    pub fn hot_reload(mut self, enabled: bool) -> Self {
+        self.hot_reload = enabled;
+        self
     }
 
     /// Register an OpenAPI schema
@@ -898,6 +981,30 @@ impl RustApi {
         self
     }
 
+    /// Print a hot-reload dev banner if `.hot_reload(true)` is set
+    fn print_hot_reload_banner(&self, addr: &str) {
+        if !self.hot_reload {
+            return;
+        }
+
+        // Set the env var so the CLI watcher can detect it
+        std::env::set_var("RUSTAPI_HOT_RELOAD", "1");
+
+        let is_under_watcher = std::env::var("RUSTAPI_HOT_RELOAD")
+            .map(|v| v == "1")
+            .unwrap_or(false);
+
+        tracing::info!("🔄 Hot-reload mode enabled");
+
+        if is_under_watcher {
+            tracing::info!("   File watcher active — changes will trigger rebuild + restart");
+        } else {
+            tracing::info!("   Tip: Run with `cargo rustapi run --watch` for automatic hot-reload");
+        }
+
+        tracing::info!("   Listening on http://{addr}");
+    }
+
     // Helper to apply status page logic (monitor, layer, route)
     fn apply_status_page(&mut self) {
         if let Some(config) = &self.status_config {
@@ -946,6 +1053,9 @@ impl RustApi {
     ///     .await
     /// ```
     pub async fn run(mut self, addr: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        // Hot-reload mode banner
+        self.print_hot_reload_banner(addr);
+
         // Apply status page if configured
         self.apply_status_page();
 
@@ -953,6 +1063,11 @@ impl RustApi {
         if let Some(limit) = self.body_limit {
             // Prepend body limit layer so it's the first to process requests
             self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
+        }
+
+        // Run on_start lifecycle hooks before accepting connections
+        for hook in self.lifecycle_hooks.on_start {
+            hook().await;
         }
 
         let server = Server::new(self.router, self.layers, self.interceptors);
@@ -968,6 +1083,9 @@ impl RustApi {
     where
         F: std::future::Future<Output = ()> + Send + 'static,
     {
+        // Hot-reload mode banner
+        self.print_hot_reload_banner(addr.as_ref());
+
         // Apply status page if configured
         self.apply_status_page();
 
@@ -975,8 +1093,25 @@ impl RustApi {
             self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
         }
 
+        // Run on_start lifecycle hooks before accepting connections
+        for hook in self.lifecycle_hooks.on_start {
+            hook().await;
+        }
+
+        // Wrap the shutdown signal to run on_shutdown hooks after signal fires
+        let shutdown_hooks = self.lifecycle_hooks.on_shutdown;
+        let wrapped_signal = async move {
+            signal.await;
+            // Run on_shutdown hooks after the shutdown signal fires
+            for hook in shutdown_hooks {
+                hook().await;
+            }
+        };
+
         let server = Server::new(self.router, self.layers, self.interceptors);
-        server.run_with_shutdown(addr.as_ref(), signal).await
+        server
+            .run_with_shutdown(addr.as_ref(), wrapped_signal)
+            .await
     }
 
     /// Get the inner router (for testing or advanced usage)

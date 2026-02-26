@@ -459,6 +459,116 @@ pub fn main(_attr: TokenStream, item: TokenStream) -> TokenStream {
     TokenStream::from(expanded)
 }
 
+/// Check if a type is a body-consuming extractor (Json, Body, ValidatedJson, etc.)
+///
+/// Body-consuming extractors implement `FromRequest` (not `FromRequestParts`)
+/// and consume the request body. They MUST be the last parameter in a handler
+/// function because the body can only be read once.
+fn is_body_consuming_type(ty: &Type) -> bool {
+    match ty {
+        Type::Path(tp) => {
+            if let Some(seg) = tp.path.segments.last() {
+                matches!(
+                    seg.ident.to_string().as_str(),
+                    "Json" | "Body" | "ValidatedJson" | "AsyncValidatedJson" | "Multipart"
+                )
+            } else {
+                false
+            }
+        }
+        _ => false,
+    }
+}
+
+/// Validate that body-consuming extractors are the last parameter(s) in a handler.
+///
+/// This prevents a common runtime error where the request body is consumed
+/// before a later extractor tries to read it. By checking at compile time,
+/// we give developers a clear error message instead of a confusing runtime failure.
+fn validate_extractor_order(input: &ItemFn) -> Result<(), syn::Error> {
+    let params: Vec<_> = input
+        .sig
+        .inputs
+        .iter()
+        .filter_map(|arg| {
+            if let FnArg::Typed(pat_ty) = arg {
+                Some(pat_ty)
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    if params.is_empty() {
+        return Ok(());
+    }
+
+    // Find all body-consuming parameter indices
+    let body_indices: Vec<usize> = params
+        .iter()
+        .enumerate()
+        .filter(|(_, p)| is_body_consuming_type(&p.ty))
+        .map(|(i, _)| i)
+        .collect();
+
+    if body_indices.is_empty() {
+        return Ok(());
+    }
+
+    // Find the last non-body parameter index
+    let last_non_body = params
+        .iter()
+        .enumerate()
+        .filter(|(_, p)| !is_body_consuming_type(&p.ty))
+        .map(|(i, _)| i)
+        .max();
+
+    // If there are non-body params after any body param, that's an error
+    if let Some(last_non_body_idx) = last_non_body {
+        let first_body_idx = body_indices[0];
+        if first_body_idx < last_non_body_idx {
+            let offending_param = &params[first_body_idx];
+            let ty_name = quote!(#offending_param).to_string();
+            return Err(syn::Error::new_spanned(
+                &offending_param.ty,
+                format!(
+                    "Body-consuming extractor must be the LAST parameter.\n\
+                     \n\
+                     Found `{}` before non-body extractor(s).\n\
+                     \n\
+                     Body extractors (Json, Body, ValidatedJson, AsyncValidatedJson, Multipart) \
+                     consume the request body, which can only be read once. Place them after all \
+                     non-body extractors (State, Path, Query, Headers, etc.).\n\
+                     \n\
+                     Example:\n\
+                     \x20 async fn handler(\n\
+                     \x20     State(db): State<AppState>,   // non-body: OK first\n\
+                     \x20     Path(id): Path<i64>,          // non-body: OK second\n\
+                     \x20     Json(body): Json<CreateUser>,  // body: MUST be last\n\
+                     \x20 ) -> Result<Json<User>> {{ ... }}",
+                    ty_name,
+                ),
+            ));
+        }
+    }
+
+    // Also check for multiple body-consuming extractors (only one allowed)
+    if body_indices.len() > 1 {
+        let second_body_param = &params[body_indices[1]];
+        return Err(syn::Error::new_spanned(
+            &second_body_param.ty,
+            "Multiple body-consuming extractors detected.\n\
+             \n\
+             Only ONE body-consuming extractor (Json, Body, ValidatedJson, AsyncValidatedJson, \
+             Multipart) is allowed per handler, because the request body can only be consumed once.\n\
+             \n\
+             Remove the extra body extractor or combine the data into a single type.",
+        ));
+    }
+
+    Ok(())
+}
+
 /// Internal helper to generate route handler macros
 fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) -> TokenStream {
     let path = parse_macro_input!(attr as LitStr);
@@ -480,6 +590,11 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
 
     // Validate path syntax at compile time
     if let Err(err) = validate_path_syntax(&path_value, path.span()) {
+        return err.to_compile_error().into();
+    }
+
+    // Validate extractor ordering at compile time
+    if let Err(err) = validate_extractor_order(&input) {
         return err.to_compile_error().into();
     }
 
@@ -579,6 +694,79 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
 
                     if let (Some(pname), Some(pschema)) = (param_name, param_schema) {
                         chained_calls = quote! { #chained_calls .param(#pname, #pschema) };
+                    }
+                }
+            } else if ident_str == "errors" {
+                // Parse #[errors(404 = "Not Found", 403 = "Forbidden")]
+                if let Ok(error_args) = attr.parse_args_with(
+                    syn::punctuated::Punctuated::<Meta, syn::Token![,]>::parse_terminated,
+                ) {
+                    for meta in error_args {
+                        if let Meta::NameValue(nv) = &meta {
+                            // The path is the status code (e.g., 404)
+                            // We need to parse it as an integer from the ident
+                            let status_str = nv.path.get_ident().map(|i| i.to_string());
+                            if let Some(status_key) = status_str {
+                                // Status code may be a name like `not_found` or number-prefixed
+                                if let Expr::Lit(lit) = &nv.value {
+                                    if let Lit::Str(s) = &lit.lit {
+                                        let desc = s.value();
+                                        chained_calls = quote! {
+                                            #chained_calls .error_response(#status_key, #desc)
+                                        };
+                                    }
+                                }
+                            }
+                        } else if let Meta::List(list) = &meta {
+                            // Handle #[errors(404(description = "Not Found"))]
+                            // For now, skip complex forms
+                            let _ = list;
+                        }
+                    }
+                }
+                // Also try parsing as direct key-value with integer keys:
+                // #[errors(404 = "Not Found")] - integers can't be Meta idents
+                // So we parse the raw token stream manually
+                if let Ok(ts) = attr.parse_args::<proc_macro2::TokenStream>() {
+                    let tokens: Vec<proc_macro2::TokenTree> = ts.into_iter().collect();
+                    let mut i = 0;
+                    while i < tokens.len() {
+                        // Look for pattern: INTEGER = "string" [,]
+                        if let proc_macro2::TokenTree::Literal(lit) = &tokens[i] {
+                            let lit_str = lit.to_string();
+                            if let Ok(status_code) = lit_str.parse::<u16>() {
+                                // Next should be '='
+                                if i + 2 < tokens.len() {
+                                    if let proc_macro2::TokenTree::Punct(p) = &tokens[i + 1] {
+                                        if p.as_char() == '=' {
+                                            if let proc_macro2::TokenTree::Literal(desc_lit) =
+                                                &tokens[i + 2]
+                                            {
+                                                let desc_str = desc_lit.to_string();
+                                                // Remove surrounding quotes
+                                                let desc = desc_str.trim_matches('"').to_string();
+                                                chained_calls = quote! {
+                                                    #chained_calls .error_response(#status_code, #desc)
+                                                };
+                                                i += 3;
+                                                // Skip comma
+                                                if i < tokens.len() {
+                                                    if let proc_macro2::TokenTree::Punct(p) =
+                                                        &tokens[i]
+                                                    {
+                                                        if p.as_char() == ',' {
+                                                            i += 1;
+                                                        }
+                                                    }
+                                                }
+                                                continue;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        i += 1;
                     }
                 }
             }
@@ -802,6 +990,36 @@ pub fn description(attr: TokenStream, item: TokenStream) -> TokenStream {
 #[proc_macro_attribute]
 pub fn param(_attr: TokenStream, item: TokenStream) -> TokenStream {
     // The param attribute is processed by the route macro (get, post, etc.)
+    // This macro just passes through the function unchanged
+    item
+}
+
+/// Error responses macro for OpenAPI documentation
+///
+/// Declares possible error responses for a handler endpoint. These are
+/// automatically added to the OpenAPI specification.
+///
+/// # Syntax
+///
+/// ```rust,ignore
+/// #[rustapi::errors(404 = "User not found", 403 = "Access denied", 409 = "Email already exists")]
+/// ```
+///
+/// # Example
+///
+/// ```rust,ignore
+/// #[rustapi::get("/users/{id}")]
+/// #[rustapi::errors(404 = "User not found", 403 = "Forbidden")]
+/// async fn get_user(Path(id): Path<Uuid>) -> Result<Json<User>> {
+///     // ...
+/// }
+/// ```
+///
+/// This generates OpenAPI responses for 404 and 403 status codes,
+/// each referencing the standard ErrorSchema component.
+#[proc_macro_attribute]
+pub fn errors(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    // The errors attribute is processed by the route macro (get, post, etc.)
     // This macro just passes through the function unchanged
     item
 }

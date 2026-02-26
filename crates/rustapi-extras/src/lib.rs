@@ -168,7 +168,7 @@ pub use security_headers::{HstsConfig, ReferrerPolicy, SecurityHeadersLayer, XFr
 pub use api_key::ApiKeyLayer;
 
 #[cfg(feature = "cache")]
-pub use cache::{CacheConfig, CacheLayer};
+pub use cache::{CacheBuilder, CacheConfig, CacheHandle, CacheLayer};
 
 #[cfg(feature = "dedup")]
 pub use dedup::{DedupConfig, DedupLayer};
