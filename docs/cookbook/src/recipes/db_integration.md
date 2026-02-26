@@ -155,7 +155,60 @@ async fn transfer_credits(
 }
 ```
 
-## 4. Integration Testing with TestContainers
+## 4. Pagination with SQLx
+
+When listing resources, always use `LIMIT` and `OFFSET` to avoid fetching thousands of rows. RustAPI provides helpers for standard HATEOAS pagination.
+
+See the [Pagination Recipe](pagination.md) for more details on `ResourceCollection`.
+
+```rust
+use rustapi_rs::hateoas::{PageInfo, ResourceCollection};
+
+#[derive(Deserialize, Schema)]
+struct PaginationParams {
+    page: Option<usize>,
+    size: Option<usize>,
+}
+
+async fn list_users(
+    State(state): State<AppState>,
+    Query(params): Query<PaginationParams>,
+) -> Result<Json<ResourceCollection<User>>, ApiError> {
+    let page = params.page.unwrap_or(0);
+    let size = params.size.unwrap_or(20).clamp(1, 100);
+    let offset = (page * size) as i64;
+
+    // Fetch data
+    let users = sqlx::query_as!(
+        User,
+        "SELECT id, username, email FROM users ORDER BY id LIMIT $1 OFFSET $2",
+        size as i64,
+        offset
+    )
+    .fetch_all(&state.db)
+    .await
+    .map_err(ApiError::from)?;
+
+    // Get total count for pagination metadata
+    // Note: For very large tables, exact count(*) can be slow. Consider estimates.
+    let count_record = sqlx::query!("SELECT count(*) as count FROM users")
+        .fetch_one(&state.db)
+        .await
+        .map_err(ApiError::from)?;
+
+    let total = count_record.count.unwrap_or(0) as usize;
+
+    let page_info = PageInfo::calculate(total, size, page);
+
+    Ok(Json(
+        ResourceCollection::new("users", users)
+            .page_info(page_info)
+            .with_pagination("/users")
+    ))
+}
+```
+
+## 5. Integration Testing with TestContainers
 
 For testing, use `testcontainers` to spin up a real database instance. This ensures your queries are correct without mocking the database driver.
 

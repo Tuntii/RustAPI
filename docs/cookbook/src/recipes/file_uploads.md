@@ -71,7 +71,7 @@ async fn upload_handler(mut multipart: Multipart) -> Result<Json<UploadResponse>
         // ⚠️ Security: Never trust the user-provided filename directly!
         // It could contain paths like "../../../etc/passwd".
         // Always generate a safe filename or sanitize inputs.
-        let safe_filename = format!("{}-{}", uuid::Uuid::new_v4(), file_name);
+        let safe_filename = format!("{}-{}", uuid::Uuid::new_v4(), sanitize_filename(&file_name));
 
         // Option 1: Use the helper method (sanitizes filename automatically)
         // field.save_to("./uploads", Some(&safe_filename)).await.map_err(|e| ApiError::internal(e.to_string()))?;
@@ -96,6 +96,14 @@ async fn upload_handler(mut multipart: Multipart) -> Result<Json<UploadResponse>
         files: uploaded_files,
     }))
 }
+
+fn sanitize_filename(name: &str) -> String {
+    std::path::Path::new(name)
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or("unknown")
+        .to_string()
+}
 ```
 
 ## Key Concepts
@@ -113,6 +121,80 @@ The default request body limit is small (2MB) to prevent attacks. You **must** e
 - **Path Traversal**: Malicious users can send filenames like `../../system32/cmd.exe`. Always rename files or sanitize filenames strictly.
 - **Content Type Validation**: The `Content-Type` header is client-controlled and can be spoofed. Do not rely on it for security execution checks (e.g., preventing `.php` execution).
 - **Executable Permissions**: Store uploads in a directory where script execution is disabled.
+
+## Handling Large Files (Streaming)
+
+If you need to handle files larger than available RAM (e.g., video uploads), the built-in `Multipart` extractor is not suitable because it buffers the entire body.
+
+Instead, you should access the request body stream directly and use a streaming multipart parser like `multer`.
+
+### Alternative: Using `multer`
+
+Add `multer` and `futures-util` to your dependencies:
+
+```toml
+[dependencies]
+multer = "3.0"
+futures-util = "0.3" # Required for StreamExt
+uuid = { version = "1", features = ["v4"] }
+```
+
+Then, create a handler that consumes the body stream:
+
+```rust
+use rustapi_rs::prelude::*;
+use rustapi_rs::http::Request;
+use rustapi_rs::body::Body;
+use futures_util::stream::StreamExt;
+use multer::Multipart;
+use tokio::fs::File;
+use tokio::io::AsyncWriteExt;
+use uuid::Uuid;
+
+#[rustapi_rs::post("/upload/stream")]
+async fn stream_upload(req: Request<Body>) -> Result<String, ApiError> {
+    // 1. Extract the boundary from the Content-Type header
+    let boundary = req
+        .headers()
+        .get("content-type")
+        .and_then(|ct| ct.to_str().ok())
+        .and_then(|ct| multer::parse_boundary(ct).ok())
+        .ok_or_else(|| ApiError::bad_request("Missing multipart boundary"))?;
+
+    // 2. Create a multer instance
+    let mut multipart = Multipart::new(req.into_body(), boundary);
+
+    // 3. Iterate over fields
+    while let Some(mut field) = multipart.next_field().await.map_err(|e| ApiError::bad_request(e.to_string()))? {
+        let file_name = field.file_name().map(|s| s.to_string());
+
+        if let Some(filename) = file_name {
+             // ⚠️ Security: Sanitize filename to prevent path traversal!
+             let safe_filename = format!("{}-{}", Uuid::new_v4(), sanitize_filename(&filename));
+             let path = std::path::Path::new("./uploads").join(&safe_filename);
+
+             let mut file = File::create(&path).await.map_err(|e| ApiError::internal(e.to_string()))?;
+
+             // Stream chunks to disk
+             while let Some(chunk) = field.chunk().await.map_err(|e| ApiError::internal(e.to_string()))? {
+                 file.write_all(&chunk).await.map_err(|e| ApiError::internal(e.to_string()))?;
+             }
+             println!("Saved stream: {:?}", path);
+        }
+    }
+
+    Ok("Stream upload complete".to_string())
+}
+
+// Helper to strip directory components from filename
+fn sanitize_filename(name: &str) -> String {
+    std::path::Path::new(name)
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or("unknown")
+        .to_string()
+}
+```
 
 ## Testing with cURL
 

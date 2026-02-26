@@ -35,6 +35,7 @@
     - [OAuth2 Client](recipes/oauth2_client.md)
     - [CSRF Protection](recipes/csrf_protection.md)
     - [Database Integration](recipes/db_integration.md)
+    - [Error Handling](recipes/error_handling.md)
     - [Testing & Mocking](recipes/testing.md)
     - [File Uploads](recipes/file_uploads.md)
     - [Background Jobs](recipes/background_jobs.md)

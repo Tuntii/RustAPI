@@ -104,7 +104,7 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 
 ### Module 5.5: Error Handling
 - **Prerequisites:** Module 5.
-- **Reading:** [Error Handling](../concepts/errors.md).
+- **Reading:** [Error Handling](../recipes/error_handling.md).
 - **Task:** Create a custom `ApiError` enum and implement `IntoResponse`. Return robust error messages.
 - **Expected Output:** `GET /users/999` returns `404 Not Found` with a structured JSON error body.
 - **Pitfalls:** Exposing internal database errors (like SQL strings) to the client.
@@ -131,11 +131,11 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 - **Reading:** [File Uploads](../recipes/file_uploads.md).
 - **Task:** Create an endpoint `POST /upload` that accepts a file and saves it to disk.
 - **Expected Output:** `curl -F file=@image.png` uploads the file.
-- **Pitfalls:** Loading large files entirely into memory (use streaming).
+- **Pitfalls:** RustAPI currently **buffers the entire request body** into memory. For large files (e.g., >100MB), consider streaming alternatives.
 
 #### 🧠 Knowledge Check
 1. Which extractor is used for file uploads?
-2. Why should you use `field.chunk()` instead of `field.bytes()`?
+2. Why is buffering a potential issue for large files?
 3. How do you increase the request body size limit?
 
 ### 🏆 Phase 2 Capstone: "The Secure Blog Engine"
@@ -210,25 +210,31 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 
 ### Module 11: Background Jobs & Testing
 - **Prerequisites:** Phase 3.
-- **Reading:** [Background Jobs Recipe](../recipes/background_jobs.md), [Testing Strategy](../concepts/testing.md).
+- **Reading:** [Background Jobs Recipe](../recipes/background_jobs.md).
 - **Task:**
     1. Implement a job `WelcomeEmailJob` that sends a "Welcome" email (simulated with `tokio::time::sleep`).
     2. Enqueue this job inside your `POST /register` handler.
-    3. Write an integration test using `TestClient` to verify the registration endpoint.
-- **Expected Output:** Registration returns 200 immediately (low latency); console logs show "Sending welcome email to ..." shortly after (asynchronous). Tests pass.
+- **Expected Output:** Registration returns 200 immediately (low latency); console logs show "Sending welcome email to ..." shortly after (asynchronous).
 - **Pitfalls:** Forgetting to start the job worker loop (`JobWorker::new(queue).run().await`).
 
-#### 🛠️ Mini Project: "The Email Worker"
-Create a system where users can request a "Report".
-1. `POST /reports`: Enqueues a `GenerateReportJob`. Returns `{"job_id": "..."}` immediately.
-2. The job simulates 5 seconds of work and then writes "Report Generated" to a file or log.
-3. (Bonus) Use Redis backend for persistence.
+### Module 11.5: Advanced Testing
+- **Prerequisites:** Module 11.
+- **Reading:** [Testing Strategy](../concepts/testing.md).
+- **Task:**
+    1. Use `TestClient` to perform integration testing on your API.
+    2. Use `MockServer` from `rustapi-testing` to mock an external currency exchange API.
+- **Expected Output:** Tests pass without requiring a real external server.
+- **Pitfalls:** Not isolating tests properly (sharing state between parallel tests).
+
+#### 🛠️ Mini Project: "The Mock Exchange"
+Create a service that converts currency by calling an external API.
+1. Write a test where `MockServer` responds with a fixed rate (e.g., 1 USD = 0.9 EUR).
+2. Verify your service calculates the correct amount based on the mock.
 
 #### 🧠 Knowledge Check
-1. Why should you offload email sending to a background job?
-2. Which backend is suitable for local development vs production?
-3. How do you enqueue a job from a handler?
-4. How can you test that a job was enqueued without actually running it?
+1. What is the difference between unit and integration tests?
+2. How does `MockServer` help with flaky external services?
+3. Why should you avoid hitting real APIs in your test suite?
 
 ### 🏆 Phase 3 Capstone: "The Real-Time Collaboration Tool"
 **Objective:** Build a real-time collaborative note-taking app.
