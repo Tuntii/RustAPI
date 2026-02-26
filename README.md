@@ -3,7 +3,7 @@
   
   # RustAPI
   
-  **Rust Speed. Python Simplicity. AI Efficiency.**
+  A high-performance, ergonomic web framework for Rust with native AI/LLM support.
 
   [![Crates.io](https://img.shields.io/crates/v/rustapi-rs.svg)](https://crates.io/crates/rustapi-rs)
   [![Docs](https://img.shields.io/badge/docs-cookbook-brightgreen)](docs/cookbook/src/SUMMARY.md)
@@ -13,68 +13,126 @@
 
 ---
 
-## ⚡ Why RustAPI?
+## Overview
 
-**Most Rust frameworks force you to choose: Speed (Actix) OR Ergonomics (Axum).**
-RustAPI gives you **both**.
+RustAPI is a Rust web framework built on **hyper 1.x** and **tokio**, designed for minimal boilerplate while retaining full control over performance. It uses a **facade architecture** (`rustapi-rs`) that shields user code from internal crate changes, keeping the public API stable as internals evolve.
 
-We built the framework we wanted: **FastAPI's developer experience** backed by **Rust's raw performance**. 
-No boilerplate. No fighting the borrow checker for simple handlers. Just code that flies.
+Key design goals:
+- **Ergonomic handler signatures** inspired by FastAPI and Axum
+- **Native TOON format** for token-efficient LLM responses
+- **Auto-discovery** of routes via procedural macros and link-time registration
+- **Three-tier request execution** (ultra fast / fast / full) to minimize overhead
 
-## 🧠 The Killer Feature: AI-First Architecture
+## What Sets RustAPI Apart
 
-**Problem:** Standard JSON APIs are verbose and expensive for Large Language Models (LLMs).
-**Solution:** RustAPI natively supports **TOON (Token-Oriented Object Notation)**.
+### Three-Tier Request Execution
 
-Top-tier LLMs (Claude, GPT-4o) charge by the token. RustAPI's TOON format reduces response token counts by **50-58%** compared to standard JSON.
+Unlike other Rust frameworks that always run the full middleware chain, RustAPI dynamically selects the cheapest execution path per request:
 
-*   **💰 Save 50% on API Costs**: Half the tokens, same data.
-*   **🌊 Zero-Latency Streaming**: Built for real-time AI agents.
-*   **🔌 MCP-Ready**: Out-of-the-box support for Model Context Protocol.
+| Path | When | Overhead |
+|:-----|:-----|:---------|
+| **Ultra Fast** | No middleware, no interceptors | Zero Arc cloning, direct handler call |
+| **Fast** | Interceptors only, no middleware layers | Interceptor functions only |
+| **Full** | Middleware layers present | Complete `LayerStack` execution |
 
-> "RustAPI isn't just a web server; it's the native language of your AI agents."
+This means a simple `GET /health` endpoint with no middleware runs at near-zero overhead, while other endpoints on the same server can use JWT, CORS, and rate limiting through the full path.
 
-## 🔄 Time-Travel Debugging (NEW in v0.1.300)
+### Facade Architecture with Contract Enforcement
 
-**Production debugging shouldn't be a nightmare.** RustAPI's Replay system records and replays HTTP requests with surgical precision.
+User code imports only from `rustapi-rs`. Internal crates (`rustapi-core`, `rustapi-macros`, etc.) can be refactored freely without breaking user code. The public API surface is tracked via committed `cargo public-api` snapshots, and CI enforces labeling rules (`breaking` / `feature`) on any PR that changes them.
+
+### Link-Time Auto-Discovery
+
+Routes annotated with `#[rustapi_rs::get("/...")]` are registered to a `linkme` distributed slice at link time — no manual route registration or inventory macros needed. `RustApi::auto()` collects them and builds a `BTreeMap`-ordered radix tree router via `matchit`.
+
+### TOON: Token-Oriented Object Notation
+
+A compact serialization format that reduces token counts by **50-58%** compared to JSON. `Toon<T>` is a drop-in replacement for `Json<T>`. `LlmResponse<T>` performs automatic content negotiation based on `Accept` headers and adds headers like `X-Token-Count-JSON`, `X-Token-Count-TOON`, and `X-Token-Savings` for observability.
+
+### Built-in Resilience Primitives
+
+RustAPI ships circuit breaker and retry middleware as first-class features, not third-party crate bolt-ons:
+
+- **Circuit Breaker** (`CircuitBreakerLayer`): Fault tolerance with open/half-open/closed states
+- **Retry** with exponential backoff
+- **Rate Limiting** (IP-based, per-route)
+- **Body Limit** with configurable max size (default 1 MB)
+
+### Environment-Aware Error Masking
+
+All error responses include a unique `error_id` (`err_{uuid}`) for log correlation. In production (`RUSTAPI_ENV=production`), 5xx error details are automatically masked to `"An internal error occurred"` while validation errors (4xx) pass through intact.
+
+### Request Replay & Time-Travel Debugging
+
+Record and replay HTTP request/response pairs for production debugging:
 
 ```rust
-// 1. Enable replay recording in production
 RustApi::new()
     .layer(ReplayLayer::new(store, config))
     .run("0.0.0.0:8080").await;
-
-// 2. Replay ANY request from the CLI
-$ cargo rustapi replay list
-$ cargo rustapi replay run <id> --target http://localhost:8080
-$ cargo rustapi replay diff <id> --target http://staging
 ```
 
-**What makes it special:**
-*   🎬 **Zero-Code Recording**: Middleware automatically captures request/response pairs
-*   🔐 **Security First**: Sensitive headers redacted, bearer auth required, disabled by default
-*   💾 **Flexible Storage**: In-memory (dev) or filesystem (production) with TTL cleanup
-*   🧪 **Integration Testing**: `ReplayClient` for programmatic test automation
-*   🕵️ **Root Cause Analysis**: Replay exact production failures in local environment
+```sh
+cargo rustapi replay list
+cargo rustapi replay run <id> --target http://localhost:8080
+cargo rustapi replay diff <id> --target http://staging
+```
 
-> "Fix production bugs in 5 minutes instead of 5 hours."
+- Middleware-based recording; no application code changes
+- Sensitive header redaction; disabled by default
+- In-memory (dev) or filesystem (production) storage with TTL
+- `ReplayClient` for programmatic test automation
 
-## 🥊 Dare to Compare
+### Dual-Stack HTTP/1.1 + HTTP/3
 
-We optimize for **Developer Joy** without sacrificing **Req/Sec**.
+Run HTTP/1.1 (TCP) and HTTP/3 (QUIC/UDP) simultaneously on the same server. Enable with the `core-http3` feature flag.
 
-| Feature | **RustAPI** | Actix-web | Axum | FastAPI (Python) |
-|:-------|:-----------:|:---------:|:----:|:----------------:|
-| **Performance** | **~92k req/s** | ~105k | ~100k | ~12k |
-| **DX (Simplicity)** | 🟢 **High** | 🔴 Low | 🟡 Medium | 🟢 High |
-| **Boilerplate** | **Zero** | High | Medium | Zero |
-| **AI/LLM Native** | ✅ **Yes** | ❌ No | ❌ No | ❌ No |
-| **Time-Travel Debug** | ✅ **Built-in** | ❌ No | ❌ No | ⚠️ 3rd-party |
-| **Stability Logic** | 🛡️ **Facade** | ⚠️ Direct | ⚠️ Direct | ✅ Stable |
+### Native OpenAPI 3.1
 
-## 🚀 30-Second Start
+`#[derive(Schema)]` generates OpenAPI schemas at compile time. `RustApi::auto()` assembles the full spec with reference integrity validation. Swagger UI is served at `/docs` by default. No external code generators or YAML files needed.
 
-Write your API in 5 lines. It's that simple.
+### Async Validation with Application State
+
+`AsyncValidatedJson<T>` can access application state (e.g., database connections) during validation. The extractor clones `ValidationContext` from request state, enabling rules like "username must be unique" at the validation layer.
+
+### Background Jobs
+
+`rustapi-jobs` provides an async job queue with three backends (Memory, Redis, Postgres), retry with exponential backoff, dead letter queues, and scheduled execution.
+
+### Side-by-Side gRPC + HTTP
+
+`rustapi-grpc` enables running Tonic-based gRPC services alongside RustAPI HTTP handlers in the same process via `run_rustapi_and_grpc`.
+
+### Additional Built-in Capabilities
+
+| Capability | Notes |
+|:-----------|:------|
+| WebSocket with permessage-deflate | Full compression negotiation via `protocol-ws` |
+| Server-Sent Events (SSE) | `SseEvent` with id, event type, retry fields |
+| Tera template rendering | `View<T>` response type via `protocol-view` |
+| JWT authentication | `AuthUser<T>` extractor + `JwtLayer` |
+| CORS | `CorsLayer` with builder pattern |
+| `simd-json` acceleration | 2-4x faster JSON parsing via `core-simd-json` feature |
+| In-memory `TestClient` | Executes the full middleware stack without network I/O |
+| `MockServer` | Expectation-based mock with explicit `verify()` |
+| `cargo rustapi new` | Interactive project scaffolding with feature selection |
+
+## Comparison
+
+| Feature | RustAPI | Actix-web | Axum | FastAPI (Python) |
+|:--------|:-------:|:---------:|:----:|:----------------:|
+| Performance | ~92k req/s | ~105k | ~100k | ~12k |
+| Ergonomics | High | Low | Medium | High |
+| AI/LLM native format (TOON) | Yes | No | No | No |
+| Request replay / time-travel debug | Built-in | No | No | 3rd-party |
+| Circuit breaker / retry | Built-in | 3rd-party | 3rd-party | 3rd-party |
+| Adaptive execution paths | 3-tier | No | No | N/A |
+| OpenAPI from code | Compile-time derive | 3rd-party | 3rd-party | Built-in |
+| HTTP/3 (QUIC) | Built-in | No | 3rd-party | No |
+| Background jobs | Built-in | 3rd-party | 3rd-party | 3rd-party |
+| API stability model | Facade + CI contract | Direct | Direct | Stable |
+
+## Quick Start
 
 ```rust
 use rustapi_rs::prelude::*;
@@ -89,12 +147,13 @@ async fn hello(Path(name): Path<String>) -> Json<Message> {
 
 #[rustapi_rs::main]
 async fn main() {
-    // 1 line to rule them all: Auto-discovery, OpenAPI, Validation
     RustApi::auto().run("127.0.0.1:8080").await
 }
 ```
 
-Prefer a shorter macro prefix? You can rename the crate in `Cargo.toml` and use the same macros:
+`RustApi::auto()` collects all macro-annotated handlers, generates OpenAPI documentation (served at `/docs`), and starts a multi-threaded tokio runtime.
+
+You can shorten the macro prefix by renaming the crate:
 
 ```toml
 [dependencies]
@@ -108,57 +167,45 @@ use api::prelude::*;
 async fn list_users() -> &'static str { "ok" }
 ```
 
-**That's it.** You get:
-*   ✅ **Swagger UI** at `/docs`
-*   ✅ **Input Validation**
-*   ✅ **Multi-threaded Runtime**
-*   ✅ **Zero Config**
+## Feature Flags
 
-## Feature Taxonomy (Stable)
-
-RustAPI now groups features into three namespaces:
+Features are organized into three namespaces:
 
 | Namespace | Purpose | Examples |
-|:--|:--|:--|
+|:----------|:--------|:--------|
 | `core-*` | Core framework capabilities | `core-openapi`, `core-tracing`, `core-http3` |
-| `protocol-*` | Optional protocol crates | `protocol-toon`, `protocol-ws`, `protocol-view`, `protocol-grpc` |
-| `extras-*` | Optional production middleware/integrations | `extras-jwt`, `extras-cors`, `extras-rate-limit`, `extras-replay` |
+| `protocol-*` | Optional protocol support | `protocol-toon`, `protocol-ws`, `protocol-view`, `protocol-grpc` |
+| `extras-*` | Production middleware | `extras-jwt`, `extras-cors`, `extras-rate-limit`, `extras-replay` |
 
-Meta features:
-- `core` (default)
-- `protocol-all`
-- `extras-all`
-- `full = core + protocol-all + extras-all`
+Meta features: `core` (default), `protocol-all`, `extras-all`, `full`.
 
-## ✨ Latest Release Highlights (v0.1.335)
+## Recent Changes (v0.1.335)
 
-*   ✅ **Dual-Stack Runtime**: Simultaneous HTTP/1.1 (TCP) and HTTP/3 (QUIC/UDP) support
-*   ✅ **WebSocket**: Full permessage-deflate negotiation and compression
-*   ✅ **OpenAPI**: Improved reference integrity and native validation docs
-*   ✅ **Async Validation**: Deep integration with application state for complex rules
-*   ✅ **gRPC Foundation**: New optional `rustapi-grpc` crate with Tonic/Prost integration and side-by-side HTTP + gRPC runners (`run_rustapi_and_grpc`, `run_rustapi_and_grpc_with_shutdown`)
-*   ✅ **CLI DX Update**: `cargo rustapi new` interactive feature selection now includes `grpc`
+- Dual-stack runtime: simultaneous HTTP/1.1 (TCP) and HTTP/3 (QUIC/UDP)
+- WebSocket permessage-deflate compression
+- Improved OpenAPI reference integrity and validation documentation
+- Async validation with application state integration
+- `rustapi-grpc` crate: optional Tonic/Prost-based gRPC alongside HTTP (`run_rustapi_and_grpc`)
+- `cargo rustapi new` now includes `grpc` in interactive feature selection
 
-## 🗺️ Public Roadmap: Next 30 Days
+## Roadmap (February 2026)
 
-We build in public. Here is our immediate focus for **February 2026**:
+- [x] Visual status page: automatic health dashboard
+- [x] gRPC integration via `rustapi-grpc`
+- [x] Distributed tracing: OpenTelemetry integration
+- [ ] RustAPI Cloud: managed deployment to major cloud providers
 
-*   [x] **Visual Status Page**: Automatic health dashboard for all endpoints.
-*   [x] **gRPC Integration (Foundation)**: First-class optional crate via Tonic (`rustapi-grpc`) with RustAPI facade-level feature flag support.
-*   [x] **Distributed Tracing**: One-line OpenTelemetry setup.
-*   [ ] **RustAPI Cloud**: One-click deploy to major cloud providers.
+## Documentation
 
-## 📚 Documentation
+Detailed architecture, recipes, and guides are in the [Cookbook](docs/cookbook/src/SUMMARY.md):
 
-We moved our detailed architecture, recipes, and deep-dives to the **[Cookbook](docs/cookbook/src/SUMMARY.md)**.
-
-*   [System Architecture & Diagrams](docs/cookbook/src/architecture/system_overview.md)
-*   [Performance Benchmarks](docs/cookbook/src/concepts/performance.md)
-*   [gRPC Integration Guide](docs/cookbook/src/crates/rustapi_grpc.md)
-*   [Full Examples](crates/rustapi-rs/examples/)
+- [System Architecture](docs/cookbook/src/architecture/system_overview.md)
+- [Performance Benchmarks](docs/cookbook/src/concepts/performance.md)
+- [gRPC Integration Guide](docs/cookbook/src/crates/rustapi_grpc.md)
+- [Examples](crates/rustapi-rs/examples/)
 
 ---
 
 <div align="center">
-  <sub>Built with ❤️ by the Tunti3.</sub>
+  <sub>Built by Tunti35.</sub>
 </div>
