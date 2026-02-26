@@ -28,7 +28,5 @@ fn hot_reload_with_full_config() {
         "hello"
     }
 
-    let _app = RustApi::new()
-        .hot_reload(true)
-        .route("/", get(hello));
+    let _app = RustApi::new().hot_reload(true).route("/", get(hello));
 }

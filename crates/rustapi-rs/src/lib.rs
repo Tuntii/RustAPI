@@ -22,6 +22,7 @@ pub mod __private {
 pub mod core {
     pub use rustapi_core::collect_auto_routes;
     pub use rustapi_core::validation::Validatable;
+    pub use rustapi_core::EventBus;
     pub use rustapi_core::{
         delete, delete_route, get, get_route, patch, patch_route, post, post_route, put, put_route,
         route, serve_dir, sse_response, ApiError, AsyncValidatedJson, Body, BodyLimitLayer,
@@ -33,7 +34,6 @@ pub mod core {
         RustApi, RustApiConfig, Sse, SseEvent, State, StaticFile, StaticFileConfig, StatusCode,
         StreamBody, TracingLayer, Typed, TypedPath, UploadedFile, ValidatedJson, WithStatus,
     };
-    pub use rustapi_core::EventBus;
 
     pub use rustapi_core::get_environment;
 
@@ -271,6 +271,7 @@ pub use rustapi_extras::timeout;
 
 /// Prelude module: `use rustapi_rs::prelude::*`.
 pub mod prelude {
+    pub use crate::core::EventBus;
     pub use crate::core::Validatable;
     pub use crate::core::{
         delete, delete_route, get, get_route, patch, patch_route, post, post_route, put, put_route,
@@ -282,7 +283,6 @@ pub mod prelude {
         StaticFileConfig, StatusCode, StreamBody, TracingLayer, Typed, TypedPath, UploadedFile,
         ValidatedJson, WithStatus,
     };
-    pub use crate::core::EventBus;
 
     #[cfg(any(feature = "core-compression", feature = "compression"))]
     pub use crate::core::{CompressionAlgorithm, CompressionConfig, CompressionLayer};

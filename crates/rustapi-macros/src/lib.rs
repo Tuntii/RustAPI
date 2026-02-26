@@ -739,7 +739,9 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
                                 if i + 2 < tokens.len() {
                                     if let proc_macro2::TokenTree::Punct(p) = &tokens[i + 1] {
                                         if p.as_char() == '=' {
-                                            if let proc_macro2::TokenTree::Literal(desc_lit) = &tokens[i + 2] {
+                                            if let proc_macro2::TokenTree::Literal(desc_lit) =
+                                                &tokens[i + 2]
+                                            {
                                                 let desc_str = desc_lit.to_string();
                                                 // Remove surrounding quotes
                                                 let desc = desc_str.trim_matches('"').to_string();
@@ -749,7 +751,9 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
                                                 i += 3;
                                                 // Skip comma
                                                 if i < tokens.len() {
-                                                    if let proc_macro2::TokenTree::Punct(p) = &tokens[i] {
+                                                    if let proc_macro2::TokenTree::Punct(p) =
+                                                        &tokens[i]
+                                                    {
                                                         if p.as_char() == ',' {
                                                             i += 1;
                                                         }

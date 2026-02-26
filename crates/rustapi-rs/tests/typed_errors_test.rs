@@ -140,9 +140,7 @@ fn test_correct_extractor_order_compiles() {
     // If this test compiles and runs, it means correct extractor ordering passes
     let routes = rustapi_rs::collect_auto_routes();
     assert!(
-        routes
-            .iter()
-            .any(|r| r.path() == "/extractor-order-ok"),
+        routes.iter().any(|r| r.path() == "/extractor-order-ok"),
         "Route with correct extractor order should exist"
     );
 }

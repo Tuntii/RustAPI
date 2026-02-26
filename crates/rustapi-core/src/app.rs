@@ -999,9 +999,7 @@ impl RustApi {
         if is_under_watcher {
             tracing::info!("   File watcher active — changes will trigger rebuild + restart");
         } else {
-            tracing::info!(
-                "   Tip: Run with `cargo rustapi run --watch` for automatic hot-reload"
-            );
+            tracing::info!("   Tip: Run with `cargo rustapi run --watch` for automatic hot-reload");
         }
 
         tracing::info!("   Listening on http://{addr}");
@@ -1111,7 +1109,9 @@ impl RustApi {
         };
 
         let server = Server::new(self.router, self.layers, self.interceptors);
-        server.run_with_shutdown(addr.as_ref(), wrapped_signal).await
+        server
+            .run_with_shutdown(addr.as_ref(), wrapped_signal)
+            .await
     }
 
     /// Get the inner router (for testing or advanced usage)

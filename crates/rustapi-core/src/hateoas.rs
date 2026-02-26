@@ -596,7 +596,10 @@ impl<T: Serialize> Paginated<T> {
         let total_pages = self.total_pages();
 
         let links = PaginationLinks {
-            self_link: format!("{}?page={}&per_page={}", base_path, self.page, self.per_page),
+            self_link: format!(
+                "{}?page={}&per_page={}",
+                base_path, self.page, self.per_page
+            ),
             first: format!("{}?page=1&per_page={}", base_path, self.per_page),
             last: format!(
                 "{}?page={}&per_page={}",
@@ -662,21 +665,18 @@ impl<T: Serialize + Send> crate::response::IntoResponse for Paginated<T> {
                 if !link_header.is_empty() {
                     response.headers_mut().insert(
                         http::header::LINK,
-                        http::HeaderValue::from_str(&link_header).unwrap_or_else(|_| {
-                            http::HeaderValue::from_static("")
-                        }),
+                        http::HeaderValue::from_str(&link_header)
+                            .unwrap_or_else(|_| http::HeaderValue::from_static("")),
                     );
                 }
 
                 response
             }
-            Err(err) => {
-                crate::error::ApiError::internal(format!(
-                    "Failed to serialize paginated response: {}",
-                    err
-                ))
-                .into_response()
-            }
+            Err(err) => crate::error::ApiError::internal(format!(
+                "Failed to serialize paginated response: {}",
+                err
+            ))
+            .into_response(),
         }
     }
 }
@@ -758,13 +758,11 @@ impl<T: Serialize + Send> crate::response::IntoResponse for CursorPaginated<T> {
                 .header(http::header::CONTENT_TYPE, "application/json")
                 .body(crate::response::Body::from(json_bytes))
                 .unwrap(),
-            Err(err) => {
-                crate::error::ApiError::internal(format!(
-                    "Failed to serialize cursor-paginated response: {}",
-                    err
-                ))
-                .into_response()
-            }
+            Err(err) => crate::error::ApiError::internal(format!(
+                "Failed to serialize cursor-paginated response: {}",
+                err
+            ))
+            .into_response(),
         }
     }
 }

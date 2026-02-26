@@ -144,7 +144,10 @@ impl CacheStore {
             .iter()
             .filter(|entry| {
                 // Cache keys are "METHOD:URI", check the URI part
-                entry.key().split_once(':').map_or(false, |(_, uri)| uri.starts_with(prefix))
+                entry
+                    .key()
+                    .split_once(':')
+                    .map_or(false, |(_, uri)| uri.starts_with(prefix))
             })
             .map(|entry| entry.key().clone())
             .collect();
@@ -411,17 +414,13 @@ impl MiddlewareLayer for CacheLayer {
             if let Some(entry) = store.get(&key) {
                 if entry.created_at.elapsed() < config.ttl {
                     // ETag: return 304 Not Modified if client has the same ETag
-                    if let (Some(ref etag), Some(ref client_etag)) =
-                        (&entry.etag, &if_none_match)
-                    {
+                    if let (Some(ref etag), Some(ref client_etag)) = (&entry.etag, &if_none_match) {
                         if etag == client_etag {
                             return http::Response::builder()
                                 .status(http::StatusCode::NOT_MODIFIED)
                                 .header("ETag", etag.as_str())
                                 .header("X-Cache", "HIT")
-                                .body(ResponseBody::Full(http_body_util::Full::new(
-                                    Bytes::new(),
-                                )))
+                                .body(ResponseBody::Full(http_body_util::Full::new(Bytes::new())))
                                 .unwrap();
                         }
                     }
@@ -623,7 +622,10 @@ mod tests {
         assert_eq!(layer.config.ttl, Duration::from_secs(120));
         assert_eq!(layer.config.max_entries, 500);
         assert!(layer.config.skip_paths.contains(&"/debug".to_string()));
-        assert!(layer.config.vary_headers.contains(&"accept-language".to_string()));
+        assert!(layer
+            .config
+            .vary_headers
+            .contains(&"accept-language".to_string()));
         assert!(!layer.config.etag);
         assert!(handle.is_empty());
     }

@@ -212,12 +212,7 @@ pub async fn watch(args: WatchArgs) -> Result<()> {
             style("Watching:").bold(),
             args.watch_paths.join(", ")
         );
-        println!(
-            "{} {} {}ms",
-            WATCH,
-            style("Debounce:").bold(),
-            args.delay
-        );
+        println!("{} {} {}ms", WATCH, style("Debounce:").bold(), args.delay);
         println!();
         println!("{}", style("Press Ctrl+C to stop.").dim());
         println!();
@@ -454,10 +449,7 @@ mod tests {
             &ignore
         ));
         assert!(is_ignored(std::path::Path::new(".git/HEAD"), &ignore));
-        assert!(!is_ignored(
-            std::path::Path::new("src/main.rs"),
-            &ignore
-        ));
+        assert!(!is_ignored(std::path::Path::new("src/main.rs"), &ignore));
     }
 
     #[test]

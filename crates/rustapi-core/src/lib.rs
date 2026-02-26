@@ -113,8 +113,7 @@ pub use handler::{
     RouteHandler,
 };
 pub use hateoas::{
-    CursorPaginated, Link, LinkOrArray, Linkable, PageInfo, Paginated, Resource,
-    ResourceCollection,
+    CursorPaginated, Link, LinkOrArray, Linkable, PageInfo, Paginated, Resource, ResourceCollection,
 };
 pub use health::{HealthCheck, HealthCheckBuilder, HealthCheckResult, HealthStatus};
 pub use http::StatusCode;
