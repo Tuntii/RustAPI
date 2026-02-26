@@ -17,7 +17,7 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.335"
+version = "0.1.389"
 edition = "2021"
 authors = ["RustAPI Contributors, Tuntii"]
 license = "MIT OR Apache-2.0"
@@ -137,3 +137,5 @@ codegen-units = 1
 inherits = "release"
 debug = true
 strip = false
+
+
