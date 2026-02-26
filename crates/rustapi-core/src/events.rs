@@ -89,6 +89,15 @@ type AsyncHandler = Arc<dyn Fn(String) -> Pin<Box<dyn Future<Output = ()> + Send
 /// Supports both synchronous and asynchronous event handlers.
 /// Multiple handlers can be registered for the same event topic.
 ///
+/// # Handler registration
+///
+/// Handlers are stored behind a `RwLock`. Reads (event emission) are cheap and
+/// fully concurrent, but writes (handler registration via [`on`][EventBus::on] /
+/// [`on_async`][EventBus::on_async]) acquire an exclusive lock. To avoid
+/// contention, **register all handlers during application startup** before
+/// the server begins serving requests, rather than registering them at
+/// runtime inside request handlers.
+///
 /// # Example
 ///
 /// ```rust
@@ -175,7 +184,16 @@ impl EventBus {
     /// Emit an event synchronously
     ///
     /// Calls all synchronous handlers for the topic in registration order.
-    /// Also spawns tokio tasks for any async handlers.
+    /// Also spawns a separate tokio task for each registered async handler.
+    ///
+    /// # Backpressure
+    ///
+    /// Async handlers are spawned without any concurrency limit. If many events
+    /// are emitted rapidly and the registered async handlers are slow, an
+    /// unbounded number of tokio tasks may be created, potentially exhausting
+    /// system resources. For high-throughput use cases consider using
+    /// [`emit_async`][EventBus::emit_async] and managing concurrency at the call
+    /// site, or keep async handler logic lightweight (e.g. send to a channel).
     ///
     /// # Example
     ///

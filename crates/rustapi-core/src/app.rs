@@ -1065,9 +1065,13 @@ impl RustApi {
             self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
         }
 
-        // Run on_start lifecycle hooks before accepting connections
-        for hook in self.lifecycle_hooks.on_start {
-            hook().await;
+        // Run on_start lifecycle hooks before accepting connections.
+        // Each hook is spawned as a separate task so that a failing hook
+        // does not prevent subsequent hooks from running.
+        for (i, hook) in self.lifecycle_hooks.on_start.into_iter().enumerate() {
+            if let Err(e) = tokio::task::spawn(hook()).await {
+                tracing::error!("on_start lifecycle hook #{} failed: {:?}", i, e);
+            }
         }
 
         let server = Server::new(self.router, self.layers, self.interceptors);
@@ -1093,18 +1097,26 @@ impl RustApi {
             self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
         }
 
-        // Run on_start lifecycle hooks before accepting connections
-        for hook in self.lifecycle_hooks.on_start {
-            hook().await;
+        // Run on_start lifecycle hooks before accepting connections.
+        // Each hook is spawned as a separate task so that a failing hook
+        // does not prevent subsequent hooks from running.
+        for (i, hook) in self.lifecycle_hooks.on_start.into_iter().enumerate() {
+            if let Err(e) = tokio::task::spawn(hook()).await {
+                tracing::error!("on_start lifecycle hook #{} failed: {:?}", i, e);
+            }
         }
 
         // Wrap the shutdown signal to run on_shutdown hooks after signal fires
         let shutdown_hooks = self.lifecycle_hooks.on_shutdown;
         let wrapped_signal = async move {
             signal.await;
-            // Run on_shutdown hooks after the shutdown signal fires
-            for hook in shutdown_hooks {
-                hook().await;
+            // Run on_shutdown hooks after the shutdown signal fires.
+            // Each hook is spawned as a separate task so that a failing hook
+            // does not prevent subsequent hooks from running.
+            for (i, hook) in shutdown_hooks.into_iter().enumerate() {
+                if let Err(e) = tokio::task::spawn(hook()).await {
+                    tracing::error!("on_shutdown lifecycle hook #{} failed: {:?}", i, e);
+                }
             }
         };
 

@@ -128,7 +128,9 @@ impl CacheStore {
 
     fn remove(&self, key: &str) {
         self.entries.remove(key);
-        // Note: we don't remove from order queue (lazy cleanup on eviction)
+        if let Ok(mut order) = self.order.lock() {
+            order.retain(|k| k != key);
+        }
     }
 
     fn clear(&self) {
@@ -152,8 +154,14 @@ impl CacheStore {
             .map(|entry| entry.key().clone())
             .collect();
 
-        for key in keys_to_remove {
-            self.entries.remove(&key);
+        for key in &keys_to_remove {
+            self.entries.remove(key.as_str());
+        }
+
+        if !keys_to_remove.is_empty() {
+            if let Ok(mut order) = self.order.lock() {
+                order.retain(|k| !keys_to_remove.contains(k));
+            }
         }
     }
 
@@ -249,7 +257,12 @@ impl CacheLayer {
         self
     }
 
-    /// Set maximum number of cached entries
+    /// Set maximum number of cached entries.
+    ///
+    /// **Note:** calling this method replaces the underlying cache store, discarding
+    /// any previously cached responses. It should therefore be called before the
+    /// layer starts serving requests (i.e. during application setup), not
+    /// at runtime.
     pub fn max_entries(mut self, max: usize) -> Self {
         self.config.max_entries = max;
         self.store = CacheStore::new(max);
@@ -348,10 +361,28 @@ fn generate_etag(body: &[u8]) -> String {
     format!("\"{:016x}\"", hash)
 }
 
-/// Build a cache key from method, URI, and vary headers
+/// Build a cache key from method, URI, and vary headers.
+///
+/// Header names and values are percent-encoded so that the delimiter
+/// characters (`|`, `=`, `%`) cannot appear unescaped inside them,
+/// preventing ambiguous or colliding cache keys.
 fn build_cache_key(method: &str, uri: &str, req: &Request, vary_headers: &[String]) -> String {
     if vary_headers.is_empty() {
         return format!("{}:{}", method, uri);
+    }
+
+    // Encode characters that are used as delimiters in the key format.
+    fn encode_part(s: &str) -> String {
+        let mut out = String::with_capacity(s.len());
+        for b in s.bytes() {
+            match b {
+                b'%' => out.push_str("%25"),
+                b'|' => out.push_str("%7C"),
+                b'=' => out.push_str("%3D"),
+                _ => out.push(b as char),
+            }
+        }
+        out
     }
 
     let mut key = format!("{}:{}", method, uri);
@@ -359,9 +390,9 @@ fn build_cache_key(method: &str, uri: &str, req: &Request, vary_headers: &[Strin
         if let Some(value) = req.headers().get(header_name.as_str()) {
             if let Ok(s) = value.to_str() {
                 key.push('|');
-                key.push_str(header_name);
+                key.push_str(&encode_part(header_name));
                 key.push('=');
-                key.push_str(s);
+                key.push_str(&encode_part(s));
             }
         }
     }
