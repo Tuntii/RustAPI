@@ -7,6 +7,63 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.397] - 2026-02-26
+
+### Added
+
+#### Compile-Time Extractor Safety (`rustapi-macros`)
+- **Body-consuming extractor ordering enforced at compile time**: `Json<T>`, `Body`, `ValidatedJson<T>` must now be the last handler parameter — otherwise you get a clear compiler error instead of a silent runtime failure.
+- Descriptive error messages: `"Body-consuming extractors must be the last parameter"`.
+- Detects multiple body-consuming extractors in the same handler.
+
+#### Typed Error Responses — OpenAPI Integration (`rustapi-macros`, `rustapi-core`)
+- New `#[errors(404 = "Not found", 403 = "Forbidden")]` attribute macro for route handlers.
+- Error types are automatically reflected in the OpenAPI spec with `ErrorSchema` references.
+- `Route::error_response()` builder method for programmatic error response registration.
+- Swagger UI now displays all possible error responses per endpoint.
+
+#### Pagination & HATEOAS Helpers (`rustapi-core`)
+- **`Paginate` extractor**: `?page=2&per_page=20` with sensible defaults (page=1, per_page=20, max=100).
+- **`Paginated<T>` response wrapper**: JSON body with `items`/`meta`/`_links`, RFC 8288 `Link` header, `X-Total-Count` & `X-Total-Pages` headers.
+- **`CursorPaginate` extractor**: `?cursor=abc&limit=20` for cursor-based pagination.
+- **`CursorPaginated<T>` response wrapper**: `items` + `next_cursor` + `has_more`.
+- Helper methods: `offset()`, `limit()`, `paginate()`, `after()`, `is_first_page()`.
+- All types re-exported in the `rustapi-rs` prelude.
+
+#### Built-in Caching Layer (`rustapi-extras`)
+- **Full rewrite of the caching system** with production-grade features:
+  - In-memory response cache with LRU eviction and configurable `max_entries` (default: 10,000).
+  - ETag generation via FNV-1a hash + automatic `If-None-Match` → 304 Not Modified.
+  - `Cache-Control` header awareness (`no-cache`, `no-store`).
+  - `Vary`-by-header cache key strategy.
+  - `CacheHandle` for programmatic invalidation (by path prefix, exact key, or clear all).
+  - `CacheBuilder` for ergonomic middleware configuration.
+
+#### Event System & Lifecycle Hooks (`rustapi-core`)
+- **`EventBus`**: In-process pub/sub with sync and async handlers.
+  - `on()` for sync handlers, `on_async()` for async handlers.
+  - `emit()` (fire-and-forget) and `emit_await()` (wait for all handlers).
+  - `handler_count()` and `topics()` introspection.
+- **Lifecycle hooks** on `RustApi` builder:
+  - `.on_start(async { ... })` — runs before the server starts accepting connections.
+  - `.on_shutdown(async { ... })` — runs on graceful shutdown.
+  - Integrated into both `run()` and `run_with_shutdown()`.
+- `EventBus` re-exported in the `rustapi-rs` prelude.
+
+#### Native Hot Reload / Watch Mode (`cargo-rustapi`, `rustapi-core`)
+- **Complete rewrite of `cargo rustapi watch`** using `notify` + `notify-debouncer-mini` — no more `cargo-watch` dependency.
+  - 300ms debounce, configurable extension filter, smart ignore paths.
+  - Build-before-restart: only restarts the server if `cargo build` succeeds.
+  - Graceful process shutdown (kill + 5s timeout), crash detection with "watching for changes" recovery.
+- `.hot_reload(true)` builder API on `RustApi` — prints a dev-mode banner with watcher hints.
+- `cargo rustapi run --watch` / `--reload` / `--hot` delegates to the native watcher.
+
+#### gRPC Support Published (`rustapi-grpc`)
+- **First crates.io release** of `rustapi-grpc v0.1.397`.
+- `run_rustapi_and_grpc()` for dual HTTP + gRPC server execution.
+- Re-exports `tonic` and `prost` for ergonomic proto service integration.
+- `protocol-grpc` feature flag in `rustapi-rs`.
+
 ### Changed
 - **Facade-first CORE stabilization**:
   - `rustapi-rs` public surface is now explicitly curated (`core`, `protocol`, `extras`, `prelude`).
@@ -17,18 +74,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Canonical naming is now `core-*`, `protocol-*`, `extras-*`.
   - Meta features standardized: `core`, `protocol-all`, `extras-all`, `full`.
   - Legacy feature names remain as compatibility aliases and are deprecated.
+- **Publish pipeline**: `rustapi-grpc` added to `smart_publish.ps1` and `publish.ps1` in correct dependency order.
 
-### Added
+### Fixed
+- Clippy lint: `.map_or(false, ...)` → `.is_some_and(...)` in cache middleware.
+- Clippy lint: Nested `format!` macros replaced with single `format!` in ETag generation.
+
+### Documentation
+- Expanded cookbook: gRPC, SSR, and AI skill recipes.
+- Learning path improvements across multiple maintenance runs.
+- Fixed SSR recipe and updated recipes index.
+
+### Added (Governance)
 - **Public API governance**:
   - Snapshot files under `api/public/` for `rustapi-rs` (default + all-features).
-  - New CI workflow `.github/workflows/public-api.yml`:
-    - snapshot drift check
-    - PR label gate requiring `breaking` or `feature` when snapshot changes.
-- **Compatibility contract**:
-  - New `CONTRACT.md` defining SemVer, MSRV (1.78), deprecation and feature policies.
+  - CI workflow for snapshot drift check and PR label gate.
+- **Compatibility contract**: New `CONTRACT.md` defining SemVer, MSRV (1.78), deprecation and feature policies.
 
 ### Deprecated
 - Legacy facade paths and feature aliases are soft-deprecated and scheduled for removal no earlier than two minor releases after announcement.
+
+## [0.1.335] - 2026-02-13
+
+### Added
+- Pagination cookbook recipe and synced docs to v0.1.335.
+- HATEOAS test schemas with manual `RustApiSchema` implementations.
+- RELEASES.md for release tracking.
+
+### Fixed
+- Lint formatting in `custom_messages.rs`.
+- Pagination size validation (PR review feedback).
+- Cumulative CI failure fixes.
 
 ## [0.1.300] - 2026-02-06
 
@@ -304,7 +380,16 @@ This release delivers a **12x performance improvement**, bringing RustAPI from ~
 - `extras` meta-feature for common optional features
 - `full` feature for all optional features
 
-[Unreleased]: https://github.com/Tuntii/RustAPI/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/Tuntii/RustAPI/compare/v0.1.397...HEAD
+[0.1.397]: https://github.com/Tuntii/RustAPI/compare/v0.1.335...v0.1.397
+[0.1.335]: https://github.com/Tuntii/RustAPI/compare/v0.1.300...v0.1.335
+[0.1.300]: https://github.com/Tuntii/RustAPI/compare/v0.1.202...v0.1.300
+[0.1.202]: https://github.com/Tuntii/RustAPI/compare/v0.1.15...v0.1.202
+[0.1.15]: https://github.com/Tuntii/RustAPI/compare/v0.1.11...v0.1.15
+[0.1.11]: https://github.com/Tuntii/RustAPI/compare/v0.1.10...v0.1.11
+[0.1.10]: https://github.com/Tuntii/RustAPI/compare/v0.1.9...v0.1.10
+[0.1.9]: https://github.com/Tuntii/RustAPI/compare/v0.1.8...v0.1.9
+[0.1.8]: https://github.com/Tuntii/RustAPI/compare/v0.1.4...v0.1.8
 [0.1.4]: https://github.com/Tuntii/RustAPI/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/Tuntii/RustAPI/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/Tuntii/RustAPI/compare/v0.1.1...v0.1.2
