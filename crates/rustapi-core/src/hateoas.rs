@@ -643,9 +643,22 @@ impl<T: Serialize> Paginated<T> {
 }
 
 impl<T: Serialize + Send> crate::response::IntoResponse for Paginated<T> {
+    /// Convert to an HTTP response.
+    ///
+    /// The response includes `X-Total-Count`, `X-Total-Pages`, and RFC 8288
+    /// `Link` headers. Navigation links (first/prev/next/last) are generated as
+    /// **relative query strings** (e.g. `?page=2&per_page=20`) because
+    /// `IntoResponse` does not have access to the original request URI.
+    ///
+    /// If you need absolute URLs in the Link header, wrap this type in a
+    /// `ResponseModifier` or interceptor that has access to the request URI,
+    /// or build the response manually using [`Paginated::link_header`] and
+    /// [`Paginated::to_body_with_path`].
     fn into_response(self) -> crate::response::Response {
-        // Use a generic base path since we don't have access to the request URI
-        // in IntoResponse. Users can override via ResponseModifier or interceptors.
+        // Use an empty base path since IntoResponse has no access to the
+        // request URI. Navigation links will be relative query strings only
+        // (e.g. `?page=2`).  Callers that need absolute URLs should use
+        // link_header(base_path) / to_body_with_path(base_path) directly.
         let base_path = "";
         let link_header = self.link_header(base_path);
         let body = self.to_body_with_path(base_path);
@@ -867,5 +880,151 @@ mod tests {
         };
         let resource = user.with_links().self_link("/users/1");
         assert!(resource.links.contains_key("self"));
+    }
+
+    // ─── IntoResponse tests ─────────────────────────────────────────────────
+
+    /// Collect a [`crate::response::Body`] into [`bytes::Bytes`] synchronously
+    /// using a one-shot tokio runtime (avoids pulling in `#[tokio::test]`).
+    fn collect_body(body: crate::response::Body) -> bytes::Bytes {
+        use http_body_util::BodyExt;
+        tokio::runtime::Builder::new_current_thread()
+            .build()
+            .unwrap()
+            .block_on(async { body.collect().await.unwrap().to_bytes() })
+    }
+
+    #[test]
+    fn test_paginated_into_response_status_and_headers() {
+        use crate::response::IntoResponse;
+
+        let users = vec![
+            User { id: 1, name: "Alice".to_string() },
+            User { id: 2, name: "Bob".to_string() },
+        ];
+        let paginated = Paginated::new(users, 1, 10, 25);
+        let response = paginated.into_response();
+
+        assert_eq!(response.status(), http::StatusCode::OK);
+        assert_eq!(
+            response.headers().get(http::header::CONTENT_TYPE).unwrap(),
+            "application/json"
+        );
+        assert_eq!(
+            response.headers().get("X-Total-Count").unwrap(),
+            "25"
+        );
+        assert_eq!(
+            response.headers().get("X-Total-Pages").unwrap(),
+            "3" // ceil(25 / 10) = 3
+        );
+        // Link header should be present (non-first page has prev/next/first/last)
+        assert!(response.headers().contains_key(http::header::LINK));
+    }
+
+    #[test]
+    fn test_paginated_into_response_json_body() {
+        use crate::response::IntoResponse;
+
+        let users = vec![User { id: 42, name: "Carol".to_string() }];
+        let paginated = Paginated::new(users, 2, 5, 10);
+        let response = paginated.into_response();
+
+        let (parts, body) = response.into_parts();
+        assert_eq!(parts.status, http::StatusCode::OK);
+
+        let bytes = collect_body(body);
+        let json: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+
+        assert!(json.get("items").is_some());
+        assert!(json.get("meta").is_some());
+        // Links use the HAL `_links` convention
+        assert!(json.get("_links").is_some());
+
+        let items = json["items"].as_array().unwrap();
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0]["id"], 42);
+
+        let meta = &json["meta"];
+        assert_eq!(meta["page"], 2);
+        assert_eq!(meta["per_page"], 5);
+        assert_eq!(meta["total"], 10);
+        assert_eq!(meta["total_pages"], 2);
+    }
+
+    #[test]
+    fn test_paginated_into_response_empty_items() {
+        use crate::response::IntoResponse;
+
+        let paginated: Paginated<User> = Paginated::new(vec![], 1, 10, 0);
+        let response = paginated.into_response();
+
+        assert_eq!(response.status(), http::StatusCode::OK);
+        assert_eq!(response.headers().get("X-Total-Count").unwrap(), "0");
+        assert_eq!(response.headers().get("X-Total-Pages").unwrap(), "0");
+        // At minimum the `first` link is always included in the Link header
+        let link = response.headers().get(http::header::LINK);
+        let link_str = link.map(|v| v.to_str().unwrap_or("")).unwrap_or("");
+        // Empty result set has no next or prev links
+        assert!(!link_str.contains("rel=\"next\""));
+        assert!(!link_str.contains("rel=\"prev\""));
+    }
+
+    #[test]
+    fn test_cursor_paginated_into_response_status_and_headers() {
+        use crate::response::IntoResponse;
+
+        let users = vec![User { id: 1, name: "Dave".to_string() }];
+        let paginated = CursorPaginated::new(users, Some("cursor_abc".to_string()), true);
+        let response = paginated.into_response();
+
+        assert_eq!(response.status(), http::StatusCode::OK);
+        assert_eq!(
+            response.headers().get(http::header::CONTENT_TYPE).unwrap(),
+            "application/json"
+        );
+    }
+
+    #[test]
+    fn test_cursor_paginated_into_response_json_body() {
+        use crate::response::IntoResponse;
+
+        let users = vec![User { id: 7, name: "Eve".to_string() }];
+        let paginated =
+            CursorPaginated::new(users, Some("next_cursor_xyz".to_string()), true);
+        let response = paginated.into_response();
+
+        let (_parts, body) = response.into_parts();
+        let bytes = collect_body(body);
+        let json: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+
+        assert!(json.get("items").is_some());
+        assert!(json.get("meta").is_some());
+
+        let items = json["items"].as_array().unwrap();
+        assert_eq!(items.len(), 1);
+        assert_eq!(items[0]["id"], 7);
+
+        let meta = &json["meta"];
+        assert_eq!(meta["next_cursor"], "next_cursor_xyz");
+        assert_eq!(meta["has_more"], true);
+    }
+
+    #[test]
+    fn test_cursor_paginated_into_response_last_page() {
+        use crate::response::IntoResponse;
+
+        let users = vec![User { id: 9, name: "Frank".to_string() }];
+        let paginated = CursorPaginated::new(users, None, false);
+        let response = paginated.into_response();
+
+        let (_parts, body) = response.into_parts();
+        let bytes = collect_body(body);
+        let json: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+
+        let meta = &json["meta"];
+        // next_cursor should be omitted when None
+        assert!(meta.get("next_cursor").is_none());
+        assert_eq!(meta["has_more"], false);
     }
 }

@@ -351,7 +351,7 @@ pub struct Route {
     /// Supported types: "uuid", "integer", "string", "boolean", "number"
     pub(crate) param_schemas: std::collections::BTreeMap<String, String>,
     /// Custom error responses for OpenAPI (status_code -> description)
-    pub(crate) error_responses: Vec<(u16, String)>,
+    pub(crate) error_responses: std::collections::BTreeMap<u16, String>,
 }
 
 impl Route {
@@ -370,7 +370,7 @@ impl Route {
             handler: into_boxed_handler(handler),
             operation,
             param_schemas: std::collections::BTreeMap::new(),
-            error_responses: Vec::new(),
+            error_responses: std::collections::BTreeMap::new(),
         }
     }
     /// Set the operation summary
@@ -453,7 +453,7 @@ impl Route {
     /// ```
     pub fn error_response(mut self, status: u16, description: impl Into<String>) -> Self {
         let desc = description.into();
-        self.error_responses.push((status, desc.clone()));
+        self.error_responses.insert(status, desc.clone());
 
         // Also add directly to the operation's responses
         let mut content = std::collections::BTreeMap::new();
@@ -480,7 +480,7 @@ impl Route {
     }
 
     /// Get the custom error responses
-    pub fn error_responses(&self) -> &[(u16, String)] {
+    pub fn error_responses(&self) -> &std::collections::BTreeMap<u16, String> {
         &self.error_responses
     }
 }
