@@ -147,7 +147,7 @@ impl CacheStore {
                 entry
                     .key()
                     .split_once(':')
-                    .map_or(false, |(_, uri)| uri.starts_with(prefix))
+                    .is_some_and(|(_, uri)| uri.starts_with(prefix))
             })
             .map(|entry| entry.key().clone())
             .collect();
@@ -345,7 +345,7 @@ fn generate_etag(body: &[u8]) -> String {
         hash ^= byte as u64;
         hash = hash.wrapping_mul(0x100000001b3);
     }
-    format!("\"{}\"", format!("{:016x}", hash))
+    format!("\"{:016x}\"", hash)
 }
 
 /// Build a cache key from method, URI, and vary headers
