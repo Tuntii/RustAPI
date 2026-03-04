@@ -29,7 +29,7 @@ uuid = { workspace = true, features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 
 # Redis backend
-redis = { version = "0.24", features = ["tokio-comp"], optional = true }
+redis = { version = "1.0", features = ["tokio-comp"], optional = true }
 
 # Postgres backend
 sqlx = { version = "0.8", features = ["postgres", "runtime-tokio", "tls-rustls", "chrono", "uuid"], optional = true }
