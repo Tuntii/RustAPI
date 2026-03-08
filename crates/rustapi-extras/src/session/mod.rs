@@ -384,7 +384,11 @@ impl Session {
     }
 
     /// Insert or replace a typed value.
-    pub async fn insert<T: Serialize>(&self, key: impl Into<String>, value: T) -> SessionResult<()> {
+    pub async fn insert<T: Serialize>(
+        &self,
+        key: impl Into<String>,
+        value: T,
+    ) -> SessionResult<()> {
         let mut guard = self.inner.lock().await;
         let value = serde_json::to_value(value)
             .map_err(|error| SessionError::Serialize(error.to_string()))?;
@@ -441,10 +445,9 @@ impl std::fmt::Debug for Session {
 
 impl FromRequestParts for Session {
     fn from_request_parts(req: &Request) -> Result<Self> {
-        req.extensions()
-            .get::<Session>()
-            .cloned()
-            .ok_or_else(|| ApiError::internal("Session middleware is missing. Add SessionLayer first."))
+        req.extensions().get::<Session>().cloned().ok_or_else(|| {
+            ApiError::internal("Session middleware is missing. Add SessionLayer first.")
+        })
     }
 }
 
@@ -542,7 +545,10 @@ where
             };
 
             if should_persist {
-                let mut session_id = snapshot.id.clone().unwrap_or_else(|| Uuid::new_v4().to_string());
+                let mut session_id = snapshot
+                    .id
+                    .clone()
+                    .unwrap_or_else(|| Uuid::new_v4().to_string());
 
                 if snapshot.rotate_id {
                     let rotated_id = Uuid::new_v4().to_string();
@@ -556,7 +562,8 @@ where
                     session_id = rotated_id;
                 }
 
-                let record = SessionRecord::new(session_id.clone(), snapshot.data.clone(), config.ttl);
+                let record =
+                    SessionRecord::new(session_id.clone(), snapshot.data.clone(), config.ttl);
 
                 if let Err(error) = store.save(record).await {
                     return ApiError::from(error).into_response();
@@ -614,8 +621,8 @@ impl RedisSessionStore {
 
     /// Create a Redis session store from a connection URL.
     pub fn from_url(url: &str) -> SessionResult<Self> {
-        let client = redis::Client::open(url)
-            .map_err(|error| SessionError::Config(error.to_string()))?;
+        let client =
+            redis::Client::open(url).map_err(|error| SessionError::Config(error.to_string()))?;
         Ok(Self::new(client))
     }
 
@@ -717,10 +724,9 @@ fn append_session_cookie(response: &mut Response, config: &SessionConfig, sessio
         cookie = cookie.domain(domain.clone());
     }
 
-    response.headers_mut().append(
-        header::SET_COOKIE,
-        cookie_header_value(cookie.build()),
-    );
+    response
+        .headers_mut()
+        .append(header::SET_COOKIE, cookie_header_value(cookie.build()));
 }
 
 fn append_clear_cookie(response: &mut Response, config: &SessionConfig) {
@@ -735,10 +741,9 @@ fn append_clear_cookie(response: &mut Response, config: &SessionConfig) {
         cookie = cookie.domain(domain.clone());
     }
 
-    response.headers_mut().append(
-        header::SET_COOKIE,
-        cookie_header_value(cookie.build()),
-    );
+    response
+        .headers_mut()
+        .append(header::SET_COOKIE, cookie_header_value(cookie.build()));
 }
 
 fn cookie_header_value(cookie: Cookie<'static>) -> HeaderValue {
@@ -788,7 +793,9 @@ mod tests {
     async fn login(session: Session, body: Body) -> TestSessionResponse {
         let payload: LoginPayload = match serde_json::from_slice(&body) {
             Ok(payload) => payload,
-            Err(error) => return TestSessionResponse::Error(ApiError::bad_request(error.to_string())),
+            Err(error) => {
+                return TestSessionResponse::Error(ApiError::bad_request(error.to_string()))
+            }
         };
 
         session.cycle_id().await;

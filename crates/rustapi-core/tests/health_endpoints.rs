@@ -36,7 +36,11 @@ async fn test_default_health_endpoints_are_available() {
         assert_eq!(res.status(), 200, "{} should return 200", path);
 
         let body: serde_json::Value = res.json().await.unwrap();
-        assert!(body.get("status").is_some(), "{} should include status", path);
+        assert!(
+            body.get("status").is_some(),
+            "{} should include status",
+            path
+        );
         assert!(
             body.get("timestamp").is_some(),
             "{} should include timestamp",
@@ -51,7 +55,9 @@ async fn test_default_health_endpoints_are_available() {
 #[tokio::test]
 async fn test_unhealthy_readiness_returns_503() {
     let health = HealthCheckBuilder::new(false)
-        .add_check("database", || async { HealthStatus::unhealthy("database offline") })
+        .add_check("database", || async {
+            HealthStatus::unhealthy("database offline")
+        })
         .build();
 
     let app = RustApi::new().with_health_check(health);

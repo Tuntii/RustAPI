@@ -25,16 +25,16 @@ pub mod core {
     pub use rustapi_core::EventBus;
     pub use rustapi_core::{
         delete, delete_route, get, get_route, patch, patch_route, post, post_route, put, put_route,
-        route, serve_dir, sse_response, ApiError, AsyncValidatedJson, Body, BodyLimitLayer,
-        BodyStream, BodyVariant, ClientIp, Created, CursorPaginate, CursorPaginated, Environment,
-        Extension, FieldError, FromRequest, FromRequestParts, Handler, HandlerService, HeaderValue,
-        Headers, HealthCheck, HealthCheckBuilder, HealthCheckResult, HealthEndpointConfig,
-        HealthStatus, Html, IntoResponse, Json, KeepAlive, MethodRouter, Multipart,
-        MultipartConfig, MultipartField, NoContent, Paginate, Paginated, Path, Query, Redirect,
-        ProductionDefaultsConfig, Request, RequestId, RequestIdLayer, Response, ResponseBody,
-        Result, Route, RouteHandler, RouteMatch, Router, RustApi, RustApiConfig, Sse, SseEvent,
-        State, StaticFile, StreamingMultipart, StreamingMultipartField, sse_from_iter,
-        StaticFileConfig, StatusCode, StreamBody, TracingLayer, Typed, TypedPath, UploadedFile,
+        route, serve_dir, sse_from_iter, sse_response, ApiError, AsyncValidatedJson, Body,
+        BodyLimitLayer, BodyStream, BodyVariant, ClientIp, Created, CursorPaginate,
+        CursorPaginated, Environment, Extension, FieldError, FromRequest, FromRequestParts,
+        Handler, HandlerService, HeaderValue, Headers, HealthCheck, HealthCheckBuilder,
+        HealthCheckResult, HealthEndpointConfig, HealthStatus, Html, IntoResponse, Json, KeepAlive,
+        MethodRouter, Multipart, MultipartConfig, MultipartField, NoContent, Paginate, Paginated,
+        Path, ProductionDefaultsConfig, Query, Redirect, Request, RequestId, RequestIdLayer,
+        Response, ResponseBody, Result, Route, RouteHandler, RouteMatch, Router, RustApi,
+        RustApiConfig, Sse, SseEvent, State, StaticFile, StaticFileConfig, StatusCode, StreamBody,
+        StreamingMultipart, StreamingMultipartField, TracingLayer, Typed, TypedPath, UploadedFile,
         ValidatedJson, WithStatus,
     };
 
@@ -193,8 +193,8 @@ pub mod extras {
         };
         pub use rustapi_extras::replay;
         pub use rustapi_extras::replay::{
-            FsReplayStore, FsReplayStoreConfig, InMemoryReplayStore, ReplayAdminAuth,
-            ReplayClient, ReplayClientError, ReplayLayer, RetentionJob,
+            FsReplayStore, FsReplayStoreConfig, InMemoryReplayStore, ReplayAdminAuth, ReplayClient,
+            ReplayClientError, ReplayLayer, RetentionJob,
         };
     }
 
@@ -211,8 +211,8 @@ pub mod extras {
     pub mod session {
         pub use rustapi_extras::session;
         pub use rustapi_extras::{
-            MemorySessionStore, Session, SessionConfig, SessionError, SessionLayer,
-            SessionRecord, SessionStore,
+            MemorySessionStore, Session, SessionConfig, SessionError, SessionLayer, SessionRecord,
+            SessionStore,
         };
 
         #[cfg(any(feature = "extras-session-redis", feature = "session-redis"))]
@@ -339,16 +339,15 @@ pub mod prelude {
     pub use crate::core::Validatable;
     pub use crate::core::{
         delete, delete_route, get, get_route, patch, patch_route, post, post_route, put, put_route,
-        route, serve_dir, sse_response, ApiError, AsyncValidatedJson, Body, BodyLimitLayer,
-        ClientIp, Created, CursorPaginate, CursorPaginated, Extension, HeaderValue, Headers,
-        HealthCheck, HealthCheckBuilder, HealthCheckResult, HealthEndpointConfig, HealthStatus,
-        Html, IntoResponse, Json, KeepAlive, Multipart, MultipartConfig, MultipartField,
-        NoContent, Paginate, Paginated, Path, ProductionDefaultsConfig, Query, Redirect, Request,
-        RequestId, RequestIdLayer, Response, Result, Route, Router, RustApi, RustApiConfig, Sse,
-        SseEvent, State, StaticFile, StaticFileConfig, StatusCode, StreamBody,
-        StreamingMultipart, StreamingMultipartField, TracingLayer, Typed, TypedPath,
-        UploadedFile, ValidatedJson, WithStatus,
-        sse_from_iter,
+        route, serve_dir, sse_from_iter, sse_response, ApiError, AsyncValidatedJson, Body,
+        BodyLimitLayer, ClientIp, Created, CursorPaginate, CursorPaginated, Extension, HeaderValue,
+        Headers, HealthCheck, HealthCheckBuilder, HealthCheckResult, HealthEndpointConfig,
+        HealthStatus, Html, IntoResponse, Json, KeepAlive, Multipart, MultipartConfig,
+        MultipartField, NoContent, Paginate, Paginated, Path, ProductionDefaultsConfig, Query,
+        Redirect, Request, RequestId, RequestIdLayer, Response, Result, Route, Router, RustApi,
+        RustApiConfig, Sse, SseEvent, State, StaticFile, StaticFileConfig, StatusCode, StreamBody,
+        StreamingMultipart, StreamingMultipartField, TracingLayer, Typed, TypedPath, UploadedFile,
+        ValidatedJson, WithStatus,
     };
 
     #[cfg(any(feature = "core-compression", feature = "compression"))]

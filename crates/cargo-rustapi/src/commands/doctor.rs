@@ -89,34 +89,34 @@ pub async fn doctor(args: DoctorArgs) -> Result<()> {
 
     println!("{}", style("Toolchain").bold());
     checks.push(check_tool("rustc", &["--version"], "Rust compiler", true).await);
-    checks.push(check_tool(
-        "cargo",
-        &["--version"],
-        "Cargo package manager",
-        true,
-    )
-    .await);
-    checks.push(check_tool(
-        "cargo",
-        &["watch", "--version"],
-        "cargo-watch (for hot reload)",
-        false,
-    )
-    .await);
-    checks.push(check_tool(
-        "docker",
-        &["--version"],
-        "Docker (for containerization)",
-        false,
-    )
-    .await);
-    checks.push(check_tool(
-        "sqlx",
-        &["--version"],
-        "sqlx-cli (for database migrations)",
-        false,
-    )
-    .await);
+    checks.push(check_tool("cargo", &["--version"], "Cargo package manager", true).await);
+    checks.push(
+        check_tool(
+            "cargo",
+            &["watch", "--version"],
+            "cargo-watch (for hot reload)",
+            false,
+        )
+        .await,
+    );
+    checks.push(
+        check_tool(
+            "docker",
+            &["--version"],
+            "Docker (for containerization)",
+            false,
+        )
+        .await,
+    );
+    checks.push(
+        check_tool(
+            "sqlx",
+            &["--version"],
+            "sqlx-cli (for database migrations)",
+            false,
+        )
+        .await,
+    );
 
     for check in &checks {
         print_check(check);
@@ -280,10 +280,7 @@ fn build_project_checks(workspace_root: &Path) -> Result<Vec<DoctorCheck>> {
     }
 
     checks.push(if signals.production_defaults {
-        DoctorCheck::pass(
-            "Application baseline",
-            "production_defaults usage detected",
-        )
+        DoctorCheck::pass("Application baseline", "production_defaults usage detected")
     } else {
         DoctorCheck::warn(
             "Application baseline",
@@ -327,17 +324,21 @@ fn build_project_checks(workspace_root: &Path) -> Result<Vec<DoctorCheck>> {
         )
     });
 
-    checks.push(if (signals.production_defaults || signals.request_id) && (signals.production_defaults || signals.tracing) {
-        DoctorCheck::pass(
-            "Request IDs and tracing",
-            "Request ID and tracing signals detected",
-        )
-    } else {
-        DoctorCheck::warn(
-            "Request IDs and tracing",
-            "RequestIdLayer/tracing signals were not clearly detected",
-        )
-    });
+    checks.push(
+        if (signals.production_defaults || signals.request_id)
+            && (signals.production_defaults || signals.tracing)
+        {
+            DoctorCheck::pass(
+                "Request IDs and tracing",
+                "Request ID and tracing signals detected",
+            )
+        } else {
+            DoctorCheck::warn(
+                "Request IDs and tracing",
+                "RequestIdLayer/tracing signals were not clearly detected",
+            )
+        },
+    );
 
     checks.push(if signals.structured_logging || signals.otel {
         DoctorCheck::pass(
@@ -351,17 +352,19 @@ fn build_project_checks(workspace_root: &Path) -> Result<Vec<DoctorCheck>> {
         )
     });
 
-    checks.push(if signals.rate_limit || signals.security_headers || signals.timeout || signals.cors {
-        DoctorCheck::pass(
-            "Edge protections",
-            "Detected timeout, rate limit, CORS, or security header configuration",
-        )
-    } else {
-        DoctorCheck::warn(
-            "Edge protections",
-            "No timeout, rate limit, CORS, or security header configuration was detected",
-        )
-    });
+    checks.push(
+        if signals.rate_limit || signals.security_headers || signals.timeout || signals.cors {
+            DoctorCheck::pass(
+                "Edge protections",
+                "Detected timeout, rate limit, CORS, or security header configuration",
+            )
+        } else {
+            DoctorCheck::warn(
+                "Edge protections",
+                "No timeout, rate limit, CORS, or security header configuration was detected",
+            )
+        },
+    );
 
     checks.push(if signals.body_limit {
         DoctorCheck::pass(
@@ -401,7 +404,11 @@ fn scan_workspace_signals(workspace_root: &Path) -> Result<WorkspaceSignals> {
         );
         signals.health_endpoints |= contains_any(
             &contents,
-            &[".health_endpoints(", ".health_endpoint_config(", "HealthEndpointConfig"],
+            &[
+                ".health_endpoints(",
+                ".health_endpoint_config(",
+                "HealthEndpointConfig",
+            ],
         );
         signals.health_checks |= contents.contains(".with_health_check(");
         signals.request_id |= contents.contains("RequestIdLayer");
@@ -414,10 +421,8 @@ fn scan_workspace_signals(workspace_root: &Path) -> Result<WorkspaceSignals> {
         );
         signals.otel |= contains_any(&contents, &["OtelLayer", "otel("]);
         signals.rate_limit |= contains_any(&contents, &["RateLimitLayer", "rate_limit("]);
-        signals.security_headers |= contains_any(
-            &contents,
-            &["SecurityHeadersLayer", "security_headers("],
-        );
+        signals.security_headers |=
+            contains_any(&contents, &["SecurityHeadersLayer", "security_headers("]);
         signals.timeout |= contains_any(&contents, &["TimeoutLayer", "timeout("]);
         signals.cors |= contains_any(&contents, &["CorsLayer", "cors("]);
         signals.body_limit |= contains_any(&contents, &["BodyLimitLayer", ".body_limit("]);
@@ -463,7 +468,10 @@ fn should_scan(path: &Path) -> bool {
         return true;
     };
 
-    !matches!(name, ".git" | "target" | "node_modules" | ".next" | "dist" | "build")
+    !matches!(
+        name,
+        ".git" | "target" | "node_modules" | ".next" | "dist" | "build"
+    )
 }
 
 fn is_scannable_file(path: &Path) -> bool {
@@ -500,7 +508,11 @@ mod tests {
     #[test]
     fn scan_workspace_signals_detects_production_patterns() {
         let dir = tempdir().unwrap();
-        fs::write(dir.path().join("Cargo.toml"), "[package]\nname='demo'\nversion='0.1.0'\n").unwrap();
+        fs::write(
+            dir.path().join("Cargo.toml"),
+            "[package]\nname='demo'\nversion='0.1.0'\n",
+        )
+        .unwrap();
         fs::write(dir.path().join(".env"), "RUSTAPI_ENV=production\n").unwrap();
 
         let src_dir = dir.path().join("src");
@@ -536,12 +548,20 @@ mod tests {
     #[test]
     fn build_project_checks_warns_when_signals_are_missing() {
         let dir = tempdir().unwrap();
-        fs::write(dir.path().join("Cargo.toml"), "[package]\nname='demo'\nversion='0.1.0'\n").unwrap();
+        fs::write(
+            dir.path().join("Cargo.toml"),
+            "[package]\nname='demo'\nversion='0.1.0'\n",
+        )
+        .unwrap();
         fs::create_dir_all(dir.path().join("src")).unwrap();
         fs::write(dir.path().join("src").join("main.rs"), "fn main() {}\n").unwrap();
 
         let checks = build_project_checks(dir.path()).unwrap();
-        assert!(checks.iter().any(|check| check.status == DoctorStatus::Warn));
-        assert!(checks.iter().any(|check| check.name == "Application baseline"));
+        assert!(checks
+            .iter()
+            .any(|check| check.status == DoctorStatus::Warn));
+        assert!(checks
+            .iter()
+            .any(|check| check.name == "Application baseline"));
     }
 }

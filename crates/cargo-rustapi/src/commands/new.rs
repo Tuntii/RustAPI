@@ -118,7 +118,12 @@ pub async fn new_project(mut args: NewArgs) -> Result<()> {
 
     // Get features
     let features = if let Some(features) = args.features {
-        merge_unique_features(preset.map(ProjectPreset::recommended_features).unwrap_or_default(), features)
+        merge_unique_features(
+            preset
+                .map(ProjectPreset::recommended_features)
+                .unwrap_or_default(),
+            features,
+        )
     } else if args.yes {
         preset
             .map(ProjectPreset::recommended_features)
@@ -153,7 +158,12 @@ pub async fn new_project(mut args: NewArgs) -> Result<()> {
         let defaults = defaults
             .into_iter()
             .enumerate()
-            .map(|(index, default)| default || preset_features.iter().any(|feature| feature == available[index]))
+            .map(|(index, default)| {
+                default
+                    || preset_features
+                        .iter()
+                        .any(|feature| feature == available[index])
+            })
             .collect::<Vec<_>>();
 
         let selections = dialoguer::MultiSelect::with_theme(&theme)

@@ -1110,10 +1110,7 @@ impl RustApi {
             let mut tracing_layer =
                 crate::middleware::TracingLayer::with_level(config.tracing_level)
                     .with_field("service", config.service_name.clone())
-                    .with_field(
-                        "environment",
-                        crate::error::get_environment().to_string(),
-                    );
+                    .with_field("environment", crate::error::get_environment().to_string());
 
             if let Some(version) = &config.version {
                 tracing_layer = tracing_layer.with_field("version", version.clone());

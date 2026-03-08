@@ -12,7 +12,10 @@ use rustapi_rs::extras::jobs::{InMemoryBackend, Job, JobContext, JobQueue};
 #[cfg(any(feature = "extras-jobs", feature = "jobs"))]
 use rustapi_rs::prelude::*;
 #[cfg(any(feature = "extras-jobs", feature = "jobs"))]
-use std::sync::{atomic::{AtomicU64, Ordering}, Arc};
+use std::sync::{
+    atomic::{AtomicU64, Ordering},
+    Arc,
+};
 
 #[cfg(any(feature = "extras-jobs", feature = "jobs"))]
 #[derive(Clone)]

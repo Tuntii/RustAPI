@@ -13,7 +13,11 @@ async fn test_production_defaults_enable_request_id_and_health_probes() {
         .production_defaults("users-api")
         .route("/hello", get(hello));
 
-    assert_eq!(app.layers().len(), 2, "request ID and tracing layers should be installed");
+    assert_eq!(
+        app.layers().len(),
+        2,
+        "request ID and tracing layers should be installed"
+    );
 
     let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
     let addr = listener.local_addr().unwrap();
@@ -106,7 +110,10 @@ async fn test_production_defaults_custom_config_applies_version_and_custom_paths
         .await
         .expect("healthz request failed");
     let body: serde_json::Value = res.json().await.unwrap();
-    assert_eq!(body.get("version"), Some(&serde_json::Value::String("1.2.3".to_string())));
+    assert_eq!(
+        body.get("version"),
+        Some(&serde_json::Value::String("1.2.3".to_string()))
+    );
 
     tx.send(()).unwrap();
     let _ = tokio::time::timeout(Duration::from_secs(2), server_handle).await;

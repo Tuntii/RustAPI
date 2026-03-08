@@ -112,13 +112,7 @@ mod new_command {
 
         cargo_rustapi()
             .current_dir(dir.path())
-            .args([
-                "new",
-                project_name,
-                "--preset",
-                "prod-api",
-                "--yes",
-            ])
+            .args(["new", project_name, "--preset", "prod-api", "--yes"])
             .assert()
             .success();
 
@@ -140,13 +134,7 @@ mod new_command {
 
         cargo_rustapi()
             .current_dir(dir.path())
-            .args([
-                "new",
-                project_name,
-                "--preset",
-                "ai-api",
-                "--yes",
-            ])
+            .args(["new", project_name, "--preset", "ai-api", "--yes"])
             .assert()
             .success();
 
@@ -166,13 +154,7 @@ mod new_command {
 
         cargo_rustapi()
             .current_dir(dir.path())
-            .args([
-                "new",
-                project_name,
-                "--preset",
-                "realtime-api",
-                "--yes",
-            ])
+            .args(["new", project_name, "--preset", "realtime-api", "--yes"])
             .assert()
             .success();
 
@@ -282,6 +264,7 @@ mod observability_command {
     }
 }
 
+#[cfg(feature = "replay")]
 mod replay_command {
     use super::*;
 

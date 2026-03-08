@@ -27,8 +27,8 @@ use crate::stream::StreamingBody;
 use bytes::Bytes;
 use futures_util::stream;
 use http::StatusCode;
-use std::path::Path;
 use std::error::Error as _;
+use std::path::Path;
 use tokio::io::AsyncWriteExt;
 
 /// Maximum file size (default: 10MB)
@@ -246,7 +246,11 @@ impl<'a> StreamingMultipartField<'a> {
     }
 
     /// Save the field to a directory using either the provided filename or the uploaded name.
-    pub async fn save_to(&mut self, dir: impl AsRef<Path>, filename: Option<&str>) -> Result<String> {
+    pub async fn save_to(
+        &mut self,
+        dir: impl AsRef<Path>,
+        filename: Option<&str>,
+    ) -> Result<String> {
         let dir = dir.as_ref();
 
         tokio::fs::create_dir_all(dir)
@@ -256,7 +260,9 @@ impl<'a> StreamingMultipartField<'a> {
         let final_filename = filename
             .map(|value| value.to_string())
             .or_else(|| self.file_name().map(|value| value.to_string()))
-            .ok_or_else(|| ApiError::bad_request("No filename provided and field has no filename"))?;
+            .ok_or_else(|| {
+                ApiError::bad_request("No filename provided and field has no filename")
+            })?;
 
         let safe_filename = sanitize_filename(&final_filename);
         let file_path = dir.join(&safe_filename);
@@ -773,7 +779,8 @@ mod tests {
         boundary: &str,
         config: MultipartConfig,
     ) -> StreamingMultipart {
-        let stream = StreamingBody::from_stream(chunked_body_stream(body, 7), Some(config.max_size));
+        let stream =
+            StreamingBody::from_stream(chunked_body_stream(body, 7), Some(config.max_size));
         StreamingMultipart::new(stream, boundary.to_string(), config)
     }
 
@@ -956,7 +963,8 @@ mod tests {
         );
 
         let mut file = multipart.next_field().await.unwrap().unwrap();
-        let temp_dir = std::env::temp_dir().join(format!("rustapi-streaming-upload-{}", uuid::Uuid::new_v4()));
+        let temp_dir =
+            std::env::temp_dir().join(format!("rustapi-streaming-upload-{}", uuid::Uuid::new_v4()));
         let saved_path = file.save_to(&temp_dir, None).await.unwrap();
         let saved = tokio::fs::read_to_string(&saved_path).await.unwrap();
 

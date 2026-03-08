@@ -56,7 +56,10 @@ pub async fn bench(args: BenchArgs) -> Result<()> {
         command.env("RUSTAPI_PERF_ITERS", iterations.to_string());
     }
 
-    let status = command.status().await.context("Failed to launch benchmark workflow")?;
+    let status = command
+        .status()
+        .await
+        .context("Failed to launch benchmark workflow")?;
     if !status.success() {
         bail!("Benchmark workflow exited with status {}", status);
     }

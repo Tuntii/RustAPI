@@ -29,17 +29,9 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 /// Internal entry for tracking rate limit state per client.
 #[derive(Debug, Clone)]
 enum RateLimitEntry {
-    FixedWindow {
-        count: u32,
-        window_start: Instant,
-    },
-    SlidingWindow {
-        requests: VecDeque<Instant>,
-    },
-    TokenBucket {
-        tokens: f64,
-        last_refill: Instant,
-    },
+    FixedWindow { count: u32, window_start: Instant },
+    SlidingWindow { requests: VecDeque<Instant> },
+    TokenBucket { tokens: f64, last_refill: Instant },
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -89,7 +81,13 @@ impl RateLimitStore {
             .or_insert_with(|| RateLimitStore::new_entry(strategy, max_requests, now));
 
         let decision = match (&mut *entry, strategy) {
-            (RateLimitEntry::FixedWindow { count, window_start }, RateLimitStrategy::FixedWindow) => {
+            (
+                RateLimitEntry::FixedWindow {
+                    count,
+                    window_start,
+                },
+                RateLimitStrategy::FixedWindow,
+            ) => {
                 if now.duration_since(*window_start) >= window {
                     *count = 0;
                     *window_start = now;
@@ -127,7 +125,13 @@ impl RateLimitStore {
                     retry_after,
                 }
             }
-            (RateLimitEntry::TokenBucket { tokens, last_refill }, RateLimitStrategy::TokenBucket) => {
+            (
+                RateLimitEntry::TokenBucket {
+                    tokens,
+                    last_refill,
+                },
+                RateLimitStrategy::TokenBucket,
+            ) => {
                 let refill_rate = max_requests as f64 / window.as_secs_f64().max(f64::EPSILON);
                 let elapsed = now.duration_since(*last_refill).as_secs_f64();
                 *tokens = (*tokens + elapsed * refill_rate).min(max_requests as f64);
@@ -174,55 +178,71 @@ impl RateLimitStore {
     ) -> Option<RateLimitInfo> {
         let now = Instant::now();
 
-        self.entries.get(&ip).map(|entry| match (&*entry, strategy) {
-            (RateLimitEntry::FixedWindow { count, window_start }, RateLimitStrategy::FixedWindow) => {
-                let current_count = if now.duration_since(*window_start) >= window {
-                    0
-                } else {
-                    *count
-                };
+        self.entries
+            .get(&ip)
+            .map(|entry| match (&*entry, strategy) {
+                (
+                    RateLimitEntry::FixedWindow {
+                        count,
+                        window_start,
+                    },
+                    RateLimitStrategy::FixedWindow,
+                ) => {
+                    let current_count = if now.duration_since(*window_start) >= window {
+                        0
+                    } else {
+                        *count
+                    };
 
-                RateLimitInfo {
-                    limit: max_requests,
-                    remaining: max_requests.saturating_sub(current_count),
-                    reset: unix_timestamp_after(window.saturating_sub(now.duration_since(*window_start))),
+                    RateLimitInfo {
+                        limit: max_requests,
+                        remaining: max_requests.saturating_sub(current_count),
+                        reset: unix_timestamp_after(
+                            window.saturating_sub(now.duration_since(*window_start)),
+                        ),
+                    }
                 }
-            }
-            (RateLimitEntry::SlidingWindow { requests }, RateLimitStrategy::SlidingWindow) => {
-                let active = requests
-                    .iter()
-                    .copied()
-                    .filter(|timestamp| now.duration_since(*timestamp) < window)
-                    .collect::<Vec<_>>();
-                let retry_after = active
-                    .first()
-                    .map(|oldest| window.saturating_sub(now.duration_since(*oldest)))
-                    .unwrap_or(Duration::ZERO);
+                (RateLimitEntry::SlidingWindow { requests }, RateLimitStrategy::SlidingWindow) => {
+                    let active = requests
+                        .iter()
+                        .copied()
+                        .filter(|timestamp| now.duration_since(*timestamp) < window)
+                        .collect::<Vec<_>>();
+                    let retry_after = active
+                        .first()
+                        .map(|oldest| window.saturating_sub(now.duration_since(*oldest)))
+                        .unwrap_or(Duration::ZERO);
 
-                RateLimitInfo {
-                    limit: max_requests,
-                    remaining: max_requests.saturating_sub(active.len() as u32),
-                    reset: unix_timestamp_after(retry_after),
+                    RateLimitInfo {
+                        limit: max_requests,
+                        remaining: max_requests.saturating_sub(active.len() as u32),
+                        reset: unix_timestamp_after(retry_after),
+                    }
                 }
-            }
-            (RateLimitEntry::TokenBucket { tokens, last_refill }, RateLimitStrategy::TokenBucket) => {
-                let refill_rate = max_requests as f64 / window.as_secs_f64().max(f64::EPSILON);
-                let elapsed = now.duration_since(*last_refill).as_secs_f64();
-                let available = (*tokens + elapsed * refill_rate).min(max_requests as f64);
-                let retry_after = next_token_after(available, max_requests, refill_rate);
+                (
+                    RateLimitEntry::TokenBucket {
+                        tokens,
+                        last_refill,
+                    },
+                    RateLimitStrategy::TokenBucket,
+                ) => {
+                    let refill_rate = max_requests as f64 / window.as_secs_f64().max(f64::EPSILON);
+                    let elapsed = now.duration_since(*last_refill).as_secs_f64();
+                    let available = (*tokens + elapsed * refill_rate).min(max_requests as f64);
+                    let retry_after = next_token_after(available, max_requests, refill_rate);
 
-                RateLimitInfo {
-                    limit: max_requests,
-                    remaining: available.floor().max(0.0).min(max_requests as f64) as u32,
-                    reset: unix_timestamp_after(retry_after),
+                    RateLimitInfo {
+                        limit: max_requests,
+                        remaining: available.floor().max(0.0).min(max_requests as f64) as u32,
+                        reset: unix_timestamp_after(retry_after),
+                    }
                 }
-            }
-            _ => RateLimitInfo {
-                limit: max_requests,
-                remaining: max_requests,
-                reset: unix_timestamp_after(Duration::ZERO),
-            },
-        })
+                _ => RateLimitInfo {
+                    limit: max_requests,
+                    remaining: max_requests,
+                    reset: unix_timestamp_after(Duration::ZERO),
+                },
+            })
     }
 
     fn new_entry(strategy: RateLimitStrategy, max_requests: u32, now: Instant) -> RateLimitEntry {
@@ -907,7 +927,10 @@ mod tests {
             let request = create_test_request(Some("10.0.0.2"));
             let response = stack.execute(request, create_success_handler()).await;
             assert_eq!(response.status(), StatusCode::OK);
-            assert_eq!(response.headers().get("X-RateLimit-Remaining").unwrap(), "0");
+            assert_eq!(
+                response.headers().get("X-RateLimit-Remaining").unwrap(),
+                "0"
+            );
         });
     }
 

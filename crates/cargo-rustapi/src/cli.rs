@@ -1,11 +1,11 @@
 //! CLI argument parsing
 
+#[cfg(feature = "replay")]
+use crate::commands::ReplayArgs;
 use crate::commands::{
     self, AddArgs, BenchArgs, ClientArgs, DeployArgs, DoctorArgs, GenerateArgs, MigrateArgs,
     NewArgs, ObservabilityArgs, RunArgs, WatchArgs,
 };
-#[cfg(feature = "replay")]
-use crate::commands::ReplayArgs;
 use clap::{Parser, Subcommand};
 
 /// The official CLI tool for the RustAPI framework. Scaffold new projects, run development servers, and manage database migrations.
@@ -67,6 +67,7 @@ enum Commands {
     Deploy(DeployArgs),
 
     /// Replay debugging commands (time-travel debugging)
+    #[cfg(feature = "replay")]
     #[command(subcommand)]
     Replay(ReplayArgs),
 }
@@ -87,6 +88,7 @@ impl Cli {
             Commands::Docs { port } => commands::open_docs(port).await,
             Commands::Client(args) => commands::client(args).await,
             Commands::Deploy(args) => commands::deploy(args).await,
+            #[cfg(feature = "replay")]
             Commands::Replay(args) => commands::replay(args).await,
         }
     }

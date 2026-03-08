@@ -1,6 +1,9 @@
 use rustapi_rs::prelude::*;
 use std::collections::HashMap;
-use std::sync::{atomic::{AtomicU64, Ordering}, Arc};
+use std::sync::{
+    atomic::{AtomicU64, Ordering},
+    Arc,
+};
 use tokio::sync::RwLock;
 
 #[derive(Clone)]
@@ -41,7 +44,10 @@ async fn list_todos(State(state): State<AppState>) -> Json<Vec<TodoItem>> {
     Json(items)
 }
 
-async fn create_todo(State(state): State<AppState>, Json(payload): Json<CreateTodo>) -> Created<TodoItem> {
+async fn create_todo(
+    State(state): State<AppState>,
+    Json(payload): Json<CreateTodo>,
+) -> Created<TodoItem> {
     let id = state.next_id.fetch_add(1, Ordering::SeqCst);
     let item = TodoItem {
         id,
@@ -106,7 +112,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             todos: Arc::new(RwLock::new(HashMap::new())),
         })
         .route("/todos", get(list_todos).post(create_todo))
-        .route("/todos/{id}", get(get_todo).put(update_todo).delete(delete_todo))
+        .route(
+            "/todos/{id}",
+            get(get_todo).put(update_todo).delete(delete_todo),
+        )
         .run("127.0.0.1:3000")
         .await
 }

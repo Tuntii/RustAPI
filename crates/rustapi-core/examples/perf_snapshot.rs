@@ -2,7 +2,9 @@ use bytes::Bytes;
 use http::{Extensions, Method, StatusCode};
 use rustapi_core::interceptor::{RequestInterceptor, ResponseInterceptor};
 use rustapi_core::middleware::{BoxedNext, MiddlewareLayer};
-use rustapi_core::{get, BodyVariant, IntoResponse, PathParams, Request, Response, RouteMatch, RustApi};
+use rustapi_core::{
+    get, BodyVariant, IntoResponse, PathParams, Request, Response, RouteMatch, RustApi,
+};
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -76,7 +78,12 @@ struct ScenarioResult {
     mean_us: f64,
 }
 
-fn scenario(name: &'static str, path_kind: &'static str, features: &'static str, app: RustApi) -> Scenario {
+fn scenario(
+    name: &'static str,
+    path_kind: &'static str,
+    features: &'static str,
+    app: RustApi,
+) -> Scenario {
     let layers = app.layers().clone();
     let interceptors = app.interceptors().clone();
     let router = app.into_router();
@@ -114,9 +121,7 @@ async fn route_request_direct(
     method: &Method,
 ) -> Response {
     match router.match_route(path, method) {
-        RouteMatch::Found { handler, .. } => {
-            handler(request).await
-        }
+        RouteMatch::Found { handler, .. } => handler(request).await,
         RouteMatch::NotFound => rustapi_core::ApiError::not_found("Not found").into_response(),
         RouteMatch::MethodNotAllowed { allowed } => {
             let allowed_str: Vec<&str> = allowed.iter().map(|m| m.as_str()).collect();
@@ -128,7 +133,10 @@ async fn route_request_direct(
             .into_response();
             response.headers_mut().insert(
                 http::header::ALLOW,
-                allowed_str.join(", ").parse().expect("allow header should parse"),
+                allowed_str
+                    .join(", ")
+                    .parse()
+                    .expect("allow header should parse"),
             );
             response
         }
@@ -183,7 +191,11 @@ async fn measure_scenario(
         let response = execute_scenario_request(scenario).await;
         let elapsed = request_start.elapsed();
 
-        assert_eq!(response.status(), StatusCode::OK, "benchmark scenario must stay healthy");
+        assert_eq!(
+            response.status(),
+            StatusCode::OK,
+            "benchmark scenario must stay healthy"
+        );
 
         latencies_ns.push(elapsed.as_nanos() as u64);
         std::hint::black_box(response.status());
@@ -233,9 +245,7 @@ fn print_results(results: &[ScenarioResult]) {
     println!(
         "| Scenario | Execution path | Features | Req/s | Mean (µs) | p50 (µs) | p95 (µs) | p99 (µs) |"
     );
-    println!(
-        "|---|---|---|---:|---:|---:|---:|---:|"
-    );
+    println!("|---|---|---|---:|---:|---:|---:|---:|");
 
     for result in results {
         println!(
@@ -255,17 +265,14 @@ fn print_results(results: &[ScenarioResult]) {
     if let Some(baseline) = results.iter().find(|result| result.name == "baseline") {
         println!("## Relative overhead vs baseline");
         println!();
-        println!("| Scenario | Req/s delta | p99 delta |",
-        );
+        println!("| Scenario | Req/s delta | p99 delta |",);
         println!("|---|---:|---:|");
         for result in results {
             let req_delta = ((result.throughput_req_s / baseline.throughput_req_s) - 1.0) * 100.0;
             let p99_delta = ((result.p99_us / baseline.p99_us) - 1.0) * 100.0;
             println!(
                 "| {} | {:+.2}% | {:+.2}% |",
-                result.name,
-                req_delta,
-                p99_delta,
+                result.name, req_delta, p99_delta,
             );
         }
     }
@@ -308,7 +315,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             "middleware_only",
             "full",
             "1 middleware layer",
-            RustApi::new().layer(NoopMiddleware).route("/hello", get(hello)),
+            RustApi::new()
+                .layer(NoopMiddleware)
+                .route("/hello", get(hello)),
         ),
         scenario(
             "full_stack_minimal",

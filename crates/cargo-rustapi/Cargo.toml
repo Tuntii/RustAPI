@@ -30,7 +30,7 @@ notify = "7.0"
 notify-debouncer-mini = "0.5"
 
 # Async
-tokio = { workspace = true, features = ["process", "fs", "macros", "rt-multi-thread", "time", "signal"] }
+tokio = { workspace = true, features = ["process", "fs", "macros", "rt-multi-thread", "time", "signal", "sync"] }
 
 # Serialization
 serde = { workspace = true }
