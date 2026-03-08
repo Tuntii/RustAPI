@@ -1132,7 +1132,7 @@ impl RustApi {
                 self.health_endpoint_config = Some(
                     config
                         .health_endpoint_config
-                        .unwrap_or_else(crate::health::HealthEndpointConfig::default),
+                        .unwrap_or_default(),
                 );
             }
         }
