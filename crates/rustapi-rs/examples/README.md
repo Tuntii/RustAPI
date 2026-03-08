@@ -21,10 +21,6 @@ Then try:
 - `POST http://127.0.0.1:3000/auth/refresh`
 - `POST http://127.0.0.1:3000/auth/logout`
 
-### `typed_path_poc`
-
-Shows typed path definitions, type-safe route registration, and URI generation with `TypedPath`.
-
 ### `full_crud_api`
 
 Shows a compact in-memory CRUD API with list/create/read/update/delete routes.
@@ -34,6 +30,14 @@ Run it with:
 ```sh
 cargo run -p rustapi-rs --example full_crud_api
 ```
+
+Then try:
+
+- `GET http://127.0.0.1:3000/todos`
+- `POST http://127.0.0.1:3000/todos`
+- `GET http://127.0.0.1:3000/todos/1`
+- `PATCH http://127.0.0.1:3000/todos/1`
+- `DELETE http://127.0.0.1:3000/todos/1`
 
 ### `streaming_api`
 
@@ -64,6 +68,11 @@ Then try:
 - `POST http://127.0.0.1:3000/jobs/email`
 - `POST http://127.0.0.1:3000/jobs/process-next`
 - `GET http://127.0.0.1:3000/jobs/stats`
+
+### `typed_path_poc`
+
+Shows typed path definitions, type-safe route registration, and URI generation with `TypedPath`.
+
 Run it with:
 
 ```sh

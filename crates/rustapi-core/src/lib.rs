@@ -128,7 +128,10 @@ pub use middleware::CompressionLayer;
 pub use middleware::{BodyLimitLayer, RequestId, RequestIdLayer, TracingLayer, DEFAULT_BODY_LIMIT};
 #[cfg(feature = "metrics")]
 pub use middleware::{MetricsLayer, MetricsResponse};
-pub use multipart::{Multipart, MultipartConfig, MultipartField, UploadedFile};
+pub use multipart::{
+    Multipart, MultipartConfig, MultipartField, StreamingMultipart, StreamingMultipartField,
+    UploadedFile,
+};
 pub use path_params::PathParams;
 pub use request::{BodyVariant, Request};
 pub use response::{

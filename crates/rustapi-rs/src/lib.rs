@@ -33,7 +33,7 @@ pub mod core {
         MultipartConfig, MultipartField, NoContent, Paginate, Paginated, Path, Query, Redirect,
         ProductionDefaultsConfig, Request, RequestId, RequestIdLayer, Response, ResponseBody,
         Result, Route, RouteHandler, RouteMatch, Router, RustApi, RustApiConfig, Sse, SseEvent,
-        State, StaticFile, sse_from_iter,
+        State, StaticFile, StreamingMultipart, StreamingMultipartField, sse_from_iter,
         StaticFileConfig, StatusCode, StreamBody, TracingLayer, Typed, TypedPath, UploadedFile,
         ValidatedJson, WithStatus,
     };
@@ -337,8 +337,9 @@ pub mod prelude {
         Html, IntoResponse, Json, KeepAlive, Multipart, MultipartConfig, MultipartField,
         NoContent, Paginate, Paginated, Path, ProductionDefaultsConfig, Query, Redirect, Request,
         RequestId, RequestIdLayer, Response, Result, Route, Router, RustApi, RustApiConfig, Sse,
-        SseEvent, State, StaticFile, StaticFileConfig, StatusCode, StreamBody, TracingLayer,
-        Typed, TypedPath, UploadedFile, ValidatedJson, WithStatus,
+        SseEvent, State, StaticFile, StaticFileConfig, StatusCode, StreamBody,
+        StreamingMultipart, StreamingMultipartField, TracingLayer, Typed, TypedPath,
+        UploadedFile, ValidatedJson, WithStatus,
         sse_from_iter,
     };
 

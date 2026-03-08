@@ -120,6 +120,7 @@ pub use rustapi_rs::core::StaticFile
 pub use rustapi_rs::core::StaticFileConfig
 pub use rustapi_rs::core::StatusCode
 pub use rustapi_rs::core::StreamBody
+pub use rustapi_rs::core::sse_from_iter
 pub use rustapi_rs::core::TracingLayer
 pub use rustapi_rs::core::Typed
 pub use rustapi_rs::core::TypedPath
@@ -187,6 +188,7 @@ pub use rustapi_rs::prelude::StaticFile
 pub use rustapi_rs::prelude::StaticFileConfig
 pub use rustapi_rs::prelude::StatusCode
 pub use rustapi_rs::prelude::StreamBody
+pub use rustapi_rs::prelude::sse_from_iter
 pub use rustapi_rs::prelude::TracingLayer
 pub use rustapi_rs::prelude::Typed
 pub use rustapi_rs::prelude::TypedPath

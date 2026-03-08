@@ -23,8 +23,13 @@
 use crate::error::{ApiError, Result};
 use crate::extract::FromRequest;
 use crate::request::Request;
+use crate::stream::StreamingBody;
 use bytes::Bytes;
+use futures_util::stream;
+use http::StatusCode;
 use std::path::Path;
+use std::error::Error as _;
+use tokio::io::AsyncWriteExt;
 
 /// Maximum file size (default: 10MB)
 pub const DEFAULT_MAX_FILE_SIZE: usize = 10 * 1024 * 1024;
@@ -82,6 +87,223 @@ impl Multipart {
     /// Get the number of fields
     pub fn field_count(&self) -> usize {
         self.fields.len()
+    }
+}
+
+/// Streaming multipart extractor for large file uploads.
+///
+/// Unlike [`Multipart`], this extractor does not buffer the entire request body in memory before
+/// parsing. It consumes the request body as a stream and yields one field at a time.
+///
+/// If a [`MultipartConfig`] is present in app state, its size and content-type limits are applied.
+pub struct StreamingMultipart {
+    inner: multer::Multipart<'static>,
+    config: MultipartConfig,
+    field_count: usize,
+}
+
+impl StreamingMultipart {
+    fn new(stream: StreamingBody, boundary: String, config: MultipartConfig) -> Self {
+        Self {
+            inner: multer::Multipart::new(stream, boundary),
+            config,
+            field_count: 0,
+        }
+    }
+
+    /// Get the next field from the multipart stream.
+    pub async fn next_field(&mut self) -> Result<Option<StreamingMultipartField<'static>>> {
+        let field = self.inner.next_field().await.map_err(map_multer_error)?;
+        let Some(field) = field else {
+            return Ok(None);
+        };
+
+        self.field_count += 1;
+        if self.field_count > self.config.max_fields {
+            return Err(ApiError::bad_request(format!(
+                "Multipart field count exceeded limit of {}",
+                self.config.max_fields
+            )));
+        }
+
+        validate_streaming_field(&field, &self.config)?;
+
+        Ok(Some(StreamingMultipartField::new(
+            field,
+            self.config.max_file_size,
+        )))
+    }
+
+    /// Number of fields yielded so far.
+    pub fn field_count(&self) -> usize {
+        self.field_count
+    }
+}
+
+impl FromRequest for StreamingMultipart {
+    async fn from_request(req: &mut Request) -> Result<Self> {
+        let content_type = req
+            .headers()
+            .get(http::header::CONTENT_TYPE)
+            .and_then(|v| v.to_str().ok())
+            .ok_or_else(|| ApiError::bad_request("Missing Content-Type header"))?;
+
+        if !content_type.starts_with("multipart/form-data") {
+            return Err(ApiError::bad_request(format!(
+                "Expected multipart/form-data, got: {}",
+                content_type
+            )));
+        }
+
+        let boundary = extract_boundary(content_type)
+            .ok_or_else(|| ApiError::bad_request("Missing boundary in Content-Type"))?;
+
+        let config = req
+            .state()
+            .get::<MultipartConfig>()
+            .cloned()
+            .unwrap_or_default();
+
+        let stream = request_body_stream(req, config.max_size)?;
+        Ok(Self::new(stream, boundary, config))
+    }
+}
+
+/// A single streaming field from a multipart form.
+///
+/// This field is one-shot: once you call [`chunk`](Self::chunk), [`bytes`](Self::bytes),
+/// [`text`](Self::text), or one of the save helpers, the underlying stream is consumed.
+pub struct StreamingMultipartField<'a> {
+    inner: multer::Field<'a>,
+    max_file_size: usize,
+    bytes_read: usize,
+}
+
+impl<'a> StreamingMultipartField<'a> {
+    fn new(inner: multer::Field<'a>, max_file_size: usize) -> Self {
+        Self {
+            inner,
+            max_file_size,
+            bytes_read: 0,
+        }
+    }
+
+    /// Get the field name.
+    pub fn name(&self) -> Option<&str> {
+        self.inner.name()
+    }
+
+    /// Get the original filename when this field is a file upload.
+    pub fn file_name(&self) -> Option<&str> {
+        self.inner.file_name()
+    }
+
+    /// Get the content type of the field.
+    pub fn content_type(&self) -> Option<&str> {
+        self.inner.content_type().map(|mime| mime.essence_str())
+    }
+
+    /// Check whether this field represents a file upload.
+    pub fn is_file(&self) -> bool {
+        self.file_name().is_some()
+    }
+
+    /// Number of bytes consumed from this field so far.
+    pub fn bytes_read(&self) -> usize {
+        self.bytes_read
+    }
+
+    /// Read the next chunk from the field stream.
+    pub async fn chunk(&mut self) -> Result<Option<Bytes>> {
+        let chunk = self.inner.chunk().await.map_err(map_multer_error)?;
+        let Some(chunk) = chunk else {
+            return Ok(None);
+        };
+
+        self.bytes_read += chunk.len();
+        if self.bytes_read > self.max_file_size {
+            return Err(file_size_limit_error(self.max_file_size));
+        }
+
+        Ok(Some(chunk))
+    }
+
+    /// Collect the full field into memory.
+    pub async fn bytes(&mut self) -> Result<Bytes> {
+        let mut buffer = bytes::BytesMut::new();
+        while let Some(chunk) = self.chunk().await? {
+            buffer.extend_from_slice(&chunk);
+        }
+        Ok(buffer.freeze())
+    }
+
+    /// Collect the field as UTF-8 text.
+    pub async fn text(&mut self) -> Result<String> {
+        String::from_utf8(self.bytes().await?.to_vec())
+            .map_err(|e| ApiError::bad_request(format!("Invalid UTF-8 in field: {}", e)))
+    }
+
+    /// Save the field to a directory using either the provided filename or the uploaded name.
+    pub async fn save_to(&mut self, dir: impl AsRef<Path>, filename: Option<&str>) -> Result<String> {
+        let dir = dir.as_ref();
+
+        tokio::fs::create_dir_all(dir)
+            .await
+            .map_err(|e| ApiError::internal(format!("Failed to create upload directory: {}", e)))?;
+
+        let final_filename = filename
+            .map(|value| value.to_string())
+            .or_else(|| self.file_name().map(|value| value.to_string()))
+            .ok_or_else(|| ApiError::bad_request("No filename provided and field has no filename"))?;
+
+        let safe_filename = sanitize_filename(&final_filename);
+        let file_path = dir.join(&safe_filename);
+        self.save_as(&file_path).await?;
+
+        Ok(file_path.to_string_lossy().to_string())
+    }
+
+    /// Save the field contents to an explicit file path without buffering the full file in memory.
+    pub async fn save_as(&mut self, path: impl AsRef<Path>) -> Result<()> {
+        let path = path.as_ref();
+
+        if let Some(parent) = path.parent() {
+            tokio::fs::create_dir_all(parent)
+                .await
+                .map_err(|e| ApiError::internal(format!("Failed to create directory: {}", e)))?;
+        }
+
+        let mut file = tokio::fs::File::create(path)
+            .await
+            .map_err(|e| ApiError::internal(format!("Failed to create file: {}", e)))?;
+
+        while let Some(chunk) = self.chunk().await? {
+            file.write_all(&chunk)
+                .await
+                .map_err(|e| ApiError::internal(format!("Failed to save file: {}", e)))?;
+        }
+
+        file.flush()
+            .await
+            .map_err(|e| ApiError::internal(format!("Failed to flush file: {}", e)))?;
+
+        Ok(())
+    }
+
+    /// Collect the field into an [`UploadedFile`] for APIs that still expect the buffered wrapper.
+    pub async fn into_uploaded_file(mut self) -> Result<UploadedFile> {
+        let filename = self
+            .file_name()
+            .ok_or_else(|| ApiError::bad_request("Field is not a file upload"))?
+            .to_string();
+        let content_type = self.content_type().map(|value| value.to_string());
+        let data = self.bytes().await?;
+
+        Ok(UploadedFile {
+            filename,
+            content_type,
+            data,
+        })
     }
 }
 
@@ -229,6 +451,66 @@ impl FromRequest for Multipart {
 
         Ok(Multipart::new(fields))
     }
+}
+
+fn request_body_stream(req: &mut Request, limit: usize) -> Result<StreamingBody> {
+    if let Some(stream) = req.take_stream() {
+        return Ok(StreamingBody::new(stream, Some(limit)));
+    }
+
+    if let Some(body) = req.take_body() {
+        let stream = stream::once(async move { Ok::<Bytes, ApiError>(body) });
+        return Ok(StreamingBody::from_stream(stream, Some(limit)));
+    }
+
+    Err(ApiError::internal("Body already consumed"))
+}
+
+fn validate_streaming_field(field: &multer::Field<'_>, config: &MultipartConfig) -> Result<()> {
+    if field.file_name().is_none() || config.allowed_content_types.is_empty() {
+        return Ok(());
+    }
+
+    let content_type = field
+        .content_type()
+        .map(|mime| mime.essence_str().to_string())
+        .ok_or_else(|| ApiError::bad_request("Uploaded file is missing Content-Type"))?;
+
+    if config
+        .allowed_content_types
+        .iter()
+        .any(|allowed| allowed.eq_ignore_ascii_case(&content_type))
+    {
+        return Ok(());
+    }
+
+    Err(ApiError::bad_request(format!(
+        "Unsupported content type '{}'",
+        content_type
+    )))
+}
+
+fn file_size_limit_error(limit: usize) -> ApiError {
+    ApiError::new(
+        StatusCode::PAYLOAD_TOO_LARGE,
+        "payload_too_large",
+        format!("Multipart field exceeded limit of {} bytes", limit),
+    )
+}
+
+fn map_multer_error(error: multer::Error) -> ApiError {
+    if let Some(source) = error.source() {
+        if let Some(api_error) = source.downcast_ref::<ApiError>() {
+            return api_error.clone();
+        }
+    }
+
+    let message = error.to_string();
+    if message.to_ascii_lowercase().contains("size limit") {
+        return ApiError::new(StatusCode::PAYLOAD_TOO_LARGE, "payload_too_large", message);
+    }
+
+    ApiError::bad_request(format!("Invalid multipart body: {}", message))
 }
 
 /// Extract boundary from Content-Type header
@@ -470,6 +752,28 @@ impl UploadedFile {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use futures_util::stream;
+
+    fn chunked_body_stream(
+        body: Bytes,
+        chunk_size: usize,
+    ) -> impl futures_util::Stream<Item = Result<Bytes>> + Send + 'static {
+        let chunks = body
+            .chunks(chunk_size)
+            .map(Bytes::copy_from_slice)
+            .map(Ok)
+            .collect::<Vec<_>>();
+        stream::iter(chunks)
+    }
+
+    fn streaming_multipart_from_body(
+        body: Bytes,
+        boundary: &str,
+        config: MultipartConfig,
+    ) -> StreamingMultipart {
+        let stream = StreamingBody::from_stream(chunked_body_stream(body, 7), Some(config.max_size));
+        StreamingMultipart::new(stream, boundary.to_string(), config)
+    }
 
     #[test]
     fn test_extract_boundary() {
@@ -539,5 +843,121 @@ mod tests {
         assert_eq!(config.max_fields, 50);
         assert_eq!(config.max_file_size, 5 * 1024 * 1024);
         assert_eq!(config.allowed_content_types.len(), 2);
+    }
+
+    #[tokio::test]
+    async fn streaming_multipart_reads_chunked_body() {
+        let boundary = "----RustApiBoundary";
+        let body = format!(
+            "--{boundary}\r\n\
+             Content-Disposition: form-data; name=\"title\"\r\n\
+             \r\n\
+             hello\r\n\
+             --{boundary}\r\n\
+             Content-Disposition: form-data; name=\"file\"; filename=\"demo.txt\"\r\n\
+             Content-Type: text/plain\r\n\
+             \r\n\
+             streamed-content\r\n\
+             --{boundary}--\r\n"
+        );
+
+        let mut multipart = streaming_multipart_from_body(
+            Bytes::from(body),
+            boundary,
+            MultipartConfig::new().max_size(1024).max_file_size(1024),
+        );
+
+        let mut title = multipart.next_field().await.unwrap().unwrap();
+        assert_eq!(title.name(), Some("title"));
+        assert_eq!(title.text().await.unwrap(), "hello");
+
+        let mut file = multipart.next_field().await.unwrap().unwrap();
+        assert_eq!(file.file_name(), Some("demo.txt"));
+        assert_eq!(file.content_type(), Some("text/plain"));
+        assert_eq!(file.bytes().await.unwrap(), Bytes::from("streamed-content"));
+
+        assert!(multipart.next_field().await.unwrap().is_none());
+        assert_eq!(multipart.field_count(), 2);
+    }
+
+    #[tokio::test]
+    async fn streaming_multipart_enforces_per_file_limit() {
+        let boundary = "----RustApiBoundary";
+        let body = format!(
+            "--{boundary}\r\n\
+             Content-Disposition: form-data; name=\"file\"; filename=\"demo.txt\"\r\n\
+             Content-Type: text/plain\r\n\
+             \r\n\
+             way-too-large\r\n\
+             --{boundary}--\r\n"
+        );
+
+        let mut multipart = streaming_multipart_from_body(
+            Bytes::from(body),
+            boundary,
+            MultipartConfig::new().max_size(1024).max_file_size(4),
+        );
+
+        let mut file = multipart.next_field().await.unwrap().unwrap();
+        let error = file.bytes().await.unwrap_err();
+        assert_eq!(error.status, StatusCode::PAYLOAD_TOO_LARGE);
+        assert!(error.message.contains("4"));
+    }
+
+    #[tokio::test]
+    async fn streaming_multipart_enforces_field_count_limit() {
+        let boundary = "----RustApiBoundary";
+        let body = format!(
+            "--{boundary}\r\n\
+             Content-Disposition: form-data; name=\"first\"\r\n\
+             \r\n\
+             one\r\n\
+             --{boundary}\r\n\
+             Content-Disposition: form-data; name=\"second\"\r\n\
+             \r\n\
+             two\r\n\
+             --{boundary}--\r\n"
+        );
+
+        let mut multipart = streaming_multipart_from_body(
+            Bytes::from(body),
+            boundary,
+            MultipartConfig::new().max_size(1024).max_fields(1),
+        );
+
+        assert!(multipart.next_field().await.unwrap().is_some());
+        let next = multipart.next_field().await;
+        assert!(next.is_err());
+        let error = next.err().unwrap();
+        assert_eq!(error.status, StatusCode::BAD_REQUEST);
+        assert!(error.message.contains("field count exceeded"));
+    }
+
+    #[tokio::test]
+    async fn streaming_multipart_save_to_writes_incrementally() {
+        let boundary = "----RustApiBoundary";
+        let body = format!(
+            "--{boundary}\r\n\
+             Content-Disposition: form-data; name=\"file\"; filename=\"demo.txt\"\r\n\
+             Content-Type: text/plain\r\n\
+             \r\n\
+             persisted\r\n\
+             --{boundary}--\r\n"
+        );
+
+        let mut multipart = streaming_multipart_from_body(
+            Bytes::from(body),
+            boundary,
+            MultipartConfig::new().max_size(1024).max_file_size(1024),
+        );
+
+        let mut file = multipart.next_field().await.unwrap().unwrap();
+        let temp_dir = std::env::temp_dir().join(format!("rustapi-streaming-upload-{}", uuid::Uuid::new_v4()));
+        let saved_path = file.save_to(&temp_dir, None).await.unwrap();
+        let saved = tokio::fs::read_to_string(&saved_path).await.unwrap();
+
+        assert_eq!(saved, "persisted");
+
+        tokio::fs::remove_dir_all(&temp_dir).await.unwrap();
     }
 }

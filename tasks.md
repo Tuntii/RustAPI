@@ -56,10 +56,10 @@ Bu dosya, audit sonrası uygulanacak işleri tek yerde toplar. Tamamlanan maddel
 ## Yüksek etkili DX işleri
 
 ### Resmi örnekler
-- [ ] `crates/rustapi-rs/examples/full_crud_api.rs` ekle
+- [x] `crates/rustapi-rs/examples/full_crud_api.rs` ekle
 - [x] `crates/rustapi-rs/examples/auth_api.rs` ekle
-- [ ] `crates/rustapi-rs/examples/streaming_api.rs` ekle
-- [ ] `crates/rustapi-rs/examples/jobs_api.rs` ekle
+- [x] `crates/rustapi-rs/examples/streaming_api.rs` ekle
+- [x] `crates/rustapi-rs/examples/jobs_api.rs` ekle
 - [x] examples için index/README ekle
 
 ### Dokümantasyon ve discoverability

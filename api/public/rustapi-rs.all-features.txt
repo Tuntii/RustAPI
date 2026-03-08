@@ -194,6 +194,7 @@ pub use rustapi_rs::core::StaticFile
 pub use rustapi_rs::core::StaticFileConfig
 pub use rustapi_rs::core::StatusCode
 pub use rustapi_rs::core::StreamBody
+pub use rustapi_rs::core::sse_from_iter
 pub use rustapi_rs::core::TracingLayer
 pub use rustapi_rs::core::Typed
 pub use rustapi_rs::core::TypedPath
@@ -286,6 +287,15 @@ pub use rustapi_rs::extras::session::SessionLayer
 pub use rustapi_rs::extras::session::SessionRecord
 pub use rustapi_rs::extras::session::SessionStore
 pub use rustapi_rs::extras::session::session
+pub mod rustapi_rs::extras::jobs
+pub use rustapi_rs::extras::jobs::EnqueueOptions
+pub use rustapi_rs::extras::jobs::InMemoryBackend
+pub use rustapi_rs::extras::jobs::Job
+pub use rustapi_rs::extras::jobs::JobBackend
+pub use rustapi_rs::extras::jobs::JobContext
+pub use rustapi_rs::extras::jobs::JobError
+pub use rustapi_rs::extras::jobs::JobQueue
+pub use rustapi_rs::extras::jobs::JobRequest
 pub mod rustapi_rs::extras::sqlx
 pub use rustapi_rs::extras::sqlx::SqlxErrorExt
 pub use rustapi_rs::extras::sqlx::convert_sqlx_error
@@ -331,6 +341,14 @@ pub use rustapi_rs::prelude::JwtLayer
 pub use rustapi_rs::prelude::JwtValidation
 pub use rustapi_rs::prelude::KeepAlive
 pub use rustapi_rs::prelude::LlmResponse
+pub use rustapi_rs::prelude::EnqueueOptions
+pub use rustapi_rs::prelude::InMemoryBackend
+pub use rustapi_rs::prelude::Job
+pub use rustapi_rs::prelude::JobBackend
+pub use rustapi_rs::prelude::JobContext
+pub use rustapi_rs::prelude::JobError
+pub use rustapi_rs::prelude::JobQueue
+pub use rustapi_rs::prelude::JobRequest
 pub use rustapi_rs::prelude::MemorySessionStore
 pub use rustapi_rs::prelude::Message
 pub use rustapi_rs::prelude::Multipart
@@ -420,6 +438,7 @@ pub use rustapi_rs::prelude::run_concurrently
 pub use rustapi_rs::prelude::run_rustapi_and_grpc
 pub use rustapi_rs::prelude::run_rustapi_and_grpc_with_shutdown
 pub use rustapi_rs::prelude::serve_dir
+pub use rustapi_rs::prelude::sse_from_iter
 pub use rustapi_rs::prelude::sse_response
 pub use rustapi_rs::prelude::trace
 pub use rustapi_rs::prelude::warn
