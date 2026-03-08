@@ -26,13 +26,13 @@ pub enum ProjectTemplate {
 pub enum ProjectPreset {
     /// Production-oriented HTTP API defaults.
     #[value(name = "prod-api")]
-    ProdApi,
+    Production,
     /// AI-friendly API defaults with TOON support.
     #[value(name = "ai-api")]
-    AiApi,
+    Ai,
     /// Realtime API defaults with WebSocket support.
     #[value(name = "realtime-api")]
-    RealtimeApi,
+    Realtime,
 }
 
 impl ProjectPreset {
@@ -44,7 +44,7 @@ impl ProjectPreset {
     /// Recommended features that should be enabled for this preset.
     pub fn recommended_features(self) -> Vec<String> {
         match self {
-            ProjectPreset::ProdApi => vec![
+            ProjectPreset::Production => vec![
                 "extras-config",
                 "extras-cors",
                 "extras-rate-limit",
@@ -52,13 +52,13 @@ impl ProjectPreset {
                 "extras-structured-logging",
                 "extras-timeout",
             ],
-            ProjectPreset::AiApi => vec![
+            ProjectPreset::Ai => vec![
                 "extras-config",
                 "extras-structured-logging",
                 "extras-timeout",
                 "protocol-toon",
             ],
-            ProjectPreset::RealtimeApi => vec![
+            ProjectPreset::Realtime => vec![
                 "extras-cors",
                 "extras-structured-logging",
                 "extras-timeout",

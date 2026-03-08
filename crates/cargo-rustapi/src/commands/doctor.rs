@@ -325,9 +325,7 @@ fn build_project_checks(workspace_root: &Path) -> Result<Vec<DoctorCheck>> {
     });
 
     checks.push(
-        if (signals.production_defaults || signals.request_id)
-            && (signals.production_defaults || signals.tracing)
-        {
+        if signals.production_defaults || (signals.request_id && signals.tracing) {
             DoctorCheck::pass(
                 "Request IDs and tracing",
                 "Request ID and tracing signals detected",

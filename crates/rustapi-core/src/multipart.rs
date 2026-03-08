@@ -814,8 +814,7 @@ mod tests {
     #[test]
     fn test_parse_simple_multipart() {
         let boundary = "----WebKitFormBoundary";
-        let body = format!(
-            "------WebKitFormBoundary\r\n\
+        let body = "------WebKitFormBoundary\r\n\
              Content-Disposition: form-data; name=\"field1\"\r\n\
              \r\n\
              value1\r\n\
@@ -825,7 +824,7 @@ mod tests {
              \r\n\
              file content\r\n\
              ------WebKitFormBoundary--\r\n"
-        );
+            .to_string();
 
         let fields = parse_multipart(&Bytes::from(body), boundary).unwrap();
         assert_eq!(fields.len(), 2);

@@ -80,9 +80,9 @@ pub async fn new_project(mut args: NewArgs) -> Result<()> {
             .interact()?;
 
         match selection {
-            1 => Some(ProjectPreset::ProdApi),
-            2 => Some(ProjectPreset::AiApi),
-            3 => Some(ProjectPreset::RealtimeApi),
+            1 => Some(ProjectPreset::Production),
+            2 => Some(ProjectPreset::Ai),
+            3 => Some(ProjectPreset::Realtime),
             _ => None,
         }
     };
