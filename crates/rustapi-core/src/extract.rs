@@ -1014,6 +1014,50 @@ impl<T: RustApiSchema> OperationModifier for ValidatedJson<T> {
     }
 }
 
+// AsyncValidatedJson - Adds request body + 422 response (same as ValidatedJson)
+impl<T: RustApiSchema> OperationModifier for AsyncValidatedJson<T> {
+    fn update_operation(op: &mut Operation) {
+        let mut ctx = SchemaCtx::new();
+        let schema_ref = T::schema(&mut ctx);
+
+        let mut content = BTreeMap::new();
+        content.insert(
+            "application/json".to_string(),
+            MediaType {
+                schema: Some(schema_ref),
+                example: None,
+            },
+        );
+
+        op.request_body = Some(RequestBody {
+            description: None,
+            required: Some(true),
+            content,
+        });
+
+        // Add 422 Validation Error response
+        let mut responses_content = BTreeMap::new();
+        responses_content.insert(
+            "application/json".to_string(),
+            MediaType {
+                schema: Some(SchemaRef::Ref {
+                    reference: "#/components/schemas/ValidationErrorSchema".to_string(),
+                }),
+                example: None,
+            },
+        );
+
+        op.responses.insert(
+            "422".to_string(),
+            ResponseSpec {
+                description: "Validation Error".to_string(),
+                content: responses_content,
+                headers: BTreeMap::new(),
+            },
+        );
+    }
+}
+
 // Json - Adds request body (Same as ValidatedJson)
 impl<T: RustApiSchema> OperationModifier for Json<T> {
     fn update_operation(op: &mut Operation) {

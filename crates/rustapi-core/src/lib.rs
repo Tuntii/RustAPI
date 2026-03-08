@@ -98,7 +98,7 @@ pub mod __private {
 }
 
 // Public API
-pub use app::{RustApi, RustApiConfig};
+pub use app::{ProductionDefaultsConfig, RustApi, RustApiConfig};
 pub use error::{get_environment, ApiError, Environment, FieldError, Result};
 pub use events::EventBus;
 #[cfg(feature = "cookies")]
@@ -115,7 +115,10 @@ pub use handler::{
 pub use hateoas::{
     CursorPaginated, Link, LinkOrArray, Linkable, PageInfo, Paginated, Resource, ResourceCollection,
 };
-pub use health::{HealthCheck, HealthCheckBuilder, HealthCheckResult, HealthStatus};
+pub use health::{
+    HealthCheck, HealthCheckBuilder, HealthCheckResult, HealthEndpointConfig, HealthResponse,
+    HealthStatus,
+};
 pub use http::StatusCode;
 #[cfg(feature = "http3")]
 pub use http3::{Http3Config, Http3Server};
@@ -132,7 +135,7 @@ pub use response::{
     Body as ResponseBody, Created, Html, IntoResponse, NoContent, Redirect, Response, WithStatus,
 };
 pub use router::{delete, get, patch, post, put, MethodRouter, RouteMatch, Router};
-pub use sse::{sse_response, KeepAlive, Sse, SseEvent};
+pub use sse::{sse_from_iter, sse_response, KeepAlive, Sse, SseEvent};
 pub use static_files::{serve_dir, StaticFile, StaticFileConfig};
 pub use stream::{StreamBody, StreamingBody, StreamingConfig};
 pub use typed_path::TypedPath;

@@ -206,6 +206,18 @@ pub use oauth2::{
     TokenError, TokenResponse,
 };
 
+#[cfg(feature = "session")]
+pub mod session;
+
+#[cfg(feature = "session")]
+pub use session::{
+    MemorySessionStore, Session, SessionConfig, SessionError, SessionLayer, SessionRecord,
+    SessionStore,
+};
+
+#[cfg(feature = "session-redis")]
+pub use session::RedisSessionStore;
+
 #[cfg(feature = "audit")]
 pub mod audit;
 

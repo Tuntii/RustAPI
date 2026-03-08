@@ -104,7 +104,7 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 
 ### Module 5.5: Error Handling
 - **Prerequisites:** Module 5.
-- **Reading:** [Error Handling](../concepts/errors.md).
+- **Reading:** [Error Handling](../recipes/error_handling.md).
 - **Task:** Create a custom `ApiError` enum and implement `IntoResponse`. Return robust error messages.
 - **Expected Output:** `GET /users/999` returns `404 Not Found` with a structured JSON error body.
 - **Pitfalls:** Exposing internal database errors (like SQL strings) to the client.

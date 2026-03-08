@@ -73,33 +73,41 @@ struct AppState {
 
 ## Benchmarking
 
-Performance is not a guessing game. Below are results from our internal benchmarks on reference hardware.
+Performance is not a guessing game, but it is very easy to misquote stale numbers.
 
-### Comparative Benchmarks
+For that reason, RustAPI keeps its benchmark publication policy and canonical claims in [`docs/PERFORMANCE_BENCHMARKS.md`](../../../PERFORMANCE_BENCHMARKS.md).
 
-| Framework | Requests/sec | Latency (avg) | Memory |
-|-----------|--------------|---------------|--------|
-| **RustAPI** | **~185,000** | **~0.54ms** | **~8MB** |
-| **RustAPI + core-simd-json** | **~220,000** | **~0.45ms** | **~8MB** |
-| Actix-web | ~178,000 | ~0.56ms | ~10MB |
-| Axum | ~165,000 | ~0.61ms | ~12MB |
-| Rocket | ~95,000 | ~1.05ms | ~15MB |
-| FastAPI (Python) | ~12,000 | ~8.3ms | ~45MB |
+Use that document for:
 
-<details>
-<summary>🔬 Test Configuration</summary>
+- the current benchmark source of truth,
+- publication rules for new public claims,
+- local and CI benchmark entry points, and
+- historical-vs-current benchmark context.
 
-- **Hardware**: Intel i7-12700K, 32GB RAM
-- **Method**: `wrk -t12 -c400 -d30s http://127.0.0.1:8080/api/users`
-- **Scenario**: JSON serialization of 100 user objects
-- **Build**: `cargo build --release`
+### Run benchmarks locally
 
-Results may vary based on hardware and workload. Run your own benchmarks:
-```bash
-cd benches
-./run_benchmarks.ps1
+From the repository root:
+
+```powershell
+./scripts/bench.ps1
 ```
-</details>
+
+That currently executes `cargo bench --workspace`.
+
+### CI benchmark path
+
+The repository also includes `.github/workflows/benchmark.yml`, which runs the same benchmark command and uploads the raw benchmark output as an artifact.
+
+### What to publish with benchmark results
+
+Whenever you publish new numbers, include at minimum:
+
+- hardware and OS
+- Rust toolchain version
+- command and workload description
+- enabled feature flags
+- throughput plus $p50$, $p95$, and $p99$ latency
+- memory usage when available
 
 ### Why So Fast?
 

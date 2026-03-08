@@ -57,6 +57,7 @@ RustAPI ships circuit breaker and retry middleware as first-class features, not 
 - **Retry** with exponential backoff
 - **Rate Limiting** (IP-based, per-route)
 - **Body Limit** with configurable max size (default 1 MB)
+- **Health Probes** via `.health_endpoints()` for `/health`, `/ready`, and `/live`
 
 ### Environment-Aware Error Masking
 
@@ -121,7 +122,7 @@ Run HTTP/1.1 (TCP) and HTTP/3 (QUIC/UDP) simultaneously on the same server. Enab
 
 | Feature | RustAPI | Actix-web | Axum | FastAPI (Python) |
 |:--------|:-------:|:---------:|:----:|:----------------:|
-| Performance | ~92k req/s | ~105k | ~100k | ~12k |
+| Performance | See benchmark source | Workload-dependent | Workload-dependent | Workload-dependent |
 | Ergonomics | High | Low | Medium | High |
 | AI/LLM native format (TOON) | Yes | No | No | No |
 | Request replay / time-travel debug | Built-in | No | No | 3rd-party |
@@ -131,6 +132,8 @@ Run HTTP/1.1 (TCP) and HTTP/3 (QUIC/UDP) simultaneously on the same server. Enab
 | HTTP/3 (QUIC) | Built-in | No | 3rd-party | No |
 | Background jobs | Built-in | 3rd-party | 3rd-party | 3rd-party |
 | API stability model | Facade + CI contract | Direct | Direct | Stable |
+
+Current benchmark methodology and canonical published performance claims live in [`docs/PERFORMANCE_BENCHMARKS.md`](docs/PERFORMANCE_BENCHMARKS.md). Historical point-in-time numbers in older release notes should not be treated as the current baseline unless they are linked from that document.
 
 ## Quick Start
 
@@ -146,12 +149,51 @@ async fn hello(Path(name): Path<String>) -> Json<Message> {
 }
 
 #[rustapi_rs::main]
-async fn main() {
-    RustApi::auto().run("127.0.0.1:8080").await
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
+  RustApi::auto().run("127.0.0.1:8080").await
 }
 ```
 
 `RustApi::auto()` collects all macro-annotated handlers, generates OpenAPI documentation (served at `/docs`), and starts a multi-threaded tokio runtime.
+
+For production deployments, you can enable standard probe endpoints without writing handlers manually:
+
+```rust
+use rustapi_rs::prelude::*;
+
+#[rustapi_rs::main]
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    let health = HealthCheckBuilder::new(true)
+        .add_check("database", || async { HealthStatus::healthy() })
+        .build();
+
+    RustApi::auto()
+        .with_health_check(health)
+        .run("127.0.0.1:8080")
+        .await
+}
+```
+
+This registers:
+- `/health` — aggregate dependency health
+- `/ready` — readiness probe (`503` when dependencies are unhealthy)
+- `/live` — lightweight liveness probe
+
+Or use a single production baseline preset:
+
+```rust
+use rustapi_rs::prelude::*;
+
+#[rustapi_rs::main]
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
+  RustApi::auto()
+    .production_defaults("users-api")
+    .run("127.0.0.1:8080")
+    .await
+}
+```
+
+`production_defaults()` enables request IDs, tracing spans, and standard probe endpoints in one call.
 
 You can shorten the macro prefix by renaming the crate:
 
@@ -202,6 +244,8 @@ Detailed architecture, recipes, and guides are in the [Cookbook](docs/cookbook/s
 - [System Architecture](docs/cookbook/src/architecture/system_overview.md)
 - [Performance Benchmarks](docs/cookbook/src/concepts/performance.md)
 - [gRPC Integration Guide](docs/cookbook/src/crates/rustapi_grpc.md)
+- [Recommended Production Baseline](docs/PRODUCTION_BASELINE.md)
+- [Production Checklist](docs/PRODUCTION_CHECKLIST.md)
 - [Examples](crates/rustapi-rs/examples/)
 
 ---

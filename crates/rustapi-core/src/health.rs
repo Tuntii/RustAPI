@@ -25,7 +25,11 @@
 //! }
 //! ```
 
+use crate::response::{Body, IntoResponse, Response};
+use http::{header, StatusCode};
+use rustapi_openapi::{MediaType, Operation, ResponseModifier, ResponseSpec, SchemaRef};
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use std::collections::HashMap;
 use std::future::Future;
 use std::pin::Pin;
@@ -96,6 +100,145 @@ pub struct HealthCheckResult {
     pub timestamp: String,
 }
 
+/// Configuration for built-in health endpoints.
+///
+/// By default RustAPI exposes three endpoints when enabled:
+/// - `/health` - aggregated dependency health
+/// - `/ready` - readiness probe for orchestrators/load balancers
+/// - `/live` - lightweight liveness probe
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HealthEndpointConfig {
+    /// Path for the aggregated health endpoint.
+    pub health_path: String,
+    /// Path for the readiness endpoint.
+    pub readiness_path: String,
+    /// Path for the liveness endpoint.
+    pub liveness_path: String,
+}
+
+impl HealthEndpointConfig {
+    /// Create a new configuration with default paths.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Override the health endpoint path.
+    pub fn health_path(mut self, path: impl Into<String>) -> Self {
+        self.health_path = path.into();
+        self
+    }
+
+    /// Override the readiness endpoint path.
+    pub fn readiness_path(mut self, path: impl Into<String>) -> Self {
+        self.readiness_path = path.into();
+        self
+    }
+
+    /// Override the liveness endpoint path.
+    pub fn liveness_path(mut self, path: impl Into<String>) -> Self {
+        self.liveness_path = path.into();
+        self
+    }
+}
+
+impl Default for HealthEndpointConfig {
+    fn default() -> Self {
+        Self {
+            health_path: "/health".to_string(),
+            readiness_path: "/ready".to_string(),
+            liveness_path: "/live".to_string(),
+        }
+    }
+}
+
+/// JSON health response used by RustAPI's built-in health endpoints.
+#[derive(Debug, Clone)]
+pub struct HealthResponse {
+    status: StatusCode,
+    body: serde_json::Value,
+}
+
+impl HealthResponse {
+    /// Create a new health response from an HTTP status and JSON body.
+    pub fn new(status: StatusCode, body: serde_json::Value) -> Self {
+        Self { status, body }
+    }
+
+    /// Create a health response from a health check result.
+    pub fn from_result(result: HealthCheckResult) -> Self {
+        let status = if result.status.is_unhealthy() {
+            StatusCode::SERVICE_UNAVAILABLE
+        } else {
+            StatusCode::OK
+        };
+
+        let body = serde_json::to_value(result).unwrap_or_else(|_| {
+            json!({
+                "status": { "unhealthy": { "reason": "failed to serialize health result" } }
+            })
+        });
+
+        Self { status, body }
+    }
+}
+
+impl IntoResponse for HealthResponse {
+    fn into_response(self) -> Response {
+        match serde_json::to_vec(&self.body) {
+            Ok(body) => http::Response::builder()
+                .status(self.status)
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(Body::from(body))
+                .unwrap(),
+            Err(err) => crate::error::ApiError::internal(format!(
+                "Failed to serialize health response: {}",
+                err
+            ))
+            .into_response(),
+        }
+    }
+}
+
+impl ResponseModifier for HealthResponse {
+    fn update_response(op: &mut Operation) {
+        let mut content = std::collections::BTreeMap::new();
+        content.insert(
+            "application/json".to_string(),
+            MediaType {
+                schema: Some(SchemaRef::Inline(json!({
+                    "type": "object",
+                    "additionalProperties": true
+                }))),
+                example: Some(json!({
+                    "status": "healthy",
+                    "checks": {
+                        "self": "healthy"
+                    },
+                    "timestamp": "1741411200.000000000Z"
+                })),
+            },
+        );
+
+        op.responses.insert(
+            "200".to_string(),
+            ResponseSpec {
+                description: "Service is healthy or ready".to_string(),
+                content: content.clone(),
+                headers: Default::default(),
+            },
+        );
+
+        op.responses.insert(
+            "503".to_string(),
+            ResponseSpec {
+                description: "Service or one of its dependencies is unhealthy".to_string(),
+                content,
+                headers: Default::default(),
+            },
+        );
+    }
+}
+
 /// Type alias for async health check functions
 pub type HealthCheckFn =
     Arc<dyn Fn() -> Pin<Box<dyn Future<Output = HealthStatus> + Send>> + Send + Sync>;
@@ -149,6 +292,25 @@ impl HealthCheck {
             timestamp,
         }
     }
+}
+
+/// Execute an aggregated health check and return an HTTP-friendly response.
+pub async fn health_response(health: HealthCheck) -> HealthResponse {
+    HealthResponse::from_result(health.execute().await)
+}
+
+/// Execute a readiness probe based on the configured health checks.
+///
+/// Readiness currently shares the same dependency checks as the aggregated
+/// health endpoint; unhealthy dependencies return `503 Service Unavailable`.
+pub async fn readiness_response(health: HealthCheck) -> HealthResponse {
+    HealthResponse::from_result(health.execute().await)
+}
+
+/// Return a lightweight liveness probe response.
+pub async fn liveness_response() -> HealthResponse {
+    let result = HealthCheckBuilder::default().build().execute().await;
+    HealthResponse::from_result(result)
 }
 
 /// Builder for health check configuration
@@ -280,5 +442,16 @@ mod tests {
         assert!(result.status.is_healthy());
         assert_eq!(result.checks.len(), 1);
         assert!(result.checks.contains_key("self"));
+    }
+
+    #[tokio::test]
+    async fn readiness_response_returns_service_unavailable_for_unhealthy_checks() {
+        let health = HealthCheckBuilder::new(false)
+            .add_check("db", || async { HealthStatus::unhealthy("db offline") })
+            .build();
+
+        let response = readiness_response(health).await.into_response();
+
+        assert_eq!(response.status(), StatusCode::SERVICE_UNAVAILABLE);
     }
 }

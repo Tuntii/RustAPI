@@ -55,6 +55,7 @@ pub use rustapi_rs::UploadedFile
 pub use rustapi_rs::Validatable
 pub use rustapi_rs::ValidatedJson
 pub use rustapi_rs::WithStatus
+pub use rustapi_rs::sse_from_iter
 pub use rustapi_rs::collect_auto_routes
 pub use rustapi_rs::delete
 pub use rustapi_rs::delete_route

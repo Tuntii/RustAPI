@@ -638,6 +638,43 @@ async fn test_create_user() {
 
 ### Health Check
 
+RustAPI now ships standard health probes out of the box:
+
+```rust
+use rustapi_rs::prelude::*;
+
+#[rustapi_rs::main]
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    RustApi::auto()
+        .health_endpoints()
+        .run("127.0.0.1:8080")
+        .await
+}
+```
+
+This enables:
+- `/health` — aggregate health report
+- `/ready` — readiness probe for orchestrators
+- `/live` — lightweight liveness probe
+
+If you want a stronger production-ready baseline from day one, use:
+
+```rust
+use rustapi_rs::prelude::*;
+
+#[rustapi_rs::main]
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    RustApi::auto()
+        .production_defaults("hello-api")
+        .run("127.0.0.1:8080")
+        .await
+}
+```
+
+This installs request IDs, tracing middleware, and probe endpoints together.
+
+If you want a custom probe, you can still define one manually:
+
 ```rust
 #[rustapi_rs::get("/health")]
 async fn health() -> &'static str {

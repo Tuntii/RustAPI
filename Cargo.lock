@@ -1759,6 +1759,15 @@ dependencies = [
 
 [[package]]
 name = "itertools"
+version = "0.13.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "413ee7dfc52ee1a4949ceeb7dbc8a33f2d6c088194d9f922fb8318faf1f01186"
+dependencies = [
+ "either",
+]
+
+[[package]]
+name = "itertools"
 version = "0.14.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2b192c782037fadd9cfa75548310488aabdbf3d2da73885b31bd0abd03351285"
@@ -2874,6 +2883,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "redis"
+version = "0.27.6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09d8f99a4090c89cc489a94833c901ead69bfbf3877b4867d5482e321ee875bc"
+dependencies = [
+ "arc-swap",
+ "async-trait",
+ "bytes",
+ "combine",
+ "futures-util",
+ "itertools 0.13.0",
+ "itoa",
+ "num-bigint",
+ "percent-encoding",
+ "pin-project-lite",
+ "ryu",
+ "tokio",
+ "tokio-util",
+ "url",
+]
+
+[[package]]
 name = "redox_syscall"
 version = "0.5.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3156,6 +3187,7 @@ dependencies = [
  "proptest",
  "r2d2",
  "rand 0.8.5",
+ "redis 0.27.6",
  "reqwest",
  "rustapi-core",
  "rustapi-openapi",
@@ -3193,7 +3225,7 @@ dependencies = [
  "chrono",
  "futures-util",
  "proptest",
- "redis",
+ "redis 0.24.0",
  "serde",
  "serde_json",
  "sqlx",
@@ -3234,9 +3266,11 @@ version = "0.1.389"
 dependencies = [
  "async-trait",
  "doc-comment",
+ "futures-util",
  "rustapi-core",
  "rustapi-extras",
  "rustapi-grpc",
+ "rustapi-jobs",
  "rustapi-macros",
  "rustapi-openapi",
  "rustapi-toon",

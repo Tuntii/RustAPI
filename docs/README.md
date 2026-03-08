@@ -10,6 +10,9 @@ Welcome to the RustAPI documentation!
 | [Features](FEATURES.md) | Complete feature reference |
 | [Philosophy](PHILOSOPHY.md) | Design principles and decisions |
 | [Architecture](ARCHITECTURE.md) | Internal structure deep dive |
+| [Performance Benchmarks](PERFORMANCE_BENCHMARKS.md) | Authoritative source for benchmark methodology and published claims |
+| [Recommended Production Baseline](PRODUCTION_BASELINE.md) | Opinionated starting point for production services |
+| [Production Checklist](PRODUCTION_CHECKLIST.md) | Rollout-ready operational checklist |
 
 ## What is RustAPI?
 
@@ -59,12 +62,19 @@ Visit `http://localhost:8080/docs` for auto-generated Swagger UI.
 
 ## Examples
 
-See the [examples](../examples/) directory:
-- `hello-world` — Minimal example
-- `crud-api` — Full CRUD operations
-- `auth-api` — JWT authentication
-- `toon-api` — LLM-optimized responses
-- `proof-of-concept` — Complete feature showcase
+See [`crates/rustapi-rs/examples/README.md`](../crates/rustapi-rs/examples/README.md) for the current in-repository example index.
+
+Current examples in this repository:
+- `typed_path_poc` — Typed path registration and URI generation
+- `status_demo` — Automatic status page demo with live traffic/error generation
+
+## Production Guides
+
+- [Recommended Production Baseline](PRODUCTION_BASELINE.md)
+- [Production Checklist](PRODUCTION_CHECKLIST.md)
+- [Cookbook: Graceful Shutdown](cookbook/src/recipes/graceful_shutdown.md)
+- [Cookbook: Deployment](cookbook/src/recipes/deployment.md)
+- [Cookbook: Observability](cookbook/src/recipes/observability.md)
 
 ## License
 

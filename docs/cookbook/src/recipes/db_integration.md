@@ -1,21 +1,87 @@
 # Database Integration
 
-RustAPI is database-agnostic, but **SQLx** is the recommended driver due to its async-first design and compile-time query verification.
+RustAPI is database-agnostic, but **SQLx** is the recommended default for most RustAPI services because it is async-first, works naturally with `State`, and supports compile-time query verification.
 
-This recipe shows how to integrate PostgreSQL/MySQL/SQLite using a global connection pool with best practices for production.
+This recipe shows how to integrate PostgreSQL/MySQL/SQLite using a shared pool, how to choose between **SQLx**, **Diesel**, and **SeaORM**, how to think about migrations, and which pooling practices are safest in production.
 
 ## Dependencies
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.335", features = ["sqlx"] } # Enable SQLx error conversion
+rustapi-rs = { version = "0.1.335", features = ["extras-sqlx"] } # Canonical facade feature for SQLx error conversion
 sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "uuid"] }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 dotenvy = "0.15"
 ```
 
-## 1. Setup Connection Pool
+## 1. Choosing SQLx vs Diesel vs SeaORM
+
+RustAPI does not force a single database stack. Pick the tool that matches your team’s trade-offs.
+
+| Stack | Best fit | Strengths | Watch-outs |
+|---|---|---|---|
+| **SQLx** | Default choice for most APIs | async-first, raw SQL clarity, compile-time query checks, easy `State` integration | you write SQL yourself |
+| **Diesel** | teams that want schema-driven queries and strong compile-time modeling | mature ecosystem, strong query builder, great for heavily relational domains | core query execution is synchronous, so use a pool plus `spawn_blocking` |
+| **SeaORM** | teams that want a higher-level async ORM | async API, entity-oriented modeling, less handwritten SQL | more abstraction, less direct control over SQL shape, no RustAPI-specific adapter layer |
+
+### Practical recommendation
+
+- Choose **SQLx** when you want the most direct, idiomatic fit with RustAPI.
+- Choose **Diesel** when your team values its schema/query-builder style enough to accept synchronous query execution boundaries.
+- Choose **SeaORM** when entity-first ergonomics matter more than writing SQL manually.
+
+If you are unsure, start with **SQLx**. It is the least surprising option for handler-first async services.
+
+## 2. Migration strategy guidance
+
+Treat schema migrations as part of application delivery, not an afterthought.
+
+### Recommended strategy by stack
+
+- **SQLx**: keep migrations in a `migrations/` directory and apply them with `sqlx::migrate!()` at startup for local/dev workflows, or via a deployment step in CI/CD for production.
+- **Diesel**: use Diesel CLI migrations as the source of truth; keep application startup focused on serving traffic rather than performing long-running schema work.
+- **SeaORM**: use the SeaORM migration crate and run migrations as a separate deployment phase.
+
+### Production guidance
+
+- Prefer **forward-only** migrations in normal delivery.
+- Make destructive changes in **multiple releases** when possible (add column -> dual write/read -> remove old column later).
+- Run migrations **before** routing production traffic to a new version when backward compatibility is not guaranteed.
+- Keep app code tolerant of short-lived mixed-schema windows during rolling deploys.
+- Seed data and schema changes should be separate concerns when possible.
+
+For many teams, the safest pattern is:
+
+1. apply migrations,
+2. verify readiness,
+3. shift traffic,
+4. clean up old schema in a later deploy.
+
+## 3. Connection pooling recommendations
+
+No matter which stack you pick, the operational rule is the same: **create the pool once at startup and share it through `State`**.
+
+Recommended defaults:
+
+- keep one long-lived pool per database/service boundary
+- never open a fresh connection per request
+- size pool limits from the database server’s actual connection budget
+- set `acquire_timeout` so overload fails fast instead of hanging forever
+- use small but non-zero `min_connections` only when warm capacity matters
+- keep transaction scopes short and never hold them across unrelated awaits
+- if you have API workers plus job workers, budget pool capacity for both
+
+As a starting point for a single service instance:
+
+- `max_connections`: enough for peak concurrent DB work, but well below the database hard cap
+- `min_connections`: `0-5` depending on cold-start sensitivity
+- `acquire_timeout`: `2-5s`
+- `idle_timeout`: a few minutes, unless your environment aggressively scales to zero
+
+If you use a synchronous driver such as Diesel, pool the connections and execute DB work with `tokio::task::spawn_blocking` so you do not block the async runtime.
+
+## 4. Setup Connection Pool
 
 Create the pool once at startup and share it via `State`. Configure pool limits appropriately.
 
@@ -61,7 +127,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 }
 ```
 
-## 2. Using the Database in Handlers
+## 5. Using the Database in Handlers
 
 Extract the `State` to get access to the pool.
 
@@ -105,7 +171,7 @@ async fn create_user(
 }
 ```
 
-## 3. Transactions
+## 6. Transactions
 
 For operations involving multiple queries, use a transaction to ensure atomicity.
 
@@ -155,7 +221,7 @@ async fn transfer_credits(
 }
 ```
 
-## 4. Integration Testing with TestContainers
+## 7. Integration Testing with TestContainers
 
 For testing, use `testcontainers` to spin up a real database instance. This ensures your queries are correct without mocking the database driver.
 
@@ -208,3 +274,5 @@ RustAPI provides automatic conversion from `sqlx::Error` to `ApiError` when the 
 - Unique Constraint Violation -> 409 Conflict
 - Check Constraint Violation -> 400 Bad Request
 - Other errors -> 500 Internal Server Error (masked in production)
+
+If you are using Diesel or SeaORM instead of SQLx, keep the same external error contract for handlers even though the internal database error types differ. Consistent HTTP error behavior matters more than which query builder paid the bills.

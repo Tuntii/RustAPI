@@ -3,6 +3,8 @@
 **Release Date**: February 26, 2026
 **Full Changelog**: https://github.com/Tuntii/RustAPI/compare/v0.1.335...v0.1.397
 
+**Benchmark Source of Truth**: Current benchmark methodology and canonical performance claims live in `docs/PERFORMANCE_BENCHMARKS.md`. Historical release-specific benchmark notes should be treated as point-in-time snapshots unless they are linked from that document.
+
 ---
 
 ## 🎯 Highlights
