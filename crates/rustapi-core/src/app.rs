@@ -1129,11 +1129,8 @@ impl RustApi {
             }
 
             if self.health_endpoint_config.is_none() {
-                self.health_endpoint_config = Some(
-                    config
-                        .health_endpoint_config
-                        .unwrap_or_default(),
-                );
+                self.health_endpoint_config =
+                    Some(config.health_endpoint_config.unwrap_or_default());
             }
         }
 
@@ -2593,4 +2590,3 @@ mod tests {
         );
     }
 }
-
