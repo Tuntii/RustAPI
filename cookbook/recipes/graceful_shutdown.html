@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-b5c3cc6f.js";
+            window.path_to_searchindex_js = "../searchindex-a3b74072.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-4e658006.js"></script>
+        <script src="../toc-c37e91f3.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -182,33 +182,31 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="graceful-shutdown"><a class="header" href="#graceful-shutdown">Graceful Shutdown</a></h1>
-<p>Graceful shutdown allows your API to stop accepting new connections and finish processing active requests before terminating. This is crucial for avoiding data loss and ensuring a smooth deployment process.</p>
+<p>Graceful shutdown lets your API stop accepting new work, drain in-flight requests, and clean up resources before the process exits. In production, the missing piece is usually <strong>draining</strong>: marking the instance unready so upstream load balancers stop sending traffic before shutdown completes.</p>
 <h2 id="problem"><a class="header" href="#problem">Problem</a></h2>
-<p>When you stop a server (e.g., via <code>CTRL+C</code> or <code>SIGTERM</code>), you want to ensure that:</p>
+<p>When you stop a server (for example with <code>Ctrl+C</code> or <code>SIGTERM</code>), you usually want all of the following:</p>
 <ol>
-<li>The server stops listening on the port.</li>
-<li>Ongoing requests are allowed to complete.</li>
-<li>Resources (database connections, background jobs) are cleaned up properly.</li>
+<li>The process stops receiving new traffic.</li>
+<li>Existing requests are allowed to finish.</li>
+<li>Readiness flips to unhealthy during the drain window.</li>
+<li>Cleanup hooks run in a predictable order.</li>
 </ol>
 <h2 id="solution"><a class="header" href="#solution">Solution</a></h2>
-<p>RustAPI provides the <code>run_with_shutdown</code> method, which accepts a <code>Future</code>. When this future completes, the server initiates the shutdown process.</p>
-<h3 id="basic-example-ctrlc"><a class="header" href="#basic-example-ctrlc">Basic Example (CTRL+C)</a></h3>
+<p>RustAPI provides <code>run_with_shutdown(...)</code>, which accepts a future. When that future resolves, the server begins graceful shutdown. If you also wire readiness to shared state, you can make the instance report <code>503</code> during the drain window before the future returns.</p>
+<h3 id="basic-example"><a class="header" href="#basic-example">Basic Example</a></h3>
 <pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
 use tokio::signal;
 
 #[tokio::main]
 async fn main() -&gt; Result&lt;()&gt; {
-    // 1. Define your application
     let app = RustApi::new().route("/", get(hello));
 
-    // 2. Define the shutdown signal
     let shutdown_signal = async {
         signal::ctrl_c()
             .await
             .expect("failed to install CTRL+C handler");
     };
 
-    // 3. Run with shutdown
     println!("Server running... Press CTRL+C to stop.");
     app.run_with_shutdown("127.0.0.1:3000", shutdown_signal).await?;
 
@@ -217,25 +215,58 @@ async fn main() -&gt; Result&lt;()&gt; {
 }
 
 async fn hello() -&gt; &amp;'static str {
-    // Simulate some work
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;
     "Hello, World!"
 }</code></pre>
-<h3 id="production-example-unix-signals"><a class="header" href="#production-example-unix-signals">Production Example (Unix Signals)</a></h3>
-<p>In a production environment (like Kubernetes or Docker), you need to handle <code>SIGTERM</code> as well as <code>SIGINT</code>.</p>
+<h3 id="production-example-with-draining"><a class="header" href="#production-example-with-draining">Production Example with Draining</a></h3>
+<p>In orchestrated environments you usually want to:</p>
+<ol>
+<li>listen for <code>SIGTERM</code> as well as <code>Ctrl+C</code>,</li>
+<li>mark the instance as draining,</li>
+<li>wait for a short drain window, and only then</li>
+<li>let <code>run_with_shutdown(...)</code> finish the shutdown.</li>
+</ol>
 <pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
-use tokio::signal;
+use std::sync::{
+    Arc,
+    atomic::{AtomicBool, Ordering},
+};
+use tokio::{
+    signal,
+    time::{sleep, Duration},
+};
 
 #[tokio::main]
-async fn main() -&gt; Result&lt;()&gt; {
-    let app = RustApi::new().route("/", get(hello));
+async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    let draining = Arc::new(AtomicBool::new(false));
+    let readiness_flag = draining.clone();
 
-    app.run_with_shutdown("0.0.0.0:3000", shutdown_signal()).await?;
+    let health = HealthCheckBuilder::new(true)
+        .add_check("draining", move || {
+            let readiness_flag = readiness_flag.clone();
+            async move {
+                if readiness_flag.load(Ordering::SeqCst) {
+                    HealthStatus::unhealthy("draining")
+                } else {
+                    HealthStatus::healthy()
+                }
+            }
+        })
+        .build();
+
+    let app = RustApi::new()
+        .with_health_check(health)
+        .on_shutdown(|| async {
+            tracing::info!("shutdown cleanup finished");
+        })
+        .route("/", get(hello));
+
+    app.run_with_shutdown("0.0.0.0:3000", shutdown_signal(draining)).await?;
 
     Ok(())
 }
 
-async fn shutdown_signal() {
+async fn shutdown_signal(draining: Arc&lt;AtomicBool&gt;) {
     let ctrl_c = async {
         signal::ctrl_c()
             .await
@@ -257,19 +288,41 @@ async fn shutdown_signal() {
         _ = ctrl_c =&gt; println!("Received Ctrl+C"),
         _ = terminate =&gt; println!("Received SIGTERM"),
     }
+
+    draining.store(true, Ordering::SeqCst);
+    sleep(Duration::from_secs(15)).await;
+}
+
+async fn hello() -&gt; &amp;'static str {
+    sleep(Duration::from_secs(2)).await;
+    "Hello, World!"
 }</code></pre>
 <h2 id="discussion"><a class="header" href="#discussion">Discussion</a></h2>
 <ul>
-<li><strong>Active Requests</strong>: RustAPI (via Hyper) will wait for active requests to complete.</li>
-<li><strong>Timeout</strong>: You might want to wrap the server execution in a timeout if you want to force shutdown after a certain period (though Hyper usually handles connection draining well).</li>
-<li><strong>Background Tasks</strong>: If you have spawned background tasks using <code>tokio::spawn</code>, they are detached and will be aborted when the runtime shuts down. For critical background work, consider using a dedicated job queue (like <code>rustapi-jobs</code>) or a <code>CancellationToken</code> to coordinate shutdown.</li>
+<li><strong>Active requests</strong>: RustAPI waits for in-flight requests to complete as shutdown proceeds.</li>
+<li><strong>Drain window</strong>: The sleep inside <code>shutdown_signal(...)</code> gives your ingress or load balancer time to observe readiness failure and stop sending new traffic.</li>
+<li><strong>Readiness semantics</strong>: By wiring readiness to shared state, <code>/ready</code> can return <code>503 Service Unavailable</code> while <code>/live</code> still reports that the process is alive.</li>
+<li><strong>Cleanup hooks</strong>: <code>on_shutdown(...)</code> hooks are executed after the shutdown signal future resolves, making them a good place for final flush/cleanup work.</li>
+<li><strong>Detached tasks</strong>: <code>tokio::spawn</code> tasks are still detached. For critical work, coordinate them explicitly or move the work into a durable queue such as <code>rustapi-jobs</code>.</li>
+<li><strong>Forceful shutdown</strong>: If your platform requires a hard upper bound, combine this approach with a platform-level termination grace period and an application-level timeout policy.</li>
 </ul>
+<h2 id="recommended-production-pattern"><a class="header" href="#recommended-production-pattern">Recommended production pattern</a></h2>
+<p>For most deployments:</p>
+<ol>
+<li>Receive <code>SIGTERM</code>.</li>
+<li>Mark the instance as draining.</li>
+<li>Let readiness fail.</li>
+<li>Wait 10–30 seconds, depending on your proxy and traffic pattern.</li>
+<li>Allow graceful shutdown to complete.</li>
+<li>Run shutdown hooks.</li>
+</ol>
+<p>Pair this with the cookbook <a href="deployment.html">Deployment</a> recipe and the docs <a href="../../../PRODUCTION_CHECKLIST.html">Production Checklist</a>.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../recipes/resilience.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../recipes/middleware_debugging.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
@@ -283,7 +336,7 @@ async fn shutdown_signal() {
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../recipes/resilience.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../recipes/middleware_debugging.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 

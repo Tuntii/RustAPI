@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-b5c3cc6f.js";
+            window.path_to_searchindex_js = "../searchindex-a3b74072.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-4e658006.js"></script>
+        <script src="../toc-c37e91f3.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -259,36 +259,32 @@ struct AppState {
 }
 <span class="boring">}</span></code></pre>
 <h2 id="benchmarking"><a class="header" href="#benchmarking">Benchmarking</a></h2>
-<p>Performance is not a guessing game. Below are results from our internal benchmarks on reference hardware.</p>
-<h3 id="comparative-benchmarks"><a class="header" href="#comparative-benchmarks">Comparative Benchmarks</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Framework</th><th>Requests/sec</th><th>Latency (avg)</th><th>Memory</th></tr>
-</thead>
-<tbody>
-<tr><td><strong>RustAPI</strong></td><td><strong>~185,000</strong></td><td><strong>~0.54ms</strong></td><td><strong>~8MB</strong></td></tr>
-<tr><td><strong>RustAPI + core-simd-json</strong></td><td><strong>~220,000</strong></td><td><strong>~0.45ms</strong></td><td><strong>~8MB</strong></td></tr>
-<tr><td>Actix-web</td><td>~178,000</td><td>~0.56ms</td><td>~10MB</td></tr>
-<tr><td>Axum</td><td>~165,000</td><td>~0.61ms</td><td>~12MB</td></tr>
-<tr><td>Rocket</td><td>~95,000</td><td>~1.05ms</td><td>~15MB</td></tr>
-<tr><td>FastAPI (Python)</td><td>~12,000</td><td>~8.3ms</td><td>~45MB</td></tr>
-</tbody>
-</table>
-</div>
-<details>
-<summary>🔬 Test Configuration</summary>
+<p>Performance is not a guessing game, but it is very easy to misquote stale numbers.</p>
+<p>For that reason, RustAPI keeps its benchmark publication policy and canonical claims in <a href="../../../PERFORMANCE_BENCHMARKS.html"><code>docs/PERFORMANCE_BENCHMARKS.md</code></a>.</p>
+<p>Use that document for:</p>
 <ul>
-<li><strong>Hardware</strong>: Intel i7-12700K, 32GB RAM</li>
-<li><strong>Method</strong>: <code>wrk -t12 -c400 -d30s http://127.0.0.1:8080/api/users</code></li>
-<li><strong>Scenario</strong>: JSON serialization of 100 user objects</li>
-<li><strong>Build</strong>: <code>cargo build --release</code></li>
+<li>the current benchmark source of truth,</li>
+<li>publication rules for new public claims,</li>
+<li>local and CI benchmark entry points, and</li>
+<li>historical-vs-current benchmark context.</li>
 </ul>
-<p>Results may vary based on hardware and workload. Run your own benchmarks:</p>
-<pre><code class="language-bash">cd benches
-./run_benchmarks.ps1
+<h3 id="run-benchmarks-locally"><a class="header" href="#run-benchmarks-locally">Run benchmarks locally</a></h3>
+<p>From the repository root:</p>
+<pre><code class="language-powershell">./scripts/bench.ps1
 </code></pre>
-</details>
+<p>That currently executes <code>cargo bench --workspace</code>.</p>
+<h3 id="ci-benchmark-path"><a class="header" href="#ci-benchmark-path">CI benchmark path</a></h3>
+<p>The repository also includes <code>.github/workflows/benchmark.yml</code>, which runs the same benchmark command and uploads the raw benchmark output as an artifact.</p>
+<h3 id="what-to-publish-with-benchmark-results"><a class="header" href="#what-to-publish-with-benchmark-results">What to publish with benchmark results</a></h3>
+<p>Whenever you publish new numbers, include at minimum:</p>
+<ul>
+<li>hardware and OS</li>
+<li>Rust toolchain version</li>
+<li>command and workload description</li>
+<li>enabled feature flags</li>
+<li>throughput plus $p50$, $p95$, and $p99$ latency</li>
+<li>memory usage when available</li>
+</ul>
 <h3 id="why-so-fast"><a class="header" href="#why-so-fast">Why So Fast?</a></h3>
 <div class="table-wrapper">
 <table>

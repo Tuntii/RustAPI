@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-b5c3cc6f.js";
+            window.path_to_searchindex_js = "../searchindex-a3b74072.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-4e658006.js"></script>
+        <script src="../toc-c37e91f3.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -182,7 +182,7 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="deployment"><a class="header" href="#deployment">Deployment</a></h1>
-<p>RustAPI includes built-in deployment tooling to helping you ship your applications to production with ease. The <code>cargo rustapi deploy</code> command generates configuration files and provides instructions for various platforms.</p>
+<p>RustAPI includes built-in deployment tooling to help you ship applications, but production deployment is more than generating a config file. This guide covers both the CLI-assisted setup and the operational recommendations for health, readiness, liveness, and rollout safety.</p>
 <h2 id="supported-platforms"><a class="header" href="#supported-platforms">Supported Platforms</a></h2>
 <ul>
 <li><strong>Docker</strong>: Generate a production-ready <code>Dockerfile</code>.</li>
@@ -233,6 +233,95 @@
 <blockquote>
 <p><strong>Note</strong>: Shuttle.rs requires some code changes to use their runtime macro <code>#[shuttle_runtime::main]</code>. The deploy command generates the configuration but you will need to adjust your <code>main.rs</code> to use their attributes if you are deploying to their platform.</p>
 </blockquote>
+<h2 id="probe-recommendations"><a class="header" href="#probe-recommendations">Probe recommendations</a></h2>
+<p>RustAPI has first-class built-in probe endpoints:</p>
+<ul>
+<li><code>/health</code> — aggregate service and dependency health</li>
+<li><code>/ready</code> — readiness for load balancers and orchestrators</li>
+<li><code>/live</code> — lightweight liveness probe</li>
+</ul>
+<p>You can enable them via:</p>
+<ul>
+<li><code>.health_endpoints()</code></li>
+<li><code>.with_health_check(...)</code></li>
+<li><code>.production_defaults("service-name")</code></li>
+</ul>
+<h3 id="recommended-semantics"><a class="header" href="#recommended-semantics">Recommended semantics</a></h3>
+<ul>
+<li><strong>Liveness</strong> should answer: “Is the process alive?”</li>
+<li><strong>Readiness</strong> should answer: “Should this instance receive traffic right now?”</li>
+<li><strong>Health</strong> should answer: “What is the aggregate state of the service and its dependencies?”</li>
+</ul>
+<p>In practice:</p>
+<ul>
+<li>let <code>/live</code> stay lightweight,</li>
+<li>let <code>/ready</code> fail when critical dependencies fail,</li>
+<li>let <code>/ready</code> also fail during drain/shutdown windows,</li>
+<li>use <code>/health</code> for richer diagnostics and dashboards.</li>
+</ul>
+<h2 id="kubernetes-example"><a class="header" href="#kubernetes-example">Kubernetes example</a></h2>
+<pre><code class="language-yaml">livenessProbe:
+	httpGet:
+		path: /live
+		port: 8080
+	initialDelaySeconds: 5
+	periodSeconds: 10
+
+readinessProbe:
+	httpGet:
+		path: /ready
+		port: 8080
+	initialDelaySeconds: 2
+	periodSeconds: 5
+
+startupProbe:
+	httpGet:
+		path: /live
+		port: 8080
+	failureThreshold: 30
+	periodSeconds: 2
+</code></pre>
+<p>If you customize the paths with <code>HealthEndpointConfig</code>, update the probe configuration to match.</p>
+<h2 id="load-balancer-and-ingress-guidance"><a class="header" href="#load-balancer-and-ingress-guidance">Load balancer and ingress guidance</a></h2>
+<ul>
+<li>Point traffic-routing health checks at <code>/ready</code>, not <code>/live</code>.</li>
+<li>Keep the drain window consistent with your termination grace period.</li>
+<li>Avoid routing public traffic to admin/debug surfaces such as <code>/status</code>, <code>/docs</code>, or <code>/admin/insights</code> unless intentionally protected.</li>
+<li>If auth middleware protects most routes, make sure probe routes remain reachable.</li>
+</ul>
+<h2 id="minimal-production-bootstrap"><a class="header" href="#minimal-production-bootstrap">Minimal production bootstrap</a></h2>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+
+#[rustapi_rs::main]
+async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+		RustApi::auto()
+				.production_defaults("users-api")
+				.run("0.0.0.0:8080")
+				.await
+}</code></pre>
+<p>If you need dependency-aware readiness, supply your own <code>HealthCheck</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+
+let health = HealthCheckBuilder::new(true)
+		.add_check("database", || async {
+				HealthStatus::healthy()
+		})
+		.build();
+
+let app = RustApi::new().with_health_check(health);
+<span class="boring">}</span></code></pre>
+<h2 id="rollout-checklist"><a class="header" href="#rollout-checklist">Rollout checklist</a></h2>
+<p>Before sending real traffic:</p>
+<ol>
+<li><code>GET /live</code> returns <code>200</code>.</li>
+<li><code>GET /ready</code> returns <code>200</code>.</li>
+<li><code>GET /health</code> shows expected dependency state.</li>
+<li>At least one business endpoint succeeds.</li>
+<li>Logs and traces contain request IDs and service metadata.</li>
+</ol>
+<p>For the full operational list, see <a href="../../../PRODUCTION_CHECKLIST.html">Production Checklist</a>.</p>
 
                     </main>
 

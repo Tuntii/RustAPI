@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-b5c3cc6f.js";
+            window.path_to_searchindex_js = "../searchindex-a3b74072.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-4e658006.js"></script>
+        <script src="../toc-c37e91f3.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -182,18 +182,18 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="oauth2-client-integration"><a class="header" href="#oauth2-client-integration">OAuth2 Client Integration</a></h1>
-<p>Integrating with third-party identity providers (like Google, GitHub) is a common requirement for modern applications. RustAPI provides a streamlined OAuth2 client in <code>rustapi-extras</code>.</p>
+<p>Integrating with third-party identity providers (like Google, GitHub) is a common requirement for modern applications. RustAPI exposes the OAuth2 client through the public <code>rustapi-rs</code> facade.</p>
 <p>This recipe demonstrates how to set up an OAuth2 flow.</p>
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
-<p>Add <code>rustapi-extras</code> with the <code>oauth2-client</code> feature to your <code>Cargo.toml</code>.</p>
+<p>Enable the canonical facade feature in <code>rustapi-rs</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-extras = { version = "0.1.335", features = ["oauth2-client"] }
+rustapi-rs = { version = "0.1.389", features = ["extras-oauth2-client"] }
 </code></pre>
 <h2 id="basic-configuration"><a class="header" href="#basic-configuration">Basic Configuration</a></h2>
 <p>You can use presets for popular providers or configure a custom one.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use rustapi_extras::oauth2::{OAuth2Config, Provider};
+</span>use rustapi_rs::extras::oauth2::OAuth2Config;
 
 // Using a preset (Google)
 let config = OAuth2Config::google(
@@ -203,12 +203,12 @@ let config = OAuth2Config::google(
 );
 
 // Or custom provider
-let custom_config = OAuth2Config::new(
-    "client-id",
-    "client-secret",
+let custom_config = OAuth2Config::custom(
     "https://auth.example.com/authorize",
     "https://auth.example.com/token",
-    "https://your-app.com/callback"
+    "client-id",
+    "client-secret",
+    "https://your-app.com/callback",
 );
 <span class="boring">}</span></code></pre>
 <h2 id="the-authorization-flow"><a class="header" href="#the-authorization-flow">The Authorization Flow</a></h2>
@@ -220,16 +220,17 @@ let custom_config = OAuth2Config::new(
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use rustapi_rs::prelude::*;
-use rustapi_extras::oauth2::{OAuth2Client, OAuth2Config};
+use rustapi_rs::extras::oauth2::OAuth2Client;
+use rustapi_rs::extras::session::Session;
 
-async fn login(client: State&lt;OAuth2Client&gt;) -&gt; impl IntoResponse {
+async fn login(State(client): State&lt;OAuth2Client&gt;, session: Session) -&gt; Redirect {
     // Generate URL with CSRF protection and PKCE
     let auth_request = client.authorization_url();
 
-    // Store CSRF token and PKCE verifier in session (or cookie)
-    // In a real app, use secure, http-only cookies
-    // session.insert("csrf_token", auth_request.csrf_state.secret());
-    // session.insert("pkce_verifier", auth_request.pkce_verifier.secret());
+    session.insert("oauth_state", auth_request.csrf_state.as_str()).await.expect("state should serialize");
+    if let Some(pkce) = auth_request.pkce_verifier.as_ref() {
+        session.insert("oauth_pkce_verifier", pkce.verifier()).await.expect("pkce should serialize");
+    }
 
     // Redirect user
     Redirect::to(auth_request.url().as_str())
@@ -239,7 +240,8 @@ async fn login(client: State&lt;OAuth2Client&gt;) -&gt; impl IntoResponse {
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use rustapi_rs::prelude::*;
-use rustapi_extras::oauth2::{OAuth2Client, OAuth2Config};
+use rustapi_rs::extras::oauth2::{CsrfState, OAuth2Client, PkceVerifier};
+use rustapi_rs::extras::session::Session;
 
 #[derive(Deserialize)]
 struct AuthCallback {
@@ -248,16 +250,25 @@ struct AuthCallback {
 }
 
 async fn callback(
+    State(client): State&lt;OAuth2Client&gt;,
+    session: Session,
     Query(params): Query&lt;AuthCallback&gt;,
-    client: State&lt;OAuth2Client&gt;,
-    // session: Session, // Assuming session management
 ) -&gt; impl IntoResponse {
-    // 1. Verify CSRF token from session matches params.state
+    let expected_state = session.get::&lt;String&gt;("oauth_state").await.unwrap().unwrap();
+    client
+        .validate_state(&amp;CsrfState::new(expected_state), &amp;params.state)
+        .expect("invalid oauth state");
+
+    let pkce_verifier = session
+        .get::&lt;String&gt;("oauth_pkce_verifier")
+        .await
+        .unwrap()
+        .map(PkceVerifier::new);
 
     // 2. Exchange code for token
-    // let pkce_verifier = session.get("pkce_verifier").unwrap();
+    let token_response = client.exchange_code(&amp;params.code, pkce_verifier.as_ref()).await;
 
-    match client.exchange_code(&amp;params.code, /* pkce_verifier */).await {
+    match token_response {
         Ok(token_response) =&gt; {
             // Success! You have an access token.
             // Use it to fetch user info or store it.
@@ -293,19 +304,21 @@ async fn get_user_info(token: &amp;str) -&gt; Result&lt;serde_json::Value, reqwe
 <ol>
 <li><strong>State Parameter</strong>: Always use the <code>state</code> parameter to prevent CSRF attacks. RustAPI’s <code>authorization_url()</code> generates one for you.</li>
 <li><strong>PKCE</strong>: Proof Key for Code Exchange (PKCE) is recommended for all OAuth2 flows, especially for public clients. RustAPI handles PKCE generation.</li>
+<li><strong>Session Storage</strong>: Store the CSRF state and PKCE verifier in a secure server-side session. Pair <code>extras-oauth2-client</code> with <code>extras-session</code> for the cleanest flow.</li>
 <li><strong>Secure Storage</strong>: Store tokens securely (e.g., encrypted cookies, secure session storage). Never expose access tokens in URLs or logs.</li>
 <li><strong>HTTPS</strong>: OAuth2 requires HTTPS callbacks in production.</li>
 </ol>
+<p>For a production-focused checklist, redirect strategy, and session integration guidance, continue with <a href="oidc_oauth2_production.html">OIDC &amp; OAuth2 in Production</a>.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../recipes/jwt_auth.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../recipes/session_auth.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="../recipes/csrf_protection.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../recipes/oidc_oauth2_production.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -315,11 +328,11 @@ async fn get_user_info(token: &amp;str) -&gt; Result&lt;serde_json::Value, reqwe
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../recipes/jwt_auth.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../recipes/session_auth.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="../recipes/csrf_protection.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../recipes/oidc_oauth2_production.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>

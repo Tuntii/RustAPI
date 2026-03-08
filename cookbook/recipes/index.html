@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-b5c3cc6f.js";
+            window.path_to_searchindex_js = "../searchindex-a3b74072.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-4e658006.js"></script>
+        <script src="../toc-c37e91f3.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -196,18 +196,27 @@
 <li><a href="pagination.html">Pagination &amp; HATEOAS</a></li>
 <li><a href="openapi_refs.html">OpenAPI &amp; Schemas</a></li>
 <li><a href="jwt_auth.html">JWT Authentication</a></li>
+<li><a href="session_auth.html">Session-Based Authentication</a></li>
+<li><a href="oauth2_client.html">OAuth2 Client</a></li>
+<li><a href="oidc_oauth2_production.html">OIDC &amp; OAuth2 in Production</a></li>
 <li><a href="csrf_protection.html">CSRF Protection</a></li>
 <li><a href="db_integration.html">Database Integration</a></li>
 <li><a href="testing.html">Testing &amp; Mocking</a></li>
 <li><a href="file_uploads.html">File Uploads</a></li>
 <li><a href="background_jobs.html">Background Jobs</a></li>
+<li><a href="custom_extractors.html">Custom Extractors</a></li>
 <li><a href="custom_middleware.html">Custom Middleware</a></li>
+<li><a href="error_handling.html">Error Handling</a></li>
+<li><a href="axum_migration.html">Axum -&gt; RustAPI Migration</a></li>
+<li><a href="actix_migration.html">Actix-web -&gt; RustAPI Migration</a></li>
 <li><a href="websockets.html">Real-time Chat</a></li>
 <li><a href="server_side_rendering.html">Server-Side Rendering (SSR)</a></li>
 <li><a href="ai_integration.html">AI Integration (TOON)</a></li>
 <li><a href="high_performance.html">Production Tuning</a></li>
 <li><a href="compression.html">Response Compression</a></li>
 <li><a href="resilience.html">Resilience Patterns</a></li>
+<li><a href="observability.html">Observability</a></li>
+<li><a href="middleware_debugging.html">Middleware Debugging</a></li>
 <li><a href="graceful_shutdown.html">Graceful Shutdown</a></li>
 <li><a href="replay.html">Time-Travel Debugging (Replay)</a></li>
 <li><a href="deployment.html">Deployment</a></li>
@@ -220,7 +229,7 @@
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../crates/cargo_rustapi.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../reference/macro_attributes.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
@@ -234,7 +243,7 @@
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../crates/cargo_rustapi.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../reference/macro_attributes.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 

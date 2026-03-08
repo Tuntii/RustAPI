@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-b5c3cc6f.js";
+            window.path_to_searchindex_js = "searchindex-a3b74072.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-4e658006.js"></script>
+        <script src="toc-c37e91f3.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -724,36 +724,32 @@ struct AppState {
 }
 <span class="boring">}</span></code></pre>
 <h2 id="benchmarking"><a class="header" href="#benchmarking">Benchmarking</a></h2>
-<p>Performance is not a guessing game. Below are results from our internal benchmarks on reference hardware.</p>
-<h3 id="comparative-benchmarks"><a class="header" href="#comparative-benchmarks">Comparative Benchmarks</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Framework</th><th>Requests/sec</th><th>Latency (avg)</th><th>Memory</th></tr>
-</thead>
-<tbody>
-<tr><td><strong>RustAPI</strong></td><td><strong>~185,000</strong></td><td><strong>~0.54ms</strong></td><td><strong>~8MB</strong></td></tr>
-<tr><td><strong>RustAPI + core-simd-json</strong></td><td><strong>~220,000</strong></td><td><strong>~0.45ms</strong></td><td><strong>~8MB</strong></td></tr>
-<tr><td>Actix-web</td><td>~178,000</td><td>~0.56ms</td><td>~10MB</td></tr>
-<tr><td>Axum</td><td>~165,000</td><td>~0.61ms</td><td>~12MB</td></tr>
-<tr><td>Rocket</td><td>~95,000</td><td>~1.05ms</td><td>~15MB</td></tr>
-<tr><td>FastAPI (Python)</td><td>~12,000</td><td>~8.3ms</td><td>~45MB</td></tr>
-</tbody>
-</table>
-</div>
-<details>
-<summary>🔬 Test Configuration</summary>
+<p>Performance is not a guessing game, but it is very easy to misquote stale numbers.</p>
+<p>For that reason, RustAPI keeps its benchmark publication policy and canonical claims in <a href="../../PERFORMANCE_BENCHMARKS.html"><code>docs/PERFORMANCE_BENCHMARKS.md</code></a>.</p>
+<p>Use that document for:</p>
 <ul>
-<li><strong>Hardware</strong>: Intel i7-12700K, 32GB RAM</li>
-<li><strong>Method</strong>: <code>wrk -t12 -c400 -d30s http://127.0.0.1:8080/api/users</code></li>
-<li><strong>Scenario</strong>: JSON serialization of 100 user objects</li>
-<li><strong>Build</strong>: <code>cargo build --release</code></li>
+<li>the current benchmark source of truth,</li>
+<li>publication rules for new public claims,</li>
+<li>local and CI benchmark entry points, and</li>
+<li>historical-vs-current benchmark context.</li>
 </ul>
-<p>Results may vary based on hardware and workload. Run your own benchmarks:</p>
-<pre><code class="language-bash">cd benches
-./run_benchmarks.ps1
+<h3 id="run-benchmarks-locally"><a class="header" href="#run-benchmarks-locally">Run benchmarks locally</a></h3>
+<p>From the repository root:</p>
+<pre><code class="language-powershell">./scripts/bench.ps1
 </code></pre>
-</details>
+<p>That currently executes <code>cargo bench --workspace</code>.</p>
+<h3 id="ci-benchmark-path"><a class="header" href="#ci-benchmark-path">CI benchmark path</a></h3>
+<p>The repository also includes <code>.github/workflows/benchmark.yml</code>, which runs the same benchmark command and uploads the raw benchmark output as an artifact.</p>
+<h3 id="what-to-publish-with-benchmark-results"><a class="header" href="#what-to-publish-with-benchmark-results">What to publish with benchmark results</a></h3>
+<p>Whenever you publish new numbers, include at minimum:</p>
+<ul>
+<li>hardware and OS</li>
+<li>Rust toolchain version</li>
+<li>command and workload description</li>
+<li>enabled feature flags</li>
+<li>throughput plus $p50$, $p95$, and $p99$ latency</li>
+<li>memory usage when available</li>
+</ul>
 <h3 id="why-so-fast"><a class="header" href="#why-so-fast">Why So Fast?</a></h3>
 <div class="table-wrapper">
 <table>
@@ -1492,7 +1488,7 @@ let app = RustApi::new()
 <h2 id="debugging"><a class="header" href="#debugging">Debugging</a></h2>
 <h3 id="time-travel-debugging-replay"><a class="header" href="#time-travel-debugging-replay">Time-Travel Debugging (Replay)</a></h3>
 <p>The <code>replay</code> feature allows you to record production traffic and replay it locally for debugging.</p>
-<p>See the <a href="#replay-time-travel-debugging">Time-Travel Debugging Recipe</a> for full details.</p>
+<p>See the <a href="#replay-workflow-time-travel-debugging">Time-Travel Debugging Recipe</a> for full details.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use rustapi_extras::replay::{ReplayLayer, ReplayConfig, InMemoryReplayStore};
@@ -1857,6 +1853,247 @@ server.expect(RequestMatcher::new(Method::POST, "/charge"))
 <li>Separation of <code>Error</code> types.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="reference"><a class="header" href="#reference">Reference</a></h1>
+<p>Focused references for APIs, metadata, and syntax details that are easier to scan than long-form guides.</p>
+<ul>
+<li><a href="#macro-attribute-reference">Macro Attribute Reference</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="macro-attribute-reference"><a class="header" href="#macro-attribute-reference">Macro Attribute Reference</a></h1>
+<p>RustAPI’s attribute macros do two jobs at once:</p>
+<ol>
+<li>they register routes and schemas at compile time, and</li>
+<li>they enrich the generated OpenAPI operation metadata.</li>
+</ol>
+<p>This reference focuses on the route metadata attributes most users need first:</p>
+<ul>
+<li><code>#[tag(...)]</code></li>
+<li><code>#[summary(...)]</code></li>
+<li><code>#[description(...)]</code></li>
+<li><code>#[param(...)]</code></li>
+<li><code>#[errors(...)]</code></li>
+</ul>
+<blockquote>
+<p><strong>Golden rule:</strong> In user code, use the facade macros from <code>rustapi-rs</code>, e.g. <code>#[rustapi_rs::get(...)]</code>, not internal crates.</p>
+</blockquote>
+<h2 id="typical-usage"><a class="header" href="#typical-usage">Typical usage</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+
+#[derive(Serialize, Schema)]
+struct User {
+    id: String,
+    name: String,
+}
+
+#[rustapi_rs::get("/users/{id}")]
+#[rustapi_rs::tag("Users")]
+#[rustapi_rs::summary("Get user by ID")]
+#[rustapi_rs::description("Returns a single user by its unique identifier.")]
+#[rustapi_rs::param(id, schema = "uuid")]
+#[rustapi_rs::errors(404 = "User not found", 403 = "Forbidden")]
+async fn get_user(Path(_id): Path&lt;String&gt;) -&gt; Result&lt;Json&lt;User&gt;&gt; {
+    Ok(Json(User {
+        id: "550e8400-e29b-41d4-a716-446655440000".into(),
+        name: "Alice".into(),
+    }))
+}
+<span class="boring">}</span></code></pre>
+<h2 id="rustapi_rstag-1"><a class="header" href="#rustapi_rstag-1"><code>#[rustapi_rs::tag("...")]</code></a></h2>
+<p>Groups the operation under one or more OpenAPI tags.</p>
+<h3 id="syntax"><a class="header" href="#syntax">Syntax</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi_rs::tag("Users")]
+<span class="boring">}</span></code></pre>
+<h3 id="effect"><a class="header" href="#effect">Effect</a></h3>
+<ul>
+<li>Appends the tag value to the operation’s <code>tags</code> list.</li>
+<li>Useful for Swagger grouping and cookbook-style API organization.</li>
+</ul>
+<h3 id="example"><a class="header" href="#example">Example</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi_rs::get("/items")]
+#[rustapi_rs::tag("Items")]
+async fn list_items() -&gt; &amp;'static str {
+    "ok"
+}
+<span class="boring">}</span></code></pre>
+<h2 id="rustapi_rssummary"><a class="header" href="#rustapi_rssummary"><code>#[rustapi_rs::summary("...")]</code></a></h2>
+<p>Sets the short OpenAPI summary for the operation.</p>
+<h3 id="syntax-1"><a class="header" href="#syntax-1">Syntax</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi_rs::summary("List all items")]
+<span class="boring">}</span></code></pre>
+<h3 id="effect-1"><a class="header" href="#effect-1">Effect</a></h3>
+<ul>
+<li>Fills the operation summary shown in Swagger and generated specs.</li>
+<li>Best used as a short, action-oriented sentence.</li>
+</ul>
+<h3 id="example-1"><a class="header" href="#example-1">Example</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi_rs::get("/items")]
+#[rustapi_rs::summary("List all items")]
+async fn list_items() -&gt; &amp;'static str {
+    "ok"
+}
+<span class="boring">}</span></code></pre>
+<h2 id="rustapi_rsdescription"><a class="header" href="#rustapi_rsdescription"><code>#[rustapi_rs::description("...")]</code></a></h2>
+<p>Sets the longer description for the operation.</p>
+<h3 id="syntax-2"><a class="header" href="#syntax-2">Syntax</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi_rs::description("Returns all active items. Supports pagination.")]
+<span class="boring">}</span></code></pre>
+<h3 id="effect-2"><a class="header" href="#effect-2">Effect</a></h3>
+<ul>
+<li>Fills the operation description field.</li>
+<li>Good for behavior notes, pagination semantics, or auth requirements.</li>
+</ul>
+<h3 id="example-2"><a class="header" href="#example-2">Example</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi_rs::get("/items")]
+#[rustapi_rs::description("Returns active items only. Archived items are excluded.")]
+async fn list_items() -&gt; &amp;'static str {
+    "ok"
+}
+<span class="boring">}</span></code></pre>
+<h2 id="rustapi_rsparam-1"><a class="header" href="#rustapi_rsparam-1"><code>#[rustapi_rs::param(...)]</code></a></h2>
+<p>Overrides the OpenAPI schema type for a <strong>path parameter</strong>.</p>
+<p>This is useful when the auto-inferred type is not the schema shape you want to expose in docs.</p>
+<h3 id="supported-schema-types-1"><a class="header" href="#supported-schema-types-1">Supported schema types</a></h3>
+<ul>
+<li><code>"uuid"</code></li>
+<li><code>"integer"</code> or <code>"int"</code></li>
+<li><code>"string"</code></li>
+<li><code>"boolean"</code> or <code>"bool"</code></li>
+<li><code>"number"</code></li>
+</ul>
+<h3 id="supported-forms"><a class="header" href="#supported-forms">Supported forms</a></h3>
+<p>Form 1:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi_rs::param(id, schema = "uuid")]
+<span class="boring">}</span></code></pre>
+<p>Form 2:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi_rs::param(id = "uuid")]
+<span class="boring">}</span></code></pre>
+<h3 id="effect-3"><a class="header" href="#effect-3">Effect</a></h3>
+<ul>
+<li>Adds a custom path parameter schema override to the generated route metadata.</li>
+<li>Particularly useful for IDs that are represented as strings but should be documented with UUID semantics.</li>
+</ul>
+<h3 id="example-3"><a class="header" href="#example-3">Example</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi_rs::get("/orders/{order_id}")]
+#[rustapi_rs::param(order_id, schema = "uuid")]
+async fn get_order(Path(_order_id): Path&lt;String&gt;) -&gt; &amp;'static str {
+    "ok"
+}
+<span class="boring">}</span></code></pre>
+<h3 id="notes"><a class="header" href="#notes">Notes</a></h3>
+<ul>
+<li>This attribute is intended for <strong>path parameters</strong>.</li>
+<li>RustAPI already auto-detects path params from handler signatures; <code>#[param(...)]</code> is an override, not a requirement.</li>
+</ul>
+<h2 id="rustapi_rserrors"><a class="header" href="#rustapi_rserrors"><code>#[rustapi_rs::errors(...)]</code></a></h2>
+<p>Declares additional typed error responses for OpenAPI.</p>
+<h3 id="syntax-3"><a class="header" href="#syntax-3">Syntax</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi_rs::errors(404 = "User not found", 403 = "Forbidden")]
+<span class="boring">}</span></code></pre>
+<h3 id="effect-4"><a class="header" href="#effect-4">Effect</a></h3>
+<ul>
+<li>Adds those responses directly to the operation’s OpenAPI response map.</li>
+<li>Each declared response uses the standard <code>ErrorSchema</code> under <code>application/json</code>.</li>
+</ul>
+<h3 id="example-4"><a class="header" href="#example-4">Example</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi_rs::delete("/users/{id}")]
+#[rustapi_rs::errors(404 = "User not found")]
+async fn delete_user(Path(_id): Path&lt;i64&gt;) -&gt; Result&lt;()&gt; {
+    Ok(())
+}
+<span class="boring">}</span></code></pre>
+<h3 id="multiple-status-codes"><a class="header" href="#multiple-status-codes">Multiple status codes</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi_rs::post("/users")]
+#[rustapi_rs::errors(
+    400 = "Invalid input",
+    409 = "Email already exists",
+    422 = "Validation failed"
+)]
+async fn create_user(Json(_body): Json&lt;User&gt;) -&gt; Result&lt;Created&lt;User&gt;&gt; {
+<span class="boring">    todo!()
+</span>}
+<span class="boring">}</span></code></pre>
+<h2 id="interaction-with-route-macros"><a class="header" href="#interaction-with-route-macros">Interaction with route macros</a></h2>
+<p>These metadata attributes are consumed by the HTTP method macros such as:</p>
+<ul>
+<li><code>#[rustapi_rs::get(...)]</code></li>
+<li><code>#[rustapi_rs::post(...)]</code></li>
+<li><code>#[rustapi_rs::put(...)]</code></li>
+<li><code>#[rustapi_rs::patch(...)]</code></li>
+<li><code>#[rustapi_rs::delete(...)]</code></li>
+</ul>
+<p>The route macro gathers metadata from the other attributes and turns them into builder calls such as:</p>
+<ul>
+<li><code>.tag(...)</code></li>
+<li><code>.summary(...)</code></li>
+<li><code>.description(...)</code></li>
+<li><code>.param(...)</code></li>
+<li><code>.error_response(...)</code></li>
+</ul>
+<h2 id="recommended-ordering"><a class="header" href="#recommended-ordering">Recommended ordering</a></h2>
+<p>Keep the route macro first, then place metadata attributes below it:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi_rs::get("/users/{id}")]
+#[rustapi_rs::tag("Users")]
+#[rustapi_rs::summary("Get user")]
+#[rustapi_rs::param(id, schema = "uuid")]
+#[rustapi_rs::errors(404 = "User not found")]
+async fn get_user(Path(_id): Path&lt;String&gt;) -&gt; Result&lt;&amp;'static str&gt; {
+    Ok("ok")
+}
+<span class="boring">}</span></code></pre>
+<p>That matches the style already used across the repository and keeps metadata easy to scan.</p>
+<h2 id="what-these-macros-do-not-do"><a class="header" href="#what-these-macros-do-not-do">What these macros do <strong>not</strong> do</a></h2>
+<ul>
+<li>They do <strong>not</strong> replace <code>#[derive(Schema)]</code> for your DTOs.</li>
+<li>They do <strong>not</strong> change runtime authorization or validation behavior by themselves.</li>
+<li><code>#[errors(...)]</code> enriches OpenAPI docs; your handler still needs to return the appropriate <code>ApiError</code> or equivalent response at runtime.</li>
+</ul>
+<h2 id="common-mistakes"><a class="header" href="#common-mistakes">Common mistakes</a></h2>
+<h3 id="forgetting-schema-on-requestresponse-types"><a class="header" href="#forgetting-schema-on-requestresponse-types">Forgetting <code>Schema</code> on request/response types</a></h3>
+<p>The metadata attributes do not remove the need for <code>#[derive(Schema)]</code> on DTOs used in OpenAPI-aware handlers.</p>
+<h3 id="using-internal-crates-directly"><a class="header" href="#using-internal-crates-directly">Using internal crates directly</a></h3>
+<p>Prefer:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi_rs::tag("Users")]
+<span class="boring">}</span></code></pre>
+<p>not imports from <code>rustapi-macros</code> or <code>rustapi-core</code> in user-facing examples.</p>
+<h3 id="assuming-errors-changes-runtime-logic"><a class="header" href="#assuming-errors-changes-runtime-logic">Assuming <code>#[errors(...)]</code> changes runtime logic</a></h3>
+<p>It documents the operation. Your code still needs to actually return <code>404</code>, <code>409</code>, etc.</p>
+<h2 id="related-reading"><a class="header" href="#related-reading">Related reading</a></h2>
+<ul>
+<li><a href="../../../crates/rustapi-openapi/README.html">rustapi-openapi README</a></li>
+<li><a href="#error-handling-4">Error Handling recipe</a></li>
+<li><a href="#custom-extractors-1">Custom Extractors recipe</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="recipes"><a class="header" href="#recipes">Recipes</a></h1>
 <p>Recipes are practical, focused guides to solving specific problems with RustAPI.</p>
 <h2 id="format"><a class="header" href="#format">Format</a></h2>
@@ -1872,20 +2109,29 @@ server.expect(RequestMatcher::new(Method::POST, "/charge"))
 <li><a href="#pagination--hateoas">Pagination &amp; HATEOAS</a></li>
 <li><a href="#openapi-schemas--references">OpenAPI &amp; Schemas</a></li>
 <li><a href="#jwt-authentication">JWT Authentication</a></li>
+<li><a href="#session-based-authentication">Session-Based Authentication</a></li>
+<li><a href="#oauth2-client-integration">OAuth2 Client</a></li>
+<li><a href="#oidc--oauth2-in-production">OIDC &amp; OAuth2 in Production</a></li>
 <li><a href="#csrf-protection-1">CSRF Protection</a></li>
 <li><a href="#database-integration">Database Integration</a></li>
 <li><a href="#testing-strategies">Testing &amp; Mocking</a></li>
 <li><a href="#file-uploads">File Uploads</a></li>
 <li><a href="#background-jobs">Background Jobs</a></li>
+<li><a href="#custom-extractors-1">Custom Extractors</a></li>
 <li><a href="#custom-middleware">Custom Middleware</a></li>
+<li><a href="#error-handling-4">Error Handling</a></li>
+<li><a href="#axum---rustapi-migration-guide">Axum -&gt; RustAPI Migration</a></li>
+<li><a href="#actix-web---rustapi-migration-guide">Actix-web -&gt; RustAPI Migration</a></li>
 <li><a href="#real-time-chat-websockets">Real-time Chat</a></li>
 <li><a href="#server-side-rendering-ssr">Server-Side Rendering (SSR)</a></li>
 <li><a href="#ai-integration">AI Integration (TOON)</a></li>
 <li><a href="#production-tuning">Production Tuning</a></li>
 <li><a href="#response-compression">Response Compression</a></li>
 <li><a href="#resilience-patterns">Resilience Patterns</a></li>
+<li><a href="#observability-1">Observability</a></li>
+<li><a href="#middleware-debugging">Middleware Debugging</a></li>
 <li><a href="#graceful-shutdown-1">Graceful Shutdown</a></li>
-<li><a href="#replay-time-travel-debugging">Time-Travel Debugging (Replay)</a></li>
+<li><a href="#replay-workflow-time-travel-debugging">Time-Travel Debugging (Replay)</a></li>
 <li><a href="#deployment">Deployment</a></li>
 <li><a href="#http3-quic-support">HTTP/3 (QUIC)</a></li>
 <li><a href="#grpc-integration">gRPC Integration</a></li>
@@ -2264,19 +2510,165 @@ async fn admin_only(AuthUser(claims): AuthUser&lt;Claims&gt;) -&gt; Result&lt;St
 </ol>
 <p>This separation allows you to have some public routes (where <code>JwtLayer</code> might just pass through) and some protected routes (where <code>AuthUser</code> enforces presence). Note that <code>JwtLayer</code> by default does <em>not</em> reject requests without tokens; it just doesn’t attach claims. The <em>extractor</em> does the rejection.</p>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="oauth2-client-integration"><a class="header" href="#oauth2-client-integration">OAuth2 Client Integration</a></h1>
-<p>Integrating with third-party identity providers (like Google, GitHub) is a common requirement for modern applications. RustAPI provides a streamlined OAuth2 client in <code>rustapi-extras</code>.</p>
-<p>This recipe demonstrates how to set up an OAuth2 flow.</p>
+<h1 id="session-based-authentication"><a class="header" href="#session-based-authentication">Session-Based Authentication</a></h1>
+<p>Cookie-backed session auth is the shortest path from “I need login/logout” to a production-shaped RustAPI service.</p>
+<p>This recipe shows how to:</p>
+<ul>
+<li>load a session from a cookie before your handler runs,</li>
+<li>read and mutate session data through the <code>Session</code> extractor,</li>
+<li>rotate the session ID on login / refresh,</li>
+<li>swap the store backend from memory to Redis without changing handler code.</li>
+</ul>
 <h2 id="prerequisites-1"><a class="header" href="#prerequisites-1">Prerequisites</a></h2>
-<p>Add <code>rustapi-extras</code> with the <code>oauth2-client</code> feature to your <code>Cargo.toml</code>.</p>
+<p>Enable the session feature on the public facade.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-extras = { version = "0.1.335", features = ["oauth2-client"] }
+rustapi-rs = { version = "0.1.389", features = ["extras-session"] }
+</code></pre>
+<p>If you want Redis-backed sessions, add the Redis backend feature too:</p>
+<pre><code class="language-toml">[dependencies]
+rustapi-rs = { version = "0.1.389", features = ["extras-session", "extras-session-redis"] }
+</code></pre>
+<h2 id="solution-2"><a class="header" href="#solution-2">Solution</a></h2>
+<p><code>rustapi-rs</code> now exposes the full session flow through the facade.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+use rustapi_rs::extras::session::{MemorySessionStore, Session, SessionConfig, SessionLayer};
+use std::time::Duration;
+
+#[derive(Debug, Deserialize, Schema)]
+struct LoginRequest {
+    user_id: String,
+}
+
+#[derive(Debug, Serialize, Schema)]
+struct SessionView {
+    authenticated: bool,
+    user_id: Option&lt;String&gt;,
+    refreshed: bool,
+    session_id: Option&lt;String&gt;,
+}
+
+async fn session_view(session: &amp;Session) -&gt; SessionView {
+    let user_id = session.get::&lt;String&gt;("user_id").await.ok().flatten();
+    let refreshed = session
+        .get::&lt;bool&gt;("refreshed")
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or(false);
+
+    SessionView {
+        authenticated: user_id.is_some(),
+        user_id,
+        refreshed,
+        session_id: session.id().await,
+    }
+}
+
+async fn login(session: Session, Json(payload): Json&lt;LoginRequest&gt;) -&gt; Json&lt;SessionView&gt; {
+    session.cycle_id().await;
+    session.insert("user_id", &amp;payload.user_id).await.expect("session insert");
+    session.insert("refreshed", false).await.expect("session insert");
+    Json(session_view(&amp;session).await)
+}
+
+async fn me(session: Session) -&gt; Json&lt;SessionView&gt; {
+    Json(session_view(&amp;session).await)
+}
+
+async fn refresh(session: Session) -&gt; Json&lt;SessionView&gt; {
+    if session.contains("user_id").await {
+        session.cycle_id().await;
+        session.insert("refreshed", true).await.expect("session insert");
+    }
+
+    Json(session_view(&amp;session).await)
+}
+
+async fn logout(session: Session) -&gt; NoContent {
+    session.destroy().await;
+    NoContent
+}
+
+let app = RustApi::new()
+    .layer(SessionLayer::new(
+        MemorySessionStore::new(),
+        SessionConfig::new()
+            .cookie_name("rustapi_auth")
+            .secure(false)
+            .ttl(Duration::from_secs(60 * 30)),
+    ))
+    .route("/auth/login", post(login))
+    .route("/auth/me", get(me))
+    .route("/auth/refresh", post(refresh))
+    .route("/auth/logout", post(logout));
+<span class="boring">}</span></code></pre>
+<p>A complete runnable version lives in <code>crates/rustapi-rs/examples/auth_api.rs</code>.</p>
+<h2 id="how-the-flow-works"><a class="header" href="#how-the-flow-works">How the flow works</a></h2>
+<ol>
+<li><code>SessionLayer</code> parses the incoming session cookie.</li>
+<li>The configured store loads the matching <code>SessionRecord</code>.</li>
+<li>The <code>Session</code> extractor gives handlers typed access to the record.</li>
+<li>Handler mutations are persisted after the response is produced.</li>
+<li>If the session was changed, the middleware emits a new <code>Set-Cookie</code> header.</li>
+<li><code>session.destroy().await</code> deletes the record and clears the cookie.</li>
+</ol>
+<p>That means your handlers stay focused on business logic while the middleware handles persistence and cookie management.</p>
+<h2 id="built-in-store-options"><a class="header" href="#built-in-store-options">Built-in store options</a></h2>
+<h3 id="in-memory-store"><a class="header" href="#in-memory-store">In-memory store</a></h3>
+<p>Use <code>MemorySessionStore</code> for tests, demos, and single-node deployments.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::extras::session::{MemorySessionStore, SessionConfig, SessionLayer};
+
+let layer = SessionLayer::new(
+    MemorySessionStore::new(),
+    SessionConfig::new(),
+);
+<span class="boring">}</span></code></pre>
+<h3 id="redis-backed-store"><a class="header" href="#redis-backed-store">Redis-backed store</a></h3>
+<p>Use <code>RedisSessionStore</code> when sessions must survive restarts or be shared across instances.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::extras::session::{RedisSessionStore, SessionConfig, SessionLayer};
+
+let store = RedisSessionStore::from_url(&amp;std::env::var("REDIS_URL")?)?
+    .key_prefix("rustapi:session:");
+
+let layer = SessionLayer::new(store, SessionConfig::new());
+<span class="boring">}</span></code></pre>
+<p>The handler API is identical. Only the store changes.</p>
+<h2 id="configuration-notes"><a class="header" href="#configuration-notes">Configuration notes</a></h2>
+<ul>
+<li>Keep <code>cookie_http_only = true</code> for session cookies.</li>
+<li>Use <code>secure(true)</code> in production so cookies are HTTPS-only.</li>
+<li>Use <code>same_site(SameSite::Lax)</code> or stricter unless your cross-site flow needs otherwise.</li>
+<li>Rotate the session ID on login and privilege changes with <code>session.cycle_id().await</code> to reduce session fixation risk.</li>
+<li>Prefer short TTLs plus rolling expiry for end-user sessions.</li>
+<li>Store only what you need in the session payload. Opaque IDs age better than giant identity blobs.</li>
+</ul>
+<h2 id="verification-1"><a class="header" href="#verification-1">Verification</a></h2>
+<p>Run the built-in session tests first:</p>
+<pre><code class="language-sh">cargo test -p rustapi-extras --features session
+</code></pre>
+<p>Then try the runnable example:</p>
+<pre><code class="language-sh">cargo run -p rustapi-rs --example auth_api --features extras-session
+</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="oauth2-client-integration"><a class="header" href="#oauth2-client-integration">OAuth2 Client Integration</a></h1>
+<p>Integrating with third-party identity providers (like Google, GitHub) is a common requirement for modern applications. RustAPI exposes the OAuth2 client through the public <code>rustapi-rs</code> facade.</p>
+<p>This recipe demonstrates how to set up an OAuth2 flow.</p>
+<h2 id="prerequisites-2"><a class="header" href="#prerequisites-2">Prerequisites</a></h2>
+<p>Enable the canonical facade feature in <code>rustapi-rs</code>.</p>
+<pre><code class="language-toml">[dependencies]
+rustapi-rs = { version = "0.1.389", features = ["extras-oauth2-client"] }
 </code></pre>
 <h2 id="basic-configuration"><a class="header" href="#basic-configuration">Basic Configuration</a></h2>
 <p>You can use presets for popular providers or configure a custom one.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use rustapi_extras::oauth2::{OAuth2Config, Provider};
+</span>use rustapi_rs::extras::oauth2::OAuth2Config;
 
 // Using a preset (Google)
 let config = OAuth2Config::google(
@@ -2286,12 +2678,12 @@ let config = OAuth2Config::google(
 );
 
 // Or custom provider
-let custom_config = OAuth2Config::new(
-    "client-id",
-    "client-secret",
+let custom_config = OAuth2Config::custom(
     "https://auth.example.com/authorize",
     "https://auth.example.com/token",
-    "https://your-app.com/callback"
+    "client-id",
+    "client-secret",
+    "https://your-app.com/callback",
 );
 <span class="boring">}</span></code></pre>
 <h2 id="the-authorization-flow"><a class="header" href="#the-authorization-flow">The Authorization Flow</a></h2>
@@ -2303,16 +2695,17 @@ let custom_config = OAuth2Config::new(
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use rustapi_rs::prelude::*;
-use rustapi_extras::oauth2::{OAuth2Client, OAuth2Config};
+use rustapi_rs::extras::oauth2::OAuth2Client;
+use rustapi_rs::extras::session::Session;
 
-async fn login(client: State&lt;OAuth2Client&gt;) -&gt; impl IntoResponse {
+async fn login(State(client): State&lt;OAuth2Client&gt;, session: Session) -&gt; Redirect {
     // Generate URL with CSRF protection and PKCE
     let auth_request = client.authorization_url();
 
-    // Store CSRF token and PKCE verifier in session (or cookie)
-    // In a real app, use secure, http-only cookies
-    // session.insert("csrf_token", auth_request.csrf_state.secret());
-    // session.insert("pkce_verifier", auth_request.pkce_verifier.secret());
+    session.insert("oauth_state", auth_request.csrf_state.as_str()).await.expect("state should serialize");
+    if let Some(pkce) = auth_request.pkce_verifier.as_ref() {
+        session.insert("oauth_pkce_verifier", pkce.verifier()).await.expect("pkce should serialize");
+    }
 
     // Redirect user
     Redirect::to(auth_request.url().as_str())
@@ -2322,7 +2715,8 @@ async fn login(client: State&lt;OAuth2Client&gt;) -&gt; impl IntoResponse {
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use rustapi_rs::prelude::*;
-use rustapi_extras::oauth2::{OAuth2Client, OAuth2Config};
+use rustapi_rs::extras::oauth2::{CsrfState, OAuth2Client, PkceVerifier};
+use rustapi_rs::extras::session::Session;
 
 #[derive(Deserialize)]
 struct AuthCallback {
@@ -2331,16 +2725,25 @@ struct AuthCallback {
 }
 
 async fn callback(
+    State(client): State&lt;OAuth2Client&gt;,
+    session: Session,
     Query(params): Query&lt;AuthCallback&gt;,
-    client: State&lt;OAuth2Client&gt;,
-    // session: Session, // Assuming session management
 ) -&gt; impl IntoResponse {
-    // 1. Verify CSRF token from session matches params.state
+    let expected_state = session.get::&lt;String&gt;("oauth_state").await.unwrap().unwrap();
+    client
+        .validate_state(&amp;CsrfState::new(expected_state), &amp;params.state)
+        .expect("invalid oauth state");
+
+    let pkce_verifier = session
+        .get::&lt;String&gt;("oauth_pkce_verifier")
+        .await
+        .unwrap()
+        .map(PkceVerifier::new);
 
     // 2. Exchange code for token
-    // let pkce_verifier = session.get("pkce_verifier").unwrap();
+    let token_response = client.exchange_code(&amp;params.code, pkce_verifier.as_ref()).await;
 
-    match client.exchange_code(&amp;params.code, /* pkce_verifier */).await {
+    match token_response {
         Ok(token_response) =&gt; {
             // Success! You have an access token.
             // Use it to fetch user info or store it.
@@ -2376,9 +2779,174 @@ async fn get_user_info(token: &amp;str) -&gt; Result&lt;serde_json::Value, reqwe
 <ol>
 <li><strong>State Parameter</strong>: Always use the <code>state</code> parameter to prevent CSRF attacks. RustAPI’s <code>authorization_url()</code> generates one for you.</li>
 <li><strong>PKCE</strong>: Proof Key for Code Exchange (PKCE) is recommended for all OAuth2 flows, especially for public clients. RustAPI handles PKCE generation.</li>
+<li><strong>Session Storage</strong>: Store the CSRF state and PKCE verifier in a secure server-side session. Pair <code>extras-oauth2-client</code> with <code>extras-session</code> for the cleanest flow.</li>
 <li><strong>Secure Storage</strong>: Store tokens securely (e.g., encrypted cookies, secure session storage). Never expose access tokens in URLs or logs.</li>
 <li><strong>HTTPS</strong>: OAuth2 requires HTTPS callbacks in production.</li>
 </ol>
+<p>For a production-focused checklist, redirect strategy, and session integration guidance, continue with <a href="#oidc--oauth2-in-production">OIDC &amp; OAuth2 in Production</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="oidc--oauth2-in-production"><a class="header" href="#oidc--oauth2-in-production">OIDC / OAuth2 in Production</a></h1>
+<p>This guide turns the basic OAuth2 client into a production-ready login flow.</p>
+<p>The short version:</p>
+<ul>
+<li>use <code>OAuth2Client</code> to generate the authorization URL,</li>
+<li>store CSRF state and PKCE verifier in a server-side session,</li>
+<li>verify <code>state</code> on callback,</li>
+<li>exchange the code for tokens,</li>
+<li>rotate the application session before marking the user as authenticated.</li>
+</ul>
+<h2 id="prerequisites-3"><a class="header" href="#prerequisites-3">Prerequisites</a></h2>
+<p>Enable both the OAuth2 client and session features on the public facade.</p>
+<pre><code class="language-toml">[dependencies]
+rustapi-rs = { version = "0.1.389", features = ["extras-oauth2-client", "extras-session"] }
+</code></pre>
+<h2 id="configure-the-provider"><a class="header" href="#configure-the-provider">Configure the provider</a></h2>
+<p>Use one of the provider presets when possible.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::extras::oauth2::{OAuth2Client, OAuth2Config};
+
+let config = OAuth2Config::google(
+    std::env::var("OAUTH_CLIENT_ID")?,
+    std::env::var("OAUTH_CLIENT_SECRET")?,
+    std::env::var("OAUTH_REDIRECT_URI")?,
+)
+.scope("openid")
+.scope("email")
+.scope("profile");
+
+let client = OAuth2Client::new(config);
+<span class="boring">}</span></code></pre>
+<p>For non-preset providers, use <code>OAuth2Config::custom(...)</code>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::extras::oauth2::OAuth2Config;
+
+let config = OAuth2Config::custom(
+    "https://id.example.com/oauth/authorize",
+    "https://id.example.com/oauth/token",
+    std::env::var("OAUTH_CLIENT_ID")?,
+    std::env::var("OAUTH_CLIENT_SECRET")?,
+    std::env::var("OAUTH_REDIRECT_URI")?,
+);
+<span class="boring">}</span></code></pre>
+<h2 id="authorization-redirect"><a class="header" href="#authorization-redirect">Authorization redirect</a></h2>
+<p>The authorization handler should generate the provider URL and persist the CSRF + PKCE data in the current session.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+use rustapi_rs::extras::oauth2::OAuth2Client;
+use rustapi_rs::extras::session::Session;
+
+async fn oauth_login(State(client): State&lt;OAuth2Client&gt;, session: Session) -&gt; Redirect {
+    let auth_request = client.authorization_url();
+
+    session
+        .insert("oauth_state", auth_request.csrf_state.as_str())
+        .await
+        .expect("state should serialize");
+
+    if let Some(pkce) = auth_request.pkce_verifier.as_ref() {
+        session
+            .insert("oauth_pkce_verifier", pkce.verifier())
+            .await
+            .expect("pkce verifier should serialize");
+    }
+
+    Redirect::to(auth_request.url())
+}
+<span class="boring">}</span></code></pre>
+<h2 id="callback-handling"><a class="header" href="#callback-handling">Callback handling</a></h2>
+<p>The callback handler validates the CSRF state, exchanges the code, and upgrades the application session.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+use rustapi_rs::extras::oauth2::{CsrfState, OAuth2Client, PkceVerifier};
+use rustapi_rs::extras::session::Session;
+
+#[derive(Debug, Deserialize, Schema)]
+struct OAuthCallback {
+    code: String,
+    state: String,
+}
+
+async fn oauth_callback(
+    State(client): State&lt;OAuth2Client&gt;,
+    session: Session,
+    Query(callback): Query&lt;OAuthCallback&gt;,
+) -&gt; Result&lt;Redirect&gt; {
+    let expected_state = session
+        .get::&lt;String&gt;("oauth_state")
+        .await?
+        .ok_or_else(|| ApiError::unauthorized("Missing OAuth state"))?;
+
+    client
+        .validate_state(&amp;CsrfState::new(expected_state), &amp;callback.state)
+        .map_err(|error| ApiError::unauthorized(error.to_string()))?;
+
+    let pkce_verifier = session
+        .get::&lt;String&gt;("oauth_pkce_verifier")
+        .await?
+        .map(PkceVerifier::new);
+
+    let tokens = client
+        .exchange_code(&amp;callback.code, pkce_verifier.as_ref())
+        .await
+        .map_err(|error| ApiError::unauthorized(error.to_string()))?;
+
+    session.cycle_id().await;
+    session.insert("user_id", "provider-subject-here").await?;
+    session.insert("refresh_token", tokens.refresh_token()).await?;
+    session.remove("oauth_state").await;
+    session.remove("oauth_pkce_verifier").await;
+
+    Ok(Redirect::to("/dashboard"))
+}
+<span class="boring">}</span></code></pre>
+<h2 id="recommended-production-shape"><a class="header" href="#recommended-production-shape">Recommended production shape</a></h2>
+<h3 id="session-strategy"><a class="header" href="#session-strategy">Session strategy</a></h3>
+<ul>
+<li>Keep provider state (<code>oauth_state</code>, PKCE verifier, post-login redirect path) in the session, not in query strings.</li>
+<li>Rotate the app session ID after a successful login with <code>session.cycle_id().await</code>.</li>
+<li>Prefer <code>RedisSessionStore</code> when multiple instances share login traffic.</li>
+<li>Clear bootstrap OAuth keys from the session after the callback succeeds or fails.</li>
+</ul>
+<h3 id="token-handling"><a class="header" href="#token-handling">Token handling</a></h3>
+<ul>
+<li>Do not log raw <code>access_token</code>, <code>refresh_token</code>, or <code>id_token</code> values.</li>
+<li>If you only need app authentication, store the provider subject and essential claims instead of the raw access token.</li>
+<li>If you must keep refresh tokens, treat them like secrets: server-side only, never in frontend-readable cookies.</li>
+<li>Call <code>refresh_token(...)</code> only from trusted backend paths and overwrite old refresh tokens if the provider rotates them.</li>
+</ul>
+<h3 id="provider-and-redirect-hygiene"><a class="header" href="#provider-and-redirect-hygiene">Provider and redirect hygiene</a></h3>
+<ul>
+<li>Use exact HTTPS redirect URIs in production.</li>
+<li>Request the minimum scopes you need.</li>
+<li>Pin timeouts explicitly via <code>OAuth2Config::timeout(...)</code> if your provider is slow.</li>
+<li>Prefer issuer/provider presets unless you fully control the custom identity server.</li>
+</ul>
+<h3 id="identity-verification"><a class="header" href="#identity-verification">Identity verification</a></h3>
+<ul>
+<li>OpenID Connect is more than “OAuth + vibes”. Validate the <code>id_token</code> with the provider’s JWKs before trusting identity claims.</li>
+<li>Use the provider <code>userinfo</code> endpoint only after you decide which claims are authoritative.</li>
+<li>Normalize external identities into your own application user model before starting long-lived sessions.</li>
+</ul>
+<h2 id="local-development"><a class="header" href="#local-development">Local development</a></h2>
+<p>For local work, keep session cookies developer-friendly while still matching production flow structure.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::extras::session::SessionConfig;
+
+let session_config = SessionConfig::new()
+    .cookie_name("rustapi_auth")
+    .secure(false);
+<span class="boring">}</span></code></pre>
+<p>That keeps the cookie usable over <code>http://127.0.0.1:3000</code> while preserving the same handler code.</p>
+<h2 id="see-also"><a class="header" href="#see-also">See also</a></h2>
+<ul>
+<li><a href="#oauth2-client-integration">OAuth2 Client</a></li>
+<li><a href="#session-based-authentication">Session-Based Authentication</a></li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="csrf-protection-1"><a class="header" href="#csrf-protection-1">CSRF Protection</a></h1>
 <p>Cross-Site Request Forgery (CSRF) protection for your RustAPI applications using the <strong>Double-Submit Cookie</strong> pattern.</p>
@@ -2611,7 +3179,7 @@ async fn test_csrf_protection() {
 </tbody>
 </table>
 </div>
-<h2 id="see-also"><a class="header" href="#see-also">See Also</a></h2>
+<h2 id="see-also-1"><a class="header" href="#see-also-1">See Also</a></h2>
 <ul>
 <li><a href="#jwt-authentication">JWT Authentication</a> - Token-based authentication</li>
 <li><a href="#security-headers">Security Headers</a> - Additional security layers</li>
@@ -2619,17 +3187,81 @@ async fn test_csrf_protection() {
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="database-integration"><a class="header" href="#database-integration">Database Integration</a></h1>
-<p>RustAPI is database-agnostic, but <strong>SQLx</strong> is the recommended driver due to its async-first design and compile-time query verification.</p>
-<p>This recipe shows how to integrate PostgreSQL/MySQL/SQLite using a global connection pool with best practices for production.</p>
+<p>RustAPI is database-agnostic, but <strong>SQLx</strong> is the recommended default for most RustAPI services because it is async-first, works naturally with <code>State</code>, and supports compile-time query verification.</p>
+<p>This recipe shows how to integrate PostgreSQL/MySQL/SQLite using a shared pool, how to choose between <strong>SQLx</strong>, <strong>Diesel</strong>, and <strong>SeaORM</strong>, how to think about migrations, and which pooling practices are safest in production.</p>
 <h2 id="dependencies-1"><a class="header" href="#dependencies-1">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["sqlx"] } # Enable SQLx error conversion
+rustapi-rs = { version = "0.1.335", features = ["extras-sqlx"] } # Canonical facade feature for SQLx error conversion
 sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "uuid"] }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 dotenvy = "0.15"
 </code></pre>
-<h2 id="1-setup-connection-pool"><a class="header" href="#1-setup-connection-pool">1. Setup Connection Pool</a></h2>
+<h2 id="1-choosing-sqlx-vs-diesel-vs-seaorm"><a class="header" href="#1-choosing-sqlx-vs-diesel-vs-seaorm">1. Choosing SQLx vs Diesel vs SeaORM</a></h2>
+<p>RustAPI does not force a single database stack. Pick the tool that matches your team’s trade-offs.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Stack</th><th>Best fit</th><th>Strengths</th><th>Watch-outs</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>SQLx</strong></td><td>Default choice for most APIs</td><td>async-first, raw SQL clarity, compile-time query checks, easy <code>State</code> integration</td><td>you write SQL yourself</td></tr>
+<tr><td><strong>Diesel</strong></td><td>teams that want schema-driven queries and strong compile-time modeling</td><td>mature ecosystem, strong query builder, great for heavily relational domains</td><td>core query execution is synchronous, so use a pool plus <code>spawn_blocking</code></td></tr>
+<tr><td><strong>SeaORM</strong></td><td>teams that want a higher-level async ORM</td><td>async API, entity-oriented modeling, less handwritten SQL</td><td>more abstraction, less direct control over SQL shape, no RustAPI-specific adapter layer</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="practical-recommendation"><a class="header" href="#practical-recommendation">Practical recommendation</a></h3>
+<ul>
+<li>Choose <strong>SQLx</strong> when you want the most direct, idiomatic fit with RustAPI.</li>
+<li>Choose <strong>Diesel</strong> when your team values its schema/query-builder style enough to accept synchronous query execution boundaries.</li>
+<li>Choose <strong>SeaORM</strong> when entity-first ergonomics matter more than writing SQL manually.</li>
+</ul>
+<p>If you are unsure, start with <strong>SQLx</strong>. It is the least surprising option for handler-first async services.</p>
+<h2 id="2-migration-strategy-guidance"><a class="header" href="#2-migration-strategy-guidance">2. Migration strategy guidance</a></h2>
+<p>Treat schema migrations as part of application delivery, not an afterthought.</p>
+<h3 id="recommended-strategy-by-stack"><a class="header" href="#recommended-strategy-by-stack">Recommended strategy by stack</a></h3>
+<ul>
+<li><strong>SQLx</strong>: keep migrations in a <code>migrations/</code> directory and apply them with <code>sqlx::migrate!()</code> at startup for local/dev workflows, or via a deployment step in CI/CD for production.</li>
+<li><strong>Diesel</strong>: use Diesel CLI migrations as the source of truth; keep application startup focused on serving traffic rather than performing long-running schema work.</li>
+<li><strong>SeaORM</strong>: use the SeaORM migration crate and run migrations as a separate deployment phase.</li>
+</ul>
+<h3 id="production-guidance"><a class="header" href="#production-guidance">Production guidance</a></h3>
+<ul>
+<li>Prefer <strong>forward-only</strong> migrations in normal delivery.</li>
+<li>Make destructive changes in <strong>multiple releases</strong> when possible (add column -&gt; dual write/read -&gt; remove old column later).</li>
+<li>Run migrations <strong>before</strong> routing production traffic to a new version when backward compatibility is not guaranteed.</li>
+<li>Keep app code tolerant of short-lived mixed-schema windows during rolling deploys.</li>
+<li>Seed data and schema changes should be separate concerns when possible.</li>
+</ul>
+<p>For many teams, the safest pattern is:</p>
+<ol>
+<li>apply migrations,</li>
+<li>verify readiness,</li>
+<li>shift traffic,</li>
+<li>clean up old schema in a later deploy.</li>
+</ol>
+<h2 id="3-connection-pooling-recommendations"><a class="header" href="#3-connection-pooling-recommendations">3. Connection pooling recommendations</a></h2>
+<p>No matter which stack you pick, the operational rule is the same: <strong>create the pool once at startup and share it through <code>State</code></strong>.</p>
+<p>Recommended defaults:</p>
+<ul>
+<li>keep one long-lived pool per database/service boundary</li>
+<li>never open a fresh connection per request</li>
+<li>size pool limits from the database server’s actual connection budget</li>
+<li>set <code>acquire_timeout</code> so overload fails fast instead of hanging forever</li>
+<li>use small but non-zero <code>min_connections</code> only when warm capacity matters</li>
+<li>keep transaction scopes short and never hold them across unrelated awaits</li>
+<li>if you have API workers plus job workers, budget pool capacity for both</li>
+</ul>
+<p>As a starting point for a single service instance:</p>
+<ul>
+<li><code>max_connections</code>: enough for peak concurrent DB work, but well below the database hard cap</li>
+<li><code>min_connections</code>: <code>0-5</code> depending on cold-start sensitivity</li>
+<li><code>acquire_timeout</code>: <code>2-5s</code></li>
+<li><code>idle_timeout</code>: a few minutes, unless your environment aggressively scales to zero</li>
+</ul>
+<p>If you use a synchronous driver such as Diesel, pool the connections and execute DB work with <code>tokio::task::spawn_blocking</code> so you do not block the async runtime.</p>
+<h2 id="4-setup-connection-pool"><a class="header" href="#4-setup-connection-pool">4. Setup Connection Pool</a></h2>
 <p>Create the pool once at startup and share it via <code>State</code>. Configure pool limits appropriately.</p>
 <pre class="playground"><code class="language-rust">use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
@@ -2670,7 +3302,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&g
         .run("0.0.0.0:3000")
         .await
 }</code></pre>
-<h2 id="2-using-the-database-in-handlers"><a class="header" href="#2-using-the-database-in-handlers">2. Using the Database in Handlers</a></h2>
+<h2 id="5-using-the-database-in-handlers"><a class="header" href="#5-using-the-database-in-handlers">5. Using the Database in Handlers</a></h2>
 <p>Extract the <code>State</code> to get access to the pool.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -2712,7 +3344,7 @@ async fn create_user(
     Ok((StatusCode::CREATED, Json(record)))
 }
 <span class="boring">}</span></code></pre>
-<h2 id="3-transactions"><a class="header" href="#3-transactions">3. Transactions</a></h2>
+<h2 id="6-transactions"><a class="header" href="#6-transactions">6. Transactions</a></h2>
 <p>For operations involving multiple queries, use a transaction to ensure atomicity.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -2760,7 +3392,7 @@ async fn create_user(
     Ok(StatusCode::OK)
 }
 <span class="boring">}</span></code></pre>
-<h2 id="4-integration-testing-with-testcontainers"><a class="header" href="#4-integration-testing-with-testcontainers">4. Integration Testing with TestContainers</a></h2>
+<h2 id="7-integration-testing-with-testcontainers"><a class="header" href="#7-integration-testing-with-testcontainers">7. Integration Testing with TestContainers</a></h2>
 <p>For testing, use <code>testcontainers</code> to spin up a real database instance. This ensures your queries are correct without mocking the database driver.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -2811,6 +3443,7 @@ mod tests {
 <li>Check Constraint Violation -&gt; 400 Bad Request</li>
 <li>Other errors -&gt; 500 Internal Server Error (masked in production)</li>
 </ul>
+<p>If you are using Diesel or SeaORM instead of SQLx, keep the same external error contract for handlers even though the internal database error types differ. Consistent HTTP error behavior matters more than which query builder paid the bills.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="testing-strategies"><a class="header" href="#testing-strategies">Testing Strategies</a></h1>
 <p>RustAPI provides robust tools for testing your application, ensuring reliability from unit tests to full integration scenarios.</p>
@@ -3220,9 +3853,158 @@ queue.enqueue_opts::&lt;WelcomeEmailJob&gt;(
 rustapi-jobs = { version = "0.1", features = ["redis"] }
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="custom-extractors-1"><a class="header" href="#custom-extractors-1">Custom Extractors</a></h1>
+<p>Custom extractors let you move repetitive request parsing out of handlers and into reusable, typed building blocks.</p>
+<p>Use them when a handler keeps repeating logic like:</p>
+<ul>
+<li>reading a required header,</li>
+<li>validating a tenant or region identifier,</li>
+<li>parsing a plain-text or binary body,</li>
+<li>loading middleware-injected context from request extensions.</li>
+</ul>
+<h2 id="problem-1"><a class="header" href="#problem-1">Problem</a></h2>
+<p>Inline parsing works for one endpoint, but quickly becomes noisy when multiple handlers repeat the same header/body checks.</p>
+<h2 id="solution-3"><a class="header" href="#solution-3">Solution</a></h2>
+<p>RustAPI exposes two traits for custom extraction:</p>
+<ul>
+<li><code>FromRequestParts</code> for headers, path params, query params, extensions, and state</li>
+<li><code>FromRequest</code> for extractors that must consume the request body</li>
+</ul>
+<p>If the extractor does <strong>not</strong> need the body, prefer <code>FromRequestParts</code>.</p>
+<h3 id="example-1-header-backed-tenant-extractor"><a class="header" href="#example-1-header-backed-tenant-extractor">Example 1: Header-backed tenant extractor</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+
+#[derive(Debug, Clone)]
+struct TenantId(String);
+
+impl TenantId {
+    fn as_str(&amp;self) -&gt; &amp;str {
+        &amp;self.0
+    }
+}
+
+impl FromRequestParts for TenantId {
+    fn from_request_parts(req: &amp;Request) -&gt; Result&lt;Self&gt; {
+        let header = HeaderValue::extract(req, "x-tenant-id")
+            .map_err(|_| ApiError::bad_request("Missing x-tenant-id header"))?;
+
+        let tenant = header.value().trim();
+        if tenant.is_empty() {
+            return Err(ApiError::bad_request("x-tenant-id cannot be empty"));
+        }
+
+        Ok(TenantId(tenant.to_string()))
+    }
+}
+
+#[derive(Serialize, Schema)]
+struct ProjectList {
+    tenant: String,
+    items: Vec&lt;String&gt;,
+}
+
+#[rustapi_rs::get("/projects")]
+async fn list_projects(tenant: TenantId) -&gt; Json&lt;ProjectList&gt; {
+    Json(ProjectList {
+        tenant: tenant.as_str().to_string(),
+        items: vec!["alpha".into(), "beta".into()],
+    })
+}
+<span class="boring">}</span></code></pre>
+<h3 id="example-2-plain-text-body-extractor"><a class="header" href="#example-2-plain-text-body-extractor">Example 2: Plain-text body extractor</a></h3>
+<p>When you need to consume the request body yourself, implement <code>FromRequest</code> instead.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+
+#[derive(Debug)]
+struct PlainTextBody(String);
+
+impl PlainTextBody {
+    fn into_inner(self) -&gt; String {
+        self.0
+    }
+}
+
+impl FromRequest for PlainTextBody {
+    async fn from_request(req: &amp;mut Request) -&gt; Result&lt;Self&gt; {
+        req.load_body().await?;
+
+        let body = req
+            .take_body()
+            .ok_or_else(|| ApiError::internal("Body already consumed"))?;
+
+        let text = String::from_utf8(body.to_vec())
+            .map_err(|_| ApiError::bad_request("Request body must be valid UTF-8"))?;
+
+        Ok(PlainTextBody(text))
+    }
+}
+
+#[derive(Serialize, Schema)]
+struct EchoResponse {
+    content: String,
+}
+
+#[rustapi_rs::post("/echo-text")]
+async fn echo_text(body: PlainTextBody) -&gt; Json&lt;EchoResponse&gt; {
+    Json(EchoResponse {
+        content: body.into_inner(),
+    })
+}
+<span class="boring">}</span></code></pre>
+<h2 id="discussion-1"><a class="header" href="#discussion-1">Discussion</a></h2>
+<h3 id="pick-the-right-trait"><a class="header" href="#pick-the-right-trait">Pick the right trait</a></h3>
+<p>Use <code>FromRequestParts</code> when you only need request metadata:</p>
+<ul>
+<li>headers,</li>
+<li>query string,</li>
+<li>path parameters,</li>
+<li>request extensions,</li>
+<li>shared state.</li>
+</ul>
+<p>Use <code>FromRequest</code> only when you must consume the body.</p>
+<h3 id="body-consuming-extractors-still-must-come-last"><a class="header" href="#body-consuming-extractors-still-must-come-last">Body-consuming extractors still must come last</a></h3>
+<p>This rule applies to your custom body extractors too.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>async fn create_note(
+    State(app): State&lt;AppState&gt;,
+    tenant: TenantId,
+    body: PlainTextBody, // body-consuming extractor goes last
+) -&gt; Result&lt;Json&lt;NoteResponse&gt;&gt; {
+<span class="boring">    let _ = (&amp;app, tenant, body);
+</span><span class="boring">    todo!()
+</span>}
+<span class="boring">}</span></code></pre>
+<h3 id="middleware--extractors-fit-together-nicely"><a class="header" href="#middleware--extractors-fit-together-nicely">Middleware + extractors fit together nicely</a></h3>
+<p>If middleware inserts typed data into request extensions, a custom extractor can read it back using the same <code>FromRequestParts</code> pattern. That keeps handlers clean and avoids repeated extension lookups.</p>
+<h3 id="error-style"><a class="header" href="#error-style">Error style</a></h3>
+<p>Return <code>ApiError</code> from your extractor when extraction fails. That keeps rejection behavior consistent with built-in extractors.</p>
+<h2 id="testing"><a class="header" href="#testing">Testing</a></h2>
+<p>Quick manual checks:</p>
+<pre><code class="language-bash">curl -i http://127.0.0.1:8080/projects
+curl -i -H "x-tenant-id: acme" http://127.0.0.1:8080/projects
+curl -i -X POST http://127.0.0.1:8080/echo-text -H "content-type: text/plain" --data "hello"
+</code></pre>
+<p>Expected outcomes:</p>
+<ul>
+<li>missing <code>x-tenant-id</code> returns <code>400</code>,</li>
+<li>valid header returns a JSON payload containing the tenant,</li>
+<li>plain-text echo returns the posted content as JSON.</li>
+</ul>
+<h2 id="related-reading-1"><a class="header" href="#related-reading-1">Related reading</a></h2>
+<ul>
+<li><a href="#handlers--extractors">Handlers &amp; Extractors</a></li>
+<li><a href="#troubleshooting-common-gotchas">Troubleshooting</a></li>
+<li><a href="#jwt-authentication">JWT Authentication</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="custom-middleware"><a class="header" href="#custom-middleware">Custom Middleware</a></h1>
 <p><strong>Problem</strong>: You need to execute code before or after every request (e.g., logging, authentication, metrics) or modify the response.</p>
-<h2 id="solution-2"><a class="header" href="#solution-2">Solution</a></h2>
+<h2 id="solution-4"><a class="header" href="#solution-4">Solution</a></h2>
 <p>In RustAPI, the idiomatic way to implement custom middleware is by implementing the <code>MiddlewareLayer</code> trait. This trait provides a safe, asynchronous interface for inspecting and modifying requests and responses.</p>
 <h3 id="the-middlewarelayer-trait"><a class="header" href="#the-middlewarelayer-trait">The <code>MiddlewareLayer</code> Trait</a></h3>
 <p>The trait is defined in <code>rustapi_core::middleware</code>:</p>
@@ -3344,10 +4126,878 @@ parts.headers.insert("X-Custom-Header", "Value".parse().unwrap());
 Response::from_parts(parts, body)
 <span class="boring">}</span></code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="error-handling-4"><a class="header" href="#error-handling-4">Error Handling</a></h1>
+<p>RustAPI ships with a structured <code>ApiError</code> type and a consistent wire format for error responses. The trick is not just returning errors, but returning the <strong>right</strong> error to the client while keeping internal details out of production responses.</p>
+<h2 id="problem-2"><a class="header" href="#problem-2">Problem</a></h2>
+<p>Without a clear error strategy, handlers tend to mix:</p>
+<ul>
+<li>business errors,</li>
+<li>validation errors,</li>
+<li>infrastructure errors, and</li>
+<li>internal debugging details.</li>
+</ul>
+<p>That usually leads to noisy handlers and accidental leakage of sensitive information.</p>
+<h2 id="solution-5"><a class="header" href="#solution-5">Solution</a></h2>
+<p>Use <code>ApiError</code> at the HTTP boundary and convert your domain/application errors into it.</p>
+<h3 id="basic-handler-pattern"><a class="header" href="#basic-handler-pattern">Basic handler pattern</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+
+#[derive(Serialize, Schema)]
+struct UserDto {
+    id: u64,
+    email: String,
+}
+
+#[rustapi_rs::get("/users/{id}")]
+async fn get_user(Path(id): Path&lt;u64&gt;) -&gt; Result&lt;Json&lt;UserDto&gt;&gt; {
+    if id == 0 {
+        return Err(ApiError::bad_request("id must be greater than zero"));
+    }
+
+    let user = find_user(id)
+        .await?
+        .ok_or_else(|| ApiError::not_found(format!("User {} not found", id)))?;
+
+    Ok(Json(user))
+}
+
+async fn find_user(_id: u64) -&gt; Result&lt;Option&lt;UserDto&gt;&gt; {
+    Ok(None)
+}
+<span class="boring">}</span></code></pre>
+<h3 id="mapping-application-errors-into-apierror"><a class="header" href="#mapping-application-errors-into-apierror">Mapping application errors into <code>ApiError</code></a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+
+#[derive(Debug)]
+enum AppError {
+    UserNotFound(u64),
+    DuplicateEmail,
+    Storage(std::io::Error),
+}
+
+impl From&lt;AppError&gt; for ApiError {
+    fn from(err: AppError) -&gt; Self {
+        match err {
+            AppError::UserNotFound(id) =&gt; {
+                ApiError::not_found(format!("User {} not found", id))
+            }
+            AppError::DuplicateEmail =&gt; {
+                ApiError::conflict("A user with that email already exists")
+            }
+            AppError::Storage(source) =&gt; {
+                ApiError::internal("Storage error").with_internal(source.to_string())
+            }
+        }
+    }
+}
+
+#[derive(Serialize, Schema)]
+struct UserDto {
+    id: u64,
+    email: String,
+}
+
+#[rustapi_rs::get("/users/{id}")]
+async fn get_user(Path(id): Path&lt;u64&gt;) -&gt; Result&lt;Json&lt;UserDto&gt;&gt; {
+    let user = load_user(id).await?;
+    Ok(Json(user))
+}
+
+async fn load_user(id: u64) -&gt; std::result::Result&lt;UserDto, AppError&gt; {
+    if id == 42 {
+        return Err(AppError::UserNotFound(id));
+    }
+
+    Ok(UserDto {
+        id,
+        email: "demo@example.com".into(),
+    })
+}
+<span class="boring">}</span></code></pre>
+<h3 id="validation-errors-are-already-normalized"><a class="header" href="#validation-errors-are-already-normalized">Validation errors are already normalized</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+
+#[derive(Deserialize, Validate, Schema)]
+struct CreateUser {
+    #[validate(email)]
+    email: String,
+    #[validate(length(min = 8))]
+    password: String,
+}
+
+#[rustapi_rs::post("/users")]
+async fn create_user(ValidatedJson(body): ValidatedJson&lt;CreateUser&gt;) -&gt; Result&lt;StatusCode&gt; {
+    let _ = body;
+    Ok(StatusCode::CREATED)
+}
+<span class="boring">}</span></code></pre>
+<p>If validation fails, RustAPI returns <code>422 Unprocessable Entity</code> automatically.</p>
+<h2 id="error-response-shape"><a class="header" href="#error-response-shape">Error response shape</a></h2>
+<p>RustAPI serializes errors as JSON like this:</p>
+<pre><code class="language-json">{
+  "error": {
+    "type": "not_found",
+    "message": "User 42 not found"
+  },
+  "error_id": "err_a1b2c3d4e5f6..."
+}
+</code></pre>
+<p>Validation errors add <code>fields</code>:</p>
+<pre><code class="language-json">{
+  "error": {
+    "type": "validation_error",
+    "message": "Request validation failed",
+    "fields": [
+      {
+        "field": "email",
+        "code": "email",
+        "message": "must be a valid email"
+      }
+    ]
+  },
+  "error_id": "err_a1b2c3d4e5f6..."
+}
+</code></pre>
+<h2 id="discussion-2"><a class="header" href="#discussion-2">Discussion</a></h2>
+<h3 id="use-4xx-for-client-facing-corrections"><a class="header" href="#use-4xx-for-client-facing-corrections">Use 4xx for client-facing corrections</a></h3>
+<p>Good candidates for direct client messages:</p>
+<ul>
+<li><code>bad_request</code></li>
+<li><code>unauthorized</code></li>
+<li><code>forbidden</code></li>
+<li><code>not_found</code></li>
+<li><code>conflict</code></li>
+<li>validation failures</li>
+</ul>
+<h3 id="use-5xx-for-internal-failures"><a class="header" href="#use-5xx-for-internal-failures">Use 5xx for internal failures</a></h3>
+<p>For infrastructure or unexpected failures, prefer <code>ApiError::internal(...)</code> and attach private details with <code>.with_internal(...)</code>.</p>
+<p>That gives operators useful logs without sending those internals to clients.</p>
+<h3 id="production-masking"><a class="header" href="#production-masking">Production masking</a></h3>
+<p>When <code>RUSTAPI_ENV=production</code>, server-side error messages are masked automatically.</p>
+<p>Example:</p>
+<ul>
+<li>development 500 message: <code>Storage error</code></li>
+<li>production 500 message: <code>An internal error occurred</code></li>
+</ul>
+<p>Validation field details still remain visible.</p>
+<h3 id="error-correlation"><a class="header" href="#error-correlation">Error correlation</a></h3>
+<p>Every response includes an <code>error_id</code>. Use it to correlate:</p>
+<ul>
+<li>client reports,</li>
+<li>server logs,</li>
+<li>trace/span data,</li>
+<li>audit or replay workflows.</li>
+</ul>
+<h3 id="sqlx-integration"><a class="header" href="#sqlx-integration">SQLx integration</a></h3>
+<p>When the SQLx feature is enabled, <code>sqlx::Error</code> converts into <code>ApiError</code> automatically. That means <code>?</code> works naturally in many handlers while still mapping common database failures to sensible HTTP responses.</p>
+<h2 id="testing-1"><a class="header" href="#testing-1">Testing</a></h2>
+<p>Manual checks:</p>
+<pre><code class="language-bash">curl -i http://127.0.0.1:8080/users/0
+curl -i http://127.0.0.1:8080/users/42
+curl -i -X POST http://127.0.0.1:8080/users -H "content-type: application/json" --data "{\"email\":\"bad\",\"password\":\"123\"}"
+</code></pre>
+<p>What to verify:</p>
+<ul>
+<li><code>400</code> returns a <code>bad_request</code> error body</li>
+<li><code>404</code> returns a <code>not_found</code> error body</li>
+<li><code>422</code> returns <code>fields</code> entries</li>
+<li>every error payload contains <code>error_id</code></li>
+</ul>
+<h2 id="related-reading-2"><a class="header" href="#related-reading-2">Related reading</a></h2>
+<ul>
+<li><a href="../../GETTING_STARTED.html#error-handling">Getting Started</a></li>
+<li><a href="#database-integration">Database Integration</a></li>
+<li><a href="#troubleshooting-common-gotchas">Troubleshooting</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="axum---rustapi-migration-guide"><a class="header" href="#axum---rustapi-migration-guide">Axum -&gt; RustAPI Migration Guide</a></h1>
+<p>If you already know Axum, RustAPI will feel familiar in the right places and pleasantly less repetitive in a few others.</p>
+<p>This guide focuses on the migration path for the most common Axum patterns:</p>
+<ul>
+<li>handlers and extractors</li>
+<li>app state</li>
+<li>route registration</li>
+<li>middleware</li>
+<li>testing</li>
+<li>OpenAPI/documentation</li>
+</ul>
+<h2 id="what-stays-familiar"><a class="header" href="#what-stays-familiar">What stays familiar</a></h2>
+<p>The good news first: most everyday handler code barely changes.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Axum concept</th><th>RustAPI equivalent</th><th>Notes</th></tr>
+</thead>
+<tbody>
+<tr><td><code>State&lt;T&gt;</code></td><td><code>State&lt;T&gt;</code></td><td>same mental model</td></tr>
+<tr><td><code>Path&lt;T&gt;</code></td><td><code>Path&lt;T&gt;</code></td><td>same purpose</td></tr>
+<tr><td><code>Query&lt;T&gt;</code></td><td><code>Query&lt;T&gt;</code></td><td>same purpose</td></tr>
+<tr><td><code>Json&lt;T&gt;</code></td><td><code>Json&lt;T&gt;</code></td><td>same purpose</td></tr>
+<tr><td><code>Router::route()</code></td><td><code>RustApi::route()</code></td><td>similar registration flow</td></tr>
+<tr><td>tower layers</td><td><code>.layer(...)</code></td><td>middleware stack support</td></tr>
+<tr><td>integration testing with service/router</td><td><code>TestClient</code></td><td>in-memory, ergonomic</td></tr>
+</tbody>
+</table>
+</div>
+<p>The biggest differences are:</p>
+<ol>
+<li>RustAPI encourages using <code>rustapi-rs</code> as a stable facade.</li>
+<li>RustAPI can auto-discover macro-annotated routes with <code>RustApi::auto()</code>.</li>
+<li>OpenAPI support is built directly into the framework flow.</li>
+</ol>
+<h2 id="1-imports-switch-to-the-facade"><a class="header" href="#1-imports-switch-to-the-facade">1. Imports: switch to the facade</a></h2>
+<p>In Axum projects, imports are often spread across <code>axum</code>, <code>tower</code>, and OpenAPI add-ons.</p>
+<p>In RustAPI, start from the facade:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+<span class="boring">}</span></code></pre>
+<p>That keeps your application code pinned to the public API surface instead of internal crates.</p>
+<h2 id="2-basic-handlers-migrate-almost-directly"><a class="header" href="#2-basic-handlers-migrate-almost-directly">2. Basic handlers migrate almost directly</a></h2>
+<h3 id="axum"><a class="header" href="#axum">Axum</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use axum::{extract::Path, Json};
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize)]
+struct User {
+    id: i64,
+    name: String,
+}
+
+async fn get_user(Path(id): Path&lt;i64&gt;) -&gt; Json&lt;User&gt; {
+    Json(User {
+        id,
+        name: "Alice".into(),
+    })
+}
+<span class="boring">}</span></code></pre>
+<h3 id="rustapi"><a class="header" href="#rustapi">RustAPI</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+
+#[derive(Serialize, Schema)]
+struct User {
+    id: i64,
+    name: String,
+}
+
+#[rustapi_rs::get("/users/{id}")]
+async fn get_user(Path(id): Path&lt;i64&gt;) -&gt; Json&lt;User&gt; {
+    Json(User {
+        id,
+        name: "Alice".into(),
+    })
+}
+<span class="boring">}</span></code></pre>
+<h3 id="migration-note"><a class="header" href="#migration-note">Migration note</a></h3>
+<ul>
+<li>The extractor shape is essentially the same.</li>
+<li>Add <code>Schema</code> when you want the type represented in generated OpenAPI docs.</li>
+<li>RustAPI route macros use <code>"/users/{id}"</code> path syntax.</li>
+</ul>
+<h2 id="3-app-bootstrap-router---rustapi"><a class="header" href="#3-app-bootstrap-router---rustapi">3. App bootstrap: <code>Router</code> -&gt; <code>RustApi</code></a></h2>
+<h3 id="axum-1"><a class="header" href="#axum-1">Axum</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use axum::{routing::get, Router};
+
+let app = Router::new().route("/users/:id", get(get_user));
+<span class="boring">}</span></code></pre>
+<h3 id="rustapi-1"><a class="header" href="#rustapi-1">RustAPI</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+
+let app = RustApi::new().route("/users/{id}", get(get_user));
+<span class="boring">}</span></code></pre>
+<h3 id="migration-note-1"><a class="header" href="#migration-note-1">Migration note</a></h3>
+<ul>
+<li>The conceptual shape is the same.</li>
+<li>Path parameters use <code>{id}</code> instead of <code>:id</code>.</li>
+<li>If you annotate handlers with route macros, you can often skip manual registration and use <code>RustApi::auto()</code>.</li>
+</ul>
+<h2 id="4-auto-registration-can-replace-manual-route-wiring"><a class="header" href="#4-auto-registration-can-replace-manual-route-wiring">4. Auto-registration can replace manual route wiring</a></h2>
+<p>This is one of the biggest quality-of-life upgrades when moving from Axum.</p>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+
+#[rustapi_rs::get("/health")]
+async fn health() -&gt; &amp;'static str {
+    "ok"
+}
+
+#[rustapi_rs::get("/users/{id}")]
+async fn get_user(Path(id): Path&lt;i64&gt;) -&gt; Json&lt;i64&gt; {
+    Json(id)
+}
+
+#[rustapi_rs::main]
+async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    RustApi::auto().run("127.0.0.1:8080").await
+}</code></pre>
+<p>If your Axum app has a lot of repetitive <code>Router::new().route(...).route(...).route(...)</code> setup, this is where some boilerplate quietly disappears into the floorboards.</p>
+<h2 id="5-state-injection-is-very-similar"><a class="header" href="#5-state-injection-is-very-similar">5. State injection is very similar</a></h2>
+<h3 id="axum-2"><a class="header" href="#axum-2">Axum</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use axum::{extract::State, routing::get, Router};
+use std::sync::Arc;
+
+#[derive(Clone)]
+struct AppState {
+    db: Arc&lt;String&gt;,
+}
+
+async fn users(State(state): State&lt;AppState&gt;) -&gt; String {
+    state.db.to_string()
+}
+
+let app = Router::new().route("/users", get(users)).with_state(AppState {
+    db: Arc::new("db".into()),
+});
+<span class="boring">}</span></code></pre>
+<h3 id="rustapi-2"><a class="header" href="#rustapi-2">RustAPI</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+use std::sync::Arc;
+
+#[derive(Clone)]
+struct AppState {
+    db: Arc&lt;String&gt;,
+}
+
+#[rustapi_rs::get("/users")]
+async fn users(State(state): State&lt;AppState&gt;) -&gt; String {
+    state.db.to_string()
+}
+
+let app = RustApi::new()
+    .state(AppState {
+        db: Arc::new("db".into()),
+    })
+    .route("/users", get(users));
+<span class="boring">}</span></code></pre>
+<h3 id="migration-note-2"><a class="header" href="#migration-note-2">Migration note</a></h3>
+<ul>
+<li>Keep your state <code>Clone + Send + Sync</code>.</li>
+<li>The usual Axum pattern of storing cheap-to-clone <code>Arc&lt;_&gt;</code> fields still applies nicely.</li>
+</ul>
+<h2 id="6-extractor-migration-map"><a class="header" href="#6-extractor-migration-map">6. Extractor migration map</a></h2>
+<p>For common endpoint code, the mapping is straightforward.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Axum</th><th>RustAPI</th><th>Notes</th></tr>
+</thead>
+<tbody>
+<tr><td><code>State&lt;T&gt;</code></td><td><code>State&lt;T&gt;</code></td><td>same pattern</td></tr>
+<tr><td><code>Path&lt;T&gt;</code></td><td><code>Path&lt;T&gt;</code></td><td>same pattern</td></tr>
+<tr><td><code>Query&lt;T&gt;</code></td><td><code>Query&lt;T&gt;</code></td><td>same pattern</td></tr>
+<tr><td><code>Json&lt;T&gt;</code></td><td><code>Json&lt;T&gt;</code></td><td>same pattern</td></tr>
+<tr><td>custom <code>FromRequestParts</code></td><td>custom <code>FromRequestParts</code></td><td>same idea for non-body extraction</td></tr>
+<tr><td>custom <code>FromRequest</code></td><td>custom <code>FromRequest</code></td><td>use for body-consuming extractors</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="important-rustapi-rule"><a class="header" href="#important-rustapi-rule">Important RustAPI rule</a></h3>
+<p>Body-consuming extractors such as <code>Json&lt;T&gt;</code>, <code>Body</code>, <code>ValidatedJson&lt;T&gt;</code>, and <code>Multipart</code> must be the <strong>last</strong> handler parameter.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi_rs::post("/users/{id}")]
+async fn update_user(
+    State(_state): State&lt;AppState&gt;,
+    Path(_id): Path&lt;i64&gt;,
+    Json(_body): Json&lt;User&gt;,
+) -&gt; Result&lt;()&gt; {
+    Ok(())
+}
+<span class="boring">}</span></code></pre>
+<h2 id="7-middleware-tower-mindset-rustapi-entry-point"><a class="header" href="#7-middleware-tower-mindset-rustapi-entry-point">7. Middleware: tower mindset, RustAPI entry point</a></h2>
+<p>If you are coming from Axum middleware, the main mental model still fits: request goes in, response comes out, layers wrap handlers.</p>
+<p>Apply middleware with:</p>
+<pre><code class="language-rust ignore">RustApi::new()
+    .layer(SimpleLogger)
+    .route("/users", get(users));</code></pre>
+<h3 id="migration-note-3"><a class="header" href="#migration-note-3">Migration note</a></h3>
+<ul>
+<li>The middleware shape is not a drop-in copy of Axum’s tower APIs.</li>
+<li>For simple request/response transformations, prefer RustAPI interceptors when they are sufficient; they are lighter than a full middleware layer.</li>
+<li>For a dedicated middleware walkthrough, see <a href="#custom-middleware">Custom Middleware</a>.</li>
+</ul>
+<h2 id="8-error-handling-becomes-more-uniform"><a class="header" href="#8-error-handling-becomes-more-uniform">8. Error handling becomes more uniform</a></h2>
+<p>Axum applications often build custom response tuples or custom error enums. That still works conceptually, but RustAPI leans toward <code>ApiError</code> for the common cases.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+
+#[rustapi_rs::get("/users/{id}")]
+#[rustapi_rs::errors(404 = "User not found")]
+async fn get_user(Path(id): Path&lt;i64&gt;) -&gt; Result&lt;Json&lt;User&gt;&gt; {
+    if id == 0 {
+        return Err(ApiError::not_found("User not found"));
+    }
+
+    Ok(Json(User {
+        id,
+        name: "Alice".into(),
+    }))
+}
+<span class="boring">}</span></code></pre>
+<h3 id="migration-note-4"><a class="header" href="#migration-note-4">Migration note</a></h3>
+<ul>
+<li><code>#[errors(...)]</code> documents the OpenAPI surface.</li>
+<li>Your handler still needs to return the actual runtime error.</li>
+<li>In production, RustAPI masks internal 5xx details automatically.</li>
+</ul>
+<h2 id="9-openapi-is-no-longer-a-side-quest"><a class="header" href="#9-openapi-is-no-longer-a-side-quest">9. OpenAPI is no longer a side quest</a></h2>
+<p>In Axum, OpenAPI commonly arrives through extra libraries and extra setup.</p>
+<p>In RustAPI, it is part of the main story:</p>
+<ul>
+<li>derive <code>Schema</code> for DTOs</li>
+<li>annotate handlers with <code>#[get]</code>, <code>#[post]</code>, etc.</li>
+<li>optionally add <code>#[tag]</code>, <code>#[summary]</code>, <code>#[description]</code>, <code>#[param]</code>, and <code>#[errors]</code></li>
+<li>serve docs automatically through the app flow</li>
+</ul>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Serialize, Schema)]
+struct User {
+    id: i64,
+    name: String,
+}
+
+#[rustapi_rs::get("/users/{id}")]
+#[rustapi_rs::tag("Users")]
+#[rustapi_rs::summary("Get user by ID")]
+#[rustapi_rs::errors(404 = "User not found")]
+async fn get_user(Path(id): Path&lt;i64&gt;) -&gt; Result&lt;Json&lt;User&gt;&gt; {
+    Ok(Json(User {
+        id,
+        name: "Alice".into(),
+    }))
+}
+<span class="boring">}</span></code></pre>
+<p>If you are migrating from Axum plus a third-party OpenAPI stack, consolidating those concerns in one framework usually makes the codebase easier to explain to Future You™.</p>
+<h2 id="10-testing-migration-service-tests---testclient"><a class="header" href="#10-testing-migration-service-tests---testclient">10. Testing migration: service tests -&gt; <code>TestClient</code></a></h2>
+<h3 id="rustapi-test-style"><a class="header" href="#rustapi-test-style">RustAPI test style</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+use rustapi_testing::TestClient;
+
+#[rustapi_rs::get("/hello")]
+async fn hello() -&gt; &amp;'static str {
+    "hello"
+}
+
+#[tokio::test]
+async fn test_hello() {
+    let app = RustApi::new().route("/hello", get(hello));
+    let client = TestClient::new(app);
+
+    let response = client.get("/hello").send().await;
+
+    assert_eq!(response.status(), 200);
+}
+<span class="boring">}</span></code></pre>
+<h3 id="migration-note-5"><a class="header" href="#migration-note-5">Migration note</a></h3>
+<ul>
+<li><code>TestClient</code> exercises the app in memory, without binding a socket.</li>
+<li>This is a good destination for many Axum integration tests that currently go through a service stack manually.</li>
+</ul>
+<h2 id="11-practical-migration-checklist"><a class="header" href="#11-practical-migration-checklist">11. Practical migration checklist</a></h2>
+<p>Use this order for a low-drama migration:</p>
+<ol>
+<li>Replace Axum imports with <code>rustapi_rs::prelude::*</code> where possible.</li>
+<li>Change route path syntax from <code>:id</code> to <code>{id}</code>.</li>
+<li>Move shared dependencies into <code>State&lt;T&gt;</code>.</li>
+<li>Convert handlers one endpoint at a time.</li>
+<li>Add <code>Schema</code> derives to DTOs that should appear in OpenAPI.</li>
+<li>Replace manual route tables with route macros and <code>RustApi::auto()</code> when it reduces boilerplate.</li>
+<li>Port middleware selectively instead of all at once.</li>
+<li>Replace service-level tests with <code>TestClient</code> where it simplifies setup.</li>
+</ol>
+<h2 id="12-a-small-beforeafter-mental-model"><a class="header" href="#12-a-small-beforeafter-mental-model">12. A small before/after mental model</a></h2>
+<h3 id="axum-mindset"><a class="header" href="#axum-mindset">Axum mindset</a></h3>
+<ul>
+<li>compose a <code>Router</code></li>
+<li>attach routes manually</li>
+<li>bolt on docs separately</li>
+<li>manage state and layers around the router</li>
+</ul>
+<h3 id="rustapi-mindset"><a class="header" href="#rustapi-mindset">RustAPI mindset</a></h3>
+<ul>
+<li>write handler-first code</li>
+<li>annotate routes directly</li>
+<li>let <code>RustApi::auto()</code> discover them when useful</li>
+<li>keep docs and route metadata close to the handler</li>
+</ul>
+<h2 id="related-reading-3"><a class="header" href="#related-reading-3">Related reading</a></h2>
+<ul>
+<li><a href="#macro-attribute-reference">Macro Attribute Reference</a></li>
+<li><a href="#custom-extractors-1">Custom Extractors</a></li>
+<li><a href="#error-handling-4">Error Handling</a></li>
+<li><a href="#middleware-debugging">Middleware Debugging</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="actix-web---rustapi-migration-guide"><a class="header" href="#actix-web---rustapi-migration-guide">Actix-web -&gt; RustAPI Migration Guide</a></h1>
+<p>If you already know Actix-web, RustAPI will feel familiar in a few core areas while removing some of the ceremony around route registration and OpenAPI integration.</p>
+<p>This guide focuses on the migration path for the most common Actix-web patterns:</p>
+<ul>
+<li>handlers and extractors</li>
+<li>app state</li>
+<li>route registration</li>
+<li>middleware</li>
+<li>testing</li>
+<li>OpenAPI/documentation</li>
+</ul>
+<h2 id="what-stays-familiar-1"><a class="header" href="#what-stays-familiar-1">What stays familiar</a></h2>
+<p>The good news first: the everyday endpoint concepts map cleanly.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Actix-web concept</th><th>RustAPI equivalent</th><th>Notes</th></tr>
+</thead>
+<tbody>
+<tr><td><code>web::Data&lt;T&gt;</code></td><td><code>State&lt;T&gt;</code></td><td>shared application state</td></tr>
+<tr><td><code>web::Path&lt;T&gt;</code></td><td><code>Path&lt;T&gt;</code></td><td>typed path extraction</td></tr>
+<tr><td><code>web::Query&lt;T&gt;</code></td><td><code>Query&lt;T&gt;</code></td><td>typed query extraction</td></tr>
+<tr><td><code>web::Json&lt;T&gt;</code></td><td><code>Json&lt;T&gt;</code></td><td>JSON body extraction</td></tr>
+<tr><td><code>App::route()</code> / <code>.service()</code></td><td><code>RustApi::route()</code> / route macros</td><td>both support explicit routing</td></tr>
+<tr><td><code>wrap(...)</code> middleware</td><td><code>.layer(...)</code></td><td>middleware stack support</td></tr>
+<tr><td><code>actix_web::test</code> helpers</td><td><code>rustapi_testing::TestClient</code></td><td>in-memory HTTP-style tests</td></tr>
+</tbody>
+</table>
+</div>
+<p>The biggest differences are:</p>
+<ol>
+<li>RustAPI encourages application code to import from the <code>rustapi-rs</code> facade.</li>
+<li>RustAPI can auto-discover macro-annotated routes with <code>RustApi::auto()</code>.</li>
+<li>OpenAPI support is designed to live close to handlers instead of being bolted on later.</li>
+</ol>
+<h2 id="1-imports-switch-to-the-facade-1"><a class="header" href="#1-imports-switch-to-the-facade-1">1. Imports: switch to the facade</a></h2>
+<p>Actix-web applications usually import directly from <code>actix_web</code>.</p>
+<p>In RustAPI, start from the public facade:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+<span class="boring">}</span></code></pre>
+<p>That keeps your application code aligned with RustAPI’s stable public surface instead of internal implementation crates.</p>
+<h2 id="2-basic-handlers-migrate-directly"><a class="header" href="#2-basic-handlers-migrate-directly">2. Basic handlers migrate directly</a></h2>
+<h3 id="actix-web"><a class="header" href="#actix-web">Actix-web</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use actix_web::{get, web, Responder};
+use serde::Serialize;
+
+#[derive(Serialize)]
+struct User {
+    id: i64,
+    name: String,
+}
+
+#[get("/users/{id}")]
+async fn get_user(id: web::Path&lt;i64&gt;) -&gt; impl Responder {
+    let id = id.into_inner();
+
+    web::Json(User {
+        id,
+        name: "Alice".into(),
+    })
+}
+<span class="boring">}</span></code></pre>
+<h3 id="rustapi-3"><a class="header" href="#rustapi-3">RustAPI</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+
+#[derive(Serialize, Schema)]
+struct User {
+    id: i64,
+    name: String,
+}
+
+#[rustapi_rs::get("/users/{id}")]
+async fn get_user(Path(id): Path&lt;i64&gt;) -&gt; Json&lt;User&gt; {
+    Json(User {
+        id,
+        name: "Alice".into(),
+    })
+}
+<span class="boring">}</span></code></pre>
+<h3 id="migration-note-6"><a class="header" href="#migration-note-6">Migration note</a></h3>
+<ul>
+<li>The path syntax is already <code>{id}</code> in both ecosystems, so that part stays pleasantly boring.</li>
+<li>Add <code>Schema</code> when the type should appear in generated OpenAPI docs.</li>
+<li>RustAPI handler signatures stay compact and keep extractor types explicit.</li>
+</ul>
+<h2 id="3-app-bootstrap-app---rustapi"><a class="header" href="#3-app-bootstrap-app---rustapi">3. App bootstrap: <code>App</code> -&gt; <code>RustApi</code></a></h2>
+<h3 id="actix-web-1"><a class="header" href="#actix-web-1">Actix-web</a></h3>
+<pre class="playground"><code class="language-rust">use actix_web::{web, App, HttpServer};
+
+#[actix_web::main]
+async fn main() -&gt; std::io::Result&lt;()&gt; {
+    HttpServer::new(|| {
+        App::new().route("/users/{id}", web::get().to(get_user))
+    })
+    .bind(("127.0.0.1", 8080))?
+    .run()
+    .await
+}</code></pre>
+<h3 id="rustapi-1-1"><a class="header" href="#rustapi-1-1">RustAPI</a></h3>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+
+#[rustapi_rs::main]
+async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    RustApi::new()
+        .route("/users/{id}", get(get_user))
+        .run("127.0.0.1:8080")
+        .await
+}</code></pre>
+<h3 id="migration-note-1-1"><a class="header" href="#migration-note-1-1">Migration note</a></h3>
+<ul>
+<li><code>RustApi::new()</code> is the main application entry point.</li>
+<li><code>RustApi::route()</code> is the closest equivalent to explicit Actix route registration.</li>
+<li>For macro-annotated handlers, <code>RustApi::auto()</code> can remove repetitive wiring.</li>
+</ul>
+<h2 id="4-auto-registration-can-replace-repetitive-service"><a class="header" href="#4-auto-registration-can-replace-repetitive-service">4. Auto-registration can replace repetitive <code>.service(...)</code></a></h2>
+<p>If your Actix-web app registers many handlers manually, RustAPI can let the route macros do more of the work.</p>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+
+#[rustapi_rs::get("/health")]
+async fn health() -&gt; &amp;'static str {
+    "ok"
+}
+
+#[rustapi_rs::get("/users/{id}")]
+async fn get_user(Path(id): Path&lt;i64&gt;) -&gt; Json&lt;i64&gt; {
+    Json(id)
+}
+
+#[rustapi_rs::main]
+async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    RustApi::auto().run("127.0.0.1:8080").await
+}</code></pre>
+<p>This is where a wall of <code>.service(...)</code> calls starts to quietly disappear. Your future diff reviews may even send a thank-you card.</p>
+<h2 id="5-state-injection-webdatat---statet"><a class="header" href="#5-state-injection-webdatat---statet">5. State injection: <code>web::Data&lt;T&gt;</code> -&gt; <code>State&lt;T&gt;</code></a></h2>
+<h3 id="actix-web-2"><a class="header" href="#actix-web-2">Actix-web</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use actix_web::{web, App, HttpServer, Responder};
+use std::sync::Arc;
+
+#[derive(Clone)]
+struct AppState {
+    db: Arc&lt;String&gt;,
+}
+
+async fn users(state: web::Data&lt;AppState&gt;) -&gt; impl Responder {
+    state.db.to_string()
+}
+
+let state = AppState {
+    db: Arc::new("db".into()),
+};
+<span class="boring">}</span></code></pre>
+<h3 id="rustapi-2-1"><a class="header" href="#rustapi-2-1">RustAPI</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+use std::sync::Arc;
+
+#[derive(Clone)]
+struct AppState {
+    db: Arc&lt;String&gt;,
+}
+
+#[rustapi_rs::get("/users")]
+async fn users(State(state): State&lt;AppState&gt;) -&gt; String {
+    state.db.to_string()
+}
+
+let app = RustApi::new()
+    .state(AppState {
+        db: Arc::new("db".into()),
+    })
+    .route("/users", get(users));
+<span class="boring">}</span></code></pre>
+<h3 id="migration-note-2-1"><a class="header" href="#migration-note-2-1">Migration note</a></h3>
+<ul>
+<li>Keep shared state <code>Clone + Send + Sync</code>.</li>
+<li>Cheap-to-clone <code>Arc&lt;_&gt;</code> fields remain the right pattern for shared dependencies.</li>
+<li>Instead of wrapping state in <code>web::Data&lt;T&gt;</code>, RustAPI stores the state directly and extracts it with <code>State&lt;T&gt;</code>.</li>
+</ul>
+<h2 id="6-extractor-migration-map-1"><a class="header" href="#6-extractor-migration-map-1">6. Extractor migration map</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Actix-web</th><th>RustAPI</th><th>Notes</th></tr>
+</thead>
+<tbody>
+<tr><td><code>web::Data&lt;T&gt;</code></td><td><code>State&lt;T&gt;</code></td><td>shared app state</td></tr>
+<tr><td><code>web::Path&lt;T&gt;</code></td><td><code>Path&lt;T&gt;</code></td><td>typed path extraction</td></tr>
+<tr><td><code>web::Query&lt;T&gt;</code></td><td><code>Query&lt;T&gt;</code></td><td>typed query extraction</td></tr>
+<tr><td><code>web::Json&lt;T&gt;</code></td><td><code>Json&lt;T&gt;</code></td><td>body extraction</td></tr>
+<tr><td>custom request extractor</td><td><code>FromRequestParts</code> / <code>FromRequest</code></td><td>choose based on body usage</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="important-rustapi-rule-1"><a class="header" href="#important-rustapi-rule-1">Important RustAPI rule</a></h3>
+<p>Body-consuming extractors such as <code>Json&lt;T&gt;</code>, <code>Body</code>, <code>ValidatedJson&lt;T&gt;</code>, <code>AsyncValidatedJson&lt;T&gt;</code>, and <code>Multipart</code> must be the <strong>last</strong> handler parameter.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[rustapi_rs::post("/users/{id}")]
+async fn update_user(
+    State(_state): State&lt;AppState&gt;,
+    Path(_id): Path&lt;i64&gt;,
+    Json(_body): Json&lt;User&gt;,
+) -&gt; Result&lt;()&gt; {
+    Ok(())
+}
+<span class="boring">}</span></code></pre>
+<h2 id="7-middleware-wrap-mindset-rustapi-entry-point"><a class="header" href="#7-middleware-wrap-mindset-rustapi-entry-point">7. Middleware: <code>wrap(...)</code> mindset, RustAPI entry point</a></h2>
+<p>Actix-web middleware and RustAPI middleware share the same big-picture mental model: requests go in, responses come out, and the middleware stack wraps the handler.</p>
+<p>Apply middleware with:</p>
+<pre><code class="language-rust ignore">RustApi::new()
+    .layer(RequestIdLayer::new())
+    .layer(TracingLayer::new())
+    .route("/users", get(users));</code></pre>
+<h3 id="migration-note-3-1"><a class="header" href="#migration-note-3-1">Migration note</a></h3>
+<ul>
+<li>Use <code>.layer(...)</code> for full middleware wrapping behavior.</li>
+<li>For lightweight request/response transformations, prefer interceptors when they are sufficient; they are cheaper than full middleware.</li>
+<li>Middleware layering order matters, so keep observability/auth/retry ordering intentional.</li>
+</ul>
+<h2 id="8-error-handling-becomes-more-uniform-1"><a class="header" href="#8-error-handling-becomes-more-uniform-1">8. Error handling becomes more uniform</a></h2>
+<p>Actix-web often leans on <code>ResponseError</code>, <code>HttpResponse</code>, or custom response builders. RustAPI keeps the same flexibility, but the common path is <code>ApiError</code>.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+
+#[rustapi_rs::get("/users/{id}")]
+#[rustapi_rs::errors(404 = "User not found")]
+async fn get_user(Path(id): Path&lt;i64&gt;) -&gt; Result&lt;Json&lt;User&gt;&gt; {
+    if id == 0 {
+        return Err(ApiError::not_found("User not found"));
+    }
+
+    Ok(Json(User {
+        id,
+        name: "Alice".into(),
+    }))
+}
+<span class="boring">}</span></code></pre>
+<h3 id="migration-note-4-1"><a class="header" href="#migration-note-4-1">Migration note</a></h3>
+<ul>
+<li><code>#[errors(...)]</code> documents the OpenAPI response surface.</li>
+<li>Your handler still needs to return the matching runtime error.</li>
+<li>In production, RustAPI masks internal 5xx details automatically.</li>
+</ul>
+<h2 id="9-openapi-moves-closer-to-the-handler"><a class="header" href="#9-openapi-moves-closer-to-the-handler">9. OpenAPI moves closer to the handler</a></h2>
+<p>In Actix-web projects, OpenAPI is often layered in through separate crates and extra registration code.</p>
+<p>In RustAPI, it becomes part of the main handler workflow:</p>
+<ul>
+<li>derive <code>Schema</code> for DTOs</li>
+<li>annotate handlers with <code>#[get]</code>, <code>#[post]</code>, and friends</li>
+<li>optionally add <code>#[tag]</code>, <code>#[summary]</code>, <code>#[description]</code>, <code>#[param]</code>, and <code>#[errors]</code></li>
+<li>serve docs through the app configuration</li>
+</ul>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>#[derive(Serialize, Schema)]
+struct User {
+    id: i64,
+    name: String,
+}
+
+#[rustapi_rs::get("/users/{id}")]
+#[rustapi_rs::tag("Users")]
+#[rustapi_rs::summary("Get user by ID")]
+#[rustapi_rs::errors(404 = "User not found")]
+async fn get_user(Path(id): Path&lt;i64&gt;) -&gt; Result&lt;Json&lt;User&gt;&gt; {
+    Ok(Json(User {
+        id,
+        name: "Alice".into(),
+    }))
+}
+<span class="boring">}</span></code></pre>
+<p>Ordinary path and query parameters are inferred into OpenAPI automatically, so <code>#[param(...)]</code> is mainly for path-parameter schema overrides.</p>
+<h2 id="10-testing-migration-actix_webtest---testclient"><a class="header" href="#10-testing-migration-actix_webtest---testclient">10. Testing migration: <code>actix_web::test</code> -&gt; <code>TestClient</code></a></h2>
+<h3 id="rustapi-test-style-1"><a class="header" href="#rustapi-test-style-1">RustAPI test style</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+use rustapi_testing::TestClient;
+
+#[rustapi_rs::get("/hello")]
+async fn hello() -&gt; &amp;'static str {
+    "hello"
+}
+
+#[tokio::test]
+async fn test_hello() {
+    let app = RustApi::new().route("/hello", get(hello));
+    let client = TestClient::new(app);
+
+    let response = client.get("/hello").send().await;
+
+    assert_eq!(response.status(), 200);
+}
+<span class="boring">}</span></code></pre>
+<h3 id="migration-note-5-1"><a class="header" href="#migration-note-5-1">Migration note</a></h3>
+<ul>
+<li><code>TestClient</code> exercises the application in memory without binding a socket.</li>
+<li>This is a good replacement for many Actix integration tests that currently build <code>App</code> instances plus test harness glue.</li>
+</ul>
+<h2 id="11-practical-migration-checklist-1"><a class="header" href="#11-practical-migration-checklist-1">11. Practical migration checklist</a></h2>
+<p>Use this order for a low-drama migration:</p>
+<ol>
+<li>Replace handler imports with <code>use rustapi_rs::prelude::*</code> on the RustAPI side.</li>
+<li>Port shared dependencies from <code>web::Data&lt;T&gt;</code> to <code>State&lt;T&gt;</code>.</li>
+<li>Convert handlers one endpoint at a time.</li>
+<li>Add <code>Schema</code> derives to DTOs that should appear in OpenAPI.</li>
+<li>Replace repetitive <code>.service(...)</code> registration with route macros and <code>RustApi::auto()</code> when it reduces boilerplate.</li>
+<li>Port middleware selectively instead of all at once.</li>
+<li>Replace Actix test harness setup with <code>TestClient</code> where it simplifies coverage.</li>
+<li>Add production defaults, tracing, and health probes once the endpoint layer is stable.</li>
+</ol>
+<h2 id="12-mental-model-shift"><a class="header" href="#12-mental-model-shift">12. Mental model shift</a></h2>
+<h3 id="actix-web-mindset"><a class="header" href="#actix-web-mindset">Actix-web mindset</a></h3>
+<ul>
+<li>build an <code>App</code></li>
+<li>register routes and services explicitly</li>
+<li>add middleware with <code>wrap(...)</code></li>
+<li>extend docs/testing with adjacent tooling</li>
+</ul>
+<h3 id="rustapi-mindset-1"><a class="header" href="#rustapi-mindset-1">RustAPI mindset</a></h3>
+<ul>
+<li>write handler-first code</li>
+<li>annotate routes directly</li>
+<li>let <code>RustApi::auto()</code> discover them when useful</li>
+<li>keep docs and route metadata close to handlers</li>
+</ul>
+<h2 id="related-reading-4"><a class="header" href="#related-reading-4">Related reading</a></h2>
+<ul>
+<li><a href="#macro-attribute-reference">Macro Attribute Reference</a></li>
+<li><a href="#custom-extractors-1">Custom Extractors</a></li>
+<li><a href="#error-handling-4">Error Handling</a></li>
+<li><a href="#middleware-debugging">Middleware Debugging</a></li>
+<li><a href="../../PRODUCTION_BASELINE.html">Recommended Production Baseline</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="advanced-middleware-rate-limiting-caching-and-deduplication"><a class="header" href="#advanced-middleware-rate-limiting-caching-and-deduplication">Advanced Middleware: Rate Limiting, Caching, and Deduplication</a></h1>
 <p>As your API grows, you’ll need to protect it from abuse and optimize performance. RustAPI provides a suite of advanced middleware in <code>rustapi-extras</code> to handle these concerns efficiently.</p>
 <p>These patterns are essential for the “Enterprise Platform” learning path and high-traffic services.</p>
-<h2 id="prerequisites-2"><a class="header" href="#prerequisites-2">Prerequisites</a></h2>
+<h2 id="prerequisites-4"><a class="header" href="#prerequisites-4">Prerequisites</a></h2>
 <p>Add the <code>rustapi-extras</code> crate with the necessary features to your <code>Cargo.toml</code>.</p>
 <pre><code class="language-toml">[dependencies]
 rustapi-rs = { version = "0.1.335", features = ["full"] }
@@ -3719,7 +5369,7 @@ async fn main() {
     println!("Server running on http://127.0.0.1:3000");
     app.run("127.0.0.1:3000").await.unwrap();
 }</code></pre>
-<h2 id="testing"><a class="header" href="#testing">Testing</a></h2>
+<h2 id="testing-2"><a class="header" href="#testing-2">Testing</a></h2>
 <p><strong>Standard Browser / Client:</strong></p>
 <pre><code class="language-bash">curl http://localhost:3000/users
 # Returns: [{"id":1,"username":"Alice",...}]
@@ -3746,7 +5396,7 @@ let prompt = format!(
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="production-tuning"><a class="header" href="#production-tuning">Production Tuning</a></h1>
 <p><strong>Problem</strong>: Your API needs to handle extreme load (10k+ requests per second).</p>
-<h2 id="solution-3"><a class="header" href="#solution-3">Solution</a></h2>
+<h2 id="solution-6"><a class="header" href="#solution-6">Solution</a></h2>
 <h3 id="1-release-profile"><a class="header" href="#1-release-profile">1. Release Profile</a></h3>
 <p>Ensure <code>Cargo.toml</code> has optimal settings:</p>
 <pre><code class="language-toml">[profile.release]
@@ -3765,7 +5415,7 @@ async fn main() {
 <p>Increase the limit before running:</p>
 <pre><code class="language-bash">ulimit -n 100000
 </code></pre>
-<h2 id="discussion-1"><a class="header" href="#discussion-1">Discussion</a></h2>
+<h2 id="discussion-3"><a class="header" href="#discussion-3">Discussion</a></h2>
 <p>RustAPI is fast by default, but the OS often becomes the bottleneck using default settings. <code>panic = "abort"</code> reduces binary size and slightly improves performance by removing unwinding tables.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="response-compression"><a class="header" href="#response-compression">Response Compression</a></h1>
@@ -3840,7 +5490,7 @@ async fn main() -&gt; Result&lt;()&gt; {
 <h1 id="resilience-patterns"><a class="header" href="#resilience-patterns">Resilience Patterns</a></h1>
 <p>Building robust applications requires handling failures gracefully. RustAPI provides a suite of middleware to help your service survive partial outages, latency spikes, and transient errors.</p>
 <p>These patterns are essential for the “Enterprise Platform” learning path and microservices architectures.</p>
-<h2 id="prerequisites-3"><a class="header" href="#prerequisites-3">Prerequisites</a></h2>
+<h2 id="prerequisites-5"><a class="header" href="#prerequisites-5">Prerequisites</a></h2>
 <p>Add the resilience features to your <code>Cargo.toml</code>. For example:</p>
 <pre><code class="language-toml">[dependencies]
 rustapi-rs = { version = "0.1.335", features = ["full"] }
@@ -3938,34 +5588,343 @@ fn main() {
     .route("/", get(handler));
 <span class="boring">}</span></code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="graceful-shutdown-1"><a class="header" href="#graceful-shutdown-1">Graceful Shutdown</a></h1>
-<p>Graceful shutdown allows your API to stop accepting new connections and finish processing active requests before terminating. This is crucial for avoiding data loss and ensuring a smooth deployment process.</p>
-<h2 id="problem-1"><a class="header" href="#problem-1">Problem</a></h2>
-<p>When you stop a server (e.g., via <code>CTRL+C</code> or <code>SIGTERM</code>), you want to ensure that:</p>
+<h1 id="observability-1"><a class="header" href="#observability-1">Observability</a></h1>
+<p>Production services need more than “logs exist somewhere”. A healthy RustAPI observability setup should let you answer three questions quickly:</p>
 <ol>
-<li>The server stops listening on the port.</li>
-<li>Ongoing requests are allowed to complete.</li>
-<li>Resources (database connections, background jobs) are cleaned up properly.</li>
+<li><strong>What failed?</strong></li>
+<li><strong>Which request or trace did it belong to?</strong></li>
+<li><strong>Is this isolated or systemic?</strong></li>
 </ol>
-<h2 id="solution-4"><a class="header" href="#solution-4">Solution</a></h2>
-<p>RustAPI provides the <code>run_with_shutdown</code> method, which accepts a <code>Future</code>. When this future completes, the server initiates the shutdown process.</p>
-<h3 id="basic-example-ctrlc"><a class="header" href="#basic-example-ctrlc">Basic Example (CTRL+C)</a></h3>
+<p>This recipe shows a pragmatic observability stack using:</p>
+<ul>
+<li><code>production_defaults(...)</code> for request IDs and request tracing,</li>
+<li><code>OtelLayer</code> for distributed traces,</li>
+<li><code>StructuredLoggingLayer</code> for machine-readable logs, and</li>
+<li><code>InsightLayer</code> for in-process traffic analytics.</li>
+</ul>
+<h2 id="prerequisites-6"><a class="header" href="#prerequisites-6">Prerequisites</a></h2>
+<p>Enable the relevant features:</p>
+<pre><code class="language-toml">[dependencies]
+rustapi-rs = { version = "0.1.335", features = [
+  "core",
+  "extras-otel",
+  "extras-structured-logging",
+  "extras-insight"
+] }
+</code></pre>
+<h2 id="basic-usage-3"><a class="header" href="#basic-usage-3">Basic Usage</a></h2>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+use rustapi_rs::extras::{
+    insight::{InsightConfig, InsightLayer},
+    otel::{OtelConfig, OtelLayer},
+    structured_logging::{LogOutputFormat, StructuredLoggingConfig, StructuredLoggingLayer},
+};
+
+#[rustapi_rs::get("/")]
+async fn hello() -&gt; &amp;'static str {
+    "hello"
+}
+
+#[rustapi_rs::main]
+async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    let environment = std::env::var("RUSTAPI_ENV")
+        .unwrap_or_else(|_| "development".to_string());
+
+    RustApi::auto()
+        .production_defaults("billing-api")
+        .layer(OtelLayer::new(
+            OtelConfig::builder()
+                .service_name("billing-api")
+                .service_version(env!("CARGO_PKG_VERSION"))
+                .deployment_environment(environment.clone())
+                .endpoint("http://otel-collector:4317")
+                .exclude_paths(vec![
+                    "/health".to_string(),
+                    "/ready".to_string(),
+                    "/live".to_string(),
+                ])
+                .build(),
+        ))
+        .layer(StructuredLoggingLayer::new(
+            StructuredLoggingConfig::builder()
+                .format(LogOutputFormat::Json)
+                .service_name("billing-api")
+                .service_version(env!("CARGO_PKG_VERSION"))
+                .environment(environment)
+                .correlation_id_header("x-request-id")
+                .exclude_paths(vec![
+                    "/health".to_string(),
+                    "/ready".to_string(),
+                    "/live".to_string(),
+                ])
+                .build(),
+        ))
+        .layer(InsightLayer::with_config(
+            InsightConfig::new()
+                .sample_rate(0.20)
+                .skip_paths(["/health", "/ready", "/live"])
+                .header_whitelist(["content-type", "user-agent", "x-request-id"])
+                .response_header_whitelist(["content-type", "x-request-id"])
+                .dashboard_path(Some("/admin/insights"))
+                .stats_path(Some("/admin/insights/stats")),
+        ))
+        .run("0.0.0.0:8080")
+        .await
+}</code></pre>
+<h2 id="the-recommended-golden-config"><a class="header" href="#the-recommended-golden-config">The recommended “golden config”</a></h2>
+<p>For most APIs, the following defaults work well:</p>
+<h3 id="1-request-correlation-everywhere"><a class="header" href="#1-request-correlation-everywhere">1. Request correlation everywhere</a></h3>
+<p>Use the production preset so every request already carries a request ID and tracing span. This gives you a stable correlation key before you add any external observability backend.</p>
+<h3 id="2-json-logs-in-production"><a class="header" href="#2-json-logs-in-production">2. JSON logs in production</a></h3>
+<p>Prefer <code>StructuredLoggingLayer</code> with:</p>
+<ul>
+<li><code>LogOutputFormat::Json</code></li>
+<li><code>service_name</code></li>
+<li><code>service_version</code></li>
+<li><code>environment</code></li>
+<li><code>correlation_id_header("x-request-id")</code></li>
+</ul>
+<p>That makes it easy to join app logs with request IDs emitted by the built-in preset.</p>
+<h3 id="3-otel-for-distributed-traces"><a class="header" href="#3-otel-for-distributed-traces">3. OTel for distributed traces</a></h3>
+<p>Use <code>OtelLayer</code> when your service participates in a larger system. Set:</p>
+<ul>
+<li>service name,</li>
+<li>service version,</li>
+<li>deployment environment,</li>
+<li>collector endpoint,</li>
+<li>excluded probe paths.</li>
+</ul>
+<h3 id="4-insight-for-local-traffic-intelligence"><a class="header" href="#4-insight-for-local-traffic-intelligence">4. Insight for local traffic intelligence</a></h3>
+<p><code>InsightLayer</code> is useful for:</p>
+<ul>
+<li>endpoint hot spots,</li>
+<li>latency outliers,</li>
+<li>lightweight internal dashboards,</li>
+<li>short-term debugging without a full external analytics platform.</li>
+</ul>
+<p>Use sampling in production and keep the dashboard on a private/admin route.</p>
+<h2 id="what-each-layer-is-responsible-for"><a class="header" href="#what-each-layer-is-responsible-for">What each layer is responsible for</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Layer</th><th>Purpose</th></tr>
+</thead>
+<tbody>
+<tr><td><code>TracingLayer</code> (via production preset)</td><td>Request-scoped tracing spans with service metadata</td></tr>
+<tr><td><code>OtelLayer</code></td><td>Distributed trace export and propagation</td></tr>
+<tr><td><code>StructuredLoggingLayer</code></td><td>Machine-readable application/request logs</td></tr>
+<tr><td><code>InsightLayer</code></td><td>In-process request analytics and dashboards</td></tr>
+</tbody>
+</table>
+</div>
+<p>These tools complement each other rather than replace each other.</p>
+<h2 id="noise-control"><a class="header" href="#noise-control">Noise control</a></h2>
+<p>Probe routes can dominate dashboards and logs in busy clusters. A good default is to exclude <code>/health</code>, <code>/ready</code>, and <code>/live</code> from:</p>
+<ul>
+<li>OTel export,</li>
+<li>structured logs, and</li>
+<li>insight capture.</li>
+</ul>
+<p>If you need probe telemetry for a specific incident, re-enable it deliberately rather than keeping it on all the time.</p>
+<h2 id="sensitive-data-guidance"><a class="header" href="#sensitive-data-guidance">Sensitive data guidance</a></h2>
+<ul>
+<li>Leave request/response body capture off unless debugging requires it.</li>
+<li>Whitelist only the headers you actually need.</li>
+<li>Keep <code>authorization</code>, <code>cookie</code>, and API-key style headers redacted.</li>
+<li>Treat admin insight endpoints as internal surfaces.</li>
+</ul>
+<h2 id="operational-tips"><a class="header" href="#operational-tips">Operational tips</a></h2>
+<ol>
+<li>Include <code>env!("CARGO_PKG_VERSION")</code> in logs and traces.</li>
+<li>Make dashboards searchable by <code>x-request-id</code>, <code>trace_id</code>, and <code>error_id</code>.</li>
+<li>Keep observability config close to your app bootstrap, not hidden in scattered helpers.</li>
+<li>Validate the full path with one real request before rollout:
+<ul>
+<li>response has <code>X-Request-ID</code>,</li>
+<li>logs include the correlation ID,</li>
+<li>traces reach the collector,</li>
+<li>insight dashboard records traffic if enabled.</li>
+</ul>
+</li>
+</ol>
+<h2 id="related-guides"><a class="header" href="#related-guides">Related guides</a></h2>
+<ul>
+<li><a href="../../PRODUCTION_BASELINE.html">Recommended Production Baseline</a></li>
+<li><a href="../../PRODUCTION_CHECKLIST.html">Production Checklist</a></li>
+<li><a href="../../ADAPTIVE_EXECUTION_DEBUG_PLAN.html">Adaptive Execution Debug Plan</a></li>
+<li><a href="#graceful-shutdown-1">Graceful Shutdown</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="middleware-debugging"><a class="header" href="#middleware-debugging">Middleware Debugging</a></h1>
+<p>Middleware bugs are rarely glamorous. They usually look like:</p>
+<ul>
+<li>a handler never running,</li>
+<li>a missing <code>x-request-id</code>,</li>
+<li>tracing spans without correlation,</li>
+<li>an extractor failing because middleware never inserted the expected extension,</li>
+<li>a response being transformed by the “wrong” layer.</li>
+</ul>
+<p>This guide focuses on debugging the middleware you already have in your stack.</p>
+<h2 id="problem-3"><a class="header" href="#problem-3">Problem</a></h2>
+<p>Middleware wraps handlers from the outside in, so when something goes wrong the visible symptom is often far away from the actual cause.</p>
+<h2 id="solution-7"><a class="header" href="#solution-7">Solution</a></h2>
+<p>Start with a minimal, observable stack and verify one layer at a time.</p>
+<h3 id="understand-execution-order-first"><a class="header" href="#understand-execution-order-first">Understand execution order first</a></h3>
+<p>RustAPI executes layers in the order they are added:</p>
+<ul>
+<li>the <strong>first</strong> <code>.layer(...)</code> sees the request first,</li>
+<li>the <strong>last</strong> <code>.layer(...)</code> sees the response first on the way back out.</li>
+</ul>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+
+#[rustapi_rs::get("/")]
+async fn index() -&gt; &amp;'static str {
+    "ok"
+}
+
+#[rustapi_rs::main]
+async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    RustApi::auto()
+        .layer(RequestIdLayer::new())
+        .layer(
+            TracingLayer::new()
+                .with_field("service", "debug-demo")
+                .with_field("environment", "development"),
+        )
+        .run("127.0.0.1:8080")
+        .await
+}</code></pre>
+<p>For the request path, the order is:</p>
+<ol>
+<li><code>RequestIdLayer</code></li>
+<li><code>TracingLayer</code></li>
+<li>handler</li>
+</ol>
+<p>For the response path, it unwinds in reverse.</p>
+<h2 id="a-practical-debugging-workflow"><a class="header" href="#a-practical-debugging-workflow">A practical debugging workflow</a></h2>
+<h3 id="1-verify-request-correlation"><a class="header" href="#1-verify-request-correlation">1. Verify request correlation</a></h3>
+<p>Start by confirming <code>RequestIdLayer</code> is active.</p>
+<pre><code class="language-bash">curl -i http://127.0.0.1:8080/
+</code></pre>
+<p>If the response does not include <code>x-request-id</code>, either:</p>
+<ul>
+<li><code>RequestIdLayer</code> is missing,</li>
+<li>the request never reached that layer, or</li>
+<li>another layer or proxy is mutating headers unexpectedly.</li>
+</ul>
+<h3 id="2-verify-tracing-sees-the-request-id"><a class="header" href="#2-verify-tracing-sees-the-request-id">2. Verify tracing sees the request ID</a></h3>
+<p><code>TracingLayer</code> reads the request ID from request extensions. If it runs without <code>RequestIdLayer</code>, the span records <code>request_id = "unknown"</code>.</p>
+<p>That makes the pairing easy to diagnose:</p>
+<ul>
+<li><code>x-request-id</code> present + trace has request ID → good</li>
+<li>no <code>x-request-id</code> + trace shows <code>unknown</code> → missing request ID layer</li>
+</ul>
+<h3 id="3-reduce-the-stack"><a class="header" href="#3-reduce-the-stack">3. Reduce the stack</a></h3>
+<p>If a handler is not reached, strip the app down to the smallest reproducer:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>RustApi::new()
+    .layer(RequestIdLayer::new())
+    .route("/", get(index));
+<span class="boring">}</span></code></pre>
+<p>Then add layers back one by one until the failure returns. It is boring, but boring debugging is usually the fastest debugging.</p>
+<h3 id="4-watch-for-short-circuiting"><a class="header" href="#4-watch-for-short-circuiting">4. Watch for short-circuiting</a></h3>
+<p>Some middleware returns a response early and never calls downstream layers or the handler. Common examples include:</p>
+<ul>
+<li>auth failures,</li>
+<li>timeout layers,</li>
+<li>CORS preflight handling,</li>
+<li>rate limits,</li>
+<li>custom guards.</li>
+</ul>
+<p>If a request fails before the handler runs, suspect an outer layer first.</p>
+<h2 id="common-failure-modes"><a class="header" href="#common-failure-modes">Common failure modes</a></h2>
+<h3 id="requestid-extractor-fails-inside-a-handler"><a class="header" href="#requestid-extractor-fails-inside-a-handler"><code>RequestId</code> extractor fails inside a handler</a></h3>
+<p>Symptom:</p>
+<ul>
+<li>handler returns an internal error saying the request ID was not found.</li>
+</ul>
+<p>Likely cause:</p>
+<ul>
+<li><code>RequestIdLayer</code> was not added.</li>
+</ul>
+<h3 id="extensiont-extractor-fails"><a class="header" href="#extensiont-extractor-fails"><code>Extension&lt;T&gt;</code> extractor fails</a></h3>
+<p>Symptom:</p>
+<ul>
+<li>handler says an extension was not found.</li>
+</ul>
+<p>Likely cause:</p>
+<ul>
+<li>the middleware that should insert that extension never ran,</li>
+<li>it short-circuited before insertion,</li>
+<li>or the inserted type does not match the extracted type exactly.</li>
+</ul>
+<h3 id="logs-exist-but-are-hard-to-correlate"><a class="header" href="#logs-exist-but-are-hard-to-correlate">Logs exist but are hard to correlate</a></h3>
+<p>Add <code>RequestIdLayer</code> and keep <code>TracingLayer</code> close to the edge of the stack so every request has a stable identifier early.</p>
+<h3 id="response-looks-modified-too-late"><a class="header" href="#response-looks-modified-too-late">Response looks modified “too late”</a></h3>
+<p>Remember response processing unwinds in reverse. The last layer added has the first chance to modify the outgoing response.</p>
+<h2 id="built-in-tools-that-help"><a class="header" href="#built-in-tools-that-help">Built-in tools that help</a></h2>
+<h3 id="status-page"><a class="header" href="#status-page">Status page</a></h3>
+<p>The built-in status page helps answer whether traffic is reaching the service and which endpoints are hot.</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>RustApi::auto().status_page();
+<span class="boring">}</span></code></pre>
+<h3 id="observability-stack"><a class="header" href="#observability-stack">Observability stack</a></h3>
+<p>If the issue spans multiple services, combine:</p>
+<ul>
+<li><code>RequestIdLayer</code></li>
+<li><code>TracingLayer</code></li>
+<li><code>OtelLayer</code></li>
+<li><code>StructuredLoggingLayer</code></li>
+</ul>
+<p>See the <a href="#observability-1">Observability</a> recipe for the recommended baseline.</p>
+<h3 id="testclient"><a class="header" href="#testclient">TestClient</a></h3>
+<p>For reproducible debugging, build a small app and exercise it with the in-memory test client. That way you can inspect middleware behavior without involving a real network hop.</p>
+<h2 id="debug-checklist"><a class="header" href="#debug-checklist">Debug checklist</a></h2>
+<ul>
+<li><input disabled="" type="checkbox"> Does the response include <code>x-request-id</code>?</li>
+<li><input disabled="" type="checkbox"> Does tracing log the same request ID instead of <code>unknown</code>?</li>
+<li><input disabled="" type="checkbox"> Is the handler actually being reached?</li>
+<li><input disabled="" type="checkbox"> Could an outer middleware be short-circuiting?</li>
+<li><input disabled="" type="checkbox"> Is layer order what you think it is?</li>
+<li><input disabled="" type="checkbox"> If using <code>Extension&lt;T&gt;</code>, does the inserted type exactly match the extracted type?</li>
+<li><input disabled="" type="checkbox"> Have you reproduced the issue with a minimal stack?</li>
+</ul>
+<h2 id="related-reading-5"><a class="header" href="#related-reading-5">Related reading</a></h2>
+<ul>
+<li><a href="#custom-middleware">Custom Middleware</a></li>
+<li><a href="#observability-1">Observability</a></li>
+<li><a href="#graceful-shutdown-1">Graceful Shutdown</a></li>
+<li><a href="#troubleshooting-common-gotchas">Troubleshooting</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="graceful-shutdown-1"><a class="header" href="#graceful-shutdown-1">Graceful Shutdown</a></h1>
+<p>Graceful shutdown lets your API stop accepting new work, drain in-flight requests, and clean up resources before the process exits. In production, the missing piece is usually <strong>draining</strong>: marking the instance unready so upstream load balancers stop sending traffic before shutdown completes.</p>
+<h2 id="problem-4"><a class="header" href="#problem-4">Problem</a></h2>
+<p>When you stop a server (for example with <code>Ctrl+C</code> or <code>SIGTERM</code>), you usually want all of the following:</p>
+<ol>
+<li>The process stops receiving new traffic.</li>
+<li>Existing requests are allowed to finish.</li>
+<li>Readiness flips to unhealthy during the drain window.</li>
+<li>Cleanup hooks run in a predictable order.</li>
+</ol>
+<h2 id="solution-8"><a class="header" href="#solution-8">Solution</a></h2>
+<p>RustAPI provides <code>run_with_shutdown(...)</code>, which accepts a future. When that future resolves, the server begins graceful shutdown. If you also wire readiness to shared state, you can make the instance report <code>503</code> during the drain window before the future returns.</p>
+<h3 id="basic-example"><a class="header" href="#basic-example">Basic Example</a></h3>
 <pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
 use tokio::signal;
 
 #[tokio::main]
 async fn main() -&gt; Result&lt;()&gt; {
-    // 1. Define your application
     let app = RustApi::new().route("/", get(hello));
 
-    // 2. Define the shutdown signal
     let shutdown_signal = async {
         signal::ctrl_c()
             .await
             .expect("failed to install CTRL+C handler");
     };
 
-    // 3. Run with shutdown
     println!("Server running... Press CTRL+C to stop.");
     app.run_with_shutdown("127.0.0.1:3000", shutdown_signal).await?;
 
@@ -3974,25 +5933,58 @@ async fn main() -&gt; Result&lt;()&gt; {
 }
 
 async fn hello() -&gt; &amp;'static str {
-    // Simulate some work
     tokio::time::sleep(std::time::Duration::from_secs(2)).await;
     "Hello, World!"
 }</code></pre>
-<h3 id="production-example-unix-signals"><a class="header" href="#production-example-unix-signals">Production Example (Unix Signals)</a></h3>
-<p>In a production environment (like Kubernetes or Docker), you need to handle <code>SIGTERM</code> as well as <code>SIGINT</code>.</p>
+<h3 id="production-example-with-draining"><a class="header" href="#production-example-with-draining">Production Example with Draining</a></h3>
+<p>In orchestrated environments you usually want to:</p>
+<ol>
+<li>listen for <code>SIGTERM</code> as well as <code>Ctrl+C</code>,</li>
+<li>mark the instance as draining,</li>
+<li>wait for a short drain window, and only then</li>
+<li>let <code>run_with_shutdown(...)</code> finish the shutdown.</li>
+</ol>
 <pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
-use tokio::signal;
+use std::sync::{
+    Arc,
+    atomic::{AtomicBool, Ordering},
+};
+use tokio::{
+    signal,
+    time::{sleep, Duration},
+};
 
 #[tokio::main]
-async fn main() -&gt; Result&lt;()&gt; {
-    let app = RustApi::new().route("/", get(hello));
+async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    let draining = Arc::new(AtomicBool::new(false));
+    let readiness_flag = draining.clone();
 
-    app.run_with_shutdown("0.0.0.0:3000", shutdown_signal()).await?;
+    let health = HealthCheckBuilder::new(true)
+        .add_check("draining", move || {
+            let readiness_flag = readiness_flag.clone();
+            async move {
+                if readiness_flag.load(Ordering::SeqCst) {
+                    HealthStatus::unhealthy("draining")
+                } else {
+                    HealthStatus::healthy()
+                }
+            }
+        })
+        .build();
+
+    let app = RustApi::new()
+        .with_health_check(health)
+        .on_shutdown(|| async {
+            tracing::info!("shutdown cleanup finished");
+        })
+        .route("/", get(hello));
+
+    app.run_with_shutdown("0.0.0.0:3000", shutdown_signal(draining)).await?;
 
     Ok(())
 }
 
-async fn shutdown_signal() {
+async fn shutdown_signal(draining: Arc&lt;AtomicBool&gt;) {
     let ctrl_c = async {
         signal::ctrl_c()
             .await
@@ -4014,18 +6006,40 @@ async fn shutdown_signal() {
         _ = ctrl_c =&gt; println!("Received Ctrl+C"),
         _ = terminate =&gt; println!("Received SIGTERM"),
     }
+
+    draining.store(true, Ordering::SeqCst);
+    sleep(Duration::from_secs(15)).await;
+}
+
+async fn hello() -&gt; &amp;'static str {
+    sleep(Duration::from_secs(2)).await;
+    "Hello, World!"
 }</code></pre>
-<h2 id="discussion-2"><a class="header" href="#discussion-2">Discussion</a></h2>
+<h2 id="discussion-4"><a class="header" href="#discussion-4">Discussion</a></h2>
 <ul>
-<li><strong>Active Requests</strong>: RustAPI (via Hyper) will wait for active requests to complete.</li>
-<li><strong>Timeout</strong>: You might want to wrap the server execution in a timeout if you want to force shutdown after a certain period (though Hyper usually handles connection draining well).</li>
-<li><strong>Background Tasks</strong>: If you have spawned background tasks using <code>tokio::spawn</code>, they are detached and will be aborted when the runtime shuts down. For critical background work, consider using a dedicated job queue (like <code>rustapi-jobs</code>) or a <code>CancellationToken</code> to coordinate shutdown.</li>
+<li><strong>Active requests</strong>: RustAPI waits for in-flight requests to complete as shutdown proceeds.</li>
+<li><strong>Drain window</strong>: The sleep inside <code>shutdown_signal(...)</code> gives your ingress or load balancer time to observe readiness failure and stop sending new traffic.</li>
+<li><strong>Readiness semantics</strong>: By wiring readiness to shared state, <code>/ready</code> can return <code>503 Service Unavailable</code> while <code>/live</code> still reports that the process is alive.</li>
+<li><strong>Cleanup hooks</strong>: <code>on_shutdown(...)</code> hooks are executed after the shutdown signal future resolves, making them a good place for final flush/cleanup work.</li>
+<li><strong>Detached tasks</strong>: <code>tokio::spawn</code> tasks are still detached. For critical work, coordinate them explicitly or move the work into a durable queue such as <code>rustapi-jobs</code>.</li>
+<li><strong>Forceful shutdown</strong>: If your platform requires a hard upper bound, combine this approach with a platform-level termination grace period and an application-level timeout policy.</li>
 </ul>
+<h2 id="recommended-production-pattern"><a class="header" href="#recommended-production-pattern">Recommended production pattern</a></h2>
+<p>For most deployments:</p>
+<ol>
+<li>Receive <code>SIGTERM</code>.</li>
+<li>Mark the instance as draining.</li>
+<li>Let readiness fail.</li>
+<li>Wait 10–30 seconds, depending on your proxy and traffic pattern.</li>
+<li>Allow graceful shutdown to complete.</li>
+<li>Run shutdown hooks.</li>
+</ol>
+<p>Pair this with the cookbook <a href="#deployment">Deployment</a> recipe and the docs <a href="../../PRODUCTION_CHECKLIST.html">Production Checklist</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="audit-logging--compliance"><a class="header" href="#audit-logging--compliance">Audit Logging &amp; Compliance</a></h1>
 <p>In many enterprise applications, maintaining a detailed audit trail is crucial for security, compliance (GDPR, SOC2), and troubleshooting. RustAPI provides a comprehensive audit logging system in <code>rustapi-extras</code>.</p>
 <p>This recipe covers how to create, log, and query audit events.</p>
-<h2 id="prerequisites-4"><a class="header" href="#prerequisites-4">Prerequisites</a></h2>
+<h2 id="prerequisites-7"><a class="header" href="#prerequisites-7">Prerequisites</a></h2>
 <p>Add <code>rustapi-extras</code> with the <code>audit</code> feature to your <code>Cargo.toml</code>.</p>
 <pre><code class="language-toml">[dependencies]
 rustapi-extras = { version = "0.1.335", features = ["audit"] }
@@ -4037,7 +6051,7 @@ rustapi-extras = { version = "0.1.335", features = ["audit"] }
 <li><strong>AuditStore</strong>: Interface for persisting events (e.g., <code>InMemoryAuditStore</code>, <code>FileAuditStore</code>).</li>
 <li><strong>ComplianceInfo</strong>: Additional metadata for regulatory requirements.</li>
 </ul>
-<h2 id="basic-usage-3"><a class="header" href="#basic-usage-3">Basic Usage</a></h2>
+<h2 id="basic-usage-4"><a class="header" href="#basic-usage-4">Basic Usage</a></h2>
 <p>Log a simple event when a user is created.</p>
 <pre class="playground"><code class="language-rust">use rustapi_extras::audit::{AuditEvent, AuditAction, InMemoryAuditStore, AuditStore};
 
@@ -4111,209 +6125,239 @@ let event = AuditEvent::new(AuditAction::Update)
 <li><strong>Secure the Logs</strong>: Ensure that the storage backend (file, database) is protected from tampering.</li>
 </ol>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="replay-time-travel-debugging"><a class="header" href="#replay-time-travel-debugging">Replay: Time-Travel Debugging</a></h1>
-<p>Record HTTP request/response pairs and replay them against different environments for debugging and regression testing.</p>
+<h1 id="replay-workflow-time-travel-debugging"><a class="header" href="#replay-workflow-time-travel-debugging">Replay workflow: time-travel debugging</a></h1>
+<p>Record HTTP request/response pairs in a controlled environment, inspect a captured request, replay it against another target, and diff the result before promoting a fix.</p>
 <blockquote>
-<p><strong>Security Notice</strong>: The replay system is designed for <strong>development and staging environments only</strong>. See <a href="#security">Security</a> for details.</p>
+<p><strong>Security notice</strong>
+Replay is intended for <strong>development, staging, canary, and incident-response environments</strong>. Do not expose the admin endpoints publicly on the open internet.</p>
 </blockquote>
-<h2 id="quick-start-2"><a class="header" href="#quick-start-2">Quick Start</a></h2>
-<p>Add the <code>replay</code> feature to your <code>Cargo.toml</code>:</p>
+<h2 id="ne-zaman-kullanılır"><a class="header" href="#ne-zaman-kullanılır">Ne zaman kullanılır?</a></h2>
+<p>Replay en çok şu durumlarda işe yarar:</p>
+<ul>
+<li>staging ile local arasında davranış farkı varsa</li>
+<li>bir regresyonu gerçek trafik örneğiyle yeniden üretmek istiyorsanız</li>
+<li>yeni bir sürümü canary ortamına almadan önce kritik istekleri tekrar koşturmak istiyorsanız</li>
+<li>“bu istek neden dün çalışıyordu da bugün bozuldu?” sorusuna zaman makinesi tadında cevap arıyorsanız</li>
+</ul>
+<h2 id="ön-koşullar"><a class="header" href="#ön-koşullar">Ön koşullar</a></h2>
+<p>Uygulamada canonical replay feature’ını açın:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["replay"] }
+rustapi-rs = { version = "0.1.335", features = ["extras-replay"] }
 </code></pre>
-<p>Add the <code>ReplayLayer</code> middleware to your application:</p>
-<pre><code class="language-rust ignore">use rustapi_rs::prelude::*;
-use rustapi_rs::replay::{ReplayLayer, InMemoryReplayStore};
-use rustapi_core::replay::ReplayConfig;
+<p>CLI tarafında <code>cargo-rustapi</code> yeterlidir; replay komutları varsayılan kurulumun parçasıdır:</p>
+<pre><code class="language-bash">cargo install cargo-rustapi
+</code></pre>
+<h2 id="1-replay-kaydını-etkinleştir"><a class="header" href="#1-replay-kaydını-etkinleştir">1) Replay kaydını etkinleştir</a></h2>
+<p>En küçük pratik kurulum için in-memory store ile başlayın:</p>
+<pre><code class="language-rust ignore">use rustapi_rs::extras::replay::{InMemoryReplayStore, ReplayConfig, ReplayLayer};
+use rustapi_rs::prelude::*;
 
-#[tokio::main]
-async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+#[rustapi_rs::get("/api/users")]
+async fn list_users() -&gt; Json&lt;Vec&lt;&amp;'static str&gt;&gt; {
+    Json(vec!["Alice", "Bob"])
+}
+
+#[rustapi_rs::main]
+async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
     let replay = ReplayLayer::new(
         ReplayConfig::new()
             .enabled(true)
-            .admin_token("my-secret-token")
-            .ttl_secs(3600)
-    );
+            .admin_token("local-replay-token")
+            .ttl_secs(900)
+            .skip_path("/health")
+            .skip_path("/ready")
+            .skip_path("/live"),
+    )
+    .with_store(InMemoryReplayStore::new(200));
 
-    RustApi::new()
+    RustApi::auto()
         .layer(replay)
-        .route("/api/users", get(list_users))
         .run("127.0.0.1:8080")
         .await
-}
-
-async fn list_users() -&gt; Json&lt;Vec&lt;String&gt;&gt; {
-    Json(vec!["Alice".into(), "Bob".into()])
 }</code></pre>
-<h2 id="how-it-works-5"><a class="header" href="#how-it-works-5">How It Works</a></h2>
+<p>Bu kurulum şunları yapar:</p>
+<ul>
+<li>replay kaydını açık hale getirir</li>
+<li>admin endpoint’lerini bearer token ile korur</li>
+<li>probe endpoint’lerini kayıttan çıkarır</li>
+<li>girdileri 15 dakika saklar</li>
+<li>bellekte en fazla 200 kayıt tutar</li>
+</ul>
+<h2 id="2-hedef-trafiği-üret"><a class="header" href="#2-hedef-trafiği-üret">2) Hedef trafiği üret</a></h2>
+<p>Artık uygulamaya normal şekilde istek atın. Replay middleware uygulama kodunuzu değiştirmeden request/response çiftlerini yakalar.</p>
+<p>Kayıt akışı şöyledir:</p>
 <ol>
-<li><strong>Record</strong>: The <code>ReplayLayer</code> middleware captures HTTP request/response pairs as they flow through your application</li>
-<li><strong>List</strong>: Query recorded entries via the admin API or CLI</li>
-<li><strong>Replay</strong>: Re-send a recorded request against any target URL</li>
-<li><strong>Diff</strong>: Compare the replayed response against the original to detect regressions</li>
+<li>istek geçer</li>
+<li>request metadata ve uygun body alanları saklanır</li>
+<li>response durumu, header’ları ve yakalanabilir body içeriği saklanır</li>
+<li>kayıt admin API ve CLI üzerinden erişilebilir hale gelir</li>
 </ol>
-<h2 id="admin-api"><a class="header" href="#admin-api">Admin API</a></h2>
-<p>All admin endpoints require a bearer token in the <code>Authorization</code> header:</p>
-<pre><code>Authorization: Bearer &lt;admin_token&gt;
+<h2 id="3-kayıtları-listele-ve-doğru-girdiyi-bul"><a class="header" href="#3-kayıtları-listele-ve-doğru-girdiyi-bul">3) Kayıtları listele ve doğru girdiyi bul</a></h2>
+<p>İlk bakış için CLI en rahat yol:</p>
+<pre><code class="language-bash"># Son replay girdilerini listele
+cargo rustapi replay list -s http://localhost:8080 -t local-replay-token
+
+# Sadece belirli bir endpoint'i filtrele
+cargo rustapi replay list -s http://localhost:8080 -t local-replay-token --method GET --path /api/users --limit 20
+</code></pre>
+<p>Liste çıktısı size şu alanları gösterir:</p>
+<ul>
+<li>replay kimliği</li>
+<li>HTTP method</li>
+<li>path</li>
+<li>orijinal response status kodu</li>
+<li>toplam süre</li>
+</ul>
+<h2 id="4-tek-bir-girdiyi-incele"><a class="header" href="#4-tek-bir-girdiyi-incele">4) Tek bir girdiyi incele</a></h2>
+<p>Şüpheli isteği bulduktan sonra tam kaydı açın:</p>
+<pre><code class="language-bash">cargo rustapi replay show &lt;id&gt; -s http://localhost:8080 -t local-replay-token
+</code></pre>
+<p>Bu komut tipik olarak şunları gösterir:</p>
+<ul>
+<li>orijinal request method ve URI</li>
+<li>saklanan header’lar</li>
+<li>yakalanan request body</li>
+<li>orijinal response status/body</li>
+<li>duration, client IP ve request ID gibi meta alanlar</li>
+</ul>
+<h2 id="5-aynı-isteği-başka-bir-ortama-tekrar-koştur"><a class="header" href="#5-aynı-isteği-başka-bir-ortama-tekrar-koştur">5) Aynı isteği başka bir ortama tekrar koştur</a></h2>
+<p>Şimdi aynı isteği local düzeltmeniz, staging ya da canary ortamınız üzerinde çalıştırabilirsiniz:</p>
+<pre><code class="language-bash">cargo rustapi replay run &lt;id&gt; -s http://localhost:8080 -t local-replay-token -T http://localhost:3000
+</code></pre>
+<p>Pratik kullanım örnekleri:</p>
+<ul>
+<li>local düzeltmenin gerçekten incident’ı çözüp çözmediğini görmek</li>
+<li>staging ortamının eski üretim davranışıyla uyumunu kontrol etmek</li>
+<li>kritik endpoint’leri deploy öncesi smoke test gibi replay etmek</li>
+</ul>
+<h2 id="6-farkları-otomatik-çıkar"><a class="header" href="#6-farkları-otomatik-çıkar">6) Farkları otomatik çıkar</a></h2>
+<p>Asıl sihir burada: replay edilen response ile orijinal response’u karşılaştırın.</p>
+<pre><code class="language-bash">cargo rustapi replay diff &lt;id&gt; -s http://localhost:8080 -t local-replay-token -T http://staging:8080
+</code></pre>
+<p><code>diff</code> çıktısı şu alanlarda fark arar:</p>
+<ul>
+<li>status code</li>
+<li>response header’ları</li>
+<li>JSON body alanları</li>
+</ul>
+<p>Bu sayede “200 döndü ama payload değişti” gibi daha sinsi regresyonları da yakalarsınız.</p>
+<h2 id="önerilen-resmi-workflow"><a class="header" href="#önerilen-resmi-workflow">Önerilen resmi workflow</a></h2>
+<p>Bir incident ya da regresyon sırasında önerilen akış şu sıradadır:</p>
+<ol>
+<li><strong>Kayıt aç</strong>: replay’i staging/canary ortamında kısa TTL ile etkinleştir.</li>
+<li><strong>Örneği yakala</strong>: problemi üreten gerçek isteği yeniden geçir.</li>
+<li><strong>Listele</strong>: <code>cargo rustapi replay list</code> ile doğru girdiyi bul.</li>
+<li><strong>İncele</strong>: <code>cargo rustapi replay show</code> ile request/response çiftini doğrula.</li>
+<li><strong>Düzeltmeyi dene</strong>: girdiyi local veya aday sürüme <code>run</code> ile tekrar oynat.</li>
+<li><strong>Diff al</strong>: <code>diff</code> ile davranışın beklenen şekilde değiştiğini doğrula.</li>
+<li><strong>Kapat</strong>: incident sonrası replay kaydını kapat veya TTL’i kısa tut.</li>
+</ol>
+<p>Kısacası: <strong>capture → inspect → replay → diff → promote</strong>.</p>
+<h2 id="admin-api-referansı"><a class="header" href="#admin-api-referansı">Admin API referansı</a></h2>
+<p>Tüm admin endpoint’leri şu header’ı ister:</p>
+<pre><code class="language-text">Authorization: Bearer &lt;admin_token&gt;
 </code></pre>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Method</th><th>Path</th><th>Description</th></tr>
+<tr><th>Method</th><th>Path</th><th>Açıklama</th></tr>
 </thead>
 <tbody>
-<tr><td>GET</td><td><code>/__rustapi/replays</code></td><td>List recorded entries</td></tr>
-<tr><td>GET</td><td><code>/__rustapi/replays/{id}</code></td><td>Show a single entry</td></tr>
-<tr><td>POST</td><td><code>/__rustapi/replays/{id}/run?target=URL</code></td><td>Replay against target</td></tr>
-<tr><td>POST</td><td><code>/__rustapi/replays/{id}/diff?target=URL</code></td><td>Replay and compute diff</td></tr>
-<tr><td>DELETE</td><td><code>/__rustapi/replays/{id}</code></td><td>Delete an entry</td></tr>
+<tr><td>GET</td><td><code>/__rustapi/replays</code></td><td>Kayıtları listele</td></tr>
+<tr><td>GET</td><td><code>/__rustapi/replays/{id}</code></td><td>Tek bir girdiyi göster</td></tr>
+<tr><td>POST</td><td><code>/__rustapi/replays/{id}/run?target=URL</code></td><td>İsteği başka hedefe replay et</td></tr>
+<tr><td>POST</td><td><code>/__rustapi/replays/{id}/diff?target=URL</code></td><td>Replay et ve fark üret</td></tr>
+<tr><td>DELETE</td><td><code>/__rustapi/replays/{id}</code></td><td>Bir girdiyi sil</td></tr>
 </tbody>
 </table>
 </div>
-<h3 id="query-parameters-for-list"><a class="header" href="#query-parameters-for-list">Query Parameters for List</a></h3>
-<ul>
-<li><code>limit</code> - Maximum number of entries to return</li>
-<li><code>method</code> - Filter by HTTP method (GET, POST, etc.)</li>
-<li><code>path</code> - Filter by path substring</li>
-<li><code>status_min</code> - Minimum status code filter</li>
-</ul>
-<h3 id="example-curl"><a class="header" href="#example-curl">Example: cURL</a></h3>
-<pre><code class="language-bash"># List entries
-curl -H "Authorization: Bearer my-secret-token" \
-     http://localhost:8080/__rustapi/replays?limit=10
+<h3 id="curl-örnekleri"><a class="header" href="#curl-örnekleri">cURL örnekleri</a></h3>
+<pre><code class="language-bash">curl -H "Authorization: Bearer local-replay-token" \
+     "http://localhost:8080/__rustapi/replays?limit=10"
 
-# Show a specific entry
-curl -H "Authorization: Bearer my-secret-token" \
-     http://localhost:8080/__rustapi/replays/&lt;id&gt;
+curl -H "Authorization: Bearer local-replay-token" \
+     "http://localhost:8080/__rustapi/replays/&lt;id&gt;"
 
-# Replay against staging
-curl -X POST -H "Authorization: Bearer my-secret-token" \
+curl -X POST -H "Authorization: Bearer local-replay-token" \
      "http://localhost:8080/__rustapi/replays/&lt;id&gt;/run?target=http://staging:8080"
 
-# Replay and diff
-curl -X POST -H "Authorization: Bearer my-secret-token" \
+curl -X POST -H "Authorization: Bearer local-replay-token" \
      "http://localhost:8080/__rustapi/replays/&lt;id&gt;/diff?target=http://staging:8080"
 </code></pre>
-<h2 id="cli-usage"><a class="header" href="#cli-usage">CLI Usage</a></h2>
-<p>Install with the <code>replay</code> feature:</p>
-<pre><code class="language-bash">cargo install cargo-rustapi --features replay
-</code></pre>
-<h3 id="commands-1"><a class="header" href="#commands-1">Commands</a></h3>
-<pre><code class="language-bash"># List recorded entries
-cargo rustapi replay list -s http://localhost:8080 -t my-secret-token
-
-# List with filters
-cargo rustapi replay list -t my-secret-token --method GET --limit 20
-
-# Show entry details
-cargo rustapi replay show &lt;id&gt; -t my-secret-token
-
-# Replay against a target URL
-cargo rustapi replay run &lt;id&gt; -T http://staging:8080 -t my-secret-token
-
-# Replay and diff
-cargo rustapi replay diff &lt;id&gt; -T http://staging:8080 -t my-secret-token
-</code></pre>
-<p>The <code>--token</code> (<code>-t</code>) parameter can also be set via the <code>RUSTAPI_REPLAY_TOKEN</code> environment variable:</p>
-<pre><code class="language-bash">export RUSTAPI_REPLAY_TOKEN=my-secret-token
-cargo rustapi replay list
-</code></pre>
-<h2 id="configuration-2"><a class="header" href="#configuration-2">Configuration</a></h2>
-<h3 id="replayconfig"><a class="header" href="#replayconfig">ReplayConfig</a></h3>
-<pre><code class="language-rust ignore">use rustapi_core::replay::ReplayConfig;
+<h2 id="konfigürasyon-notları"><a class="header" href="#konfigürasyon-notları">Konfigürasyon notları</a></h2>
+<p><code>ReplayConfig</code> ile en sık ayarlanan seçenekler:</p>
+<pre><code class="language-rust ignore">use rustapi_rs::extras::replay::ReplayConfig;
 
 let config = ReplayConfig::new()
-    // Enable recording (default: false)
     .enabled(true)
-    // Required: admin bearer token
-    .admin_token("my-secret-token")
-    // Max entries in store (default: 500)
-    .store_capacity(1000)
-    // Entry TTL in seconds (default: 3600 = 1 hour)
-    .ttl_secs(7200)
-    // Sampling rate 0.0-1.0 (default: 1.0 = all requests)
+    .admin_token("local-replay-token")
+    .store_capacity(1_000)
+    .ttl_secs(7_200)
     .sample_rate(0.5)
-    // Max request body capture size (default: 64KB)
     .max_request_body(131_072)
-    // Max response body capture size (default: 256KB)
     .max_response_body(524_288)
-    // Only record specific paths
-    .record_path("/api/users")
     .record_path("/api/orders")
-    // Or skip specific paths
+    .record_path("/api/users")
     .skip_path("/health")
     .skip_path("/metrics")
-    // Add headers to redact
     .redact_header("x-custom-secret")
-    // Add body fields to redact
     .redact_body_field("password")
-    .redact_body_field("ssn")
     .redact_body_field("credit_card")
-    // Custom admin route prefix (default: "/__rustapi/replays")
     .admin_route_prefix("/__admin/replays");</code></pre>
-<h3 id="default-redacted-headers"><a class="header" href="#default-redacted-headers">Default Redacted Headers</a></h3>
-<p>The following headers are redacted by default (values replaced with <code>[REDACTED]</code>):</p>
+<p>Varsayılan olarak şu header’lar <code>[REDACTED]</code> olarak saklanır:</p>
 <ul>
 <li><code>authorization</code></li>
 <li><code>cookie</code></li>
 <li><code>x-api-key</code></li>
 <li><code>x-auth-token</code></li>
 </ul>
-<h3 id="body-field-redaction"><a class="header" href="#body-field-redaction">Body Field Redaction</a></h3>
-<p>JSON body fields are recursively redacted. For example, with <code>.redact_body_field("password")</code>:</p>
-<pre><code class="language-json">// Before redaction
-{"user": {"name": "alice", "password": "secret123"}}
-
-// After redaction
-{"user": {"name": "alice", "password": "[REDACTED]"}}
-</code></pre>
-<h2 id="custom-store"><a class="header" href="#custom-store">Custom Store</a></h2>
-<h3 id="file-system-store"><a class="header" href="#file-system-store">File-System Store</a></h3>
-<p>For persistent storage across restarts:</p>
-<pre><code class="language-rust ignore">use rustapi_rs::replay::{ReplayLayer, FsReplayStore, FsReplayStoreConfig};
-use rustapi_core::replay::ReplayConfig;
+<p>JSON body redaction recursive çalışır; örneğin <code>password</code> alanı iç içe nesnelerde de maskelenir.</p>
+<h2 id="kalıcı-saklama-için-filesystem-store"><a class="header" href="#kalıcı-saklama-için-filesystem-store">Kalıcı saklama için filesystem store</a></h2>
+<p>Geliştirici makinesi yeniden başlasa bile kayıtların kalmasını istiyorsanız filesystem store kullanın:</p>
+<pre><code class="language-rust ignore">use rustapi_rs::extras::replay::{
+    FsReplayStore, FsReplayStoreConfig, ReplayConfig, ReplayLayer,
+};
 
 let config = ReplayConfig::new()
     .enabled(true)
-    .admin_token("my-secret-token");
+    .admin_token("local-replay-token");
 
 let fs_store = FsReplayStore::new(FsReplayStoreConfig {
     directory: "./replay-data".into(),
-    max_file_size: Some(10 * 1024 * 1024), // 10MB per file
+    max_file_size: Some(10 * 1024 * 1024),
     create_if_missing: true,
 });
 
-let layer = ReplayLayer::new(config).with_store(fs_store);</code></pre>
-<h3 id="implementing-a-custom-store"><a class="header" href="#implementing-a-custom-store">Implementing a Custom Store</a></h3>
-<p>Implement the <code>ReplayStore</code> trait for custom backends (Redis, database, etc.):</p>
+let replay = ReplayLayer::new(config).with_store(fs_store);</code></pre>
+<h2 id="özel-backend-yazmak-isterseniz"><a class="header" href="#özel-backend-yazmak-isterseniz">Özel backend yazmak isterseniz</a></h2>
+<p>Redis, object storage ya da kurumsal bir audit backend’i kullanmak istiyorsanız <code>ReplayStore</code> trait’ini uygulayın:</p>
 <pre><code class="language-rust ignore">use async_trait::async_trait;
-use rustapi_core::replay::{
+use rustapi_rs::extras::replay::{
     ReplayEntry, ReplayQuery, ReplayStore, ReplayStoreResult,
 };
 
-struct MyCustomStore {
-    // your fields
-}
+#[derive(Clone)]
+struct MyCustomStore;
 
 #[async_trait]
 impl ReplayStore for MyCustomStore {
     async fn store(&amp;self, entry: ReplayEntry) -&gt; ReplayStoreResult&lt;()&gt; {
-        // Store the entry
+        let _ = entry;
         Ok(())
     }
 
     async fn get(&amp;self, id: &amp;str) -&gt; ReplayStoreResult&lt;Option&lt;ReplayEntry&gt;&gt; {
-        // Retrieve by ID
+        let _ = id;
         Ok(None)
     }
 
     async fn list(&amp;self, query: &amp;ReplayQuery) -&gt; ReplayStoreResult&lt;Vec&lt;ReplayEntry&gt;&gt; {
-        // List with filtering
+        let _ = query;
         Ok(vec![])
     }
 
     async fn delete(&amp;self, id: &amp;str) -&gt; ReplayStoreResult&lt;bool&gt; {
-        // Delete by ID
+        let _ = id;
         Ok(false)
     }
 
@@ -4326,7 +6370,7 @@ impl ReplayStore for MyCustomStore {
     }
 
     async fn delete_before(&amp;self, timestamp_ms: u64) -&gt; ReplayStoreResult&lt;usize&gt; {
-        // Delete entries older than timestamp
+        let _ = timestamp_ms;
         Ok(0)
     }
 
@@ -4334,28 +6378,37 @@ impl ReplayStore for MyCustomStore {
         Box::new(self.clone())
     }
 }</code></pre>
-<h2 id="security"><a class="header" href="#security">Security</a></h2>
-<p>The replay system has multiple security layers built in:</p>
+<h2 id="doğrulama-kontrol-listesi"><a class="header" href="#doğrulama-kontrol-listesi">Doğrulama kontrol listesi</a></h2>
+<p>Replay kurulumundan sonra şu kısa kontrolü yapın:</p>
 <ol>
-<li><strong>Disabled by default</strong>: Recording is off (<code>enabled: false</code>) until explicitly enabled</li>
-<li><strong>Admin token required</strong>: All <code>/__rustapi/replays</code> endpoints require a valid bearer token. Requests without the token get a <code>401 Unauthorized</code> response</li>
-<li><strong>Header redaction</strong>: <code>authorization</code>, <code>cookie</code>, <code>x-api-key</code>, and <code>x-auth-token</code> values are replaced with <code>[REDACTED]</code> before storage</li>
-<li><strong>Body field redaction</strong>: Sensitive JSON fields (e.g., <code>password</code>, <code>ssn</code>) can be configured for redaction</li>
-<li><strong>TTL enforcement</strong>: Entries are automatically deleted after the configured TTL (default: 1 hour)</li>
-<li><strong>Body size limits</strong>: Request (64KB) and response (256KB) bodies are truncated to prevent memory issues</li>
-<li><strong>Bounded storage</strong>: The in-memory store uses a ring buffer with FIFO eviction</li>
+<li>uygulamaya bir istek gönderin</li>
+<li><code>cargo rustapi replay list -t &lt;token&gt;</code> ile girdiyi görün</li>
+<li><code>cargo rustapi replay show &lt;id&gt; -t &lt;token&gt;</code> ile body/header kaydını doğrulayın</li>
+<li><code>cargo rustapi replay diff &lt;id&gt; -t &lt;token&gt; -T &lt;target&gt;</code> ile karşılaştırma alın</li>
 </ol>
-<p><strong>Recommendations</strong>:</p>
+<p>Bu dört adım başarılıysa workflow hazırdır.</p>
+<h2 id="güvenlik-özeti"><a class="header" href="#güvenlik-özeti">Güvenlik özeti</a></h2>
+<p>Replay sistemi birden fazla koruma ile gelir:</p>
+<ol>
+<li><strong>Varsayılan kapalıdır</strong>: <code>enabled(false)</code> ile başlar.</li>
+<li><strong>Admin token zorunludur</strong>: admin endpoint’leri bearer token ister.</li>
+<li><strong>Header redaction vardır</strong>: hassas header’lar maskelenir.</li>
+<li><strong>Body field redaction vardır</strong>: JSON alanları seçmeli maskelenebilir.</li>
+<li><strong>TTL uygulanır</strong>: eski kayıtlar otomatik temizlenir.</li>
+<li><strong>Body boyutu sınırlandırılır</strong>: request/response capture sınırlıdır.</li>
+<li><strong>Bounded storage kullanılır</strong>: in-memory store FIFO eviction ile sınırlıdır.</li>
+</ol>
+<p>Öneriler:</p>
 <ul>
-<li>Use only in development/staging environments</li>
-<li>Use a strong, unique admin token</li>
-<li>Keep TTL short</li>
-<li>Add application-specific sensitive fields to the redaction list</li>
-<li>Monitor memory usage when using the in-memory store with large capacity values</li>
+<li>replay’i herkese açık production ingress arkasında açmayın</li>
+<li>kısa TTL kullanın</li>
+<li>uygulamaya özel gizli alanları redaction listesine ekleyin</li>
+<li>büyük kapasite ile in-memory store kullanıyorsanız bellek tüketimini izleyin</li>
+<li>incident sonrasında replay kaydını kapatmayı düşünün</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="deployment"><a class="header" href="#deployment">Deployment</a></h1>
-<p>RustAPI includes built-in deployment tooling to helping you ship your applications to production with ease. The <code>cargo rustapi deploy</code> command generates configuration files and provides instructions for various platforms.</p>
+<p>RustAPI includes built-in deployment tooling to help you ship applications, but production deployment is more than generating a config file. This guide covers both the CLI-assisted setup and the operational recommendations for health, readiness, liveness, and rollout safety.</p>
 <h2 id="supported-platforms"><a class="header" href="#supported-platforms">Supported Platforms</a></h2>
 <ul>
 <li><strong>Docker</strong>: Generate a production-ready <code>Dockerfile</code>.</li>
@@ -4406,6 +6459,95 @@ impl ReplayStore for MyCustomStore {
 <blockquote>
 <p><strong>Note</strong>: Shuttle.rs requires some code changes to use their runtime macro <code>#[shuttle_runtime::main]</code>. The deploy command generates the configuration but you will need to adjust your <code>main.rs</code> to use their attributes if you are deploying to their platform.</p>
 </blockquote>
+<h2 id="probe-recommendations"><a class="header" href="#probe-recommendations">Probe recommendations</a></h2>
+<p>RustAPI has first-class built-in probe endpoints:</p>
+<ul>
+<li><code>/health</code> — aggregate service and dependency health</li>
+<li><code>/ready</code> — readiness for load balancers and orchestrators</li>
+<li><code>/live</code> — lightweight liveness probe</li>
+</ul>
+<p>You can enable them via:</p>
+<ul>
+<li><code>.health_endpoints()</code></li>
+<li><code>.with_health_check(...)</code></li>
+<li><code>.production_defaults("service-name")</code></li>
+</ul>
+<h3 id="recommended-semantics"><a class="header" href="#recommended-semantics">Recommended semantics</a></h3>
+<ul>
+<li><strong>Liveness</strong> should answer: “Is the process alive?”</li>
+<li><strong>Readiness</strong> should answer: “Should this instance receive traffic right now?”</li>
+<li><strong>Health</strong> should answer: “What is the aggregate state of the service and its dependencies?”</li>
+</ul>
+<p>In practice:</p>
+<ul>
+<li>let <code>/live</code> stay lightweight,</li>
+<li>let <code>/ready</code> fail when critical dependencies fail,</li>
+<li>let <code>/ready</code> also fail during drain/shutdown windows,</li>
+<li>use <code>/health</code> for richer diagnostics and dashboards.</li>
+</ul>
+<h2 id="kubernetes-example"><a class="header" href="#kubernetes-example">Kubernetes example</a></h2>
+<pre><code class="language-yaml">livenessProbe:
+	httpGet:
+		path: /live
+		port: 8080
+	initialDelaySeconds: 5
+	periodSeconds: 10
+
+readinessProbe:
+	httpGet:
+		path: /ready
+		port: 8080
+	initialDelaySeconds: 2
+	periodSeconds: 5
+
+startupProbe:
+	httpGet:
+		path: /live
+		port: 8080
+	failureThreshold: 30
+	periodSeconds: 2
+</code></pre>
+<p>If you customize the paths with <code>HealthEndpointConfig</code>, update the probe configuration to match.</p>
+<h2 id="load-balancer-and-ingress-guidance"><a class="header" href="#load-balancer-and-ingress-guidance">Load balancer and ingress guidance</a></h2>
+<ul>
+<li>Point traffic-routing health checks at <code>/ready</code>, not <code>/live</code>.</li>
+<li>Keep the drain window consistent with your termination grace period.</li>
+<li>Avoid routing public traffic to admin/debug surfaces such as <code>/status</code>, <code>/docs</code>, or <code>/admin/insights</code> unless intentionally protected.</li>
+<li>If auth middleware protects most routes, make sure probe routes remain reachable.</li>
+</ul>
+<h2 id="minimal-production-bootstrap"><a class="header" href="#minimal-production-bootstrap">Minimal production bootstrap</a></h2>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+
+#[rustapi_rs::main]
+async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+		RustApi::auto()
+				.production_defaults("users-api")
+				.run("0.0.0.0:8080")
+				.await
+}</code></pre>
+<p>If you need dependency-aware readiness, supply your own <code>HealthCheck</code>:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+
+let health = HealthCheckBuilder::new(true)
+		.add_check("database", || async {
+				HealthStatus::healthy()
+		})
+		.build();
+
+let app = RustApi::new().with_health_check(health);
+<span class="boring">}</span></code></pre>
+<h2 id="rollout-checklist"><a class="header" href="#rollout-checklist">Rollout checklist</a></h2>
+<p>Before sending real traffic:</p>
+<ol>
+<li><code>GET /live</code> returns <code>200</code>.</li>
+<li><code>GET /ready</code> returns <code>200</code>.</li>
+<li><code>GET /health</code> shows expected dependency state.</li>
+<li>At least one business endpoint succeeds.</li>
+<li>Logs and traces contain request IDs and service metadata.</li>
+</ol>
+<p>For the full operational list, see <a href="../../PRODUCTION_CHECKLIST.html">Production Checklist</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="http3-quic-support"><a class="header" href="#http3-quic-support">HTTP/3 (QUIC) Support</a></h1>
 <p>RustAPI supports HTTP/3 (QUIC), the next generation of the HTTP protocol, providing lower latency, better performance over unstable networks, and improved security.</p>
@@ -4458,14 +6600,14 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&g
         .run_dual_stack("127.0.0.1:8080")
         .await
 }</code></pre>
-<h2 id="how-it-works-6"><a class="header" href="#how-it-works-6">How It Works</a></h2>
+<h2 id="how-it-works-5"><a class="header" href="#how-it-works-5">How It Works</a></h2>
 <p>HTTP/3 in RustAPI is built on top of <code>quinn</code> and <code>h3</code>. When enabled:</p>
 <ol>
 <li><strong>UDP Binding</strong>: The server binds to a UDP socket (in addition to TCP if dual-stack).</li>
 <li><strong>TLS</strong>: QUIC requires TLS 1.3. RustAPI handles the TLS configuration.</li>
 <li><strong>Optimization</strong>: Responses are optimized for QUIC streams.</li>
 </ol>
-<h2 id="testing-1"><a class="header" href="#testing-1">Testing</a></h2>
+<h2 id="testing-3"><a class="header" href="#testing-3">Testing</a></h2>
 <p>You can test HTTP/3 support using <code>curl</code> with HTTP/3 support:</p>
 <pre><code class="language-bash">curl --http3 -k https://localhost:8080/
 </code></pre>
@@ -4572,7 +6714,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&g
 
     Ok(())
 }</code></pre>
-<h2 id="how-it-works-7"><a class="header" href="#how-it-works-7">How It Works</a></h2>
+<h2 id="how-it-works-6"><a class="header" href="#how-it-works-6">How It Works</a></h2>
 <ol>
 <li><strong>Shared Runtime</strong>: Both servers run on the same Tokio runtime, sharing thread pool resources efficiently.</li>
 <li><strong>Graceful Shutdown</strong>: When <code>Ctrl+C</code> is pressed, <code>run_rustapi_and_grpc_with_shutdown</code> signals both the HTTP server and the gRPC server to stop accepting new connections and finish pending requests.</li>
@@ -5194,7 +7336,7 @@ RustApi::auto()
 <tr><td>3</td><td><strong>Advanced Security</strong></td><td>Add <a href="#advanced-security">OAuth2 and Security Headers</a></td></tr>
 <tr><td>4</td><td><strong>Optimization</strong></td><td>Configure <a href="#optimization">Caching and Deduplication</a></td></tr>
 <tr><td>5</td><td><strong>Background Jobs</strong></td><td>Implement <a href="#rustapi-jobs-the-workhorse">Reliable Job Queues</a></td></tr>
-<tr><td>6</td><td><strong>Debugging</strong></td><td>Set up <a href="#replay-time-travel-debugging">Time-Travel Debugging</a></td></tr>
+<tr><td>6</td><td><strong>Debugging</strong></td><td>Set up <a href="#replay-workflow-time-travel-debugging">Time-Travel Debugging</a></td></tr>
 <tr><td>7</td><td><strong>Reliable Testing</strong></td><td>Master <a href="#rustapi-testing-the-auditor">Mocking and Integration Testing</a></td></tr>
 </tbody>
 </table>
@@ -5203,7 +7345,7 @@ RustApi::auto()
 <ul>
 <li><a href="#rustapi-testing-the-auditor">rustapi-testing: The Auditor</a></li>
 <li><a href="#rustapi-extras-the-toolbox">rustapi-extras: The Toolbox</a></li>
-<li><a href="#replay-time-travel-debugging">Time-Travel Debugging</a></li>
+<li><a href="#replay-workflow-time-travel-debugging">Time-Travel Debugging</a></li>
 <li><a href="#rustapi-jobs-the-workhorse">rustapi-jobs: The Workhorse</a></li>
 <li><a href="#resilience-patterns">Resilience Patterns</a></li>
 </ul>
@@ -5353,7 +7495,7 @@ cargo test
 <tr><td><a href="#real-time-chat-websockets">Real-time Chat</a></td><td><code>websocket</code></td></tr>
 <tr><td><a href="#production-tuning">Production Tuning</a></td><td><code>microservices-advanced</code></td></tr>
 <tr><td><a href="#resilience-patterns">Resilience Patterns</a></td><td><code>microservices</code></td></tr>
-<tr><td><a href="#replay-time-travel-debugging">Time-Travel Debugging</a></td><td><code>microservices</code></td></tr>
+<tr><td><a href="#replay-workflow-time-travel-debugging">Time-Travel Debugging</a></td><td><code>microservices</code></td></tr>
 <tr><td><a href="#deployment">Deployment</a></td><td><code>serverless-lambda</code></td></tr>
 </tbody>
 </table>
@@ -5497,7 +7639,7 @@ cargo test
 <h3 id="module-55-error-handling"><a class="header" href="#module-55-error-handling">Module 5.5: Error Handling</a></h3>
 <ul>
 <li><strong>Prerequisites:</strong> Module 5.</li>
-<li><strong>Reading:</strong> <a href="concepts/errors.html">Error Handling</a>.</li>
+<li><strong>Reading:</strong> <a href="#error-handling-4">Error Handling</a>.</li>
 <li><strong>Task:</strong> Create a custom <code>ApiError</code> enum and implement <code>IntoResponse</code>. Return robust error messages.</li>
 <li><strong>Expected Output:</strong> <code>GET /users/999</code> returns <code>404 Not Found</code> with a structured JSON error body.</li>
 <li><strong>Pitfalls:</strong> Exposing internal database errors (like SQL strings) to the client.</li>
@@ -5685,7 +7827,7 @@ cargo test
 <h3 id="module-13-resilience--security"><a class="header" href="#module-13-resilience--security">Module 13: Resilience &amp; Security</a></h3>
 <ul>
 <li><strong>Prerequisites:</strong> Phase 3.</li>
-<li><strong>Reading:</strong> <a href="#resilience-patterns">Resilience Patterns</a>, <a href="#replay-time-travel-debugging">Time-Travel Debugging</a>.</li>
+<li><strong>Reading:</strong> <a href="#resilience-patterns">Resilience Patterns</a>, <a href="#replay-workflow-time-travel-debugging">Time-Travel Debugging</a>.</li>
 <li><strong>Task:</strong>
 <ol>
 <li>Wrap an external API call with a <code>CircuitBreaker</code>.</li>

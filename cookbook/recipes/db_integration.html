@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-b5c3cc6f.js";
+            window.path_to_searchindex_js = "../searchindex-a3b74072.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-4e658006.js"></script>
+        <script src="../toc-c37e91f3.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -182,17 +182,81 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="database-integration"><a class="header" href="#database-integration">Database Integration</a></h1>
-<p>RustAPI is database-agnostic, but <strong>SQLx</strong> is the recommended driver due to its async-first design and compile-time query verification.</p>
-<p>This recipe shows how to integrate PostgreSQL/MySQL/SQLite using a global connection pool with best practices for production.</p>
+<p>RustAPI is database-agnostic, but <strong>SQLx</strong> is the recommended default for most RustAPI services because it is async-first, works naturally with <code>State</code>, and supports compile-time query verification.</p>
+<p>This recipe shows how to integrate PostgreSQL/MySQL/SQLite using a shared pool, how to choose between <strong>SQLx</strong>, <strong>Diesel</strong>, and <strong>SeaORM</strong>, how to think about migrations, and which pooling practices are safest in production.</p>
 <h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["sqlx"] } # Enable SQLx error conversion
+rustapi-rs = { version = "0.1.335", features = ["extras-sqlx"] } # Canonical facade feature for SQLx error conversion
 sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "uuid"] }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 dotenvy = "0.15"
 </code></pre>
-<h2 id="1-setup-connection-pool"><a class="header" href="#1-setup-connection-pool">1. Setup Connection Pool</a></h2>
+<h2 id="1-choosing-sqlx-vs-diesel-vs-seaorm"><a class="header" href="#1-choosing-sqlx-vs-diesel-vs-seaorm">1. Choosing SQLx vs Diesel vs SeaORM</a></h2>
+<p>RustAPI does not force a single database stack. Pick the tool that matches your team’s trade-offs.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Stack</th><th>Best fit</th><th>Strengths</th><th>Watch-outs</th></tr>
+</thead>
+<tbody>
+<tr><td><strong>SQLx</strong></td><td>Default choice for most APIs</td><td>async-first, raw SQL clarity, compile-time query checks, easy <code>State</code> integration</td><td>you write SQL yourself</td></tr>
+<tr><td><strong>Diesel</strong></td><td>teams that want schema-driven queries and strong compile-time modeling</td><td>mature ecosystem, strong query builder, great for heavily relational domains</td><td>core query execution is synchronous, so use a pool plus <code>spawn_blocking</code></td></tr>
+<tr><td><strong>SeaORM</strong></td><td>teams that want a higher-level async ORM</td><td>async API, entity-oriented modeling, less handwritten SQL</td><td>more abstraction, less direct control over SQL shape, no RustAPI-specific adapter layer</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="practical-recommendation"><a class="header" href="#practical-recommendation">Practical recommendation</a></h3>
+<ul>
+<li>Choose <strong>SQLx</strong> when you want the most direct, idiomatic fit with RustAPI.</li>
+<li>Choose <strong>Diesel</strong> when your team values its schema/query-builder style enough to accept synchronous query execution boundaries.</li>
+<li>Choose <strong>SeaORM</strong> when entity-first ergonomics matter more than writing SQL manually.</li>
+</ul>
+<p>If you are unsure, start with <strong>SQLx</strong>. It is the least surprising option for handler-first async services.</p>
+<h2 id="2-migration-strategy-guidance"><a class="header" href="#2-migration-strategy-guidance">2. Migration strategy guidance</a></h2>
+<p>Treat schema migrations as part of application delivery, not an afterthought.</p>
+<h3 id="recommended-strategy-by-stack"><a class="header" href="#recommended-strategy-by-stack">Recommended strategy by stack</a></h3>
+<ul>
+<li><strong>SQLx</strong>: keep migrations in a <code>migrations/</code> directory and apply them with <code>sqlx::migrate!()</code> at startup for local/dev workflows, or via a deployment step in CI/CD for production.</li>
+<li><strong>Diesel</strong>: use Diesel CLI migrations as the source of truth; keep application startup focused on serving traffic rather than performing long-running schema work.</li>
+<li><strong>SeaORM</strong>: use the SeaORM migration crate and run migrations as a separate deployment phase.</li>
+</ul>
+<h3 id="production-guidance"><a class="header" href="#production-guidance">Production guidance</a></h3>
+<ul>
+<li>Prefer <strong>forward-only</strong> migrations in normal delivery.</li>
+<li>Make destructive changes in <strong>multiple releases</strong> when possible (add column -&gt; dual write/read -&gt; remove old column later).</li>
+<li>Run migrations <strong>before</strong> routing production traffic to a new version when backward compatibility is not guaranteed.</li>
+<li>Keep app code tolerant of short-lived mixed-schema windows during rolling deploys.</li>
+<li>Seed data and schema changes should be separate concerns when possible.</li>
+</ul>
+<p>For many teams, the safest pattern is:</p>
+<ol>
+<li>apply migrations,</li>
+<li>verify readiness,</li>
+<li>shift traffic,</li>
+<li>clean up old schema in a later deploy.</li>
+</ol>
+<h2 id="3-connection-pooling-recommendations"><a class="header" href="#3-connection-pooling-recommendations">3. Connection pooling recommendations</a></h2>
+<p>No matter which stack you pick, the operational rule is the same: <strong>create the pool once at startup and share it through <code>State</code></strong>.</p>
+<p>Recommended defaults:</p>
+<ul>
+<li>keep one long-lived pool per database/service boundary</li>
+<li>never open a fresh connection per request</li>
+<li>size pool limits from the database server’s actual connection budget</li>
+<li>set <code>acquire_timeout</code> so overload fails fast instead of hanging forever</li>
+<li>use small but non-zero <code>min_connections</code> only when warm capacity matters</li>
+<li>keep transaction scopes short and never hold them across unrelated awaits</li>
+<li>if you have API workers plus job workers, budget pool capacity for both</li>
+</ul>
+<p>As a starting point for a single service instance:</p>
+<ul>
+<li><code>max_connections</code>: enough for peak concurrent DB work, but well below the database hard cap</li>
+<li><code>min_connections</code>: <code>0-5</code> depending on cold-start sensitivity</li>
+<li><code>acquire_timeout</code>: <code>2-5s</code></li>
+<li><code>idle_timeout</code>: a few minutes, unless your environment aggressively scales to zero</li>
+</ul>
+<p>If you use a synchronous driver such as Diesel, pool the connections and execute DB work with <code>tokio::task::spawn_blocking</code> so you do not block the async runtime.</p>
+<h2 id="4-setup-connection-pool"><a class="header" href="#4-setup-connection-pool">4. Setup Connection Pool</a></h2>
 <p>Create the pool once at startup and share it via <code>State</code>. Configure pool limits appropriately.</p>
 <pre class="playground"><code class="language-rust">use sqlx::postgres::PgPoolOptions;
 use std::sync::Arc;
@@ -233,7 +297,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&g
         .run("0.0.0.0:3000")
         .await
 }</code></pre>
-<h2 id="2-using-the-database-in-handlers"><a class="header" href="#2-using-the-database-in-handlers">2. Using the Database in Handlers</a></h2>
+<h2 id="5-using-the-database-in-handlers"><a class="header" href="#5-using-the-database-in-handlers">5. Using the Database in Handlers</a></h2>
 <p>Extract the <code>State</code> to get access to the pool.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -275,7 +339,7 @@ async fn create_user(
     Ok((StatusCode::CREATED, Json(record)))
 }
 <span class="boring">}</span></code></pre>
-<h2 id="3-transactions"><a class="header" href="#3-transactions">3. Transactions</a></h2>
+<h2 id="6-transactions"><a class="header" href="#6-transactions">6. Transactions</a></h2>
 <p>For operations involving multiple queries, use a transaction to ensure atomicity.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -323,7 +387,7 @@ async fn create_user(
     Ok(StatusCode::OK)
 }
 <span class="boring">}</span></code></pre>
-<h2 id="4-integration-testing-with-testcontainers"><a class="header" href="#4-integration-testing-with-testcontainers">4. Integration Testing with TestContainers</a></h2>
+<h2 id="7-integration-testing-with-testcontainers"><a class="header" href="#7-integration-testing-with-testcontainers">7. Integration Testing with TestContainers</a></h2>
 <p>For testing, use <code>testcontainers</code> to spin up a real database instance. This ensures your queries are correct without mocking the database driver.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -374,6 +438,7 @@ mod tests {
 <li>Check Constraint Violation -&gt; 400 Bad Request</li>
 <li>Other errors -&gt; 500 Internal Server Error (masked in production)</li>
 </ul>
+<p>If you are using Diesel or SeaORM instead of SQLx, keep the same external error contract for handlers even though the internal database error types differ. Consistent HTTP error behavior matters more than which query builder paid the bills.</p>
 
                     </main>
 
