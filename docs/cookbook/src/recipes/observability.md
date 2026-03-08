@@ -174,4 +174,5 @@ If you need probe telemetry for a specific incident, re-enable it deliberately r
 
 - [Recommended Production Baseline](../../../PRODUCTION_BASELINE.md)
 - [Production Checklist](../../../PRODUCTION_CHECKLIST.md)
+- [Adaptive Execution Debug Plan](../../../ADAPTIVE_EXECUTION_DEBUG_PLAN.md)
 - [Graceful Shutdown](graceful_shutdown.md)

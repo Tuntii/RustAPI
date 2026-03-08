@@ -1,245 +1,286 @@
-# Replay: Time-Travel Debugging
+# Replay workflow: time-travel debugging
 
-Record HTTP request/response pairs and replay them against different environments for debugging and regression testing.
+Record HTTP request/response pairs in a controlled environment, inspect a captured request, replay it against another target, and diff the result before promoting a fix.
 
-> **Security Notice**: The replay system is designed for **development and staging environments only**. See [Security](#security) for details.
+> **Security notice**
+> Replay is intended for **development, staging, canary, and incident-response environments**. Do not expose the admin endpoints publicly on the open internet.
 
-## Quick Start
+## Ne zaman kullanılır?
 
-Add the `replay` feature to your `Cargo.toml`:
+Replay en çok şu durumlarda işe yarar:
+
+- staging ile local arasında davranış farkı varsa
+- bir regresyonu gerçek trafik örneğiyle yeniden üretmek istiyorsanız
+- yeni bir sürümü canary ortamına almadan önce kritik istekleri tekrar koşturmak istiyorsanız
+- “bu istek neden dün çalışıyordu da bugün bozuldu?” sorusuna zaman makinesi tadında cevap arıyorsanız
+
+## Ön koşullar
+
+Uygulamada canonical replay feature'ını açın:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.335", features = ["replay"] }
+rustapi-rs = { version = "0.1.335", features = ["extras-replay"] }
 ```
 
-Add the `ReplayLayer` middleware to your application:
+CLI tarafında `cargo-rustapi` yeterlidir; replay komutları varsayılan kurulumun parçasıdır:
+
+```bash
+cargo install cargo-rustapi
+```
+
+## 1) Replay kaydını etkinleştir
+
+En küçük pratik kurulum için in-memory store ile başlayın:
 
 ```rust,ignore
+use rustapi_rs::extras::replay::{InMemoryReplayStore, ReplayConfig, ReplayLayer};
 use rustapi_rs::prelude::*;
-use rustapi_rs::replay::{ReplayLayer, InMemoryReplayStore};
-use rustapi_core::replay::ReplayConfig;
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+#[rustapi_rs::get("/api/users")]
+async fn list_users() -> Json<Vec<&'static str>> {
+    Json(vec!["Alice", "Bob"])
+}
+
+#[rustapi_rs::main]
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let replay = ReplayLayer::new(
         ReplayConfig::new()
             .enabled(true)
-            .admin_token("my-secret-token")
-            .ttl_secs(3600)
-    );
+            .admin_token("local-replay-token")
+            .ttl_secs(900)
+            .skip_path("/health")
+            .skip_path("/ready")
+            .skip_path("/live"),
+    )
+    .with_store(InMemoryReplayStore::new(200));
 
-    RustApi::new()
+    RustApi::auto()
         .layer(replay)
-        .route("/api/users", get(list_users))
         .run("127.0.0.1:8080")
         .await
 }
-
-async fn list_users() -> Json<Vec<String>> {
-    Json(vec!["Alice".into(), "Bob".into()])
-}
 ```
 
-## How It Works
+Bu kurulum şunları yapar:
 
-1. **Record**: The `ReplayLayer` middleware captures HTTP request/response pairs as they flow through your application
-2. **List**: Query recorded entries via the admin API or CLI
-3. **Replay**: Re-send a recorded request against any target URL
-4. **Diff**: Compare the replayed response against the original to detect regressions
+- replay kaydını açık hale getirir
+- admin endpoint'lerini bearer token ile korur
+- probe endpoint'lerini kayıttan çıkarır
+- girdileri 15 dakika saklar
+- bellekte en fazla 200 kayıt tutar
 
-## Admin API
+## 2) Hedef trafiği üret
 
-All admin endpoints require a bearer token in the `Authorization` header:
+Artık uygulamaya normal şekilde istek atın. Replay middleware uygulama kodunuzu değiştirmeden request/response çiftlerini yakalar.
 
+Kayıt akışı şöyledir:
+
+1. istek geçer
+2. request metadata ve uygun body alanları saklanır
+3. response durumu, header'ları ve yakalanabilir body içeriği saklanır
+4. kayıt admin API ve CLI üzerinden erişilebilir hale gelir
+
+## 3) Kayıtları listele ve doğru girdiyi bul
+
+İlk bakış için CLI en rahat yol:
+
+```bash
+# Son replay girdilerini listele
+cargo rustapi replay list -s http://localhost:8080 -t local-replay-token
+
+# Sadece belirli bir endpoint'i filtrele
+cargo rustapi replay list -s http://localhost:8080 -t local-replay-token --method GET --path /api/users --limit 20
 ```
+
+Liste çıktısı size şu alanları gösterir:
+
+- replay kimliği
+- HTTP method
+- path
+- orijinal response status kodu
+- toplam süre
+
+## 4) Tek bir girdiyi incele
+
+Şüpheli isteği bulduktan sonra tam kaydı açın:
+
+```bash
+cargo rustapi replay show <id> -s http://localhost:8080 -t local-replay-token
+```
+
+Bu komut tipik olarak şunları gösterir:
+
+- orijinal request method ve URI
+- saklanan header'lar
+- yakalanan request body
+- orijinal response status/body
+- duration, client IP ve request ID gibi meta alanlar
+
+## 5) Aynı isteği başka bir ortama tekrar koştur
+
+Şimdi aynı isteği local düzeltmeniz, staging ya da canary ortamınız üzerinde çalıştırabilirsiniz:
+
+```bash
+cargo rustapi replay run <id> -s http://localhost:8080 -t local-replay-token -T http://localhost:3000
+```
+
+Pratik kullanım örnekleri:
+
+- local düzeltmenin gerçekten incident'ı çözüp çözmediğini görmek
+- staging ortamının eski üretim davranışıyla uyumunu kontrol etmek
+- kritik endpoint'leri deploy öncesi smoke test gibi replay etmek
+
+## 6) Farkları otomatik çıkar
+
+Asıl sihir burada: replay edilen response ile orijinal response'u karşılaştırın.
+
+```bash
+cargo rustapi replay diff <id> -s http://localhost:8080 -t local-replay-token -T http://staging:8080
+```
+
+`diff` çıktısı şu alanlarda fark arar:
+
+- status code
+- response header'ları
+- JSON body alanları
+
+Bu sayede “200 döndü ama payload değişti” gibi daha sinsi regresyonları da yakalarsınız.
+
+## Önerilen resmi workflow
+
+Bir incident ya da regresyon sırasında önerilen akış şu sıradadır:
+
+1. **Kayıt aç**: replay'i staging/canary ortamında kısa TTL ile etkinleştir.
+2. **Örneği yakala**: problemi üreten gerçek isteği yeniden geçir.
+3. **Listele**: `cargo rustapi replay list` ile doğru girdiyi bul.
+4. **İncele**: `cargo rustapi replay show` ile request/response çiftini doğrula.
+5. **Düzeltmeyi dene**: girdiyi local veya aday sürüme `run` ile tekrar oynat.
+6. **Diff al**: `diff` ile davranışın beklenen şekilde değiştiğini doğrula.
+7. **Kapat**: incident sonrası replay kaydını kapat veya TTL'i kısa tut.
+
+Kısacası: **capture → inspect → replay → diff → promote**.
+
+## Admin API referansı
+
+Tüm admin endpoint'leri şu header'ı ister:
+
+```text
 Authorization: Bearer <admin_token>
 ```
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/__rustapi/replays` | List recorded entries |
-| GET | `/__rustapi/replays/{id}` | Show a single entry |
-| POST | `/__rustapi/replays/{id}/run?target=URL` | Replay against target |
-| POST | `/__rustapi/replays/{id}/diff?target=URL` | Replay and compute diff |
-| DELETE | `/__rustapi/replays/{id}` | Delete an entry |
+| Method | Path | Açıklama |
+|--------|------|----------|
+| GET | `/__rustapi/replays` | Kayıtları listele |
+| GET | `/__rustapi/replays/{id}` | Tek bir girdiyi göster |
+| POST | `/__rustapi/replays/{id}/run?target=URL` | İsteği başka hedefe replay et |
+| POST | `/__rustapi/replays/{id}/diff?target=URL` | Replay et ve fark üret |
+| DELETE | `/__rustapi/replays/{id}` | Bir girdiyi sil |
 
-### Query Parameters for List
-
-- `limit` - Maximum number of entries to return
-- `method` - Filter by HTTP method (GET, POST, etc.)
-- `path` - Filter by path substring
-- `status_min` - Minimum status code filter
-
-### Example: cURL
+### cURL örnekleri
 
 ```bash
-# List entries
-curl -H "Authorization: Bearer my-secret-token" \
-     http://localhost:8080/__rustapi/replays?limit=10
+curl -H "Authorization: Bearer local-replay-token" \
+     "http://localhost:8080/__rustapi/replays?limit=10"
 
-# Show a specific entry
-curl -H "Authorization: Bearer my-secret-token" \
-     http://localhost:8080/__rustapi/replays/<id>
+curl -H "Authorization: Bearer local-replay-token" \
+     "http://localhost:8080/__rustapi/replays/<id>"
 
-# Replay against staging
-curl -X POST -H "Authorization: Bearer my-secret-token" \
+curl -X POST -H "Authorization: Bearer local-replay-token" \
      "http://localhost:8080/__rustapi/replays/<id>/run?target=http://staging:8080"
 
-# Replay and diff
-curl -X POST -H "Authorization: Bearer my-secret-token" \
+curl -X POST -H "Authorization: Bearer local-replay-token" \
      "http://localhost:8080/__rustapi/replays/<id>/diff?target=http://staging:8080"
 ```
 
-## CLI Usage
+## Konfigürasyon notları
 
-Install with the `replay` feature:
-
-```bash
-cargo install cargo-rustapi --features replay
-```
-
-### Commands
-
-```bash
-# List recorded entries
-cargo rustapi replay list -s http://localhost:8080 -t my-secret-token
-
-# List with filters
-cargo rustapi replay list -t my-secret-token --method GET --limit 20
-
-# Show entry details
-cargo rustapi replay show <id> -t my-secret-token
-
-# Replay against a target URL
-cargo rustapi replay run <id> -T http://staging:8080 -t my-secret-token
-
-# Replay and diff
-cargo rustapi replay diff <id> -T http://staging:8080 -t my-secret-token
-```
-
-The `--token` (`-t`) parameter can also be set via the `RUSTAPI_REPLAY_TOKEN` environment variable:
-
-```bash
-export RUSTAPI_REPLAY_TOKEN=my-secret-token
-cargo rustapi replay list
-```
-
-## Configuration
-
-### ReplayConfig
+`ReplayConfig` ile en sık ayarlanan seçenekler:
 
 ```rust,ignore
-use rustapi_core::replay::ReplayConfig;
+use rustapi_rs::extras::replay::ReplayConfig;
 
 let config = ReplayConfig::new()
-    // Enable recording (default: false)
     .enabled(true)
-    // Required: admin bearer token
-    .admin_token("my-secret-token")
-    // Max entries in store (default: 500)
-    .store_capacity(1000)
-    // Entry TTL in seconds (default: 3600 = 1 hour)
-    .ttl_secs(7200)
-    // Sampling rate 0.0-1.0 (default: 1.0 = all requests)
+    .admin_token("local-replay-token")
+    .store_capacity(1_000)
+    .ttl_secs(7_200)
     .sample_rate(0.5)
-    // Max request body capture size (default: 64KB)
     .max_request_body(131_072)
-    // Max response body capture size (default: 256KB)
     .max_response_body(524_288)
-    // Only record specific paths
-    .record_path("/api/users")
     .record_path("/api/orders")
-    // Or skip specific paths
+    .record_path("/api/users")
     .skip_path("/health")
     .skip_path("/metrics")
-    // Add headers to redact
     .redact_header("x-custom-secret")
-    // Add body fields to redact
     .redact_body_field("password")
-    .redact_body_field("ssn")
     .redact_body_field("credit_card")
-    // Custom admin route prefix (default: "/__rustapi/replays")
     .admin_route_prefix("/__admin/replays");
 ```
 
-### Default Redacted Headers
-
-The following headers are redacted by default (values replaced with `[REDACTED]`):
+Varsayılan olarak şu header'lar `[REDACTED]` olarak saklanır:
 
 - `authorization`
 - `cookie`
 - `x-api-key`
 - `x-auth-token`
 
-### Body Field Redaction
+JSON body redaction recursive çalışır; örneğin `password` alanı iç içe nesnelerde de maskelenir.
 
-JSON body fields are recursively redacted. For example, with `.redact_body_field("password")`:
+## Kalıcı saklama için filesystem store
 
-```json
-// Before redaction
-{"user": {"name": "alice", "password": "secret123"}}
-
-// After redaction
-{"user": {"name": "alice", "password": "[REDACTED]"}}
-```
-
-## Custom Store
-
-### File-System Store
-
-For persistent storage across restarts:
+Geliştirici makinesi yeniden başlasa bile kayıtların kalmasını istiyorsanız filesystem store kullanın:
 
 ```rust,ignore
-use rustapi_rs::replay::{ReplayLayer, FsReplayStore, FsReplayStoreConfig};
-use rustapi_core::replay::ReplayConfig;
+use rustapi_rs::extras::replay::{
+    FsReplayStore, FsReplayStoreConfig, ReplayConfig, ReplayLayer,
+};
 
 let config = ReplayConfig::new()
     .enabled(true)
-    .admin_token("my-secret-token");
+    .admin_token("local-replay-token");
 
 let fs_store = FsReplayStore::new(FsReplayStoreConfig {
     directory: "./replay-data".into(),
-    max_file_size: Some(10 * 1024 * 1024), // 10MB per file
+    max_file_size: Some(10 * 1024 * 1024),
     create_if_missing: true,
 });
 
-let layer = ReplayLayer::new(config).with_store(fs_store);
+let replay = ReplayLayer::new(config).with_store(fs_store);
 ```
 
-### Implementing a Custom Store
+## Özel backend yazmak isterseniz
 
-Implement the `ReplayStore` trait for custom backends (Redis, database, etc.):
+Redis, object storage ya da kurumsal bir audit backend'i kullanmak istiyorsanız `ReplayStore` trait'ini uygulayın:
 
 ```rust,ignore
 use async_trait::async_trait;
-use rustapi_core::replay::{
+use rustapi_rs::extras::replay::{
     ReplayEntry, ReplayQuery, ReplayStore, ReplayStoreResult,
 };
 
-struct MyCustomStore {
-    // your fields
-}
+#[derive(Clone)]
+struct MyCustomStore;
 
 #[async_trait]
 impl ReplayStore for MyCustomStore {
     async fn store(&self, entry: ReplayEntry) -> ReplayStoreResult<()> {
-        // Store the entry
+        let _ = entry;
         Ok(())
     }
 
     async fn get(&self, id: &str) -> ReplayStoreResult<Option<ReplayEntry>> {
-        // Retrieve by ID
+        let _ = id;
         Ok(None)
     }
 
     async fn list(&self, query: &ReplayQuery) -> ReplayStoreResult<Vec<ReplayEntry>> {
-        // List with filtering
+        let _ = query;
         Ok(vec![])
     }
 
     async fn delete(&self, id: &str) -> ReplayStoreResult<bool> {
-        // Delete by ID
+        let _ = id;
         Ok(false)
     }
 
@@ -252,7 +293,7 @@ impl ReplayStore for MyCustomStore {
     }
 
     async fn delete_before(&self, timestamp_ms: u64) -> ReplayStoreResult<usize> {
-        // Delete entries older than timestamp
+        let _ = timestamp_ms;
         Ok(0)
     }
 
@@ -262,22 +303,33 @@ impl ReplayStore for MyCustomStore {
 }
 ```
 
-## Security
+## Doğrulama kontrol listesi
 
-The replay system has multiple security layers built in:
+Replay kurulumundan sonra şu kısa kontrolü yapın:
 
-1. **Disabled by default**: Recording is off (`enabled: false`) until explicitly enabled
-2. **Admin token required**: All `/__rustapi/replays` endpoints require a valid bearer token. Requests without the token get a `401 Unauthorized` response
-3. **Header redaction**: `authorization`, `cookie`, `x-api-key`, and `x-auth-token` values are replaced with `[REDACTED]` before storage
-4. **Body field redaction**: Sensitive JSON fields (e.g., `password`, `ssn`) can be configured for redaction
-5. **TTL enforcement**: Entries are automatically deleted after the configured TTL (default: 1 hour)
-6. **Body size limits**: Request (64KB) and response (256KB) bodies are truncated to prevent memory issues
-7. **Bounded storage**: The in-memory store uses a ring buffer with FIFO eviction
+1. uygulamaya bir istek gönderin
+2. `cargo rustapi replay list -t <token>` ile girdiyi görün
+3. `cargo rustapi replay show <id> -t <token>` ile body/header kaydını doğrulayın
+4. `cargo rustapi replay diff <id> -t <token> -T <target>` ile karşılaştırma alın
 
-**Recommendations**:
+Bu dört adım başarılıysa workflow hazırdır.
 
-- Use only in development/staging environments
-- Use a strong, unique admin token
-- Keep TTL short
-- Add application-specific sensitive fields to the redaction list
-- Monitor memory usage when using the in-memory store with large capacity values
+## Güvenlik özeti
+
+Replay sistemi birden fazla koruma ile gelir:
+
+1. **Varsayılan kapalıdır**: `enabled(false)` ile başlar.
+2. **Admin token zorunludur**: admin endpoint'leri bearer token ister.
+3. **Header redaction vardır**: hassas header'lar maskelenir.
+4. **Body field redaction vardır**: JSON alanları seçmeli maskelenebilir.
+5. **TTL uygulanır**: eski kayıtlar otomatik temizlenir.
+6. **Body boyutu sınırlandırılır**: request/response capture sınırlıdır.
+7. **Bounded storage kullanılır**: in-memory store FIFO eviction ile sınırlıdır.
+
+Öneriler:
+
+- replay'i herkese açık production ingress arkasında açmayın
+- kısa TTL kullanın
+- uygulamaya özel gizli alanları redaction listesine ekleyin
+- büyük kapasite ile in-memory store kullanıyorsanız bellek tüketimini izleyin
+- incident sonrasında replay kaydını kapatmayı düşünün

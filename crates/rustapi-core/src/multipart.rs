@@ -112,6 +112,8 @@ impl StreamingMultipart {
     }
 
     /// Get the next field from the multipart stream.
+    ///
+    /// Consume or drop the previously returned field before calling this again.
     pub async fn next_field(&mut self) -> Result<Option<StreamingMultipartField<'static>>> {
         let field = self.inner.next_field().await.map_err(map_multer_error)?;
         let Some(field) = field else {
@@ -870,11 +872,13 @@ mod tests {
         let mut title = multipart.next_field().await.unwrap().unwrap();
         assert_eq!(title.name(), Some("title"));
         assert_eq!(title.text().await.unwrap(), "hello");
+        drop(title);
 
         let mut file = multipart.next_field().await.unwrap().unwrap();
         assert_eq!(file.file_name(), Some("demo.txt"));
         assert_eq!(file.content_type(), Some("text/plain"));
         assert_eq!(file.bytes().await.unwrap(), Bytes::from("streamed-content"));
+        drop(file);
 
         assert!(multipart.next_field().await.unwrap().is_none());
         assert_eq!(multipart.field_count(), 2);

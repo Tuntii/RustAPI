@@ -19,6 +19,7 @@ use http::StatusCode;
 use http_body_util::Full;
 use rustapi_core::middleware::{BoxedNext, MiddlewareLayer};
 use rustapi_core::{Request, Response, ResponseBody};
+use std::collections::VecDeque;
 use std::future::Future;
 use std::net::IpAddr;
 use std::pin::Pin;
@@ -27,9 +28,36 @@ use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 /// Internal entry for tracking rate limit state per client.
 #[derive(Debug, Clone)]
-struct RateLimitEntry {
-    count: u32,
-    window_start: Instant,
+enum RateLimitEntry {
+    FixedWindow {
+        count: u32,
+        window_start: Instant,
+    },
+    SlidingWindow {
+        requests: VecDeque<Instant>,
+    },
+    TokenBucket {
+        tokens: f64,
+        last_refill: Instant,
+    },
+}
+
+#[derive(Debug, Clone, Copy)]
+struct RateLimitDecision {
+    is_allowed: bool,
+    remaining: u32,
+    retry_after: Duration,
+}
+
+/// Supported rate limiting strategies.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RateLimitStrategy {
+    /// Traditional fixed window counter.
+    FixedWindow,
+    /// Rolling window that expires each request individually.
+    SlidingWindow,
+    /// Burst-friendly token bucket that refills over time.
+    TokenBucket,
 }
 
 /// Internal store for tracking request counts per IP.
@@ -52,67 +80,199 @@ impl RateLimitStore {
         ip: IpAddr,
         max_requests: u32,
         window: Duration,
+        strategy: RateLimitStrategy,
     ) -> (bool, u32, u32, u64) {
         let now = Instant::now();
-        let mut entry = self.entries.entry(ip).or_insert_with(|| RateLimitEntry {
-            count: 0,
-            window_start: now,
-        });
+        let mut entry = self
+            .entries
+            .entry(ip)
+            .or_insert_with(|| RateLimitStore::new_entry(strategy, max_requests, now));
 
-        // Check if window has expired and reset if needed
-        if now.duration_since(entry.window_start) >= window {
-            entry.count = 0;
-            entry.window_start = now;
-        }
+        let decision = match (&mut *entry, strategy) {
+            (RateLimitEntry::FixedWindow { count, window_start }, RateLimitStrategy::FixedWindow) => {
+                if now.duration_since(*window_start) >= window {
+                    *count = 0;
+                    *window_start = now;
+                }
 
-        // Increment count
-        entry.count += 1;
-        let current_count = entry.count;
+                *count += 1;
+                RateLimitDecision {
+                    is_allowed: *count <= max_requests,
+                    remaining: max_requests.saturating_sub(*count),
+                    retry_after: window.saturating_sub(now.duration_since(*window_start)),
+                }
+            }
+            (RateLimitEntry::SlidingWindow { requests }, RateLimitStrategy::SlidingWindow) => {
+                while let Some(oldest) = requests.front() {
+                    if now.duration_since(*oldest) >= window {
+                        requests.pop_front();
+                    } else {
+                        break;
+                    }
+                }
 
-        // Calculate remaining
-        let remaining = max_requests.saturating_sub(current_count);
-        let is_allowed = current_count <= max_requests;
+                let is_allowed = requests.len() < max_requests as usize;
+                if is_allowed {
+                    requests.push_back(now);
+                }
 
-        // Calculate actual reset timestamp based on window start
-        let elapsed = now.duration_since(entry.window_start);
-        let time_until_reset = window.saturating_sub(elapsed);
-        let actual_reset = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap_or_default()
-            .as_secs()
-            + time_until_reset.as_secs();
+                let retry_after = requests
+                    .front()
+                    .map(|oldest| window.saturating_sub(now.duration_since(*oldest)))
+                    .unwrap_or(Duration::ZERO);
 
-        (is_allowed, current_count, remaining, actual_reset)
+                RateLimitDecision {
+                    is_allowed,
+                    remaining: max_requests.saturating_sub(requests.len() as u32),
+                    retry_after,
+                }
+            }
+            (RateLimitEntry::TokenBucket { tokens, last_refill }, RateLimitStrategy::TokenBucket) => {
+                let refill_rate = max_requests as f64 / window.as_secs_f64().max(f64::EPSILON);
+                let elapsed = now.duration_since(*last_refill).as_secs_f64();
+                *tokens = (*tokens + elapsed * refill_rate).min(max_requests as f64);
+                *last_refill = now;
+
+                let is_allowed = *tokens >= 1.0;
+                if is_allowed {
+                    *tokens -= 1.0;
+                }
+
+                let remaining = tokens.floor().max(0.0).min(max_requests as f64) as u32;
+                let retry_after = next_token_after(*tokens, max_requests, refill_rate);
+
+                RateLimitDecision {
+                    is_allowed,
+                    remaining,
+                    retry_after,
+                }
+            }
+            (entry, _) => {
+                *entry = RateLimitStore::new_entry(strategy, max_requests, now);
+                let _ = entry;
+                return self.check_and_update(ip, max_requests, window, strategy);
+            }
+        };
+
+        let reset = unix_timestamp_after(decision.retry_after);
+        (
+            decision.is_allowed,
+            max_requests.saturating_sub(decision.remaining),
+            decision.remaining,
+            reset,
+        )
     }
 
     /// Get current rate limit info for a client without incrementing.
     #[allow(dead_code)]
-    fn get_info(&self, ip: IpAddr, max_requests: u32, window: Duration) -> Option<RateLimitInfo> {
+    fn get_info(
+        &self,
+        ip: IpAddr,
+        max_requests: u32,
+        window: Duration,
+        strategy: RateLimitStrategy,
+    ) -> Option<RateLimitInfo> {
         let now = Instant::now();
 
-        self.entries.get(&ip).map(|entry| {
-            // Check if window has expired
-            let (count, window_start) = if now.duration_since(entry.window_start) >= window {
-                (0, now)
-            } else {
-                (entry.count, entry.window_start)
-            };
+        self.entries.get(&ip).map(|entry| match (&*entry, strategy) {
+            (RateLimitEntry::FixedWindow { count, window_start }, RateLimitStrategy::FixedWindow) => {
+                let current_count = if now.duration_since(*window_start) >= window {
+                    0
+                } else {
+                    *count
+                };
 
-            let remaining = max_requests.saturating_sub(count);
-            let elapsed = now.duration_since(window_start);
-            let time_until_reset = window.saturating_sub(elapsed);
-            let reset = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_secs()
-                + time_until_reset.as_secs();
-
-            RateLimitInfo {
-                limit: max_requests,
-                remaining,
-                reset,
+                RateLimitInfo {
+                    limit: max_requests,
+                    remaining: max_requests.saturating_sub(current_count),
+                    reset: unix_timestamp_after(window.saturating_sub(now.duration_since(*window_start))),
+                }
             }
+            (RateLimitEntry::SlidingWindow { requests }, RateLimitStrategy::SlidingWindow) => {
+                let active = requests
+                    .iter()
+                    .copied()
+                    .filter(|timestamp| now.duration_since(*timestamp) < window)
+                    .collect::<Vec<_>>();
+                let retry_after = active
+                    .first()
+                    .map(|oldest| window.saturating_sub(now.duration_since(*oldest)))
+                    .unwrap_or(Duration::ZERO);
+
+                RateLimitInfo {
+                    limit: max_requests,
+                    remaining: max_requests.saturating_sub(active.len() as u32),
+                    reset: unix_timestamp_after(retry_after),
+                }
+            }
+            (RateLimitEntry::TokenBucket { tokens, last_refill }, RateLimitStrategy::TokenBucket) => {
+                let refill_rate = max_requests as f64 / window.as_secs_f64().max(f64::EPSILON);
+                let elapsed = now.duration_since(*last_refill).as_secs_f64();
+                let available = (*tokens + elapsed * refill_rate).min(max_requests as f64);
+                let retry_after = next_token_after(available, max_requests, refill_rate);
+
+                RateLimitInfo {
+                    limit: max_requests,
+                    remaining: available.floor().max(0.0).min(max_requests as f64) as u32,
+                    reset: unix_timestamp_after(retry_after),
+                }
+            }
+            _ => RateLimitInfo {
+                limit: max_requests,
+                remaining: max_requests,
+                reset: unix_timestamp_after(Duration::ZERO),
+            },
         })
+    }
+
+    fn new_entry(strategy: RateLimitStrategy, max_requests: u32, now: Instant) -> RateLimitEntry {
+        match strategy {
+            RateLimitStrategy::FixedWindow => RateLimitEntry::FixedWindow {
+                count: 0,
+                window_start: now,
+            },
+            RateLimitStrategy::SlidingWindow => RateLimitEntry::SlidingWindow {
+                requests: VecDeque::new(),
+            },
+            RateLimitStrategy::TokenBucket => RateLimitEntry::TokenBucket {
+                tokens: max_requests as f64,
+                last_refill: now,
+            },
+        }
+    }
+}
+
+fn next_token_after(tokens: f64, max_requests: u32, refill_rate: f64) -> Duration {
+    if refill_rate <= f64::EPSILON || tokens >= max_requests as f64 {
+        return Duration::ZERO;
+    }
+
+    let fractional = tokens.fract();
+    let needed = if fractional <= f64::EPSILON {
+        1.0
+    } else {
+        1.0 - fractional
+    };
+
+    Duration::from_secs_f64((needed / refill_rate).max(0.0))
+}
+
+fn unix_timestamp_after(duration: Duration) -> u64 {
+    unix_now_secs() + duration_to_header_secs(duration)
+}
+
+fn unix_now_secs() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs()
+}
+
+fn duration_to_header_secs(duration: Duration) -> u64 {
+    if duration.is_zero() {
+        0
+    } else {
+        duration.as_secs().max(1)
     }
 }
 
@@ -135,6 +295,7 @@ impl RateLimitStore {
 pub struct RateLimitLayer {
     requests: u32,
     window: Duration,
+    strategy: RateLimitStrategy,
     store: Arc<RateLimitStore>,
 }
 
@@ -159,6 +320,27 @@ impl RateLimitLayer {
         Self {
             requests,
             window,
+            strategy: RateLimitStrategy::FixedWindow,
+            store: Arc::new(RateLimitStore::new()),
+        }
+    }
+
+    /// Create a rate limiter that expires requests individually using a rolling window.
+    pub fn sliding_window(requests: u32, window: Duration) -> Self {
+        Self {
+            requests,
+            window,
+            strategy: RateLimitStrategy::SlidingWindow,
+            store: Arc::new(RateLimitStore::new()),
+        }
+    }
+
+    /// Create a token bucket limiter that allows bursts and refills over the given window.
+    pub fn token_bucket(capacity: u32, refill_window: Duration) -> Self {
+        Self {
+            requests: capacity,
+            window: refill_window,
+            strategy: RateLimitStrategy::TokenBucket,
             store: Arc::new(RateLimitStore::new()),
         }
     }
@@ -171,6 +353,11 @@ impl RateLimitLayer {
     /// Get the configured window duration.
     pub fn window(&self) -> Duration {
         self.window
+    }
+
+    /// Get the configured limiting strategy.
+    pub fn strategy(&self) -> RateLimitStrategy {
+        self.strategy
     }
 
     /// Get the internal store (for testing purposes).
@@ -221,19 +408,17 @@ impl MiddlewareLayer for RateLimitLayer {
         let store = self.store.clone();
         let max_requests = self.requests;
         let window = self.window;
+        let strategy = self.strategy;
 
         Box::pin(async move {
             let client_ip = RateLimitLayer::extract_client_ip(&req);
 
             let (is_allowed, _count, remaining, reset) =
-                store.check_and_update(client_ip, max_requests, window);
+                store.check_and_update(client_ip, max_requests, window, strategy);
 
             if !is_allowed {
                 // Calculate Retry-After in seconds
-                let now_secs = SystemTime::now()
-                    .duration_since(UNIX_EPOCH)
-                    .unwrap_or_default()
-                    .as_secs();
+                let now_secs = unix_now_secs();
                 let retry_after = reset.saturating_sub(now_secs);
 
                 // Return 429 Too Many Requests
@@ -597,6 +782,23 @@ mod tests {
         let layer = RateLimitLayer::new(100, Duration::from_secs(60));
         assert_eq!(layer.requests(), 100);
         assert_eq!(layer.window(), Duration::from_secs(60));
+        assert_eq!(layer.strategy(), RateLimitStrategy::FixedWindow);
+    }
+
+    #[test]
+    fn test_sliding_window_layer_creation() {
+        let layer = RateLimitLayer::sliding_window(100, Duration::from_secs(60));
+        assert_eq!(layer.requests(), 100);
+        assert_eq!(layer.window(), Duration::from_secs(60));
+        assert_eq!(layer.strategy(), RateLimitStrategy::SlidingWindow);
+    }
+
+    #[test]
+    fn test_token_bucket_layer_creation() {
+        let layer = RateLimitLayer::token_bucket(5, Duration::from_secs(10));
+        assert_eq!(layer.requests(), 5);
+        assert_eq!(layer.window(), Duration::from_secs(10));
+        assert_eq!(layer.strategy(), RateLimitStrategy::TokenBucket);
     }
 
     #[test]
@@ -679,6 +881,59 @@ mod tests {
             assert_eq!(body_json["error"]["type"], "rate_limit_exceeded");
             assert_eq!(body_json["error"]["message"], "Too many requests");
             assert!(body_json["error"]["retry_after"].is_number());
+        });
+    }
+
+    #[test]
+    fn test_sliding_window_keeps_recent_requests_in_window() {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            let layer = RateLimitLayer::sliding_window(2, Duration::from_millis(40));
+            let mut stack = LayerStack::new();
+            stack.push(Box::new(layer));
+
+            let request = create_test_request(Some("10.0.0.2"));
+            let response = stack.execute(request, create_success_handler()).await;
+            assert_eq!(response.status(), StatusCode::OK);
+
+            tokio::time::sleep(Duration::from_millis(35)).await;
+
+            let request = create_test_request(Some("10.0.0.2"));
+            let response = stack.execute(request, create_success_handler()).await;
+            assert_eq!(response.status(), StatusCode::OK);
+
+            tokio::time::sleep(Duration::from_millis(10)).await;
+
+            let request = create_test_request(Some("10.0.0.2"));
+            let response = stack.execute(request, create_success_handler()).await;
+            assert_eq!(response.status(), StatusCode::OK);
+            assert_eq!(response.headers().get("X-RateLimit-Remaining").unwrap(), "0");
+        });
+    }
+
+    #[test]
+    fn test_token_bucket_refills_after_wait() {
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        rt.block_on(async {
+            let layer = RateLimitLayer::token_bucket(2, Duration::from_millis(40));
+            let mut stack = LayerStack::new();
+            stack.push(Box::new(layer));
+
+            for _ in 0..2 {
+                let request = create_test_request(Some("10.0.0.3"));
+                let response = stack.execute(request, create_success_handler()).await;
+                assert_eq!(response.status(), StatusCode::OK);
+            }
+
+            let request = create_test_request(Some("10.0.0.3"));
+            let response = stack.execute(request, create_success_handler()).await;
+            assert_eq!(response.status(), StatusCode::TOO_MANY_REQUESTS);
+
+            tokio::time::sleep(Duration::from_millis(25)).await;
+
+            let request = create_test_request(Some("10.0.0.3"));
+            let response = stack.execute(request, create_success_handler()).await;
+            assert_eq!(response.status(), StatusCode::OK);
         });
     }
 }

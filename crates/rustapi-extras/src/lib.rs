@@ -126,7 +126,7 @@ pub use jwt::{create_token, AuthUser, JwtError, JwtLayer, JwtValidation, Validat
 pub use cors::{AllowedOrigins, CorsLayer};
 
 #[cfg(feature = "rate-limit")]
-pub use rate_limit::RateLimitLayer;
+pub use rate_limit::{RateLimitLayer, RateLimitStrategy};
 
 #[cfg(feature = "config")]
 pub use config::{

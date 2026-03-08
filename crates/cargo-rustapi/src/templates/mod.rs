@@ -21,6 +21,56 @@ pub enum ProjectTemplate {
     Full,
 }
 
+/// Opinionated feature presets layered on top of project templates.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum ProjectPreset {
+    /// Production-oriented HTTP API defaults.
+    #[value(name = "prod-api")]
+    ProdApi,
+    /// AI-friendly API defaults with TOON support.
+    #[value(name = "ai-api")]
+    AiApi,
+    /// Realtime API defaults with WebSocket support.
+    #[value(name = "realtime-api")]
+    RealtimeApi,
+}
+
+impl ProjectPreset {
+    /// Default base template for this preset.
+    pub fn default_template(self) -> ProjectTemplate {
+        ProjectTemplate::Api
+    }
+
+    /// Recommended features that should be enabled for this preset.
+    pub fn recommended_features(self) -> Vec<String> {
+        match self {
+            ProjectPreset::ProdApi => vec![
+                "extras-config",
+                "extras-cors",
+                "extras-rate-limit",
+                "extras-security-headers",
+                "extras-structured-logging",
+                "extras-timeout",
+            ],
+            ProjectPreset::AiApi => vec![
+                "extras-config",
+                "extras-structured-logging",
+                "extras-timeout",
+                "protocol-toon",
+            ],
+            ProjectPreset::RealtimeApi => vec![
+                "extras-cors",
+                "extras-structured-logging",
+                "extras-timeout",
+                "protocol-ws",
+            ],
+        }
+        .into_iter()
+        .map(str::to_string)
+        .collect()
+    }
+}
+
 /// Generate a project from a template
 pub async fn generate_project(
     name: &str,

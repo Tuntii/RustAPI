@@ -18,3 +18,5 @@ docs/PRODUCTION_CHECKLIST.md
 /.github/instructions
 /.github/prompts
 /.github/skills
+*.md
+tasks.md

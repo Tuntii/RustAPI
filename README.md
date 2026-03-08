@@ -68,21 +68,32 @@ All error responses include a unique `error_id` (`err_{uuid}`) for log correlati
 Record and replay HTTP request/response pairs for production debugging:
 
 ```rust
+use rustapi_rs::extras::replay::{ReplayConfig, ReplayLayer};
+use rustapi_rs::prelude::*;
+
 RustApi::new()
-    .layer(ReplayLayer::new(store, config))
-    .run("0.0.0.0:8080").await;
+  .layer(
+    ReplayLayer::new(
+      ReplayConfig::new()
+        .enabled(true)
+        .admin_token("local-replay-token"),
+    ),
+  )
+  .run("0.0.0.0:8080")
+  .await?;
 ```
 
 ```sh
-cargo rustapi replay list
-cargo rustapi replay run <id> --target http://localhost:8080
-cargo rustapi replay diff <id> --target http://staging
+cargo rustapi replay list -t local-replay-token
+cargo rustapi replay run <id> -t local-replay-token --target http://localhost:8080
+cargo rustapi replay diff <id> -t local-replay-token --target http://staging
 ```
 
 - Middleware-based recording; no application code changes
 - Sensitive header redaction; disabled by default
 - In-memory (dev) or filesystem (production) storage with TTL
 - `ReplayClient` for programmatic test automation
+- Full incident workflow: [`docs/cookbook/src/recipes/replay.md`](docs/cookbook/src/recipes/replay.md)
 
 ### Dual-Stack HTTP/1.1 + HTTP/3
 

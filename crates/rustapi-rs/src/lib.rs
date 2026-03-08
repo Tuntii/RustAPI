@@ -103,7 +103,7 @@ pub mod extras {
     #[cfg(any(feature = "extras-rate-limit", feature = "rate-limit"))]
     pub mod rate_limit {
         pub use rustapi_extras::rate_limit;
-        pub use rustapi_extras::RateLimitLayer;
+        pub use rustapi_extras::{RateLimitLayer, RateLimitStrategy};
     }
 
     #[cfg(any(feature = "extras-config", feature = "config"))]
@@ -187,7 +187,15 @@ pub mod extras {
 
     #[cfg(any(feature = "extras-replay", feature = "replay"))]
     pub mod replay {
+        pub use rustapi_core::replay::{
+            RecordedRequest, RecordedResponse, ReplayConfig, ReplayEntry, ReplayId, ReplayMeta,
+            ReplayQuery, ReplayStore, ReplayStoreError, ReplayStoreResult,
+        };
         pub use rustapi_extras::replay;
+        pub use rustapi_extras::replay::{
+            FsReplayStore, FsReplayStoreConfig, InMemoryReplayStore, ReplayAdminAuth,
+            ReplayClient, ReplayClientError, ReplayLayer, RetentionJob,
+        };
     }
 
     #[cfg(any(feature = "extras-oauth2-client", feature = "oauth2-client"))]
@@ -261,7 +269,7 @@ pub use rustapi_extras::{AllowedOrigins, CorsLayer};
 #[cfg(any(feature = "extras-rate-limit", feature = "rate-limit"))]
 pub use rustapi_extras::rate_limit;
 #[cfg(any(feature = "extras-rate-limit", feature = "rate-limit"))]
-pub use rustapi_extras::RateLimitLayer;
+pub use rustapi_extras::{RateLimitLayer, RateLimitStrategy};
 
 #[cfg(any(feature = "extras-config", feature = "config"))]
 pub use rustapi_extras::config;
@@ -369,7 +377,7 @@ pub mod prelude {
     pub use crate::{AllowedOrigins, CorsLayer};
 
     #[cfg(any(feature = "extras-rate-limit", feature = "rate-limit"))]
-    pub use crate::RateLimitLayer;
+    pub use crate::{RateLimitLayer, RateLimitStrategy};
 
     #[cfg(any(feature = "extras-config", feature = "config"))]
     pub use crate::{

@@ -25,6 +25,8 @@ pub use rustapi_rs::MethodRouter
 pub use rustapi_rs::Multipart
 pub use rustapi_rs::MultipartConfig
 pub use rustapi_rs::MultipartField
+pub use rustapi_rs::StreamingMultipart
+pub use rustapi_rs::StreamingMultipartField
 pub use rustapi_rs::NoContent
 pub use rustapi_rs::Path
 pub use rustapi_rs::Query
@@ -97,6 +99,8 @@ pub use rustapi_rs::core::MethodRouter
 pub use rustapi_rs::core::Multipart
 pub use rustapi_rs::core::MultipartConfig
 pub use rustapi_rs::core::MultipartField
+pub use rustapi_rs::core::StreamingMultipart
+pub use rustapi_rs::core::StreamingMultipartField
 pub use rustapi_rs::core::NoContent
 pub use rustapi_rs::core::Path
 pub use rustapi_rs::core::Query
@@ -165,6 +169,8 @@ pub use rustapi_rs::prelude::KeepAlive
 pub use rustapi_rs::prelude::Multipart
 pub use rustapi_rs::prelude::MultipartConfig
 pub use rustapi_rs::prelude::MultipartField
+pub use rustapi_rs::prelude::StreamingMultipart
+pub use rustapi_rs::prelude::StreamingMultipartField
 pub use rustapi_rs::prelude::NoContent
 pub use rustapi_rs::prelude::Path
 pub use rustapi_rs::prelude::Query
