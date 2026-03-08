@@ -28,8 +28,13 @@ jobs:
       - name: Run Benchmarks
         run: cargo bench --workspace | tee benchmark_results.txt
 
+      - name: Run Performance Snapshot
+        run: cargo run -p rustapi-core --example perf_snapshot --release | tee perf_snapshot.txt
+
       - name: Upload Benchmark Results
         uses: actions/upload-artifact@v4
         with:
           name: benchmark-results
-          path: benchmark_results.txt
+          path: |
+            benchmark_results.txt
+            perf_snapshot.txt

@@ -38,7 +38,78 @@ pub struct RustApi {
     hot_reload: bool,
     #[cfg(feature = "http3")]
     http3_config: Option<crate::http3::Http3Config>,
+    health_check: Option<crate::health::HealthCheck>,
+    health_endpoint_config: Option<crate::health::HealthEndpointConfig>,
     status_config: Option<crate::status::StatusConfig>,
+}
+
+/// Configuration for RustAPI's built-in production baseline preset.
+///
+/// This preset bundles together the most common foundation pieces for a
+/// production HTTP service:
+/// - request IDs on every response
+/// - structured tracing spans with service metadata
+/// - standard `/health`, `/ready`, and `/live` probes
+#[derive(Debug, Clone)]
+pub struct ProductionDefaultsConfig {
+    service_name: String,
+    version: Option<String>,
+    tracing_level: tracing::Level,
+    health_endpoint_config: Option<crate::health::HealthEndpointConfig>,
+    enable_request_id: bool,
+    enable_tracing: bool,
+    enable_health_endpoints: bool,
+}
+
+impl ProductionDefaultsConfig {
+    /// Create a new production baseline configuration.
+    pub fn new(service_name: impl Into<String>) -> Self {
+        Self {
+            service_name: service_name.into(),
+            version: None,
+            tracing_level: tracing::Level::INFO,
+            health_endpoint_config: None,
+            enable_request_id: true,
+            enable_tracing: true,
+            enable_health_endpoints: true,
+        }
+    }
+
+    /// Annotate tracing spans and default health payloads with an application version.
+    pub fn version(mut self, version: impl Into<String>) -> Self {
+        self.version = Some(version.into());
+        self
+    }
+
+    /// Set the tracing log level used by the preset tracing layer.
+    pub fn tracing_level(mut self, level: tracing::Level) -> Self {
+        self.tracing_level = level;
+        self
+    }
+
+    /// Override the default health endpoint paths.
+    pub fn health_endpoint_config(mut self, config: crate::health::HealthEndpointConfig) -> Self {
+        self.health_endpoint_config = Some(config);
+        self
+    }
+
+    /// Enable or disable request ID propagation.
+    pub fn request_id(mut self, enabled: bool) -> Self {
+        self.enable_request_id = enabled;
+        self
+    }
+
+    /// Enable or disable structured tracing middleware.
+    pub fn tracing(mut self, enabled: bool) -> Self {
+        self.enable_tracing = enabled;
+        self
+    }
+
+    /// Enable or disable built-in health endpoints.
+    pub fn health_endpoints(mut self, enabled: bool) -> Self {
+        self.enable_health_endpoints = enabled;
+        self
+    }
 }
 
 impl RustApi {
@@ -68,6 +139,8 @@ impl RustApi {
             hot_reload: false,
             #[cfg(feature = "http3")]
             http3_config: None,
+            health_check: None,
+            health_endpoint_config: None,
             status_config: None,
         }
     }
@@ -981,6 +1054,89 @@ impl RustApi {
         self
     }
 
+    /// Enable built-in `/health`, `/ready`, and `/live` endpoints with default paths.
+    ///
+    /// The default health check includes a lightweight `self` probe so the
+    /// endpoints are immediately useful even before dependency checks are added.
+    pub fn health_endpoints(mut self) -> Self {
+        self.health_endpoint_config = Some(crate::health::HealthEndpointConfig::default());
+        if self.health_check.is_none() {
+            self.health_check = Some(crate::health::HealthCheckBuilder::default().build());
+        }
+        self
+    }
+
+    /// Enable built-in health endpoints with custom paths.
+    pub fn health_endpoints_with_config(
+        mut self,
+        config: crate::health::HealthEndpointConfig,
+    ) -> Self {
+        self.health_endpoint_config = Some(config);
+        if self.health_check.is_none() {
+            self.health_check = Some(crate::health::HealthCheckBuilder::default().build());
+        }
+        self
+    }
+
+    /// Register a custom health check and enable built-in health endpoints.
+    ///
+    /// The configured check is used by `/health` and `/ready`, while `/live`
+    /// remains a lightweight process-level probe.
+    pub fn with_health_check(mut self, health_check: crate::health::HealthCheck) -> Self {
+        self.health_check = Some(health_check);
+        if self.health_endpoint_config.is_none() {
+            self.health_endpoint_config = Some(crate::health::HealthEndpointConfig::default());
+        }
+        self
+    }
+
+    /// Apply a one-call production baseline preset.
+    ///
+    /// This enables:
+    /// - `RequestIdLayer`
+    /// - `TracingLayer` with `service` and `environment` fields
+    /// - built-in `/health`, `/ready`, and `/live` probes
+    pub fn production_defaults(self, service_name: impl Into<String>) -> Self {
+        self.production_defaults_with_config(ProductionDefaultsConfig::new(service_name))
+    }
+
+    /// Apply the production baseline preset with custom configuration.
+    pub fn production_defaults_with_config(mut self, config: ProductionDefaultsConfig) -> Self {
+        if config.enable_request_id {
+            self = self.layer(crate::middleware::RequestIdLayer::new());
+        }
+
+        if config.enable_tracing {
+            let mut tracing_layer =
+                crate::middleware::TracingLayer::with_level(config.tracing_level)
+                    .with_field("service", config.service_name.clone())
+                    .with_field("environment", crate::error::get_environment().to_string());
+
+            if let Some(version) = &config.version {
+                tracing_layer = tracing_layer.with_field("version", version.clone());
+            }
+
+            self = self.layer(tracing_layer);
+        }
+
+        if config.enable_health_endpoints {
+            if self.health_check.is_none() {
+                let mut builder = crate::health::HealthCheckBuilder::default();
+                if let Some(version) = &config.version {
+                    builder = builder.version(version.clone());
+                }
+                self.health_check = Some(builder.build());
+            }
+
+            if self.health_endpoint_config.is_none() {
+                self.health_endpoint_config =
+                    Some(config.health_endpoint_config.unwrap_or_default());
+            }
+        }
+
+        self
+    }
+
     /// Print a hot-reload dev banner if `.hot_reload(true)` is set
     fn print_hot_reload_banner(&self, addr: &str) {
         if !self.hot_reload {
@@ -1006,6 +1162,45 @@ impl RustApi {
     }
 
     // Helper to apply status page logic (monitor, layer, route)
+    fn apply_health_endpoints(&mut self) {
+        if let Some(config) = &self.health_endpoint_config {
+            use crate::router::get;
+
+            let health_check = self
+                .health_check
+                .clone()
+                .unwrap_or_else(|| crate::health::HealthCheckBuilder::default().build());
+
+            let health_path = config.health_path.clone();
+            let readiness_path = config.readiness_path.clone();
+            let liveness_path = config.liveness_path.clone();
+
+            let health_handler = {
+                let health_check = health_check.clone();
+                move || {
+                    let health_check = health_check.clone();
+                    async move { crate::health::health_response(health_check).await }
+                }
+            };
+
+            let readiness_handler = {
+                let health_check = health_check.clone();
+                move || {
+                    let health_check = health_check.clone();
+                    async move { crate::health::readiness_response(health_check).await }
+                }
+            };
+
+            let liveness_handler = || async { crate::health::liveness_response().await };
+
+            let router = std::mem::take(&mut self.router);
+            self.router = router
+                .route(&health_path, get(health_handler))
+                .route(&readiness_path, get(readiness_handler))
+                .route(&liveness_path, get(liveness_handler));
+        }
+    }
+
     fn apply_status_page(&mut self) {
         if let Some(config) = &self.status_config {
             let monitor = std::sync::Arc::new(crate::status::StatusMonitor::new());
@@ -1056,6 +1251,9 @@ impl RustApi {
         // Hot-reload mode banner
         self.print_hot_reload_banner(addr);
 
+        // Apply health endpoints if configured
+        self.apply_health_endpoints();
+
         // Apply status page if configured
         self.apply_status_page();
 
@@ -1085,6 +1283,9 @@ impl RustApi {
     {
         // Hot-reload mode banner
         self.print_hot_reload_banner(addr.as_ref());
+
+        // Apply health endpoints if configured
+        self.apply_health_endpoints();
 
         // Apply status page if configured
         self.apply_status_page();
@@ -1149,6 +1350,9 @@ impl RustApi {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         use std::sync::Arc;
 
+        // Apply health endpoints if configured
+        self.apply_health_endpoints();
+
         // Apply status page if configured
         self.apply_status_page();
 
@@ -1187,6 +1391,9 @@ impl RustApi {
         addr: &str,
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         use std::sync::Arc;
+
+        // Apply health endpoints if configured
+        self.apply_health_endpoints();
 
         // Apply status page if configured
         self.apply_status_page();
@@ -1257,6 +1464,9 @@ impl RustApi {
         };
         config.port = http_socket.port();
         let http_addr = http_socket.to_string();
+
+        // Apply health endpoints if configured
+        self.apply_health_endpoints();
 
         // Apply status page if configured
         self.apply_status_page();
@@ -1462,6 +1672,138 @@ fn normalize_prefix_for_openapi(prefix: &str) -> String {
 impl Default for RustApi {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+/// Check Basic Auth header against expected credentials
+#[cfg(feature = "swagger-ui")]
+fn check_basic_auth(req: &crate::Request, expected: &str) -> bool {
+    req.headers()
+        .get(http::header::AUTHORIZATION)
+        .and_then(|v| v.to_str().ok())
+        .map(|auth| auth == expected)
+        .unwrap_or(false)
+}
+
+/// Create 401 Unauthorized response with WWW-Authenticate header
+#[cfg(feature = "swagger-ui")]
+fn unauthorized_response() -> crate::Response {
+    http::Response::builder()
+        .status(http::StatusCode::UNAUTHORIZED)
+        .header(
+            http::header::WWW_AUTHENTICATE,
+            "Basic realm=\"API Documentation\"",
+        )
+        .header(http::header::CONTENT_TYPE, "text/plain")
+        .body(crate::response::Body::from("Unauthorized"))
+        .unwrap()
+}
+
+/// Configuration builder for RustAPI with auto-routes
+pub struct RustApiConfig {
+    docs_path: Option<String>,
+    docs_enabled: bool,
+    api_title: String,
+    api_version: String,
+    api_description: Option<String>,
+    body_limit: Option<usize>,
+    layers: LayerStack,
+}
+
+impl Default for RustApiConfig {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl RustApiConfig {
+    pub fn new() -> Self {
+        Self {
+            docs_path: Some("/docs".to_string()),
+            docs_enabled: true,
+            api_title: "RustAPI".to_string(),
+            api_version: "1.0.0".to_string(),
+            api_description: None,
+            body_limit: None,
+            layers: LayerStack::new(),
+        }
+    }
+
+    /// Set the docs path (default: "/docs")
+    pub fn docs_path(mut self, path: impl Into<String>) -> Self {
+        self.docs_path = Some(path.into());
+        self
+    }
+
+    /// Enable or disable docs (default: true)
+    pub fn docs_enabled(mut self, enabled: bool) -> Self {
+        self.docs_enabled = enabled;
+        self
+    }
+
+    /// Set OpenAPI info
+    pub fn openapi_info(
+        mut self,
+        title: impl Into<String>,
+        version: impl Into<String>,
+        description: Option<impl Into<String>>,
+    ) -> Self {
+        self.api_title = title.into();
+        self.api_version = version.into();
+        self.api_description = description.map(|d| d.into());
+        self
+    }
+
+    /// Set body size limit
+    pub fn body_limit(mut self, limit: usize) -> Self {
+        self.body_limit = Some(limit);
+        self
+    }
+
+    /// Add a middleware layer
+    pub fn layer<L>(mut self, layer: L) -> Self
+    where
+        L: MiddlewareLayer,
+    {
+        self.layers.push(Box::new(layer));
+        self
+    }
+
+    /// Build the RustApi instance
+    pub fn build(self) -> RustApi {
+        let mut app = RustApi::new().mount_auto_routes_grouped();
+
+        // Apply configuration
+        if let Some(limit) = self.body_limit {
+            app = app.body_limit(limit);
+        }
+
+        app = app.openapi_info(
+            &self.api_title,
+            &self.api_version,
+            self.api_description.as_deref(),
+        );
+
+        #[cfg(feature = "swagger-ui")]
+        if self.docs_enabled {
+            if let Some(path) = self.docs_path {
+                app = app.docs(&path);
+            }
+        }
+
+        // Apply layers
+        // Note: layers are applied in reverse order in RustApi::layer logic (pushing to vec)
+        app.layers.extend(self.layers);
+
+        app
+    }
+
+    /// Build and run the server
+    pub async fn run(
+        self,
+        addr: impl AsRef<str>,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.build().run(addr.as_ref()).await
     }
 }
 
@@ -2246,137 +2588,5 @@ mod tests {
                 .any(|p| p.name == "item_id" && p.location == "path"),
             "Should have 'item_id' path parameter"
         );
-    }
-}
-
-/// Check Basic Auth header against expected credentials
-#[cfg(feature = "swagger-ui")]
-fn check_basic_auth(req: &crate::Request, expected: &str) -> bool {
-    req.headers()
-        .get(http::header::AUTHORIZATION)
-        .and_then(|v| v.to_str().ok())
-        .map(|auth| auth == expected)
-        .unwrap_or(false)
-}
-
-/// Create 401 Unauthorized response with WWW-Authenticate header
-#[cfg(feature = "swagger-ui")]
-fn unauthorized_response() -> crate::Response {
-    http::Response::builder()
-        .status(http::StatusCode::UNAUTHORIZED)
-        .header(
-            http::header::WWW_AUTHENTICATE,
-            "Basic realm=\"API Documentation\"",
-        )
-        .header(http::header::CONTENT_TYPE, "text/plain")
-        .body(crate::response::Body::from("Unauthorized"))
-        .unwrap()
-}
-
-/// Configuration builder for RustAPI with auto-routes
-pub struct RustApiConfig {
-    docs_path: Option<String>,
-    docs_enabled: bool,
-    api_title: String,
-    api_version: String,
-    api_description: Option<String>,
-    body_limit: Option<usize>,
-    layers: LayerStack,
-}
-
-impl Default for RustApiConfig {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl RustApiConfig {
-    pub fn new() -> Self {
-        Self {
-            docs_path: Some("/docs".to_string()),
-            docs_enabled: true,
-            api_title: "RustAPI".to_string(),
-            api_version: "1.0.0".to_string(),
-            api_description: None,
-            body_limit: None,
-            layers: LayerStack::new(),
-        }
-    }
-
-    /// Set the docs path (default: "/docs")
-    pub fn docs_path(mut self, path: impl Into<String>) -> Self {
-        self.docs_path = Some(path.into());
-        self
-    }
-
-    /// Enable or disable docs (default: true)
-    pub fn docs_enabled(mut self, enabled: bool) -> Self {
-        self.docs_enabled = enabled;
-        self
-    }
-
-    /// Set OpenAPI info
-    pub fn openapi_info(
-        mut self,
-        title: impl Into<String>,
-        version: impl Into<String>,
-        description: Option<impl Into<String>>,
-    ) -> Self {
-        self.api_title = title.into();
-        self.api_version = version.into();
-        self.api_description = description.map(|d| d.into());
-        self
-    }
-
-    /// Set body size limit
-    pub fn body_limit(mut self, limit: usize) -> Self {
-        self.body_limit = Some(limit);
-        self
-    }
-
-    /// Add a middleware layer
-    pub fn layer<L>(mut self, layer: L) -> Self
-    where
-        L: MiddlewareLayer,
-    {
-        self.layers.push(Box::new(layer));
-        self
-    }
-
-    /// Build the RustApi instance
-    pub fn build(self) -> RustApi {
-        let mut app = RustApi::new().mount_auto_routes_grouped();
-
-        // Apply configuration
-        if let Some(limit) = self.body_limit {
-            app = app.body_limit(limit);
-        }
-
-        app = app.openapi_info(
-            &self.api_title,
-            &self.api_version,
-            self.api_description.as_deref(),
-        );
-
-        #[cfg(feature = "swagger-ui")]
-        if self.docs_enabled {
-            if let Some(path) = self.docs_path {
-                app = app.docs(&path);
-            }
-        }
-
-        // Apply layers
-        // Note: layers are applied in reverse order in RustApi::layer logic (pushing to vec)
-        app.layers.extend(self.layers);
-
-        app
-    }
-
-    /// Build and run the server
-    pub async fn run(
-        self,
-        addr: impl AsRef<str>,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        self.build().run(addr.as_ref()).await
     }
 }

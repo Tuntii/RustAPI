@@ -11,9 +11,10 @@ homepage.workspace = true
 
 [dependencies]
 # Async
-tokio = { workspace = true, features = ["rt", "net", "time", "fs", "macros"] }
+tokio = { workspace = true, features = ["rt", "net", "time", "fs", "macros", "io-util"] }
 futures-util = { workspace = true }
 pin-project-lite = { workspace = true }
+multer = "3"
 
 # HTTP
 hyper = { workspace = true, features = ["server", "http1"] }

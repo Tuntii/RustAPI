@@ -12,3 +12,11 @@ assets/b9c93c1cd427d8f50e68dbd11ed2b000.jpg
 
 docs/cookbook/book/
 build_rs_cov.profraw
+answer.md
+docs/PRODUCTION_BASELINE.md
+docs/PRODUCTION_CHECKLIST.md
+/.github/instructions
+/.github/prompts
+/.github/skills
+*.md
+tasks.md

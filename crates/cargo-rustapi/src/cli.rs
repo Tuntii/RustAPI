@@ -1,8 +1,10 @@
 //! CLI argument parsing
 
+#[cfg(feature = "replay")]
+use crate::commands::ReplayArgs;
 use crate::commands::{
-    self, AddArgs, ClientArgs, DeployArgs, DoctorArgs, GenerateArgs, MigrateArgs, NewArgs, RunArgs,
-    WatchArgs,
+    self, AddArgs, BenchArgs, ClientArgs, DeployArgs, DoctorArgs, GenerateArgs, MigrateArgs,
+    NewArgs, ObservabilityArgs, RunArgs, WatchArgs,
 };
 use clap::{Parser, Subcommand};
 
@@ -33,8 +35,14 @@ enum Commands {
     /// Add a feature or dependency
     Add(AddArgs),
 
+    /// Run the benchmark workflow
+    Bench(BenchArgs),
+
     /// Check environment health
     Doctor(DoctorArgs),
+
+    /// Surface observability docs and baseline workflow assets
+    Observability(ObservabilityArgs),
 
     /// Generate code from templates
     #[command(subcommand)]
@@ -61,7 +69,7 @@ enum Commands {
     /// Replay debugging commands (time-travel debugging)
     #[cfg(feature = "replay")]
     #[command(subcommand)]
-    Replay(commands::ReplayArgs),
+    Replay(ReplayArgs),
 }
 
 impl Cli {
@@ -72,7 +80,9 @@ impl Cli {
             Commands::Run(args) => commands::run_dev(args).await,
             Commands::Watch(args) => commands::watch(args).await,
             Commands::Add(args) => commands::add(args).await,
+            Commands::Bench(args) => commands::bench(args).await,
             Commands::Doctor(args) => commands::doctor(args).await,
+            Commands::Observability(args) => commands::observability(args).await,
             Commands::Generate(args) => commands::generate(args).await,
             Commands::Migrate(args) => commands::migrate(args).await,
             Commands::Docs { port } => commands::open_docs(port).await,

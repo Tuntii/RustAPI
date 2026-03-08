@@ -25,14 +25,17 @@ pub mod core {
     pub use rustapi_core::EventBus;
     pub use rustapi_core::{
         delete, delete_route, get, get_route, patch, patch_route, post, post_route, put, put_route,
-        route, serve_dir, sse_response, ApiError, AsyncValidatedJson, Body, BodyLimitLayer,
-        BodyStream, BodyVariant, ClientIp, Created, CursorPaginate, CursorPaginated, Environment,
-        Extension, FieldError, FromRequest, FromRequestParts, Handler, HandlerService, HeaderValue,
-        Headers, Html, IntoResponse, Json, KeepAlive, MethodRouter, Multipart, MultipartConfig,
-        MultipartField, NoContent, Paginate, Paginated, Path, Query, Redirect, Request, RequestId,
-        RequestIdLayer, Response, ResponseBody, Result, Route, RouteHandler, RouteMatch, Router,
-        RustApi, RustApiConfig, Sse, SseEvent, State, StaticFile, StaticFileConfig, StatusCode,
-        StreamBody, TracingLayer, Typed, TypedPath, UploadedFile, ValidatedJson, WithStatus,
+        route, serve_dir, sse_from_iter, sse_response, ApiError, AsyncValidatedJson, Body,
+        BodyLimitLayer, BodyStream, BodyVariant, ClientIp, Created, CursorPaginate,
+        CursorPaginated, Environment, Extension, FieldError, FromRequest, FromRequestParts,
+        Handler, HandlerService, HeaderValue, Headers, HealthCheck, HealthCheckBuilder,
+        HealthCheckResult, HealthEndpointConfig, HealthStatus, Html, IntoResponse, Json, KeepAlive,
+        MethodRouter, Multipart, MultipartConfig, MultipartField, NoContent, Paginate, Paginated,
+        Path, ProductionDefaultsConfig, Query, Redirect, Request, RequestId, RequestIdLayer,
+        Response, ResponseBody, Result, Route, RouteHandler, RouteMatch, Router, RustApi,
+        RustApiConfig, Sse, SseEvent, State, StaticFile, StaticFileConfig, StatusCode, StreamBody,
+        StreamingMultipart, StreamingMultipartField, TracingLayer, Typed, TypedPath, UploadedFile,
+        ValidatedJson, WithStatus,
     };
 
     pub use rustapi_core::get_environment;
@@ -100,7 +103,7 @@ pub mod extras {
     #[cfg(any(feature = "extras-rate-limit", feature = "rate-limit"))]
     pub mod rate_limit {
         pub use rustapi_extras::rate_limit;
-        pub use rustapi_extras::RateLimitLayer;
+        pub use rustapi_extras::{RateLimitLayer, RateLimitStrategy};
     }
 
     #[cfg(any(feature = "extras-config", feature = "config"))]
@@ -184,7 +187,44 @@ pub mod extras {
 
     #[cfg(any(feature = "extras-replay", feature = "replay"))]
     pub mod replay {
+        pub use rustapi_core::replay::{
+            RecordedRequest, RecordedResponse, ReplayConfig, ReplayEntry, ReplayId, ReplayMeta,
+            ReplayQuery, ReplayStore, ReplayStoreError, ReplayStoreResult,
+        };
         pub use rustapi_extras::replay;
+        pub use rustapi_extras::replay::{
+            FsReplayStore, FsReplayStoreConfig, InMemoryReplayStore, ReplayAdminAuth, ReplayClient,
+            ReplayClientError, ReplayLayer, RetentionJob,
+        };
+    }
+
+    #[cfg(any(feature = "extras-oauth2-client", feature = "oauth2-client"))]
+    pub mod oauth2 {
+        pub use rustapi_extras::oauth2;
+        pub use rustapi_extras::{
+            AuthorizationRequest, CsrfState, OAuth2Client, OAuth2Config, PkceVerifier, Provider,
+            TokenError, TokenResponse,
+        };
+    }
+
+    #[cfg(any(feature = "extras-session", feature = "session"))]
+    pub mod session {
+        pub use rustapi_extras::session;
+        pub use rustapi_extras::{
+            MemorySessionStore, Session, SessionConfig, SessionError, SessionLayer, SessionRecord,
+            SessionStore,
+        };
+
+        #[cfg(any(feature = "extras-session-redis", feature = "session-redis"))]
+        pub use rustapi_extras::RedisSessionStore;
+    }
+
+    #[cfg(any(feature = "extras-jobs", feature = "jobs"))]
+    pub mod jobs {
+        pub use rustapi_jobs::{
+            EnqueueOptions, InMemoryBackend, Job, JobBackend, JobContext, JobError, JobQueue,
+            JobRequest,
+        };
     }
 }
 
@@ -229,7 +269,7 @@ pub use rustapi_extras::{AllowedOrigins, CorsLayer};
 #[cfg(any(feature = "extras-rate-limit", feature = "rate-limit"))]
 pub use rustapi_extras::rate_limit;
 #[cfg(any(feature = "extras-rate-limit", feature = "rate-limit"))]
-pub use rustapi_extras::RateLimitLayer;
+pub use rustapi_extras::{RateLimitLayer, RateLimitStrategy};
 
 #[cfg(any(feature = "extras-config", feature = "config"))]
 pub use rustapi_extras::config;
@@ -269,18 +309,44 @@ pub use rustapi_extras::structured_logging;
 #[cfg(any(feature = "extras-timeout", feature = "timeout"))]
 pub use rustapi_extras::timeout;
 
+#[cfg(any(feature = "extras-oauth2-client", feature = "oauth2-client"))]
+pub use rustapi_extras::oauth2;
+#[cfg(any(feature = "extras-oauth2-client", feature = "oauth2-client"))]
+pub use rustapi_extras::{
+    AuthorizationRequest, CsrfState, OAuth2Client, OAuth2Config, PkceVerifier, Provider,
+    TokenError, TokenResponse,
+};
+
+#[cfg(any(feature = "extras-session", feature = "session"))]
+pub use rustapi_extras::session;
+#[cfg(any(feature = "extras-session", feature = "session"))]
+pub use rustapi_extras::{
+    MemorySessionStore, Session, SessionConfig, SessionError, SessionLayer, SessionRecord,
+    SessionStore,
+};
+
+#[cfg(any(feature = "extras-session-redis", feature = "session-redis"))]
+pub use rustapi_extras::RedisSessionStore;
+
+#[cfg(any(feature = "extras-jobs", feature = "jobs"))]
+pub use rustapi_jobs::{
+    EnqueueOptions, InMemoryBackend, Job, JobBackend, JobContext, JobError, JobQueue, JobRequest,
+};
+
 /// Prelude module: `use rustapi_rs::prelude::*`.
 pub mod prelude {
     pub use crate::core::EventBus;
     pub use crate::core::Validatable;
     pub use crate::core::{
         delete, delete_route, get, get_route, patch, patch_route, post, post_route, put, put_route,
-        route, serve_dir, sse_response, ApiError, AsyncValidatedJson, Body, BodyLimitLayer,
-        ClientIp, Created, CursorPaginate, CursorPaginated, Extension, HeaderValue, Headers, Html,
-        IntoResponse, Json, KeepAlive, Multipart, MultipartConfig, MultipartField, NoContent,
-        Paginate, Paginated, Path, Query, Redirect, Request, RequestId, RequestIdLayer, Response,
-        Result, Route, Router, RustApi, RustApiConfig, Sse, SseEvent, State, StaticFile,
-        StaticFileConfig, StatusCode, StreamBody, TracingLayer, Typed, TypedPath, UploadedFile,
+        route, serve_dir, sse_from_iter, sse_response, ApiError, AsyncValidatedJson, Body,
+        BodyLimitLayer, ClientIp, Created, CursorPaginate, CursorPaginated, Extension, HeaderValue,
+        Headers, HealthCheck, HealthCheckBuilder, HealthCheckResult, HealthEndpointConfig,
+        HealthStatus, Html, IntoResponse, Json, KeepAlive, Multipart, MultipartConfig,
+        MultipartField, NoContent, Paginate, Paginated, Path, ProductionDefaultsConfig, Query,
+        Redirect, Request, RequestId, RequestIdLayer, Response, Result, Route, Router, RustApi,
+        RustApiConfig, Sse, SseEvent, State, StaticFile, StaticFileConfig, StatusCode, StreamBody,
+        StreamingMultipart, StreamingMultipartField, TracingLayer, Typed, TypedPath, UploadedFile,
         ValidatedJson, WithStatus,
     };
 
@@ -310,7 +376,7 @@ pub mod prelude {
     pub use crate::{AllowedOrigins, CorsLayer};
 
     #[cfg(any(feature = "extras-rate-limit", feature = "rate-limit"))]
-    pub use crate::RateLimitLayer;
+    pub use crate::{RateLimitLayer, RateLimitStrategy};
 
     #[cfg(any(feature = "extras-config", feature = "config"))]
     pub use crate::{
@@ -320,6 +386,27 @@ pub mod prelude {
 
     #[cfg(any(feature = "extras-sqlx", feature = "sqlx"))]
     pub use crate::{convert_sqlx_error, SqlxErrorExt};
+
+    #[cfg(any(feature = "extras-oauth2-client", feature = "oauth2-client"))]
+    pub use crate::{
+        AuthorizationRequest, CsrfState, OAuth2Client, OAuth2Config, PkceVerifier, Provider,
+        TokenError, TokenResponse,
+    };
+
+    #[cfg(any(feature = "extras-session", feature = "session"))]
+    pub use crate::{
+        MemorySessionStore, Session, SessionConfig, SessionError, SessionLayer, SessionRecord,
+        SessionStore,
+    };
+
+    #[cfg(any(feature = "extras-session-redis", feature = "session-redis"))]
+    pub use crate::RedisSessionStore;
+
+    #[cfg(any(feature = "extras-jobs", feature = "jobs"))]
+    pub use crate::{
+        EnqueueOptions, InMemoryBackend, Job, JobBackend, JobContext, JobError, JobQueue,
+        JobRequest,
+    };
 
     #[cfg(any(feature = "protocol-toon", feature = "toon"))]
     pub use crate::protocol::toon::{AcceptHeader, LlmResponse, Negotiate, OutputFormat, Toon};

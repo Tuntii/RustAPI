@@ -1677,7 +1677,7 @@ mod property_tests {
         fn prop_empty_or_slashes_normalize_to_root(
             num_slashes in 0..10usize,
         ) {
-            let prefix: String = std::iter::repeat('/').take(num_slashes).collect();
+            let prefix = "/".repeat(num_slashes);
 
             let normalized = normalize_prefix(&prefix);
 

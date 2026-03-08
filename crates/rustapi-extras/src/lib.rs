@@ -126,7 +126,7 @@ pub use jwt::{create_token, AuthUser, JwtError, JwtLayer, JwtValidation, Validat
 pub use cors::{AllowedOrigins, CorsLayer};
 
 #[cfg(feature = "rate-limit")]
-pub use rate_limit::RateLimitLayer;
+pub use rate_limit::{RateLimitLayer, RateLimitStrategy};
 
 #[cfg(feature = "config")]
 pub use config::{
@@ -205,6 +205,18 @@ pub use oauth2::{
     AuthorizationRequest, CsrfState, OAuth2Client, OAuth2Config, PkceVerifier, Provider,
     TokenError, TokenResponse,
 };
+
+#[cfg(feature = "session")]
+pub mod session;
+
+#[cfg(feature = "session")]
+pub use session::{
+    MemorySessionStore, Session, SessionConfig, SessionError, SessionLayer, SessionRecord,
+    SessionStore,
+};
+
+#[cfg(feature = "session-redis")]
+pub use session::RedisSessionStore;
 
 #[cfg(feature = "audit")]
 pub mod audit;

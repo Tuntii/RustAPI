@@ -25,6 +25,8 @@ pub use rustapi_rs::MethodRouter
 pub use rustapi_rs::Multipart
 pub use rustapi_rs::MultipartConfig
 pub use rustapi_rs::MultipartField
+pub use rustapi_rs::StreamingMultipart
+pub use rustapi_rs::StreamingMultipartField
 pub use rustapi_rs::NoContent
 pub use rustapi_rs::Path
 pub use rustapi_rs::Query
@@ -55,6 +57,7 @@ pub use rustapi_rs::UploadedFile
 pub use rustapi_rs::Validatable
 pub use rustapi_rs::ValidatedJson
 pub use rustapi_rs::WithStatus
+pub use rustapi_rs::sse_from_iter
 pub use rustapi_rs::collect_auto_routes
 pub use rustapi_rs::delete
 pub use rustapi_rs::delete_route
@@ -96,6 +99,8 @@ pub use rustapi_rs::core::MethodRouter
 pub use rustapi_rs::core::Multipart
 pub use rustapi_rs::core::MultipartConfig
 pub use rustapi_rs::core::MultipartField
+pub use rustapi_rs::core::StreamingMultipart
+pub use rustapi_rs::core::StreamingMultipartField
 pub use rustapi_rs::core::NoContent
 pub use rustapi_rs::core::Path
 pub use rustapi_rs::core::Query
@@ -119,6 +124,7 @@ pub use rustapi_rs::core::StaticFile
 pub use rustapi_rs::core::StaticFileConfig
 pub use rustapi_rs::core::StatusCode
 pub use rustapi_rs::core::StreamBody
+pub use rustapi_rs::core::sse_from_iter
 pub use rustapi_rs::core::TracingLayer
 pub use rustapi_rs::core::Typed
 pub use rustapi_rs::core::TypedPath
@@ -163,6 +169,8 @@ pub use rustapi_rs::prelude::KeepAlive
 pub use rustapi_rs::prelude::Multipart
 pub use rustapi_rs::prelude::MultipartConfig
 pub use rustapi_rs::prelude::MultipartField
+pub use rustapi_rs::prelude::StreamingMultipart
+pub use rustapi_rs::prelude::StreamingMultipartField
 pub use rustapi_rs::prelude::NoContent
 pub use rustapi_rs::prelude::Path
 pub use rustapi_rs::prelude::Query
@@ -186,6 +194,7 @@ pub use rustapi_rs::prelude::StaticFile
 pub use rustapi_rs::prelude::StaticFileConfig
 pub use rustapi_rs::prelude::StatusCode
 pub use rustapi_rs::prelude::StreamBody
+pub use rustapi_rs::prelude::sse_from_iter
 pub use rustapi_rs::prelude::TracingLayer
 pub use rustapi_rs::prelude::Typed
 pub use rustapi_rs::prelude::TypedPath

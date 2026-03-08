@@ -9,7 +9,7 @@ use std::path::Path;
 use std::time::Duration;
 use tokio::fs;
 
-use crate::templates::{self, ProjectTemplate};
+use crate::templates::{self, ProjectPreset, ProjectTemplate};
 
 /// Arguments for the `new` command
 #[derive(Args, Debug)]
@@ -20,6 +20,10 @@ pub struct NewArgs {
     /// Project template
     #[arg(short, long, value_enum)]
     pub template: Option<ProjectTemplate>,
+
+    /// Opinionated feature preset
+    #[arg(long, value_enum)]
+    pub preset: Option<ProjectPreset>,
 
     /// Features to enable
     #[arg(short, long, value_delimiter = ',')]
@@ -57,9 +61,37 @@ pub async fn new_project(mut args: NewArgs) -> Result<()> {
         anyhow::bail!("Directory '{}' already exists", name);
     }
 
+    // Get preset
+    let preset = if let Some(preset) = args.preset {
+        Some(preset)
+    } else if args.yes {
+        None
+    } else {
+        let presets = [
+            "none - choose template/features manually",
+            "prod-api - production-oriented HTTP API defaults",
+            "ai-api - TOON-ready API defaults",
+            "realtime-api - WebSocket-ready API defaults",
+        ];
+        let selection = Select::with_theme(&theme)
+            .with_prompt("Select an optional preset")
+            .items(&presets)
+            .default(0)
+            .interact()?;
+
+        match selection {
+            1 => Some(ProjectPreset::Production),
+            2 => Some(ProjectPreset::Ai),
+            3 => Some(ProjectPreset::Realtime),
+            _ => None,
+        }
+    };
+
     // Get template
     let template = if let Some(template) = args.template {
         template
+    } else if let Some(preset) = preset {
+        preset.default_template()
     } else if args.yes {
         ProjectTemplate::Minimal
     } else {
@@ -86,25 +118,53 @@ pub async fn new_project(mut args: NewArgs) -> Result<()> {
 
     // Get features
     let features = if let Some(features) = args.features {
-        features
+        merge_unique_features(
+            preset
+                .map(ProjectPreset::recommended_features)
+                .unwrap_or_default(),
+            features,
+        )
     } else if args.yes {
-        vec![]
+        preset
+            .map(ProjectPreset::recommended_features)
+            .unwrap_or_default()
     } else {
         let available = [
             "extras-jwt",
             "extras-cors",
             "extras-rate-limit",
             "extras-config",
+            "extras-security-headers",
+            "extras-structured-logging",
+            "extras-timeout",
             "protocol-toon",
             "protocol-ws",
             "protocol-view",
             "protocol-grpc",
         ];
+        let preset_features = preset
+            .map(ProjectPreset::recommended_features)
+            .unwrap_or_default();
         let defaults = match template {
-            ProjectTemplate::Full => vec![true, true, true, true, false, false, false, false],
-            ProjectTemplate::Web => vec![false, false, false, false, false, false, true, false],
+            ProjectTemplate::Full => vec![
+                true, true, true, true, false, false, false, false, false, false, false,
+            ],
+            ProjectTemplate::Web => vec![
+                false, false, false, false, false, false, false, false, false, true, false,
+            ],
             _ => vec![false; available.len()],
         };
+
+        let defaults = defaults
+            .into_iter()
+            .enumerate()
+            .map(|(index, default)| {
+                default
+                    || preset_features
+                        .iter()
+                        .any(|feature| feature == available[index])
+            })
+            .collect::<Vec<_>>();
 
         let selections = dialoguer::MultiSelect::with_theme(&theme)
             .with_prompt("Select features (space to toggle)")
@@ -124,6 +184,15 @@ pub async fn new_project(mut args: NewArgs) -> Result<()> {
         println!("{}", style("Project configuration:").bold());
         println!("  Name:     {}", style(&name).cyan());
         println!("  Template: {}", style(format!("{:?}", template)).cyan());
+        println!(
+            "  Preset:   {}",
+            style(
+                preset
+                    .map(|preset| format!("{:?}", preset))
+                    .unwrap_or_else(|| "none".to_string())
+            )
+            .cyan()
+        );
         println!(
             "  Features: {}",
             style(if features.is_empty() {
@@ -189,6 +258,16 @@ pub async fn new_project(mut args: NewArgs) -> Result<()> {
     );
 
     Ok(())
+}
+
+fn merge_unique_features(mut base: Vec<String>, extras: Vec<String>) -> Vec<String> {
+    for feature in extras {
+        if !base.contains(&feature) {
+            base.push(feature);
+        }
+    }
+
+    base
 }
 
 /// Validate project name

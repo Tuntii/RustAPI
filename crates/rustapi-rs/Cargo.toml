@@ -16,12 +16,14 @@ readme = "README.md"
 rustapi-core = { workspace = true, default-features = false }
 rustapi-macros = { workspace = true }
 rustapi-extras = { workspace = true, optional = true }
+rustapi-jobs = { workspace = true, optional = true }
 rustapi-toon = { workspace = true, optional = true }
 rustapi-ws = { workspace = true, optional = true }
 rustapi-view = { workspace = true, optional = true }
 rustapi-grpc = { workspace = true, optional = true }
 rustapi-validate = { workspace = true }
 async-trait = { workspace = true }
+futures-util = { workspace = true }
 
 # Re-exports for user convenience
 tokio = { workspace = true }
@@ -82,6 +84,10 @@ extras-sanitization = ["dep:rustapi-extras", "rustapi-extras/sanitization"]
 extras-otel = ["dep:rustapi-extras", "rustapi-extras/otel"]
 extras-structured-logging = ["dep:rustapi-extras", "rustapi-extras/structured-logging"]
 extras-replay = ["dep:rustapi-extras", "rustapi-extras/replay"]
+extras-oauth2-client = ["dep:rustapi-extras", "rustapi-extras/oauth2-client"]
+extras-session = ["dep:rustapi-extras", "rustapi-extras/session"]
+extras-session-redis = ["dep:rustapi-extras", "rustapi-extras/session-redis"]
+extras-jobs = ["dep:rustapi-jobs"]
 extras-all = [
     "extras-jwt",
     "extras-cors",
@@ -101,6 +107,10 @@ extras-all = [
     "extras-sanitization",
     "extras-otel",
     "extras-structured-logging",
+    "extras-oauth2-client",
+    "extras-session",
+    "extras-session-redis",
+    "extras-jobs",
     "extras-replay",
 ]
 
@@ -137,6 +147,10 @@ sanitization = ["extras-sanitization"]
 otel = ["extras-otel"]
 structured-logging = ["extras-structured-logging"]
 replay = ["extras-replay"]
+oauth2-client = ["extras-oauth2-client"]
+session = ["extras-session"]
+session-redis = ["extras-session-redis"]
+jobs = ["extras-jobs"]
 extras = ["extras-jwt", "extras-cors", "extras-rate-limit"]
 
 # Canonical aggregate

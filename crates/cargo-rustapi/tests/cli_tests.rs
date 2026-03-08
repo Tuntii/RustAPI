@@ -105,6 +105,68 @@ mod new_command {
     }
 
     #[test]
+    fn test_new_with_prod_api_preset() {
+        let dir = tempdir().expect("Failed to create temp dir");
+        let project_name = "test-prod-preset-project";
+        let project_path = dir.path().join(project_name);
+
+        cargo_rustapi()
+            .current_dir(dir.path())
+            .args(["new", project_name, "--preset", "prod-api", "--yes"])
+            .assert()
+            .success();
+
+        let cargo_content =
+            fs::read_to_string(project_path.join("Cargo.toml")).expect("Failed to read Cargo.toml");
+        assert!(cargo_content.contains("extras-config"));
+        assert!(cargo_content.contains("extras-cors"));
+        assert!(cargo_content.contains("extras-rate-limit"));
+        assert!(cargo_content.contains("extras-security-headers"));
+        assert!(cargo_content.contains("extras-structured-logging"));
+        assert!(cargo_content.contains("extras-timeout"));
+    }
+
+    #[test]
+    fn test_new_with_ai_api_preset() {
+        let dir = tempdir().expect("Failed to create temp dir");
+        let project_name = "test-ai-preset-project";
+        let project_path = dir.path().join(project_name);
+
+        cargo_rustapi()
+            .current_dir(dir.path())
+            .args(["new", project_name, "--preset", "ai-api", "--yes"])
+            .assert()
+            .success();
+
+        let cargo_content =
+            fs::read_to_string(project_path.join("Cargo.toml")).expect("Failed to read Cargo.toml");
+        assert!(cargo_content.contains("protocol-toon"));
+        assert!(cargo_content.contains("extras-config"));
+        assert!(cargo_content.contains("extras-timeout"));
+        assert!(cargo_content.contains("extras-structured-logging"));
+    }
+
+    #[test]
+    fn test_new_with_realtime_api_preset() {
+        let dir = tempdir().expect("Failed to create temp dir");
+        let project_name = "test-realtime-preset-project";
+        let project_path = dir.path().join(project_name);
+
+        cargo_rustapi()
+            .current_dir(dir.path())
+            .args(["new", project_name, "--preset", "realtime-api", "--yes"])
+            .assert()
+            .success();
+
+        let cargo_content =
+            fs::read_to_string(project_path.join("Cargo.toml")).expect("Failed to read Cargo.toml");
+        assert!(cargo_content.contains("protocol-ws"));
+        assert!(cargo_content.contains("extras-cors"));
+        assert!(cargo_content.contains("extras-timeout"));
+        assert!(cargo_content.contains("extras-structured-logging"));
+    }
+
+    #[test]
     fn test_new_existing_directory_fails() {
         let dir = tempdir().expect("Failed to create temp dir");
         let project_name = "existing-dir";
@@ -164,6 +226,55 @@ mod doctor_command {
             stdout.contains("Rust compiler") || stdout.contains("rustc"),
             "Doctor should check for Rust compiler"
         );
+    }
+}
+
+mod bench_command {
+    use super::*;
+
+    #[test]
+    fn test_bench_help() {
+        cargo_rustapi()
+            .args(["bench", "--help"])
+            .assert()
+            .success()
+            .stdout(predicate::str::contains("benchmark workflow"));
+    }
+}
+
+mod observability_command {
+    use super::*;
+
+    #[test]
+    fn test_observability_help() {
+        cargo_rustapi()
+            .args(["observability", "--help"])
+            .assert()
+            .success()
+            .stdout(predicate::str::contains("observability"));
+    }
+
+    #[test]
+    fn test_observability_runs_against_repo() {
+        cargo_rustapi()
+            .args(["observability", "--path", "."])
+            .assert()
+            .success()
+            .stdout(predicate::str::contains("Observability workflow assets"));
+    }
+}
+
+#[cfg(feature = "replay")]
+mod replay_command {
+    use super::*;
+
+    #[test]
+    fn test_replay_help() {
+        cargo_rustapi()
+            .args(["replay", "--help"])
+            .assert()
+            .success()
+            .stdout(predicate::str::contains("Replay debugging commands"));
     }
 }
 

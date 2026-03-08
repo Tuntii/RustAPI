@@ -151,18 +151,12 @@ pub struct PkceVerifier {
 }
 
 impl PkceVerifier {
-    /// Generate a new PKCE verifier with S256 challenge.
-    pub fn generate() -> Self {
+    /// Rebuild a PKCE verifier from an existing verifier string.
+    pub fn new(verifier: impl Into<String>) -> Self {
         use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
-        use rand::{rngs::OsRng, RngCore};
-
-        // Generate 32 random bytes for the verifier
-        let mut verifier_bytes = [0u8; 32];
-        OsRng.fill_bytes(&mut verifier_bytes);
-        let verifier = URL_SAFE_NO_PAD.encode(verifier_bytes);
-
-        // Create S256 challenge: BASE64URL(SHA256(verifier))
         use sha2::{Digest, Sha256};
+
+        let verifier = verifier.into();
         let mut hasher = Sha256::new();
         hasher.update(verifier.as_bytes());
         let hash = hasher.finalize();
@@ -173,6 +167,17 @@ impl PkceVerifier {
             challenge,
             method: "S256".to_string(),
         }
+    }
+
+    /// Generate a new PKCE verifier with S256 challenge.
+    pub fn generate() -> Self {
+        use rand::{rngs::OsRng, RngCore};
+
+        // Generate 32 random bytes for the verifier
+        let mut verifier_bytes = [0u8; 32];
+        OsRng.fill_bytes(&mut verifier_bytes);
+        use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine as _};
+        Self::new(URL_SAFE_NO_PAD.encode(verifier_bytes))
     }
 
     /// Get the code verifier (for token exchange).
@@ -256,6 +261,10 @@ mod tests {
 
         // Verifier and challenge should be different
         assert_ne!(pkce.verifier(), pkce.challenge());
+
+        let rebuilt = PkceVerifier::new(pkce.verifier().to_string());
+        assert_eq!(rebuilt.verifier(), pkce.verifier());
+        assert_eq!(rebuilt.challenge(), pkce.challenge());
     }
 
     #[test]

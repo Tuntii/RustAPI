@@ -140,6 +140,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This release delivers a **12x performance improvement**, bringing RustAPI from ~8K req/s to **~92K req/s**.
 
+> Note: the numbers below are preserved as a **historical release snapshot**. Current benchmark methodology and canonical public performance claims are maintained in `docs/PERFORMANCE_BENCHMARKS.md`.
+
 #### Benchmark Results
 
 | Framework | Requests/sec | Latency (avg) |
