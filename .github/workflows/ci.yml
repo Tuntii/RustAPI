@@ -189,7 +189,7 @@ jobs:
         run: cargo tarpaulin --workspace --out Html --output-dir coverage
 
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-report
           path: coverage/tarpaulin-report.html
