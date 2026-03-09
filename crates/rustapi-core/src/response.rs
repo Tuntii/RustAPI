@@ -328,6 +328,14 @@ impl ResponseModifier for ApiError {
             },
         );
     }
+
+    fn register_components(spec: &mut rustapi_openapi::OpenApiSpec) {
+        spec.register_in_place::<rustapi_openapi::ErrorSchema>();
+        spec.register_in_place::<rustapi_openapi::ErrorBodySchema>();
+        spec.register_in_place::<rustapi_openapi::ValidationErrorSchema>();
+        spec.register_in_place::<rustapi_openapi::ValidationErrorBodySchema>();
+        spec.register_in_place::<rustapi_openapi::FieldErrorSchema>();
+    }
 }
 
 /// 201 Created response wrapper
@@ -383,6 +391,10 @@ impl<T: RustApiSchema> ResponseModifier for Created<T> {
                 headers: BTreeMap::new(),
             },
         );
+    }
+
+    fn register_components(spec: &mut rustapi_openapi::OpenApiSpec) {
+        spec.register_in_place::<T>();
     }
 }
 
@@ -574,6 +586,10 @@ impl<T: RustApiSchema, const CODE: u16> ResponseModifier for WithStatus<T, CODE>
                 headers: BTreeMap::new(),
             },
         );
+    }
+
+    fn register_components(spec: &mut rustapi_openapi::OpenApiSpec) {
+        spec.register_in_place::<T>();
     }
 }
 

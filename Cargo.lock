@@ -333,7 +333,7 @@ checksum = "1e748733b7cbc798e1434b6ac524f0c1ff2ab456fe201501e6497c8417a4fc33"
 
 [[package]]
 name = "cargo-rustapi"
-version = "0.1.410"
+version = "0.1.412"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -3136,7 +3136,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-core"
-version = "0.1.410"
+version = "0.1.412"
 dependencies = [
  "async-stream",
  "async-trait",
@@ -3163,7 +3163,6 @@ dependencies = [
  "rcgen",
  "reqwest",
  "rustapi-openapi",
- "rustapi-testing",
  "rustapi-validate",
  "rustls",
  "rustls-pemfile",
@@ -3184,7 +3183,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-extras"
-version = "0.1.410"
+version = "0.1.412"
 dependencies = [
  "async-trait",
  "base64",
@@ -3226,7 +3225,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-grpc"
-version = "0.1.410"
+version = "0.1.412"
 dependencies = [
  "prost",
  "rustapi-core",
@@ -3237,7 +3236,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-jobs"
-version = "0.1.410"
+version = "0.1.412"
 dependencies = [
  "async-trait",
  "chrono",
@@ -3255,7 +3254,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-macros"
-version = "0.1.410"
+version = "0.1.412"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -3268,7 +3267,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-openapi"
-version = "0.1.410"
+version = "0.1.412"
 dependencies = [
  "bytes",
  "http",
@@ -3280,7 +3279,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-rs"
-version = "0.1.410"
+version = "0.1.412"
 dependencies = [
  "async-trait",
  "doc-comment",
@@ -3305,7 +3304,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-testing"
-version = "0.1.410"
+version = "0.1.412"
 dependencies = [
  "bytes",
  "futures-util",
@@ -3325,7 +3324,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-toon"
-version = "0.1.410"
+version = "0.1.412"
 dependencies = [
  "bytes",
  "futures-util",
@@ -3343,7 +3342,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-validate"
-version = "0.1.410"
+version = "0.1.412"
 dependencies = [
  "async-trait",
  "http",
@@ -3360,7 +3359,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-view"
-version = "0.1.410"
+version = "0.1.412"
 dependencies = [
  "bytes",
  "http",
@@ -3377,7 +3376,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-ws"
-version = "0.1.410"
+version = "0.1.412"
 dependencies = [
  "async-trait",
  "base64",

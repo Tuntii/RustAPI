@@ -542,6 +542,10 @@ impl RustApi {
     ///     .route("/users/{id}", get(get_user).delete(delete_user))
     /// ```
     pub fn route(mut self, path: &str, method_router: MethodRouter) -> Self {
+        for register_components in &method_router.component_registrars {
+            register_components(&mut self.openapi_spec);
+        }
+
         // Register operations in OpenAPI spec
         for (method, op) in &method_router.operations {
             let mut op = op.clone();
@@ -592,6 +596,8 @@ impl RustApi {
             "PATCH" => http::Method::PATCH,
             _ => http::Method::GET,
         };
+
+        (route.component_registrar)(&mut self.openapi_spec);
 
         // Register operation in OpenAPI spec
         let mut op = route.operation;
@@ -660,6 +666,10 @@ impl RustApi {
         // Propagate OpenAPI operations from nested router with prefixed paths
         // We need to do this before calling router.nest() because it consumes the router
         for (matchit_path, method_router) in router.method_routers() {
+            for register_components in &method_router.component_registrars {
+                register_components(&mut self.openapi_spec);
+            }
+
             // Get the display path from registered_routes (has {param} format)
             let display_path = router
                 .registered_routes()

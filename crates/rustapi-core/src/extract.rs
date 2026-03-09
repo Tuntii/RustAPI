@@ -1012,6 +1012,13 @@ impl<T: RustApiSchema> OperationModifier for ValidatedJson<T> {
             },
         );
     }
+
+    fn register_components(spec: &mut rustapi_openapi::OpenApiSpec) {
+        spec.register_in_place::<T>();
+        spec.register_in_place::<rustapi_openapi::ValidationErrorSchema>();
+        spec.register_in_place::<rustapi_openapi::ValidationErrorBodySchema>();
+        spec.register_in_place::<rustapi_openapi::FieldErrorSchema>();
+    }
 }
 
 // AsyncValidatedJson - Adds request body + 422 response (same as ValidatedJson)
@@ -1056,6 +1063,13 @@ impl<T: RustApiSchema> OperationModifier for AsyncValidatedJson<T> {
             },
         );
     }
+
+    fn register_components(spec: &mut rustapi_openapi::OpenApiSpec) {
+        spec.register_in_place::<T>();
+        spec.register_in_place::<rustapi_openapi::ValidationErrorSchema>();
+        spec.register_in_place::<rustapi_openapi::ValidationErrorBodySchema>();
+        spec.register_in_place::<rustapi_openapi::FieldErrorSchema>();
+    }
 }
 
 // Json - Adds request body (Same as ValidatedJson)
@@ -1078,6 +1092,10 @@ impl<T: RustApiSchema> OperationModifier for Json<T> {
             required: Some(true),
             content,
         });
+    }
+
+    fn register_components(spec: &mut rustapi_openapi::OpenApiSpec) {
+        spec.register_in_place::<T>();
     }
 }
 
@@ -1112,6 +1130,10 @@ impl<T: RustApiSchema> OperationModifier for Query<T> {
 
             op.parameters.extend(new_params);
         }
+    }
+
+    fn register_components(spec: &mut rustapi_openapi::OpenApiSpec) {
+        spec.register_in_place::<T>();
     }
 }
 
@@ -1189,6 +1211,10 @@ impl<T: RustApiSchema> ResponseModifier for Json<T> {
                 headers: BTreeMap::new(),
             },
         );
+    }
+
+    fn register_components(spec: &mut rustapi_openapi::OpenApiSpec) {
+        spec.register_in_place::<T>();
     }
 }
 

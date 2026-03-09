@@ -7,6 +7,70 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.410] - 2026-03-09
+
+### Added
+
+#### Production Defaults Preset (`rustapi-core`)
+- **One-call production baseline**: `.production_defaults("service-name")` enables `RequestIdLayer`, `TracingLayer`, and built-in health probes in a single builder call.
+- `ProductionDefaultsConfig` for granular control: `.version()`, `.tracing_level()`, `.request_id()`, `.tracing()`, `.health_endpoints()`.
+- `.production_defaults_with_config(config)` for full customization.
+
+#### Health Check System (`rustapi-core`)
+- **Built-in `/health`, `/ready`, `/live` endpoints** — Kubernetes-compatible probes out of the box.
+- `HealthCheckBuilder` with `.add_check(name, async_fn)` for custom dependency checks.
+- `HealthStatus` enum: `Healthy`, `Unhealthy { reason }`, `Degraded { reason }`.
+- `HealthCheckResult` response with per-component status, version, and ISO 8601 timestamp.
+- `HealthEndpointConfig` for custom endpoint paths.
+- `/health` returns aggregated status (200/503), `/ready` checks dependencies, `/live` is a lightweight process probe.
+- `.health_endpoints()`, `.health_endpoints_with_config()`, `.with_health_check()` on `RustApi` builder.
+- All types re-exported in `rustapi-rs` prelude.
+
+#### Session Management (`rustapi-extras`)
+- **Cookie-backed session middleware** with `SessionLayer` and `Session` extractor.
+- `SessionConfig` with `.cookie_name()`, `.cookie_path()`, `.cookie_domain()`, `.secure()`, `.http_only()`, `.same_site()`, `.ttl()`, `.rolling()`.
+- `MemorySessionStore` — in-memory store with `.len()` and `.is_empty()`.
+- `SessionStore` trait for custom backends (`load`, `save`, `delete`).
+- `Session` extractor methods: `.get()`, `.insert()`, `.contains()`, `.destroy()`, `.cycle_id()`, `.id()`.
+- `SessionRecord` with expiration tracking (`.is_expired()`, `.ttl_seconds()`).
+- Secure defaults: `HttpOnly`, `Secure`, `SameSite=Lax`, 24h TTL, rolling refresh.
+- Re-exported under `rustapi_rs::extras::session`.
+
+#### Rate Limiting Strategies (`rustapi-extras`)
+- **Three strategies** via `RateLimitStrategy`: `FixedWindow`, `SlidingWindow`, `TokenBucket`.
+- Per-IP tracking with `DashMap`.
+- Response headers: `X-RateLimit-Remaining`, `Retry-After`.
+- Returns 429 Too Many Requests on limit exceeded.
+- Re-exported under `rustapi_rs::extras::rate_limit`.
+
+#### CLI: New Commands (`cargo-rustapi`)
+- **`cargo rustapi bench`** — run benchmark workflow with `--warmup` and `--iterations` options.
+- **`cargo rustapi observability`** — surface observability assets and check production readiness (`--check` for strict mode).
+- **`cargo rustapi doctor`** — expanded environment health checks with `--strict` mode.
+
+#### Multipart Streaming Enhancements (`rustapi-core`)
+- `StreamingMultipartField`: `.bytes_read()` progress tracking, `.save_to()`, `.save_as()`, `.into_uploaded_file()`.
+- `StreamingMultipart` / `Multipart`: `.field_count()` method.
+
+#### New Examples (`rustapi-rs`)
+- `auth_api.rs` — session-based authentication (login/logout/refresh/me).
+- `full_crud_api.rs` — complete CRUD API with stateful `Arc<RwLock<HashMap>>`.
+- `jobs_api.rs` — background job queue with `InMemoryBackend`.
+- `streaming_api.rs` — server-sent events (SSE) streaming.
+
+#### Performance Snapshot (`rustapi-core`)
+- `crates/rustapi-core/examples/perf_snapshot.rs` — synthetic in-process benchmark measuring ultra fast, fast, and full execution paths.
+
+### Changed
+- `scripts/bench.ps1` updated to run both `cargo bench --workspace` and the perf snapshot example.
+- Facade (`rustapi-rs`) now re-exports `ProductionDefaultsConfig`, health types, session module, and rate limit module.
+
+### Documentation
+- **10+ new cookbook recipes**: session auth, observability, error handling, custom extractors, middleware debugging, Axum migration, Actix migration, OIDC/OAuth2 production, macro attributes reference, deployment expansion.
+- `docs/PERFORMANCE_BENCHMARKS.md` expanded with perf snapshot methodology.
+- `docs/GETTING_STARTED.md` updated.
+- `crates/rustapi-rs/examples/README.md` — example catalog and descriptions.
+
 ## [0.1.397] - 2026-02-26
 
 ### Added

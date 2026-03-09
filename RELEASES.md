@@ -1,3 +1,240 @@
+# RustAPI v0.1.410 Release Notes
+
+**Release Date**: March 9, 2026
+**Full Changelog**: https://github.com/Tuntii/RustAPI/compare/v0.1.397...v0.1.410
+
+**Benchmark Source of Truth**: Current benchmark methodology and canonical performance claims live in `docs/PERFORMANCE_BENCHMARKS.md`. Historical release-specific benchmark notes should be treated as point-in-time snapshots unless they are linked from that document.
+
+---
+
+## 🎯 Highlights
+
+v0.1.410 is the **Production Baseline** release. It delivers everything you need to go from prototype to production-ready service with a single builder call — health probes, session management, rate limiting, observability tooling, and a suite of real-world examples.
+
+| Feature | Crate | Impact |
+|---------|-------|--------|
+| Production Defaults Preset | `rustapi-core` | One-call production setup: health probes + tracing + request IDs |
+| Health Check System | `rustapi-core` | Built-in `/health`, `/ready`, `/live` with custom checks |
+| Session Management | `rustapi-extras` | Cookie-backed sessions with pluggable stores |
+| Rate Limiting Strategies | `rustapi-extras` | Fixed window, sliding window, and token bucket |
+| CLI: bench & observability | `cargo-rustapi` | New `bench` and `observability` subcommands |
+| Multipart Streaming | `rustapi-core` | Enhanced streaming multipart with progress tracking |
+| 4 New Examples | `rustapi-rs` | Auth, CRUD, Jobs, Streaming — ready to copy |
+| 10+ Cookbook Recipes | `docs/cookbook` | Migration guides, session auth, observability, error handling |
+
+---
+
+## 🏭 Production Defaults Preset
+
+Go production-ready with a single call:
+
+```rust
+use rustapi_rs::prelude::*;
+
+#[tokio::main]
+async fn main() {
+    RustApi::new()
+        .production_defaults("my-service")
+        .run("0.0.0.0:3000")
+        .await;
+}
+```
+
+This enables:
+- **`RequestIdLayer`** — unique ID on every request
+- **`TracingLayer`** — structured logging with service metadata
+- **`/health`**, **`/ready`**, **`/live`** — Kubernetes-compatible probes
+
+Customizable via `ProductionDefaultsConfig`:
+
+```rust
+RustApi::new()
+    .production_defaults_with_config(
+        ProductionDefaultsConfig::new("my-service")
+            .version("1.2.3")
+            .tracing_level(tracing::Level::DEBUG)
+            .request_id(true)
+            .health_endpoints(true)
+    )
+    .run("0.0.0.0:3000")
+    .await;
+```
+
+---
+
+## 🏥 Health Check System
+
+Full health check module with builder API, custom checks, and OpenAPI integration:
+
+```rust
+use rustapi_rs::prelude::*;
+
+let health = HealthCheckBuilder::new(true)
+    .add_check("database", || async {
+        // Check database connectivity
+        HealthStatus::healthy()
+    })
+    .add_check("redis", || async {
+        HealthStatus::degraded("high latency".into())
+    })
+    .version("1.0.0")
+    .build();
+
+RustApi::new()
+    .with_health_check(health)
+    .health_endpoints()
+    .run("0.0.0.0:3000")
+    .await;
+```
+
+- **`/health`** — aggregated status of all checks (200 or 503)
+- **`/ready`** — dependency readiness (200 or 503)
+- **`/live`** — lightweight liveness probe (always 200)
+- Configurable paths via `HealthEndpointConfig`
+- `HealthStatus` variants: `Healthy`, `Unhealthy { reason }`, `Degraded { reason }`
+
+---
+
+## 🔐 Session Management
+
+Cookie-backed session management with pluggable storage backends:
+
+```rust
+use rustapi_rs::prelude::*;
+use rustapi_rs::extras::session::*;
+
+let store = MemorySessionStore::new();
+
+RustApi::new()
+    .layer(SessionLayer::new(
+        store,
+        SessionConfig::default()
+            .cookie_name("my_session")
+            .ttl(Duration::from_secs(3600))
+            .secure(true)
+            .http_only(true)
+            .same_site(SameSite::Lax)
+    ))
+    .run("0.0.0.0:3000")
+    .await;
+```
+
+Handler-side usage:
+
+```rust
+#[post("/login")]
+async fn login(session: Session, body: Json<LoginRequest>) -> Result<Json<Value>> {
+    session.insert("user_id", &body.user_id).await?;
+    session.cycle_id().await; // CSRF protection
+    Ok(Json(json!({"status": "ok"})))
+}
+```
+
+- `Session` extractor with `get`, `insert`, `contains`, `destroy`, `cycle_id`
+- `MemorySessionStore` built-in; `SessionStore` trait for custom backends
+- Rolling sessions (refresh TTL on each access) by default
+- Secure defaults: `HttpOnly`, `Secure`, `SameSite=Lax`
+
+---
+
+## 🚦 Rate Limiting Strategies
+
+Three strategies for different use cases:
+
+```rust
+use rustapi_rs::extras::rate_limit::*;
+
+// Fixed window: 100 requests per 60 seconds
+RustApi::new()
+    .layer(RateLimitLayer::new(100, Duration::from_secs(60))
+        .strategy(RateLimitStrategy::FixedWindow))
+
+// Sliding window: smoother distribution
+    .layer(RateLimitLayer::new(100, Duration::from_secs(60))
+        .strategy(RateLimitStrategy::SlidingWindow))
+
+// Token bucket: allows bursts
+    .layer(RateLimitLayer::new(100, Duration::from_secs(60))
+        .strategy(RateLimitStrategy::TokenBucket))
+```
+
+- Per-IP tracking with `DashMap`
+- Response headers: `X-RateLimit-Remaining`, `Retry-After`
+- Returns `429 Too Many Requests` when limit exceeded
+
+---
+
+## 🔨 New CLI Commands
+
+### `cargo rustapi bench`
+Run the performance benchmark workflow:
+```powershell
+cargo rustapi bench --warmup 5 --iterations 1000
+```
+
+### `cargo rustapi observability`
+Surface observability assets and check production readiness:
+```powershell
+cargo rustapi observability --check
+```
+Checks for production baseline docs, observability cookbook, benchmark script, and quality gate.
+
+### `cargo rustapi doctor` (enhanced)
+Expanded environment health checks with `--strict` mode that fails on warnings.
+
+---
+
+## 📄 Enhanced Multipart Streaming
+
+`StreamingMultipart` and `StreamingMultipartField` now support:
+- `.bytes_read()` — progress tracking
+- `.save_to(path)` — stream directly to disk
+- `.save_as(path)` — save with custom filename
+- `.into_uploaded_file()` — convert to `UploadedFile`
+- `.field_count()` — number of fields in the upload
+
+---
+
+## 📝 New Examples
+
+Four production-ready examples added to `crates/rustapi-rs/examples/`:
+
+| Example | Description |
+|---------|-------------|
+| `auth_api.rs` | Session-based authentication with login/logout/refresh |
+| `full_crud_api.rs` | Complete CRUD API with `Arc<RwLock<HashMap>>` state |
+| `jobs_api.rs` | Background job queue with `InMemoryBackend` |
+| `streaming_api.rs` | Server-sent events (SSE) streaming |
+
+---
+
+## 📖 New Cookbook Recipes
+
+- **Session Authentication** — cookie-backed auth patterns
+- **Observability** — monitoring and tracing setup
+- **Error Handling** — structured error responses
+- **Custom Extractors** — building your own extractors
+- **Middleware Debugging** — layer inspection and troubleshooting
+- **Axum Migration** — step-by-step migration guide from Axum
+- **Actix Migration** — step-by-step migration guide from Actix-web
+- **OIDC/OAuth2 Production** — production-grade OAuth2 setup
+- **Macro Attributes Reference** — complete reference for all route macro attributes
+
+---
+
+## 📦 Facade Re-exports
+
+New types available in `rustapi_rs::prelude::*`:
+- `ProductionDefaultsConfig`, `HealthCheck`, `HealthCheckBuilder`, `HealthCheckResult`, `HealthStatus`, `HealthEndpointConfig`
+
+New modules in `rustapi_rs::extras::`:
+- `session` — `Session`, `SessionLayer`, `SessionConfig`, `MemorySessionStore`, `SessionStore`, `SessionRecord`
+- `rate_limit` — `RateLimitLayer`, `RateLimitStrategy`
+
+---
+
+---
+
 # RustAPI v0.1.397 Release Notes
 
 **Release Date**: February 26, 2026

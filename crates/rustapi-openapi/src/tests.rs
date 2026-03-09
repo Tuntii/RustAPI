@@ -26,6 +26,10 @@ mod tests {
         let json = spec.to_json();
         assert_eq!(json["openapi"], "3.1.0");
         assert_eq!(json["info"]["title"], "Test");
+        assert_eq!(
+            json["jsonSchemaDialect"],
+            "https://spec.openapis.org/oas/3.1/dialect/base"
+        );
     }
 
     #[derive(Schema)]

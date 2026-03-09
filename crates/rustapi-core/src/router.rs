@@ -126,6 +126,7 @@ impl std::error::Error for RouteConflictError {}
 pub struct MethodRouter {
     handlers: HashMap<Method, BoxedHandler>,
     pub(crate) operations: HashMap<Method, Operation>,
+    pub(crate) component_registrars: Vec<fn(&mut rustapi_openapi::OpenApiSpec)>,
 }
 
 impl Clone for MethodRouter {
@@ -133,6 +134,7 @@ impl Clone for MethodRouter {
         Self {
             handlers: self.handlers.clone(),
             operations: self.operations.clone(),
+            component_registrars: self.component_registrars.clone(),
         }
     }
 }
@@ -143,13 +145,21 @@ impl MethodRouter {
         Self {
             handlers: HashMap::new(),
             operations: HashMap::new(),
+            component_registrars: Vec::new(),
         }
     }
 
     /// Add a handler for a specific method
-    fn on(mut self, method: Method, handler: BoxedHandler, operation: Operation) -> Self {
+    fn on(
+        mut self,
+        method: Method,
+        handler: BoxedHandler,
+        operation: Operation,
+        component_registrar: fn(&mut rustapi_openapi::OpenApiSpec),
+    ) -> Self {
         self.handlers.insert(method.clone(), handler);
         self.operations.insert(method, operation);
+        self.component_registrars.push(component_registrar);
         self
     }
 
@@ -168,6 +178,7 @@ impl MethodRouter {
         Self {
             handlers,
             operations: HashMap::new(), // Operations lost when using raw boxed handlers for now
+            component_registrars: Vec::new(),
         }
     }
 
@@ -190,6 +201,7 @@ impl MethodRouter {
         self.handlers.insert(method.clone(), handler);
         self.operations.insert(method, operation);
     }
+
     /// Add a GET handler
     pub fn get<H, T>(self, handler: H) -> Self
     where
@@ -198,7 +210,12 @@ impl MethodRouter {
     {
         let mut op = Operation::new();
         H::update_operation(&mut op);
-        self.on(Method::GET, into_boxed_handler(handler), op)
+        self.on(
+            Method::GET,
+            into_boxed_handler(handler),
+            op,
+            <H as Handler<T>>::register_components,
+        )
     }
 
     /// Add a POST handler
@@ -209,7 +226,12 @@ impl MethodRouter {
     {
         let mut op = Operation::new();
         H::update_operation(&mut op);
-        self.on(Method::POST, into_boxed_handler(handler), op)
+        self.on(
+            Method::POST,
+            into_boxed_handler(handler),
+            op,
+            <H as Handler<T>>::register_components,
+        )
     }
 
     /// Add a PUT handler
@@ -220,7 +242,12 @@ impl MethodRouter {
     {
         let mut op = Operation::new();
         H::update_operation(&mut op);
-        self.on(Method::PUT, into_boxed_handler(handler), op)
+        self.on(
+            Method::PUT,
+            into_boxed_handler(handler),
+            op,
+            <H as Handler<T>>::register_components,
+        )
     }
 
     /// Add a PATCH handler
@@ -231,7 +258,12 @@ impl MethodRouter {
     {
         let mut op = Operation::new();
         H::update_operation(&mut op);
-        self.on(Method::PATCH, into_boxed_handler(handler), op)
+        self.on(
+            Method::PATCH,
+            into_boxed_handler(handler),
+            op,
+            <H as Handler<T>>::register_components,
+        )
     }
 
     /// Add a DELETE handler
@@ -242,7 +274,12 @@ impl MethodRouter {
     {
         let mut op = Operation::new();
         H::update_operation(&mut op);
-        self.on(Method::DELETE, into_boxed_handler(handler), op)
+        self.on(
+            Method::DELETE,
+            into_boxed_handler(handler),
+            op,
+            <H as Handler<T>>::register_components,
+        )
     }
 }
 
@@ -260,7 +297,12 @@ where
 {
     let mut op = Operation::new();
     H::update_operation(&mut op);
-    MethodRouter::new().on(Method::GET, into_boxed_handler(handler), op)
+    MethodRouter::new().on(
+        Method::GET,
+        into_boxed_handler(handler),
+        op,
+        <H as Handler<T>>::register_components,
+    )
 }
 
 /// Create a POST route handler
@@ -271,7 +313,12 @@ where
 {
     let mut op = Operation::new();
     H::update_operation(&mut op);
-    MethodRouter::new().on(Method::POST, into_boxed_handler(handler), op)
+    MethodRouter::new().on(
+        Method::POST,
+        into_boxed_handler(handler),
+        op,
+        <H as Handler<T>>::register_components,
+    )
 }
 
 /// Create a PUT route handler
@@ -282,7 +329,12 @@ where
 {
     let mut op = Operation::new();
     H::update_operation(&mut op);
-    MethodRouter::new().on(Method::PUT, into_boxed_handler(handler), op)
+    MethodRouter::new().on(
+        Method::PUT,
+        into_boxed_handler(handler),
+        op,
+        <H as Handler<T>>::register_components,
+    )
 }
 
 /// Create a PATCH route handler
@@ -293,7 +345,12 @@ where
 {
     let mut op = Operation::new();
     H::update_operation(&mut op);
-    MethodRouter::new().on(Method::PATCH, into_boxed_handler(handler), op)
+    MethodRouter::new().on(
+        Method::PATCH,
+        into_boxed_handler(handler),
+        op,
+        <H as Handler<T>>::register_components,
+    )
 }
 
 /// Create a DELETE route handler
@@ -304,7 +361,12 @@ where
 {
     let mut op = Operation::new();
     H::update_operation(&mut op);
-    MethodRouter::new().on(Method::DELETE, into_boxed_handler(handler), op)
+    MethodRouter::new().on(
+        Method::DELETE,
+        into_boxed_handler(handler),
+        op,
+        <H as Handler<T>>::register_components,
+    )
 }
 
 /// Main router

@@ -58,7 +58,9 @@ impl OpenApiSpec {
                 version: version.into(),
                 ..Default::default()
             },
-            json_schema_dialect: Some("https://json-schema.org/draft/2020-12/schema".to_string()),
+            json_schema_dialect: Some(
+                "https://spec.openapis.org/oas/3.1/dialect/base".to_string(),
+            ),
             servers: Vec::new(),
             paths: BTreeMap::new(),
             webhooks: BTreeMap::new(),
@@ -634,10 +636,14 @@ pub struct ExternalDocs {
 // Re-exports/Traits needed for backwards compatibility or easy migration
 pub trait OperationModifier {
     fn update_operation(op: &mut Operation);
+
+    fn register_components(_spec: &mut OpenApiSpec) {}
 }
 
 pub trait ResponseModifier {
     fn update_response(op: &mut Operation);
+
+    fn register_components(_spec: &mut OpenApiSpec) {}
 }
 
 // Helper implementations for OperationModifier/ResponseModifier
@@ -648,11 +654,19 @@ impl<T: OperationModifier> OperationModifier for Option<T> {
             body.required = Some(false);
         }
     }
+
+    fn register_components(spec: &mut OpenApiSpec) {
+        T::register_components(spec);
+    }
 }
 
 impl<T: OperationModifier, E> OperationModifier for Result<T, E> {
     fn update_operation(op: &mut Operation) {
         T::update_operation(op);
+    }
+
+    fn register_components(spec: &mut OpenApiSpec) {
+        T::register_components(spec);
     }
 }
 
@@ -712,12 +726,21 @@ impl<T: ResponseModifier> ResponseModifier for Option<T> {
     fn update_response(op: &mut Operation) {
         T::update_response(op);
     }
+
+    fn register_components(spec: &mut OpenApiSpec) {
+        T::register_components(spec);
+    }
 }
 
 impl<T: ResponseModifier, E: ResponseModifier> ResponseModifier for Result<T, E> {
     fn update_response(op: &mut Operation) {
         T::update_response(op);
         E::update_response(op);
+    }
+
+    fn register_components(spec: &mut OpenApiSpec) {
+        T::register_components(spec);
+        E::register_components(spec);
     }
 }
 

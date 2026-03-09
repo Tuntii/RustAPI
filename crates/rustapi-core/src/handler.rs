@@ -78,6 +78,9 @@ pub trait Handler<T>: sealed::Sealed + Clone + Send + Sync + Sized + 'static {
 
     /// Update the OpenAPI operation
     fn update_operation(op: &mut Operation);
+
+    /// Register any OpenAPI components referenced by this handler.
+    fn register_components(spec: &mut rustapi_openapi::OpenApiSpec);
 }
 
 /// Wrapper to convert a Handler into a tower Service
@@ -122,6 +125,10 @@ where
     fn update_operation(op: &mut Operation) {
         Res::update_response(op);
     }
+
+    fn register_components(spec: &mut rustapi_openapi::OpenApiSpec) {
+        Res::register_components(spec);
+    }
 }
 
 // 1 arg
@@ -147,6 +154,11 @@ where
     fn update_operation(op: &mut Operation) {
         T1::update_operation(op);
         Res::update_response(op);
+    }
+
+    fn register_components(spec: &mut rustapi_openapi::OpenApiSpec) {
+        T1::register_components(spec);
+        Res::register_components(spec);
     }
 }
 
@@ -179,6 +191,12 @@ where
         T1::update_operation(op);
         T2::update_operation(op);
         Res::update_response(op);
+    }
+
+    fn register_components(spec: &mut rustapi_openapi::OpenApiSpec) {
+        T1::register_components(spec);
+        T2::register_components(spec);
+        Res::register_components(spec);
     }
 }
 
@@ -217,6 +235,13 @@ where
         T2::update_operation(op);
         T3::update_operation(op);
         Res::update_response(op);
+    }
+
+    fn register_components(spec: &mut rustapi_openapi::OpenApiSpec) {
+        T1::register_components(spec);
+        T2::register_components(spec);
+        T3::register_components(spec);
+        Res::register_components(spec);
     }
 }
 
@@ -261,6 +286,14 @@ where
         T3::update_operation(op);
         T4::update_operation(op);
         Res::update_response(op);
+    }
+
+    fn register_components(spec: &mut rustapi_openapi::OpenApiSpec) {
+        T1::register_components(spec);
+        T2::register_components(spec);
+        T3::register_components(spec);
+        T4::register_components(spec);
+        Res::register_components(spec);
     }
 }
 
@@ -312,6 +345,15 @@ where
         T5::update_operation(op);
         Res::update_response(op);
     }
+
+    fn register_components(spec: &mut rustapi_openapi::OpenApiSpec) {
+        T1::register_components(spec);
+        T2::register_components(spec);
+        T3::register_components(spec);
+        T4::register_components(spec);
+        T5::register_components(spec);
+        Res::register_components(spec);
+    }
 }
 
 // Type-erased handler for storage in router
@@ -347,6 +389,7 @@ pub struct Route {
     pub(crate) method: &'static str,
     pub(crate) handler: BoxedHandler,
     pub(crate) operation: Operation,
+    pub(crate) component_registrar: fn(&mut rustapi_openapi::OpenApiSpec),
     /// Custom parameter schemas for OpenAPI (param_name -> schema_type)
     /// Supported types: "uuid", "integer", "string", "boolean", "number"
     pub(crate) param_schemas: std::collections::BTreeMap<String, String>,
@@ -369,6 +412,7 @@ impl Route {
             method,
             handler: into_boxed_handler(handler),
             operation,
+            component_registrar: <H as Handler<T>>::register_components,
             param_schemas: std::collections::BTreeMap::new(),
             error_responses: Vec::new(),
         }
