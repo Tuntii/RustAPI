@@ -3163,6 +3163,7 @@ dependencies = [
  "rcgen",
  "reqwest",
  "rustapi-openapi",
+ "rustapi-testing",
  "rustapi-validate",
  "rustls",
  "rustls-pemfile",
