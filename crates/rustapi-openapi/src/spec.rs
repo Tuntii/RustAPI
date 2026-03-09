@@ -58,9 +58,7 @@ impl OpenApiSpec {
                 version: version.into(),
                 ..Default::default()
             },
-            json_schema_dialect: Some(
-                "https://spec.openapis.org/oas/3.1/dialect/base".to_string(),
-            ),
+            json_schema_dialect: Some("https://spec.openapis.org/oas/3.1/dialect/base".to_string()),
             servers: Vec::new(),
             paths: BTreeMap::new(),
             webhooks: BTreeMap::new(),

@@ -1,4 +1,4 @@
-use rustapi_core::{post, Created, Json, RustApi, get};
+use rustapi_core::{get, post, Created, Json, RustApi};
 use rustapi_openapi::Schema;
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -211,34 +211,34 @@ async fn test_openapi_snapshot() {
     assert_eq!(output, output2, "Nondeterministic output detected!");
 }
 
-  #[derive(Debug, Deserialize, Schema)]
-  struct CreatePin {
+#[derive(Debug, Deserialize, Schema)]
+struct CreatePin {
     title: String,
-  }
+}
 
-  #[derive(Debug, Serialize, Schema)]
-  struct PinResponse {
+#[derive(Debug, Serialize, Schema)]
+struct PinResponse {
     id: i64,
     title: String,
-  }
+}
 
-  async fn create_pin(Json(body): Json<CreatePin>) -> Created<PinResponse> {
+async fn create_pin(Json(body): Json<CreatePin>) -> Created<PinResponse> {
     Created(PinResponse {
-      id: 1,
-      title: body.title,
+        id: 1,
+        title: body.title,
     })
-  }
+}
 
-  #[test]
-  fn test_manual_route_registers_openapi_components_for_body_refs() {
+#[test]
+fn test_manual_route_registers_openapi_components_for_body_refs() {
     use rustapi_openapi::schema::RustApiSchema;
 
     let app = RustApi::new().route("/pins", post(create_pin));
     let spec = app.openapi_spec();
 
     assert!(
-      spec.validate_integrity().is_ok(),
-      "manual route OpenAPI spec should not contain dangling $ref values"
+        spec.validate_integrity().is_ok(),
+        "manual route OpenAPI spec should not contain dangling $ref values"
     );
 
     let components = spec.components.as_ref().expect("components should exist");
@@ -251,15 +251,15 @@ async fn test_openapi_snapshot() {
     let path_item = spec.paths.get("/pins").expect("/pins path should exist");
     let op = path_item.post.as_ref().expect("POST /pins should exist");
     let media_type = op
-      .request_body
-      .as_ref()
-      .and_then(|body| body.content.get("application/json"))
-      .expect("request body media type should exist");
+        .request_body
+        .as_ref()
+        .and_then(|body| body.content.get("application/json"))
+        .expect("request body media type should exist");
 
     match media_type.schema.as_ref().expect("schema should exist") {
-      rustapi_openapi::SchemaRef::Ref { reference } => {
-        assert_eq!(reference, "#/components/schemas/CreatePin");
-      }
-      other => panic!("expected request body schema ref, got {other:?}"),
+        rustapi_openapi::SchemaRef::Ref { reference } => {
+            assert_eq!(reference, "#/components/schemas/CreatePin");
+        }
+        other => panic!("expected request body schema ref, got {other:?}"),
     }
-  }
+}
