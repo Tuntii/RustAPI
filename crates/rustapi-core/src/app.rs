@@ -491,7 +491,16 @@ impl RustApi {
         let mut by_path: BTreeMap<String, MethodRouter> = BTreeMap::new();
 
         for route in routes {
-            let method_enum = match route.method {
+            let crate::handler::Route {
+                path: route_path,
+                method,
+                handler,
+                operation,
+                component_registrar,
+                ..
+            } = route;
+
+            let method_enum = match method {
                 "GET" => http::Method::GET,
                 "POST" => http::Method::POST,
                 "PUT" => http::Method::PUT,
@@ -500,14 +509,19 @@ impl RustApi {
                 _ => http::Method::GET,
             };
 
-            let path = if route.path.starts_with('/') {
-                route.path.to_string()
+            let path = if route_path.starts_with('/') {
+                route_path.to_string()
             } else {
-                format!("/{}", route.path)
+                format!("/{}", route_path)
             };
 
             let entry = by_path.entry(path).or_default();
-            entry.insert_boxed_with_operation(method_enum, route.handler, route.operation);
+            entry.insert_boxed_with_operation(
+                method_enum,
+                handler,
+                operation,
+                component_registrar,
+            );
         }
 
         #[cfg(feature = "tracing")]

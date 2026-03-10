@@ -190,6 +190,7 @@ impl MethodRouter {
         method: Method,
         handler: BoxedHandler,
         operation: Operation,
+        component_registrar: fn(&mut rustapi_openapi::OpenApiSpec),
     ) {
         if self.handlers.contains_key(&method) {
             panic!(
@@ -200,6 +201,7 @@ impl MethodRouter {
 
         self.handlers.insert(method.clone(), handler);
         self.operations.insert(method, operation);
+        self.component_registrars.push(component_registrar);
     }
 
     /// Add a GET handler

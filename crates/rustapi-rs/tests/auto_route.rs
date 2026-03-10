@@ -1,7 +1,7 @@
 use rustapi_rs::collect_auto_routes;
 use rustapi_rs::prelude::*;
 use rustapi_rs::{get, post};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 // Standard handler
 #[get("/test-auto-rs")]
@@ -63,6 +63,25 @@ async fn get_user(Path(_id): Path<i64>) -> &'static str {
 struct Pagination {
     page: Option<u32>,
     page_size: Option<u32>,
+}
+
+#[derive(Debug, Clone, Deserialize, Schema)]
+struct AutoCreatePin {
+    title: String,
+}
+
+#[derive(Debug, Clone, Serialize, Schema)]
+struct AutoCreatePinResponse {
+    id: i64,
+    title: String,
+}
+
+#[post("/auto-create-pin")]
+async fn auto_create_pin(Json(body): Json<AutoCreatePin>) -> Created<AutoCreatePinResponse> {
+    Created(AutoCreatePinResponse {
+        id: 1,
+        title: body.title,
+    })
 }
 
 #[get("/query")]
@@ -152,4 +171,45 @@ fn test_openapi_includes_query_params() {
             .any(|p| p.location == "query" && p.name == "page_size"),
         "OpenAPI should include query parameter 'page_size'"
     );
+}
+
+#[test]
+fn test_auto_registers_openapi_components_for_body_refs() {
+    use rustapi_openapi::schema::RustApiSchema;
+
+    let app = RustApi::auto();
+    let spec = app.openapi_spec();
+
+    assert!(
+        spec.validate_integrity().is_ok(),
+        "auto route OpenAPI spec should not contain dangling $ref values"
+    );
+
+    let components = spec.components.as_ref().expect("components should exist");
+    let create_pin_name = <AutoCreatePin as RustApiSchema>::component_name().unwrap();
+    let response_name = <AutoCreatePinResponse as RustApiSchema>::component_name().unwrap();
+
+    assert!(components.schemas.contains_key(create_pin_name));
+    assert!(components.schemas.contains_key(response_name));
+
+    let path_item = spec
+        .paths
+        .get("/auto-create-pin")
+        .expect("/auto-create-pin path should exist");
+    let op = path_item
+        .post
+        .as_ref()
+        .expect("POST /auto-create-pin should exist");
+    let media_type = op
+        .request_body
+        .as_ref()
+        .and_then(|body| body.content.get("application/json"))
+        .expect("request body media type should exist");
+
+    match media_type.schema.as_ref().expect("schema should exist") {
+        rustapi_openapi::SchemaRef::Ref { reference } => {
+            assert_eq!(reference, "#/components/schemas/AutoCreatePin");
+        }
+        other => panic!("expected request body schema ref, got {other:?}"),
+    }
 }
