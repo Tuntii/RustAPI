@@ -30,7 +30,7 @@ rust-version = "1.78"
 
 [workspace.dependencies]
 # Async runtime
-tokio = "1.35"
+tokio = "1.50"
 
 # HTTP
 hyper = "1.1"
@@ -90,7 +90,7 @@ tera = "1.19"
 # CLI
 clap = { version = "4.5", features = ["derive", "color"] }
 dialoguer = "0.11"
-indicatif = "0.17"
+indicatif = "0.18"
 console = "0.16"
 
 # Internal crates
