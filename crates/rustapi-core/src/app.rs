@@ -516,12 +516,7 @@ impl RustApi {
             };
 
             let entry = by_path.entry(path).or_default();
-            entry.insert_boxed_with_operation(
-                method_enum,
-                handler,
-                operation,
-                component_registrar,
-            );
+            entry.insert_boxed_with_operation(method_enum, handler, operation, component_registrar);
         }
 
         #[cfg(feature = "tracing")]
