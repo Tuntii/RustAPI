@@ -4532,9 +4532,9 @@ dependencies = [
 
 [[package]]
 name = "toon-format"
-version = "0.4.1"
+version = "0.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "349a10106f2c703fbfbe4a2eef6683af0acca60a0b8334c7a33795231dbf92d5"
+checksum = "6d25e33e50b37f95f3b55b6e664218cac7e1a50f056a75bb4c7a6cccfbc8a8c4"
 dependencies = [
  "indexmap",
  "serde",
