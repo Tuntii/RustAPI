@@ -82,7 +82,7 @@ proptest = "1.4"
 rustapi-core = { workspace = true, features = ["test-utils"] }
 rustapi-testing = { workspace = true }
 tempfile = "3.26"
-serial_test = "3.2"
+serial_test = "3.4"
 
 [features]
 default = []
