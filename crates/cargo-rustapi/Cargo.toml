@@ -27,7 +27,7 @@ console = { workspace = true }
 walkdir = "2.5"
 toml_edit = "0.22"
 notify = "7.0"
-notify-debouncer-mini = "0.5"
+notify-debouncer-mini = "0.7"
 
 # Async
 tokio = { workspace = true, features = ["process", "fs", "macros", "rt-multi-thread", "time", "signal", "sync"] }
