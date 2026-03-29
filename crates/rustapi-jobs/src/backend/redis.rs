@@ -43,7 +43,7 @@ impl JobBackend for RedisBackend {
     async fn push(&self, job: JobRequest) -> Result<()> {
         let mut conn = self
             .client
-            .get_async_connection()
+            .get_multiplexed_async_connection()
             .await
             .map_err(|e| JobError::BackendError(e.to_string()))?;
 
@@ -60,7 +60,7 @@ impl JobBackend for RedisBackend {
     async fn pop(&self) -> Result<Option<JobRequest>> {
         let mut conn = self
             .client
-            .get_async_connection()
+            .get_multiplexed_async_connection()
             .await
             .map_err(|e| JobError::BackendError(e.to_string()))?;
 
