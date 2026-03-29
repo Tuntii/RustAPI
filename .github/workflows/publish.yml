@@ -28,6 +28,11 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Install native database client libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libmariadb-dev libmariadb-dev-compat libpq-dev libsqlite3-dev
+
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
