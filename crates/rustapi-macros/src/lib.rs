@@ -390,18 +390,18 @@ fn validate_path_syntax(path: &str, span: proc_macro2::Span) -> Result<(), syn::
                 param_start = None;
             }
             // Check for invalid characters in path (outside of parameters)
-            _ if brace_depth == 0 => {
+            _ if brace_depth == 0
                 // Allow alphanumeric, -, _, ., /, and common URL characters
-                if !ch.is_alphanumeric() && !"-_./*".contains(ch) {
-                    return Err(syn::Error::new(
-                        span,
-                        format!(
-                            "invalid character '{}' at position {} in route path: \"{}\"",
-                            ch, i, path
-                        ),
-                    ));
-                }
+                && !ch.is_alphanumeric() && !"-_./*".contains(ch) => {
+                return Err(syn::Error::new(
+                    span,
+                    format!(
+                        "invalid character '{}' at position {} in route path: \"{}\"",
+                        ch, i, path
+                    ),
+                ));
             }
+            _ if brace_depth == 0 => {}
             _ => {}
         }
     }
@@ -660,11 +660,9 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
                     for meta in param_args {
                         match &meta {
                             // Simple ident: #[param(id, ...)]
-                            Meta::Path(path) => {
-                                if param_name.is_none() {
-                                    if let Some(ident) = path.get_ident() {
-                                        param_name = Some(ident.to_string());
-                                    }
+                            Meta::Path(path) if param_name.is_none() => {
+                                if let Some(ident) = path.get_ident() {
+                                    param_name = Some(ident.to_string());
                                 }
                             }
                             // Named value: #[param(schema = "uuid")] or #[param(id = "uuid")]
