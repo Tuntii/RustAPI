@@ -71,7 +71,7 @@ rand = { version = "0.8", optional = true }
 base64 = { version = "0.22", optional = true }
 
 # OAuth2 (feature-gated)
-sha2 = { version = "0.10", optional = true }
+sha2 = { version = "0.11", optional = true }
 
 # Replay (feature-gated)
 uuid = { workspace = true, optional = true }
