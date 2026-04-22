@@ -78,7 +78,7 @@ criterion = { version = "0.5", features = ["html_reports"] }
 
 # WebSocket
 tokio-tungstenite = "0.24"
-tungstenite = "0.24"
+tungstenite = "0.29"
 
 # gRPC
 tonic = "0.14"
