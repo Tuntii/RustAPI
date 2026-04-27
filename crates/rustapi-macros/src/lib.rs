@@ -392,7 +392,8 @@ fn validate_path_syntax(path: &str, span: proc_macro2::Span) -> Result<(), syn::
             // Check for invalid characters in path (outside of parameters)
             _ if brace_depth == 0
                 // Allow alphanumeric, -, _, ., /, and common URL characters
-                && !ch.is_alphanumeric() && !"-_./*".contains(ch) => {
+                && !ch.is_alphanumeric() && !"-_./*".contains(ch) =>
+            {
                 return Err(syn::Error::new(
                     span,
                     format!(
