@@ -29,7 +29,7 @@ async-trait = { workspace = true }
 regex = "1.10"
 
 # Internationalization
-rust-i18n = "3.0"
+rust-i18n = "4.0"
 
 # Re-export derive macro
 rustapi-macros = { workspace = true }
@@ -37,5 +37,5 @@ rustapi-macros = { workspace = true }
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 proptest = "1.4"
-rust-i18n = "3.0"
+rust-i18n = "4.0"
 rustapi-core = { workspace = true, default-features = false }
