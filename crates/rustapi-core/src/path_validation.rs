@@ -227,15 +227,15 @@ pub fn validate_path(path: &str) -> Result<(), PathValidationError> {
                 param_start = None;
             }
             // Check for invalid characters in path (outside of parameters)
-            _ if brace_depth == 0 => {
+            _ if brace_depth == 0
                 // Allow alphanumeric, -, _, ., /, and common URL characters
-                if !ch.is_alphanumeric() && !"-_./*".contains(ch) {
-                    return Err(PathValidationError::InvalidCharacter {
-                        path: path.to_string(),
-                        character: ch,
-                        position: i,
-                    });
-                }
+                && !ch.is_alphanumeric() && !"-_./*".contains(ch) =>
+            {
+                return Err(PathValidationError::InvalidCharacter {
+                    path: path.to_string(),
+                    character: ch,
+                    position: i,
+                });
             }
             _ => {}
         }

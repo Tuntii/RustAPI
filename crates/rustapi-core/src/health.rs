@@ -264,11 +264,10 @@ impl HealthCheck {
                 HealthStatus::Unhealthy { .. } => {
                     overall_status = HealthStatus::unhealthy("one or more checks failed");
                 }
-                HealthStatus::Degraded { .. } => {
-                    if overall_status.is_healthy() {
-                        overall_status = HealthStatus::degraded("one or more checks degraded");
-                    }
+                HealthStatus::Degraded { .. } if overall_status.is_healthy() => {
+                    overall_status = HealthStatus::degraded("one or more checks degraded");
                 }
+                HealthStatus::Degraded { .. } => {}
                 _ => {}
             }
 
