@@ -19,8 +19,8 @@ jobs:
     if: github.event_name == 'push'
     steps:
       - uses: release-drafter/release-drafter@v7
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   update_pr_label:
     permissions:
@@ -29,6 +29,6 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     steps:
-      - uses: release-drafter/release-drafter@v7
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: release-drafter/release-drafter/autolabeler@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
