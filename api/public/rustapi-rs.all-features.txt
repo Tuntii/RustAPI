@@ -18,6 +18,9 @@ pub use rustapi_rs::Cookies
 pub use rustapi_rs::CorsLayer
 pub use rustapi_rs::Created
 pub use rustapi_rs::CsrfState
+pub use rustapi_rs::DashboardConfig
+pub use rustapi_rs::DashboardMetrics
+pub use rustapi_rs::DashboardSnapshot
 pub use rustapi_rs::Environment
 pub use rustapi_rs::Extension
 pub use rustapi_rs::ExtrasEnvironment
@@ -222,6 +225,10 @@ pub use rustapi_rs::core::put_route
 pub use rustapi_rs::core::route
 pub use rustapi_rs::core::serve_dir
 pub use rustapi_rs::core::sse_response
+pub mod rustapi_rs::dashboard
+pub use rustapi_rs::dashboard::DashboardConfig
+pub use rustapi_rs::dashboard::DashboardMetrics
+pub use rustapi_rs::dashboard::DashboardSnapshot
 pub mod rustapi_rs::extras
 pub mod rustapi_rs::extras::api_key
 pub use rustapi_rs::extras::api_key::api_key

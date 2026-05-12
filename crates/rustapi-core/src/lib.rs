@@ -55,6 +55,8 @@ mod auto_route;
 pub use auto_route::collect_auto_routes;
 mod auto_schema;
 pub use auto_schema::apply_auto_schemas;
+#[cfg(feature = "dashboard")]
+pub mod dashboard;
 mod error;
 pub mod events;
 mod extract;
@@ -99,6 +101,8 @@ pub mod __private {
 
 // Public API
 pub use app::{ProductionDefaultsConfig, RustApi, RustApiConfig};
+#[cfg(feature = "dashboard")]
+pub use dashboard::{DashboardConfig, DashboardMetrics, DashboardSnapshot};
 pub use error::{get_environment, ApiError, Environment, FieldError, Result};
 pub use events::EventBus;
 #[cfg(feature = "cookies")]

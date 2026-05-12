@@ -54,6 +54,7 @@ core-compression-brotli = ["rustapi-core/compression-brotli"]
 core-cookies = ["dep:rustapi-extras", "rustapi-extras/cookies", "rustapi-core/cookies"]
 core-http3 = ["rustapi-core/http3"]
 core-http3-dev = ["rustapi-core/http3-dev"]
+core-dashboard = ["rustapi-core/dashboard"]
 
 # Canonical protocol features
 protocol-toon = ["dep:rustapi-toon"]
@@ -154,4 +155,4 @@ jobs = ["extras-jobs"]
 extras = ["extras-jwt", "extras-cors", "extras-rate-limit"]
 
 # Canonical aggregate
-full = ["core", "protocol-all", "extras-all", "core-legacy-validator"]
+full = ["core", "protocol-all", "extras-all", "core-legacy-validator", "core-dashboard"]

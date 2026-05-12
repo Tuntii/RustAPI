@@ -41,6 +41,8 @@ pub struct RustApi {
     health_check: Option<crate::health::HealthCheck>,
     health_endpoint_config: Option<crate::health::HealthEndpointConfig>,
     status_config: Option<crate::status::StatusConfig>,
+    #[cfg(feature = "dashboard")]
+    dashboard_config: Option<crate::dashboard::DashboardConfig>,
 }
 
 /// Configuration for RustAPI's built-in production baseline preset.
@@ -142,6 +144,8 @@ impl RustApi {
             health_check: None,
             health_endpoint_config: None,
             status_config: None,
+            #[cfg(feature = "dashboard")]
+            dashboard_config: None,
         }
     }
 
@@ -1256,6 +1260,120 @@ impl RustApi {
         }
     }
 
+    #[cfg(feature = "dashboard")]
+    fn apply_dashboard(&mut self) {
+        use crate::dashboard::{DashboardMetrics, RouteInventoryItem};
+        use crate::handler::BoxedHandler;
+        use crate::response::Body;
+        use crate::router::MethodRouter;
+        use std::collections::HashMap;
+        use std::sync::Arc;
+
+        let config = match self.dashboard_config.take() {
+            Some(c) => c,
+            None => return,
+        };
+
+        // Build route inventory from currently registered routes
+        let inventory: Vec<RouteInventoryItem> = self
+            .router
+            .registered_routes()
+            .values()
+            .map(|info| RouteInventoryItem {
+                path: info.path.clone(),
+                methods: info.methods.iter().map(|m| m.to_string()).collect(),
+            })
+            .collect();
+
+        let metrics = Arc::new(DashboardMetrics::new(inventory));
+
+        // Insert metrics into router state using the public .state() API
+        let router = std::mem::take(&mut self.router);
+        self.router = router.state(Arc::clone(&metrics));
+
+        // Register dashboard routes
+        let prefix = config.path.trim_end_matches('/').to_owned();
+
+        fn not_found() -> crate::response::Response {
+            http::Response::builder()
+                .status(404)
+                .body(Body::Full(http_body_util::Full::new(bytes::Bytes::from(
+                    "Not Found",
+                ))))
+                .unwrap()
+        }
+
+        // Route 1: GET /__rustapi/dashboard  (the SPA page)
+        {
+            let metrics_c = Arc::clone(&metrics);
+            let config_c = config.clone();
+            let handler: BoxedHandler = Arc::new(move |req| {
+                let metrics = Arc::clone(&metrics_c);
+                let cfg = config_c.clone();
+                Box::pin(async move {
+                    let headers = req.headers().clone();
+                    let method = req.method().to_string();
+                    let path = req.uri().path().to_owned();
+                    crate::dashboard::routes::dispatch(&headers, &method, &path, &metrics, &cfg)
+                        .await
+                        .unwrap_or_else(not_found)
+                })
+            });
+            let mut h = HashMap::new();
+            h.insert(http::Method::GET, handler);
+            let router = std::mem::take(&mut self.router);
+            self.router = router.route(&prefix, MethodRouter::from_boxed(h));
+        }
+
+        // Route 2: GET /__rustapi/dashboard/*path  (API sub-paths)
+        {
+            let metrics_c = Arc::clone(&metrics);
+            let config_c = config.clone();
+            let wildcard_path = format!("{}/*path", prefix);
+            let handler: BoxedHandler = Arc::new(move |req| {
+                let metrics = Arc::clone(&metrics_c);
+                let cfg = config_c.clone();
+                Box::pin(async move {
+                    let headers = req.headers().clone();
+                    let method = req.method().to_string();
+                    let path = req.uri().path().to_owned();
+                    crate::dashboard::routes::dispatch(&headers, &method, &path, &metrics, &cfg)
+                        .await
+                        .unwrap_or_else(not_found)
+                })
+            });
+            let mut h = HashMap::new();
+            h.insert(http::Method::GET, handler);
+            let router = std::mem::take(&mut self.router);
+            self.router = router.route(&wildcard_path, MethodRouter::from_boxed(h));
+        }
+    }
+
+    /// Enable the embedded isometric system dashboard.
+    ///
+    /// Registers a self-contained admin surface at the configured path
+    /// (default: `/__rustapi/dashboard`).
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// use rustapi_core::dashboard::DashboardConfig;
+    ///
+    /// RustApi::new()
+    ///     .route("/api/users", get(list_users))
+    ///     .dashboard(
+    ///         DashboardConfig::new()
+    ///             .admin_token("my-secret")
+    ///     )
+    ///     .run("127.0.0.1:8080")
+    ///     .await
+    /// ```
+    #[cfg(feature = "dashboard")]
+    pub fn dashboard(mut self, config: crate::dashboard::DashboardConfig) -> Self {
+        self.dashboard_config = Some(config);
+        self
+    }
+
     /// Run the server
     ///
     /// # Example
@@ -1275,6 +1393,10 @@ impl RustApi {
 
         // Apply status page if configured
         self.apply_status_page();
+
+        // Apply embedded dashboard if configured
+        #[cfg(feature = "dashboard")]
+        self.apply_dashboard();
 
         // Apply body limit layer if configured (should be first in the chain)
         if let Some(limit) = self.body_limit {
@@ -1308,6 +1430,10 @@ impl RustApi {
 
         // Apply status page if configured
         self.apply_status_page();
+
+        // Apply embedded dashboard if configured
+        #[cfg(feature = "dashboard")]
+        self.apply_dashboard();
 
         if let Some(limit) = self.body_limit {
             self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));

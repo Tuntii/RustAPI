@@ -228,13 +228,15 @@ pub mod extras {
     }
 }
 
-// Legacy root module aliases.
-#[cfg(any(feature = "protocol-toon", feature = "toon"))]
-#[deprecated(note = "Use rustapi_rs::protocol::toon instead")]
-pub mod toon {
-    pub use crate::protocol::toon::*;
+/// Dashboard module: embedded isometric system dashboard.
+#[cfg(feature = "core-dashboard")]
+pub mod dashboard {
+    pub use rustapi_core::dashboard::{DashboardConfig, DashboardMetrics, DashboardSnapshot};
 }
 
+// Root-level re-exports for dashboard types (convenience)
+#[cfg(feature = "core-dashboard")]
+pub use rustapi_core::dashboard::{DashboardConfig, DashboardMetrics, DashboardSnapshot};
 #[cfg(any(feature = "protocol-ws", feature = "ws"))]
 #[deprecated(note = "Use rustapi_rs::protocol::ws instead")]
 pub mod ws {
@@ -355,6 +357,9 @@ pub mod prelude {
 
     #[cfg(any(feature = "core-cookies", feature = "cookies"))]
     pub use crate::core::Cookies;
+
+    #[cfg(feature = "core-dashboard")]
+    pub use crate::{DashboardConfig, DashboardMetrics, DashboardSnapshot};
 
     pub use rustapi_macros::ApiError;
     pub use rustapi_macros::Schema;
