@@ -241,12 +241,18 @@ Meta features: `core` (default), `protocol-all`, `extras-all`, `full`.
 - `rustapi-grpc` crate: optional Tonic/Prost-based gRPC alongside HTTP (`run_rustapi_and_grpc`)
 - `cargo rustapi new` now includes `grpc` in interactive feature selection
 
-## Roadmap (February 2026)
+## Roadmap (June 2026)
 
-- [x] Visual status page: automatic health dashboard
-- [x] gRPC integration via `rustapi-grpc`
-- [x] Distributed tracing: OpenTelemetry integration
-- [ ] RustAPI Cloud: managed deployment to major cloud providers
+- [ ] Embedded Isometric System Dashboard (`/dashboard`)
+  - Built-in control plane that boots automatically with a bento-grid layout, dark mode, and glassmorphism styling.
+  - Live architectural view of request routing across the **Ultra Fast**, **Fast**, and **Full** execution paths.
+  - Interactive endpoint visualization for topology inspection, route grouping, and runtime status awareness.
+  - Time-travel replay UI for browsing recorded HTTP traffic, selecting a historical request, and inspecting replay state directly from the dashboard.
+- [ ] Native MCP (Model Context Protocol) Orchestration
+  - Embedded MCP server that exposes RustAPI endpoints as discoverable tools for LLMs and external AI agents.
+  - Automatic capability discovery and direct tool-style invocation for compatible clients such as Claude and other multi-agent runtimes.
+  - Framework-level orchestration layer for agent-to-endpoint communication, authorization, and operational policy enforcement.
+
 
 ## Documentation
 
