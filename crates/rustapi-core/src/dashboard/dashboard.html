@@ -350,7 +350,8 @@
 <script>
 // ── Config ────────────────────────────────────────────────────────────────────
 const BASE = window.location.origin;
-const API  = BASE + '/__rustapi/dashboard/api';
+const DASHBOARD_PATH = window.location.pathname.replace(/\/+$/, '');
+const API  = BASE + (DASHBOARD_PATH || '') + '/api';
 const REFRESH_MS = 3000;
 
 // ── State ─────────────────────────────────────────────────────────────────────
