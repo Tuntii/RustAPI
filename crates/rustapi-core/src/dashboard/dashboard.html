@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
 <title>RustAPI Dashboard</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   :root {
     --bg: #0d1117;
@@ -358,14 +358,10 @@ const REFRESH_MS = 3000;
 let prevTotal = null;
 let prevTs    = null;
 const rpsHistory = new Array(20).fill(0);
-let rpsChart = null;
 
 // ── Token ─────────────────────────────────────────────────────────────────────
 function getToken() {
-  // 1. URL ?token=
-  const p = new URLSearchParams(window.location.search);
-  if (p.has('token')) return p.get('token');
-  // 2. Input field
+  // Read only from the input field; URL token is migrated to the field on load
   const inp = document.getElementById('token-input').value.trim();
   return inp || null;
 }
@@ -475,42 +471,72 @@ function drawIso(canvas, uf, fast, full) {
   });
 }
 
-// ── RPS Chart ─────────────────────────────────────────────────────────────────
-function initRpsChart() {
-  const ctx = document.getElementById('rps-chart').getContext('2d');
-  rpsChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: rpsHistory.map((_, i) => ''),
-      datasets: [{
-        data: [...rpsHistory],
-        fill: true,
-        tension: 0.4,
-        borderColor: '#58a6ff',
-        backgroundColor: 'rgba(88,166,255,0.08)',
-        borderWidth: 2,
-        pointRadius: 0,
-        pointHoverRadius: 4,
-        pointHoverBackgroundColor: '#58a6ff',
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: { duration: 300 },
-      plugins: { legend: { display: false }, tooltip: {
-        callbacks: { label: ctx => ctx.parsed.y.toFixed(2) + ' req/s' }
-      }},
-      scales: {
-        x: { display: false },
-        y: {
-          min: 0,
-          grid: { color: 'rgba(48,54,61,0.5)' },
-          ticks: { color: '#7d8590', font: { size: 10 } }
-        }
-      }
-    }
-  });
+// ── RPS Chart (inline canvas sparkline — no external dependencies) ────────────
+function drawRpsChart() {
+  const canvas = document.getElementById('rps-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.offsetWidth || 300;
+  const H = canvas.offsetHeight || 148;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+
+  const data = rpsHistory;
+  if (data.length < 2) return;
+
+  const maxVal = data.reduce((m, v) => Math.max(m, v), 0.001);
+  const pad = { top: 8, right: 8, bottom: 24, left: 36 };
+  const cW = W - pad.left - pad.right;
+  const cH = H - pad.top - pad.bottom;
+
+  // Grid lines + y-axis labels
+  const gridLines = 4;
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= gridLines; i++) {
+    const y = pad.top + (cH / gridLines) * i;
+    ctx.strokeStyle = 'rgba(48,54,61,0.5)';
+    ctx.beginPath();
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(pad.left + cW, y);
+    ctx.stroke();
+    const val = maxVal * (1 - i / gridLines);
+    ctx.fillStyle = '#7d8590';
+    ctx.font = '10px -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(val.toFixed(1), pad.left - 4, y + 3);
+  }
+
+  const pts = data.map((v, i) => ({
+    x: pad.left + (i / (data.length - 1)) * cW,
+    y: pad.top + cH - (v / maxVal) * cH,
+  }));
+
+  // Filled area under curve
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) {
+    const cp = (pts[i].x + pts[i - 1].x) / 2;
+    ctx.bezierCurveTo(cp, pts[i - 1].y, cp, pts[i].y, pts[i].x, pts[i].y);
+  }
+  ctx.lineTo(pts[pts.length - 1].x, pad.top + cH);
+  ctx.lineTo(pts[0].x, pad.top + cH);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(88,166,255,0.08)';
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) {
+    const cp = (pts[i].x + pts[i - 1].x) / 2;
+    ctx.bezierCurveTo(cp, pts[i - 1].y, cp, pts[i].y, pts[i].x, pts[i].y);
+  }
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
 }
 
 // ── Route Table ───────────────────────────────────────────────────────────────
@@ -597,10 +623,7 @@ async function refresh() {
     // ── RPS chart
     rpsHistory.shift();
     rpsHistory.push(parseFloat(rps.toFixed(3)));
-    if (rpsChart) {
-      rpsChart.data.datasets[0].data = [...rpsHistory];
-      rpsChart.update('none');
-    }
+    drawRpsChart();
 
   } catch (e) {
     banner.style.display = 'block';
@@ -618,7 +641,18 @@ function setText(id, val) {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  initRpsChart();
+  // Move ?token= from URL into the input field and strip it from the address bar
+  // to prevent the token from appearing in browser history or server logs.
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('token')) {
+    document.getElementById('token-input').value = params.get('token');
+    params.delete('token');
+    const newSearch = params.toString();
+    const newUrl = window.location.pathname +
+      (newSearch ? '?' + newSearch : '') +
+      window.location.hash;
+    history.replaceState(null, '', newUrl);
+  }
   refresh();
   setInterval(refresh, REFRESH_MS);
   document.getElementById('token-input').addEventListener('change', () => refresh());
