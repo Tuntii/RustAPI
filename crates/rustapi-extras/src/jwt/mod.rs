@@ -764,7 +764,9 @@ mod tests {
     #[tokio::test]
     async fn test_skip_paths_root_matches_only_root() {
         let mut stack = LayerStack::new();
-        stack.push(Box::new(JwtLayer::<TestClaims>::new("secret").skip_paths(vec!["/"])));
+        stack.push(Box::new(
+            JwtLayer::<TestClaims>::new("secret").skip_paths(vec!["/"]),
+        ));
         let handler = dummy_handler();
 
         let root_request = create_test_request_for_path("/", None);
