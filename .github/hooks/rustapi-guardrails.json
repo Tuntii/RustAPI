@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "type": "command",
+        "windows": "powershell -ExecutionPolicy Bypass -File .github/scripts/copilot_guardrails.ps1",
+        "linux": "pwsh -File .github/scripts/copilot_guardrails.ps1",
+        "osx": "pwsh -File .github/scripts/copilot_guardrails.ps1",
+        "cwd": ".",
+        "timeout": 10
+      }
+    ]
+  }
+}
