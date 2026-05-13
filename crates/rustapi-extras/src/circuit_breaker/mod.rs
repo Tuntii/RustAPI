@@ -280,9 +280,7 @@ fn record_failure(state: &mut CircuitBreakerState, config: &CircuitBreakerConfig
     state.last_failure_time = Some(Instant::now());
 
     match state.state {
-        CircuitState::Closed
-            if state.failure_count >= config.failure_threshold =>
-        {
+        CircuitState::Closed if state.failure_count >= config.failure_threshold => {
             // Open the circuit
             tracing::warn!(
                 "Circuit breaker OPENING after {} failures",
