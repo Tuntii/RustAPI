@@ -122,6 +122,7 @@ impl<T: DeserializeOwned + Clone + Send + Sync + 'static> JwtLayer<T> {
     /// Skip JWT validation for specific paths.
     ///
     /// Paths that start with any of the provided prefixes will bypass JWT validation.
+    /// The root path `/` is treated specially and matches only `/`, not every path.
     /// This is useful for public endpoints like health checks, documentation, and login.
     ///
     /// # Example
@@ -170,7 +171,7 @@ impl<T: DeserializeOwned + Clone + Send + Sync + 'static> MiddlewareLayer for Jw
         Box::pin(async move {
             // Check if this path should skip JWT validation
             let path = req.uri().path();
-            if skip_paths.iter().any(|skip| path.starts_with(skip)) {
+            if skip_paths.iter().any(|skip| should_skip_path(path, skip)) {
                 return next(req).await;
             }
 
@@ -243,6 +244,14 @@ impl<T: DeserializeOwned + Clone + Send + Sync + 'static> MiddlewareLayer for Jw
 /// Internal wrapper for validated claims stored in request extensions
 #[derive(Clone)]
 pub struct ValidatedClaims<T>(pub T);
+
+fn should_skip_path(path: &str, skip: &str) -> bool {
+    if skip == "/" {
+        path == "/"
+    } else {
+        path.starts_with(skip)
+    }
+}
 
 /// Create a 401 Unauthorized JSON response
 fn create_unauthorized_response(message: &str) -> Response {
@@ -415,7 +424,12 @@ mod tests {
 
     /// Create a test request with optional Authorization header
     fn create_test_request(auth_header: Option<&str>) -> Request {
-        let uri: http::Uri = "/test".parse().unwrap();
+        create_test_request_for_path("/test", auth_header)
+    }
+
+    /// Create a test request for a specific path with optional Authorization header
+    fn create_test_request_for_path(path: &str, auth_header: Option<&str>) -> Request {
+        let uri: http::Uri = path.parse().unwrap();
         let mut builder = http::Request::builder().method(Method::GET).uri(uri);
 
         if let Some(auth) = auth_header {
@@ -745,6 +759,35 @@ mod tests {
         let response = stack.execute(request, handler).await;
 
         assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[tokio::test]
+    async fn test_skip_paths_root_matches_only_root() {
+        let mut stack = LayerStack::new();
+        stack.push(Box::new(JwtLayer::<TestClaims>::new("secret").skip_paths(vec!["/"])));
+        let handler = dummy_handler();
+
+        let root_request = create_test_request_for_path("/", None);
+        let root_response = stack.execute(root_request, handler.clone()).await;
+        assert_eq!(root_response.status(), StatusCode::OK);
+
+        let protected_request = create_test_request_for_path("/protected", None);
+        let protected_response = stack.execute(protected_request, handler).await;
+        assert_eq!(protected_response.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[tokio::test]
+    async fn test_skip_paths_prefix_still_matches_nested_paths() {
+        let mut stack = LayerStack::new();
+        stack.push(Box::new(
+            JwtLayer::<TestClaims>::new("secret").skip_paths(vec!["/docs"]),
+        ));
+        let handler = dummy_handler();
+
+        let docs_request = create_test_request_for_path("/docs/openapi.json", None);
+        let docs_response = stack.execute(docs_request, handler).await;
+
+        assert_eq!(docs_response.status(), StatusCode::OK);
     }
 
     #[test]
