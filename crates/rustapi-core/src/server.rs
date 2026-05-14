@@ -295,6 +295,7 @@ async fn handle_request(
     response
 }
 
+#[cfg(feature = "dashboard")]
 fn normalize_metrics_path(path: &str) -> String {
     const MAX_SEGMENTS: usize = 16;
     const MAX_SEGMENT_LEN: usize = 64;
@@ -335,6 +336,7 @@ fn normalize_metrics_path(path: &str) -> String {
     normalized
 }
 
+#[cfg(feature = "dashboard")]
 fn is_dynamic_metrics_segment(segment: &str) -> bool {
     if segment.is_empty() {
         return false;
