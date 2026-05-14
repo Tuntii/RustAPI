@@ -28,4 +28,9 @@ pub mod metrics;
 pub mod routes;
 
 pub use config::DashboardConfig;
-pub use metrics::{DashboardMetrics, DashboardSnapshot, ExecutionPath, RouteInventoryItem};
+pub use metrics::{
+    DashboardHealthEndpointSnapshot, DashboardHealthSummary, DashboardLiveCountersSnapshot,
+    DashboardMetrics, DashboardReplayIndexSnapshot, DashboardSnapshot, DashboardStageSnapshot,
+    ExecutionPath, RequestStage, RouteGraphSnapshot, RouteGroupSnapshot, RouteInventoryItem,
+    RouteMetricsSnapshot,
+};

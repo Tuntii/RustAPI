@@ -100,9 +100,39 @@ impl ReplayQuery {
         self
     }
 
+    /// Filter entries recorded at or after this Unix timestamp in milliseconds.
+    pub fn from_timestamp(mut self, timestamp_ms: u64) -> Self {
+        self.from_timestamp = Some(timestamp_ms);
+        self
+    }
+
+    /// Filter entries recorded at or before this Unix timestamp in milliseconds.
+    pub fn to_timestamp(mut self, timestamp_ms: u64) -> Self {
+        self.to_timestamp = Some(timestamp_ms);
+        self
+    }
+
+    /// Filter by replay metadata tag.
+    pub fn tag(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.tag = Some((key.into(), value.into()));
+        self
+    }
+
     /// Set the maximum number of entries to return.
     pub fn limit(mut self, limit: usize) -> Self {
         self.limit = Some(limit);
+        self
+    }
+
+    /// Skip the first `offset` matching entries.
+    pub fn offset(mut self, offset: usize) -> Self {
+        self.offset = Some(offset);
+        self
+    }
+
+    /// Control ordering. `true` returns newest entries first.
+    pub fn newest_first(mut self, newest_first: bool) -> Self {
+        self.newest_first = newest_first;
         self
     }
 
@@ -227,5 +257,30 @@ mod tests {
     fn test_query_limit() {
         let query = ReplayQuery::new().limit(10);
         assert_eq!(query.limit, Some(10));
+    }
+
+    #[test]
+    fn test_query_pagination_and_timestamp_builders() {
+        let query = ReplayQuery::new()
+            .limit(25)
+            .offset(50)
+            .from_timestamp(1000)
+            .to_timestamp(2000)
+            .newest_first(false);
+
+        assert_eq!(query.limit, Some(25));
+        assert_eq!(query.offset, Some(50));
+        assert_eq!(query.from_timestamp, Some(1000));
+        assert_eq!(query.to_timestamp, Some(2000));
+        assert!(!query.newest_first);
+    }
+
+    #[test]
+    fn test_query_tag_filter() {
+        let mut tagged = make_entry("GET", "/users", 200);
+        tagged.meta.tags.insert("tenant".into(), "acme".into());
+
+        assert!(ReplayQuery::new().tag("tenant", "acme").matches(&tagged));
+        assert!(!ReplayQuery::new().tag("tenant", "other").matches(&tagged));
     }
 }

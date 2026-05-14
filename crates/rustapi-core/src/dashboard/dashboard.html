@@ -137,6 +137,40 @@
   .panel-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
   .panel-body { padding: 16px; }
 
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(13,17,23,.25);
+  }
+  .toolbar select,
+  .toolbar input,
+  .replay-controls input,
+  .replay-controls select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  .toolbar input { min-width: 220px; flex: 1; }
+  .small-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 10px;
+    margin-right: 4px;
+    margin-bottom: 2px;
+    background: rgba(255,255,255,.03);
+  }
+
   /* ── Isometric Execution Paths ──────────────────────────────────────────── */
   #iso-canvas {
     display: block;
@@ -199,8 +233,85 @@
   .latency { color: var(--muted); font-size: 11px; }
   .no-routes { padding: 32px; text-align: center; color: var(--muted); }
 
+  .topology-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .topology-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+  }
+  .topology-group { font-weight: 700; font-size: 12px; margin-bottom: 6px; }
+  .topology-meta { color: var(--muted); font-size: 11px; display: flex; gap: 8px; flex-wrap: wrap; }
+
   /* ── Live Chart ─────────────────────────────────────────────────────────── */
   .chart-wrap { padding: 16px; height: 180px; position: relative; }
+
+  /* ── Replay Browser ─────────────────────────────────────────────────────── */
+  .replay-panel { margin-top: 12px; }
+  .replay-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr 120px 1fr 1fr auto;
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .btn {
+    border: 1px solid rgba(88,166,255,.45);
+    background: rgba(88,166,255,.12);
+    color: var(--accent);
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .btn:hover { background: rgba(88,166,255,.2); }
+  .replay-grid {
+    display: grid;
+    grid-template-columns: minmax(280px, 420px) 1fr;
+    gap: 12px;
+    padding: 16px;
+  }
+  .replay-list {
+    max-height: 360px;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .replay-item {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(48,54,61,.5);
+    cursor: pointer;
+  }
+  .replay-item:last-child { border-bottom: none; }
+  .replay-item:hover { background: rgba(88,166,255,.05); }
+  .replay-item.active { background: rgba(88,166,255,.1); }
+  .replay-id { color: var(--muted); font-size: 10px; font-family: 'SF Mono', monospace; }
+  .replay-detail {
+    min-height: 360px;
+    max-height: 520px;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: rgba(13,17,23,.35);
+    padding: 12px;
+    white-space: pre-wrap;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 11px;
+    color: var(--text);
+  }
+  .replay-actions { display: flex; gap: 8px; margin-bottom: 10px; }
+
+  @media (max-width: 980px) {
+    .stat-row, .main-grid, .replay-grid { grid-template-columns: 1fr; }
+    .replay-controls { grid-template-columns: 1fr 1fr; }
+  }
 
   /* ── Error banner ───────────────────────────────────────────────────────── */
   #error-banner {
@@ -317,18 +428,27 @@
       <span class="panel-title">Route Topology</span>
       <span id="route-count-badge" style="font-size:11px;color:var(--muted)">— routes</span>
     </div>
+    <div class="topology-cards" id="topology-cards"></div>
+    <div class="toolbar">
+      <select id="group-filter" aria-label="Filter routes by group"><option value="">All groups</option></select>
+      <select id="method-filter" aria-label="Filter routes by method"><option value="">All methods</option></select>
+      <select id="tag-filter" aria-label="Filter routes by tag"><option value="">All tags</option></select>
+      <input id="route-search" type="search" placeholder="Search path, group, tag…" autocomplete="off">
+    </div>
     <div style="overflow-y:auto;max-height:520px">
       <table class="route-table">
         <thead>
           <tr>
             <th>Path</th>
+            <th>Group</th>
             <th>Methods</th>
+            <th>Signals</th>
             <th>Hits</th>
             <th>Avg ms</th>
           </tr>
         </thead>
         <tbody id="routes-tbody">
-          <tr><td colspan="4" class="no-routes">Loading…</td></tr>
+          <tr><td colspan="6" class="no-routes">Loading…</td></tr>
         </tbody>
       </table>
     </div>
@@ -347,6 +467,37 @@
 
 </div>
 
+<!-- Replay Browser -->
+<div class="panel replay-panel">
+  <div class="panel-header">
+    <span class="panel-title">Replay Browser</span>
+    <span id="replay-status" style="font-size:11px;color:var(--muted)">Uses ReplayLayer admin API when enabled</span>
+  </div>
+  <div class="replay-controls">
+    <input id="replay-api-path" placeholder="Replay API path" value="/__rustapi/replays" autocomplete="off">
+    <input id="replay-token" type="password" placeholder="Replay token (defaults to dashboard token)" autocomplete="off">
+    <select id="replay-method">
+      <option value="">Any method</option>
+      <option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option>
+    </select>
+    <input id="replay-path-filter" placeholder="Path contains…" autocomplete="off">
+    <input id="replay-target" placeholder="Diff target URL (optional)" autocomplete="off">
+    <button class="btn" id="replay-load">Load</button>
+  </div>
+  <div class="replay-grid">
+    <div class="replay-list" id="replay-list">
+      <div class="no-routes">ReplayLayer not loaded yet, or no entries.</div>
+    </div>
+    <div>
+      <div class="replay-actions">
+        <button class="btn" id="replay-show" disabled>Show selected</button>
+        <button class="btn" id="replay-diff" disabled>Diff selected</button>
+      </div>
+      <pre class="replay-detail" id="replay-detail">Select a replay entry to inspect request/response details. Diff needs a target URL.</pre>
+    </div>
+  </div>
+</div>
+
 <script>
 // ── Config ────────────────────────────────────────────────────────────────────
 const BASE = window.location.origin;
@@ -358,6 +509,8 @@ const REFRESH_MS = 3000;
 let prevTotal = null;
 let prevTs    = null;
 const rpsHistory = new Array(20).fill(0);
+let latestRoutes = [];
+let selectedReplayId = null;
 
 // ── Token ─────────────────────────────────────────────────────────────────────
 function getToken() {
@@ -540,27 +693,90 @@ function drawRpsChart() {
 }
 
 // ── Route Table ───────────────────────────────────────────────────────────────
-function renderRoutes(routes) {
-  const tbody = document.getElementById('routes-tbody');
-  if (!routes || !routes.length) {
-    tbody.innerHTML = '<tr><td colspan="4" class="no-routes">No routes registered</td></tr>';
+function renderTopology(routeGraph) {
+  const host = document.getElementById('topology-cards');
+  if (!host) return;
+  const groups = (routeGraph && routeGraph.groups) || [];
+  if (!groups.length) {
+    host.innerHTML = '<div class="topology-card"><div class="topology-group">No topology yet</div><div class="topology-meta">Register routes to see groups.</div></div>';
     return;
   }
-  document.getElementById('route-count-badge').textContent = routes.length + ' routes';
+  host.innerHTML = groups.map(g => `
+    <div class="topology-card">
+      <div class="topology-group">/${escapeHtml(g.group)}</div>
+      <div class="topology-meta">
+        <span>${g.route_count} routes</span>
+        <span>${g.method_count} methods</span>
+        <span>${fmtNum(g.hit_count)} hits</span>
+      </div>
+    </div>
+  `).join('');
+}
 
-  const maxHits = Math.max(...routes.map(r => r.hit_count || 0), 1);
+function updateRouteFilters(routes) {
+  setSelectOptions('group-filter', [...new Set(routes.map(r => r.group).filter(Boolean))], 'All groups');
+  setSelectOptions('method-filter', [...new Set(routes.flatMap(r => r.methods || []))], 'All methods');
+  setSelectOptions('tag-filter', [...new Set(routes.flatMap(r => r.tags || []))], 'All tags');
+}
 
-  tbody.innerHTML = routes.map(r => {
+function setSelectOptions(id, values, label) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const current = el.value;
+  const sorted = values.sort((a, b) => a.localeCompare(b));
+  el.innerHTML = `<option value="">${label}</option>` + sorted.map(v => `<option value="${escapeAttr(v)}">${escapeHtml(v)}</option>`).join('');
+  if (sorted.includes(current)) el.value = current;
+}
+
+function filteredRoutes(routes) {
+  const group = document.getElementById('group-filter')?.value || '';
+  const method = document.getElementById('method-filter')?.value || '';
+  const tag = document.getElementById('tag-filter')?.value || '';
+  const q = (document.getElementById('route-search')?.value || '').toLowerCase();
+  return routes.filter(r => {
+    if (group && r.group !== group) return false;
+    if (method && !(r.methods || []).includes(method)) return false;
+    if (tag && !(r.tags || []).includes(tag)) return false;
+    if (q) {
+      const haystack = [r.path, r.group, ...(r.tags || []), ...(r.feature_gates || [])].join(' ').toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function renderRoutes(routes) {
+  const tbody = document.getElementById('routes-tbody');
+  const filtered = filteredRoutes(routes || []);
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="no-routes">No routes match the current filters</td></tr>';
+    return;
+  }
+  document.getElementById('route-count-badge').textContent = filtered.length + ' / ' + routes.length + ' routes';
+
+  const maxHits = Math.max(...filtered.map(r => r.hit_count || 0), 1);
+
+  tbody.innerHTML = filtered.map(r => {
     const methods = (r.methods || []).map(m =>
       `<span class="method-badge m-${m}">${m}</span>`
     ).join('');
+    const tags = (r.tags || []).map(t => `<span class="small-pill">#${escapeHtml(t)}</span>`).join('');
+    const gates = (r.feature_gates || []).map(g => `<span class="small-pill">${escapeHtml(g)}</span>`).join('');
+    const signals = [
+      r.health_eligible ? '<span class="small-pill">health</span>' : '',
+      r.replay_eligible ? '<span class="small-pill">replay</span>' : '<span class="small-pill">no replay</span>',
+      tags,
+      gates,
+    ].join('');
     const barW = Math.round((r.hit_count / maxHits) * 100);
     const avg  = r.avg_latency_ms ? r.avg_latency_ms.toFixed(1) : '0.0';
     const errStyle = r.error_count > 0 ? 'color:var(--red)' : '';
     return `
       <tr>
-        <td><span class="path-text">${r.path}</span></td>
+        <td><span class="path-text">${escapeHtml(r.path)}</span></td>
+        <td><span class="small-pill">/${escapeHtml(r.group || 'root')}</span></td>
         <td>${methods}</td>
+        <td>${signals || '<span class="small-pill">—</span>'}</td>
         <td>
           <div class="hit-bar-wrap">
             <div class="hit-bar"><div class="hit-bar-fill" style="width:${barW}%"></div></div>
@@ -571,6 +787,14 @@ function renderRoutes(routes) {
       </tr>
     `;
   }).join('');
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+}
+
+function escapeAttr(s) {
+  return escapeHtml(s).replace(/'/g, '&#39;');
 }
 
 // ── Refresh ───────────────────────────────────────────────────────────────────
@@ -617,8 +841,16 @@ async function refresh() {
     const canvas = document.getElementById('iso-canvas');
     drawIso(canvas, snap.ultra_fast_reqs || 0, snap.fast_reqs || 0, snap.full_reqs || 0);
 
-    // ── Route table
-    renderRoutes(snap.routes);
+    // ── Route topology + table
+    latestRoutes = snap.routes || [];
+    updateRouteFilters(latestRoutes);
+    renderTopology(snap.route_graph);
+    renderRoutes(latestRoutes);
+
+    if (snap.replay_index && snap.replay_index.admin_path) {
+      const replayPath = document.getElementById('replay-api-path');
+      if (replayPath && !replayPath.dataset.userEdited) replayPath.value = snap.replay_index.admin_path;
+    }
 
     // ── RPS chart
     rpsHistory.shift();
@@ -639,6 +871,113 @@ function setText(id, val) {
   if (el) el.textContent = val;
 }
 
+// ── Replay Browser ───────────────────────────────────────────────────────────
+function replayBaseUrl() {
+  const path = (document.getElementById('replay-api-path')?.value || '/__rustapi/replays').trim() || '/__rustapi/replays';
+  return BASE + (path.startsWith('/') ? path : '/' + path);
+}
+
+function replayToken() {
+  return (document.getElementById('replay-token')?.value || '').trim() || getToken();
+}
+
+async function replayFetch(path, options = {}) {
+  const headers = { 'Accept': 'application/json', ...(options.headers || {}) };
+  const tok = replayToken();
+  if (tok) headers['Authorization'] = 'Bearer ' + tok;
+  const resp = await fetch(replayBaseUrl() + path, { ...options, headers });
+  const text = await resp.text();
+  let body;
+  try { body = text ? JSON.parse(text) : null; } catch { body = text; }
+  if (!resp.ok) {
+    const msg = body && body.message ? body.message : resp.status + ' ' + resp.statusText;
+    throw new Error(msg);
+  }
+  return body;
+}
+
+async function loadReplays() {
+  const status = document.getElementById('replay-status');
+  const list = document.getElementById('replay-list');
+  const params = new URLSearchParams({ limit: '25' });
+  const method = document.getElementById('replay-method')?.value || '';
+  const path = document.getElementById('replay-path-filter')?.value || '';
+  if (method) params.set('method', method);
+  if (path) params.set('path', path);
+
+  try {
+    status.textContent = 'Loading replay entries…';
+    const data = await replayFetch('?' + params.toString());
+    const entries = data.entries || [];
+    status.textContent = `${entries.length} shown / ${data.total ?? '—'} total`;
+    renderReplayList(entries);
+  } catch (e) {
+    status.textContent = 'Replay unavailable';
+    list.innerHTML = `<div class="no-routes">Replay API unavailable: ${escapeHtml(e.message)}<br>Enable ReplayLayer and enter its admin token.</div>`;
+  }
+}
+
+function renderReplayList(entries) {
+  const list = document.getElementById('replay-list');
+  if (!entries.length) {
+    list.innerHTML = '<div class="no-routes">No replay entries match the filters.</div>';
+    return;
+  }
+  list.innerHTML = entries.map(e => {
+    const active = e.id === selectedReplayId ? ' active' : '';
+    const method = e.request?.method || '—';
+    const path = e.request?.path || e.request?.uri || '—';
+    const status = e.response?.status || '—';
+    return `
+      <div class="replay-item${active}" data-id="${escapeAttr(e.id)}">
+        <div><span class="method-badge m-${method}">${escapeHtml(method)}</span> <span class="path-text">${escapeHtml(path)}</span></div>
+        <div class="topology-meta"><span>Status ${escapeHtml(status)}</span><span>${escapeHtml(e.meta?.duration_ms ?? '—')}ms</span></div>
+        <div class="replay-id">${escapeHtml(e.id)}</div>
+      </div>
+    `;
+  }).join('');
+  list.querySelectorAll('.replay-item').forEach(el => {
+    el.addEventListener('click', () => selectReplay(el.dataset.id));
+  });
+}
+
+function selectReplay(id) {
+  selectedReplayId = id;
+  document.querySelectorAll('.replay-item').forEach(el => el.classList.toggle('active', el.dataset.id === id));
+  document.getElementById('replay-show').disabled = false;
+  document.getElementById('replay-diff').disabled = false;
+  showReplay();
+}
+
+async function showReplay() {
+  if (!selectedReplayId) return;
+  const detail = document.getElementById('replay-detail');
+  try {
+    detail.textContent = 'Loading replay detail…';
+    const data = await replayFetch('/' + encodeURIComponent(selectedReplayId));
+    detail.textContent = JSON.stringify(data, null, 2);
+  } catch (e) {
+    detail.textContent = 'Could not load replay detail: ' + e.message;
+  }
+}
+
+async function diffReplay() {
+  if (!selectedReplayId) return;
+  const target = (document.getElementById('replay-target')?.value || '').trim();
+  const detail = document.getElementById('replay-detail');
+  if (!target) {
+    detail.textContent = 'Enter a diff target URL first, for example http://localhost:3000';
+    return;
+  }
+  try {
+    detail.textContent = 'Running replay diff…';
+    const data = await replayFetch('/' + encodeURIComponent(selectedReplayId) + '/diff?target=' + encodeURIComponent(target), { method: 'POST' });
+    detail.textContent = JSON.stringify(data, null, 2);
+  } catch (e) {
+    detail.textContent = 'Replay diff failed: ' + e.message;
+  }
+}
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   // Move ?token= from URL into the input field and strip it from the address bar
@@ -656,6 +995,13 @@ document.addEventListener('DOMContentLoaded', () => {
   refresh();
   setInterval(refresh, REFRESH_MS);
   document.getElementById('token-input').addEventListener('change', () => refresh());
+  ['group-filter', 'method-filter', 'tag-filter', 'route-search'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', () => renderRoutes(latestRoutes));
+  });
+  document.getElementById('replay-api-path')?.addEventListener('input', e => { e.target.dataset.userEdited = '1'; });
+  document.getElementById('replay-load')?.addEventListener('click', () => loadReplays());
+  document.getElementById('replay-show')?.addEventListener('click', () => showReplay());
+  document.getElementById('replay-diff')?.addEventListener('click', () => diffReplay());
 });
 </script>
 </body>

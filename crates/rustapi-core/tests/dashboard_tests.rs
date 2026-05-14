@@ -24,9 +24,11 @@ fn config_builder() {
     let cfg = DashboardConfig::new()
         .admin_token("secret")
         .path("/admin/dash")
+        .replay_api_path("/admin/replays")
         .title("My Dashboard");
     assert_eq!(cfg.admin_token.as_deref(), Some("secret"));
     assert_eq!(cfg.path, "/admin/dash");
+    assert_eq!(cfg.replay_api_path, "/admin/replays");
     assert_eq!(cfg.title, "My Dashboard");
 }
 
@@ -50,10 +52,7 @@ fn metrics_initial_zeros() {
 
 #[test]
 fn metrics_record_ultra_fast() {
-    let m = DashboardMetrics::new(vec![RouteInventoryItem {
-        path: "/users".into(),
-        methods: vec!["GET".into()],
-    }]);
+    let m = DashboardMetrics::new(vec![RouteInventoryItem::new("/users", vec!["GET".into()])]);
 
     m.record_request("/users", 5, ExecutionPath::UltraFast, false);
     m.record_request("/users", 3, ExecutionPath::UltraFast, false);
@@ -72,10 +71,10 @@ fn metrics_record_ultra_fast() {
 
 #[test]
 fn metrics_record_error() {
-    let m = DashboardMetrics::new(vec![RouteInventoryItem {
-        path: "/broken".into(),
-        methods: vec!["POST".into()],
-    }]);
+    let m = DashboardMetrics::new(vec![RouteInventoryItem::new(
+        "/broken",
+        vec!["POST".into()],
+    )]);
 
     m.record_request("/broken", 10, ExecutionPath::Full, true);
 
@@ -95,6 +94,42 @@ fn metrics_unknown_route_skips_counter() {
     let snap = m.snapshot();
     assert_eq!(snap.total_reqs, 1);
     assert!(snap.routes.is_empty(), "No routes in inventory");
+}
+
+#[test]
+fn metrics_dynamic_route_uses_inventory_key() {
+    let m = DashboardMetrics::new(vec![RouteInventoryItem::new(
+        "/users/{id}",
+        vec!["GET".into()],
+    )]);
+
+    m.record_request("/users/{param}", 7, ExecutionPath::UltraFast, false);
+
+    let snap = m.snapshot();
+    let route = snap
+        .routes
+        .iter()
+        .find(|r| r.path == "/users/{id}")
+        .unwrap();
+    assert_eq!(route.hit_count, 1);
+    assert_eq!(route.avg_latency_ms, 7.0);
+}
+
+#[test]
+fn metrics_stage_and_state_snapshot() {
+    let route = RouteInventoryItem::new("/health", vec!["GET".into()]).health_eligible(true);
+    let m = DashboardMetrics::new(vec![route]);
+
+    m.record_stage(rustapi_core::dashboard::RequestStage::Received);
+    m.record_stage(rustapi_core::dashboard::RequestStage::Routed);
+    m.record_stage(rustapi_core::dashboard::RequestStage::Completed);
+
+    let snap = m.snapshot();
+    assert_eq!(snap.stages.received_reqs, 1);
+    assert_eq!(snap.stages.routed_reqs, 1);
+    assert_eq!(snap.stages.completed_reqs, 1);
+    assert!(snap.health_summary.configured);
+    assert_eq!(snap.route_graph.total_routes, 1);
 }
 
 #[test]
@@ -121,10 +156,11 @@ fn make_headers_with_token(token: &str) -> http::HeaderMap {
 }
 
 fn make_metrics() -> Arc<DashboardMetrics> {
-    Arc::new(DashboardMetrics::new(vec![RouteInventoryItem {
-        path: "/api/users".into(),
-        methods: vec!["GET".into(), "POST".into()],
-    }]))
+    Arc::new(DashboardMetrics::new(vec![RouteInventoryItem::new(
+        "/api/users",
+        vec!["GET".into(), "POST".into()],
+    )
+    .with_tags(vec!["users".into()])]))
 }
 
 #[tokio::test]
@@ -250,4 +286,37 @@ async fn dispatch_metrics_endpoint() {
     .await;
     assert!(resp.is_some());
     assert_eq!(resp.unwrap().status(), http::StatusCode::OK);
+}
+
+#[tokio::test]
+async fn dispatch_topology_endpoint() {
+    let m = make_metrics();
+    let cfg = DashboardConfig::new();
+
+    let resp = dispatch(
+        &make_headers(),
+        "GET",
+        "/__rustapi/dashboard/api/topology",
+        &m,
+        &cfg,
+    )
+    .await;
+    assert!(resp.is_some());
+    assert_eq!(resp.unwrap().status(), http::StatusCode::OK);
+}
+
+#[tokio::test]
+async fn dispatch_events_health_and_replay_endpoints() {
+    let m = make_metrics();
+    let cfg = DashboardConfig::new();
+
+    for path in [
+        "/__rustapi/dashboard/api/events",
+        "/__rustapi/dashboard/api/health",
+        "/__rustapi/dashboard/api/replay",
+    ] {
+        let resp = dispatch(&make_headers(), "GET", path, &m, &cfg).await;
+        assert!(resp.is_some(), "{} should be handled", path);
+        assert_eq!(resp.unwrap().status(), http::StatusCode::OK);
+    }
 }

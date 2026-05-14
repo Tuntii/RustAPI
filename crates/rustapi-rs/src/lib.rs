@@ -231,7 +231,12 @@ pub mod extras {
 /// Dashboard module: embedded isometric system dashboard.
 #[cfg(feature = "core-dashboard")]
 pub mod dashboard {
-    pub use rustapi_core::dashboard::{DashboardConfig, DashboardMetrics, DashboardSnapshot};
+    pub use rustapi_core::dashboard::{
+        DashboardConfig, DashboardHealthEndpointSnapshot, DashboardHealthSummary,
+        DashboardLiveCountersSnapshot, DashboardMetrics, DashboardReplayIndexSnapshot,
+        DashboardSnapshot, DashboardStageSnapshot, ExecutionPath, RequestStage, RouteGraphSnapshot,
+        RouteGroupSnapshot, RouteInventoryItem, RouteMetricsSnapshot,
+    };
 }
 
 // Root-level re-exports for dashboard types (convenience)

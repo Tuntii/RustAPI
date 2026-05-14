@@ -8,6 +8,8 @@ use crate::response::IntoResponse;
 use crate::router::{MethodRouter, Router};
 use crate::server::Server;
 use std::collections::BTreeMap;
+#[cfg(feature = "dashboard")]
+use std::collections::BTreeSet;
 use std::future::Future;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
@@ -1274,18 +1276,42 @@ impl RustApi {
             None => return,
         };
 
-        // Build route inventory from currently registered routes
-        let inventory: Vec<RouteInventoryItem> = self
+        // Build route inventory from currently registered routes. This snapshot
+        // intentionally happens before dashboard routes are mounted so the UI
+        // represents application endpoints rather than the dashboard itself.
+        let mut inventory: Vec<RouteInventoryItem> = self
             .router
             .registered_routes()
             .values()
-            .map(|info| RouteInventoryItem {
-                path: info.path.clone(),
-                methods: info.methods.iter().map(|m| m.to_string()).collect(),
+            .map(|info| {
+                let methods: Vec<String> = info.methods.iter().map(|m| m.to_string()).collect();
+                let health_eligible = self
+                    .health_endpoint_config
+                    .as_ref()
+                    .map(|health| {
+                        info.path == health.health_path
+                            || info.path == health.readiness_path
+                            || info.path == health.liveness_path
+                    })
+                    .unwrap_or(false);
+
+                RouteInventoryItem::new(info.path.clone(), methods)
+                    .with_tags(openapi_tags_for_route(
+                        &self.openapi_spec,
+                        &info.path,
+                        &info.methods,
+                    ))
+                    .with_feature_gates(infer_route_feature_gates(&info.path))
+                    .health_eligible(health_eligible)
+                    .replay_eligible(is_dashboard_replay_eligible(&info.path, health_eligible))
             })
             .collect();
+        inventory.sort_by(|a, b| a.path.cmp(&b.path));
 
-        let metrics = Arc::new(DashboardMetrics::new(inventory));
+        let metrics = Arc::new(DashboardMetrics::new_with_replay_admin_path(
+            inventory,
+            config.replay_api_path.clone(),
+        ));
 
         // Insert metrics into router state using the public .state() API
         let router = std::mem::take(&mut self.router);
@@ -1643,6 +1669,60 @@ impl RustApi {
 
         Ok(())
     }
+}
+
+#[cfg(feature = "dashboard")]
+fn openapi_tags_for_route(
+    spec: &rustapi_openapi::OpenApiSpec,
+    path: &str,
+    methods: &[http::Method],
+) -> Vec<String> {
+    let Some(path_item) = spec.paths.get(path) else {
+        return Vec::new();
+    };
+
+    let mut tags = BTreeSet::new();
+    for method in methods {
+        if let Some(operation) = operation_for_method(path_item, method) {
+            tags.extend(operation.tags.iter().cloned());
+        }
+    }
+
+    tags.into_iter().collect()
+}
+
+#[cfg(feature = "dashboard")]
+fn operation_for_method<'a>(
+    path_item: &'a rustapi_openapi::PathItem,
+    method: &http::Method,
+) -> Option<&'a rustapi_openapi::Operation> {
+    match *method {
+        http::Method::GET => path_item.get.as_ref(),
+        http::Method::POST => path_item.post.as_ref(),
+        http::Method::PUT => path_item.put.as_ref(),
+        http::Method::PATCH => path_item.patch.as_ref(),
+        http::Method::DELETE => path_item.delete.as_ref(),
+        http::Method::HEAD => path_item.head.as_ref(),
+        http::Method::OPTIONS => path_item.options.as_ref(),
+        http::Method::TRACE => path_item.trace.as_ref(),
+        _ => None,
+    }
+}
+
+#[cfg(feature = "dashboard")]
+fn infer_route_feature_gates(path: &str) -> Vec<String> {
+    if path.contains("openapi") || path.contains("docs") {
+        vec!["core-openapi".to_string()]
+    } else if path.starts_with("/__rustapi/replays") {
+        vec!["extras-replay".to_string()]
+    } else {
+        Vec::new()
+    }
+}
+
+#[cfg(feature = "dashboard")]
+fn is_dashboard_replay_eligible(path: &str, health_eligible: bool) -> bool {
+    !health_eligible && !path.starts_with("/__rustapi/")
 }
 
 fn add_path_params_to_operation(

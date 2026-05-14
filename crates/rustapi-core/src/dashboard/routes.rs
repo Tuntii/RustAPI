@@ -5,6 +5,10 @@
 //!   GET  /__rustapi/dashboard/api/snapshot → DashboardSnapshot JSON (auth required)
 //!   GET  /__rustapi/dashboard/api/routes   → Route inventory JSON (auth required)
 //!   GET  /__rustapi/dashboard/api/metrics  → Live counters JSON  (auth required)
+//!   GET  /__rustapi/dashboard/api/topology → Route graph JSON    (auth required)
+//!   GET  /__rustapi/dashboard/api/events   → Stage counters JSON (auth required)
+//!   GET  /__rustapi/dashboard/api/health   → Health summary JSON (auth required)
+//!   GET  /__rustapi/dashboard/api/replay   → Replay index JSON   (auth required)
 
 use super::auth::DashboardAuth;
 use super::config::DashboardConfig;
@@ -67,6 +71,22 @@ pub async fn dispatch(
             check_auth!(headers, config);
             Some(serve_live_metrics(metrics))
         }
+        ("GET", "api/topology") => {
+            check_auth!(headers, config);
+            Some(serve_topology(metrics))
+        }
+        ("GET", "api/events") => {
+            check_auth!(headers, config);
+            Some(serve_events(metrics))
+        }
+        ("GET", "api/health") => {
+            check_auth!(headers, config);
+            Some(serve_health(metrics))
+        }
+        ("GET", "api/replay") => {
+            check_auth!(headers, config);
+            Some(serve_replay(metrics))
+        }
 
         _ => None,
     }
@@ -96,13 +116,31 @@ fn serve_routes(metrics: &Arc<DashboardMetrics>) -> Response {
 }
 
 fn serve_live_metrics(metrics: &Arc<DashboardMetrics>) -> Response {
-    use std::sync::atomic::Ordering;
+    let snap = metrics.snapshot();
     json_ok(json!({
-        "total_reqs":      metrics.total_reqs.load(Ordering::Relaxed),
-        "ultra_fast_reqs": metrics.ultra_fast_reqs.load(Ordering::Relaxed),
-        "fast_reqs":       metrics.fast_reqs.load(Ordering::Relaxed),
-        "full_reqs":       metrics.full_reqs.load(Ordering::Relaxed),
+        "live_counters": snap.live_counters,
+        "stages": snap.stages,
     }))
+}
+
+fn serve_topology(metrics: &Arc<DashboardMetrics>) -> Response {
+    let snap = metrics.snapshot();
+    json_ok(json!({ "route_graph": snap.route_graph }))
+}
+
+fn serve_events(metrics: &Arc<DashboardMetrics>) -> Response {
+    let snap = metrics.snapshot();
+    json_ok(json!({ "stages": snap.stages }))
+}
+
+fn serve_health(metrics: &Arc<DashboardMetrics>) -> Response {
+    let snap = metrics.snapshot();
+    json_ok(json!({ "health_summary": snap.health_summary }))
+}
+
+fn serve_replay(metrics: &Arc<DashboardMetrics>) -> Response {
+    let snap = metrics.snapshot();
+    json_ok(json!({ "replay_index": snap.replay_index }))
 }
 
 fn json_ok(body: serde_json::Value) -> Response {

@@ -84,24 +84,7 @@ pub async fn dispatch(
 }
 
 async fn handle_list(uri: &http::Uri, store: &dyn ReplayStore) -> Response {
-    let mut query = ReplayQuery::new();
-
-    if let Some(limit) = extract_query_param(uri, "limit") {
-        if let Ok(n) = limit.parse::<usize>() {
-            query = query.limit(n);
-        }
-    }
-    if let Some(method) = extract_query_param(uri, "method") {
-        query = query.method(method);
-    }
-    if let Some(path) = extract_query_param(uri, "path") {
-        query = query.path_contains(path);
-    }
-    if let Some(status_min) = extract_query_param(uri, "status_min") {
-        if let Ok(s) = status_min.parse::<u16>() {
-            query = query.status_min(s);
-        }
-    }
+    let query = replay_query_from_uri(uri);
 
     match store.list(&query).await {
         Ok(entries) => {
@@ -121,6 +104,63 @@ async fn handle_list(uri: &http::Uri, store: &dyn ReplayStore) -> Response {
             json!({"error": "store_error", "message": e.to_string()}),
         ),
     }
+}
+
+fn replay_query_from_uri(uri: &http::Uri) -> ReplayQuery {
+    let mut query = ReplayQuery::new();
+
+    if let Some(limit) = extract_query_param(uri, "limit") {
+        if let Ok(n) = limit.parse::<usize>() {
+            query = query.limit(n);
+        }
+    }
+    if let Some(offset) = extract_query_param(uri, "offset") {
+        if let Ok(n) = offset.parse::<usize>() {
+            query = query.offset(n);
+        }
+    }
+    if let Some(method) = extract_query_param(uri, "method") {
+        if !method.is_empty() {
+            query = query.method(method.to_ascii_uppercase());
+        }
+    }
+    if let Some(path) = extract_query_param(uri, "path") {
+        if !path.is_empty() {
+            query = query.path_contains(path);
+        }
+    }
+    if let Some(status_min) = extract_query_param(uri, "status_min") {
+        if let Ok(s) = status_min.parse::<u16>() {
+            query = query.status_min(s);
+        }
+    }
+    if let Some(status_max) = extract_query_param(uri, "status_max") {
+        if let Ok(s) = status_max.parse::<u16>() {
+            query = query.status_max(s);
+        }
+    }
+    if let Some(from) = extract_query_param(uri, "from") {
+        if let Ok(ts) = from.parse::<u64>() {
+            query = query.from_timestamp(ts);
+        }
+    }
+    if let Some(to) = extract_query_param(uri, "to") {
+        if let Ok(ts) = to.parse::<u64>() {
+            query = query.to_timestamp(ts);
+        }
+    }
+    if let Some(tag) = extract_query_param(uri, "tag") {
+        if let Some((key, value)) = tag.split_once('=') {
+            if !key.is_empty() {
+                query = query.tag(key.to_string(), value.to_string());
+            }
+        }
+    }
+    if let Some(order) = extract_query_param(uri, "order") {
+        query = query.newest_first(!matches!(order.as_str(), "asc" | "oldest" | "oldest_first"));
+    }
+
+    query
 }
 
 async fn handle_show(id: &str, store: &dyn ReplayStore) -> Response {
@@ -255,4 +295,32 @@ fn json_response(status: StatusCode, body: serde_json::Value) -> Response {
         .header(http::header::CONTENT_TYPE, "application/json")
         .body(ResponseBody::Full(Full::new(Bytes::from(body_bytes))))
         .unwrap()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::replay_query_from_uri;
+
+    #[test]
+    fn replay_query_from_uri_supports_ui_filters() {
+        let uri: http::Uri = "/__rustapi/replays?limit=20&offset=40&method=get&path=/api&status_min=400&status_max=499&from=1000&to=2000&tag=tenant=acme&order=asc"
+            .parse()
+            .unwrap();
+
+        let query = replay_query_from_uri(&uri);
+
+        assert_eq!(query.limit, Some(20));
+        assert_eq!(query.offset, Some(40));
+        assert_eq!(query.method.as_deref(), Some("GET"));
+        assert_eq!(query.path_contains.as_deref(), Some("/api"));
+        assert_eq!(query.status_min, Some(400));
+        assert_eq!(query.status_max, Some(499));
+        assert_eq!(query.from_timestamp, Some(1000));
+        assert_eq!(query.to_timestamp, Some(2000));
+        assert_eq!(
+            query.tag.as_ref().map(|(k, v)| (k.as_str(), v.as_str())),
+            Some(("tenant", "acme"))
+        );
+        assert!(!query.newest_first);
+    }
 }

@@ -226,6 +226,11 @@ async fn handle_request(
         .get::<std::sync::Arc<crate::dashboard::DashboardMetrics>>()
         .cloned();
 
+    #[cfg(feature = "dashboard")]
+    if let Some(ref metrics) = dashboard_metrics {
+        metrics.record_stage(crate::dashboard::RequestStage::Received);
+    }
+
     // Dashboard: classify execution path before branching.
     #[cfg(feature = "dashboard")]
     let exec_path = if layers.is_empty() && interceptors.is_empty() {
@@ -288,74 +293,18 @@ async fn handle_request(
     if let Some(ref metrics) = dashboard_metrics {
         let duration_ms = start.elapsed().as_millis() as u64;
         let is_error = response.status().is_server_error();
-        let metrics_path = normalize_metrics_path(&path);
+        if response.status() != StatusCode::NOT_FOUND {
+            metrics.record_stage(crate::dashboard::RequestStage::Routed);
+        }
+        metrics.record_stage(crate::dashboard::RequestStage::Completed);
+        if response.status().is_client_error() || response.status().is_server_error() {
+            metrics.record_stage(crate::dashboard::RequestStage::Failed);
+        }
+        let metrics_path = crate::dashboard::metrics::metrics_key_for_path(&path);
         metrics.record_request(&metrics_path, duration_ms, exec_path, is_error);
     }
 
     response
-}
-
-#[cfg(feature = "dashboard")]
-fn normalize_metrics_path(path: &str) -> String {
-    const MAX_SEGMENTS: usize = 16;
-    const MAX_SEGMENT_LEN: usize = 64;
-
-    if path.is_empty() || path == "/" {
-        return "/".to_string();
-    }
-
-    let mut normalized = String::with_capacity(path.len().min(256));
-    normalized.push('/');
-
-    let mut first = true;
-    for (idx, segment) in path.split('/').filter(|s| !s.is_empty()).enumerate() {
-        if idx >= MAX_SEGMENTS {
-            if !first {
-                normalized.push('/');
-            }
-            normalized.push_str("{truncated}");
-            break;
-        }
-
-        if !first {
-            normalized.push('/');
-        }
-        first = false;
-
-        if is_dynamic_metrics_segment(segment) || segment.len() > MAX_SEGMENT_LEN {
-            normalized.push_str("{param}");
-        } else {
-            normalized.push_str(segment);
-        }
-    }
-
-    if normalized.len() > 256 {
-        normalized.truncate(256);
-    }
-
-    normalized
-}
-
-#[cfg(feature = "dashboard")]
-fn is_dynamic_metrics_segment(segment: &str) -> bool {
-    if segment.is_empty() {
-        return false;
-    }
-
-    if segment.bytes().all(|b| b.is_ascii_digit()) {
-        return true;
-    }
-
-    // Heuristic for UUID/opaque identifier segments:
-    // long hex-ish strings, optionally containing dashes.
-    let hex_or_dash = segment
-        .bytes()
-        .all(|b| b.is_ascii_hexdigit() || b == b'-');
-    if hex_or_dash && segment.len() >= 16 {
-        return true;
-    }
-
-    false
 }
 
 /// Direct routing without middleware chain - maximum performance path

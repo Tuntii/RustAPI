@@ -10,6 +10,7 @@
 /// let config = DashboardConfig::new()
 ///     .admin_token("my-secret")
 ///     .path("/__rustapi/dashboard")
+///     .replay_api_path("/__rustapi/replays")
 ///     .title("My API Dashboard");
 /// ```
 #[derive(Debug, Clone)]
@@ -23,6 +24,10 @@ pub struct DashboardConfig {
 
     /// Page title shown in the UI.
     pub title: String,
+
+    /// Replay admin API path used by the dashboard replay browser.
+    /// Default: `"/__rustapi/replays"`.
+    pub replay_api_path: String,
 }
 
 impl Default for DashboardConfig {
@@ -38,6 +43,7 @@ impl DashboardConfig {
             admin_token: None,
             path: "/__rustapi/dashboard".to_string(),
             title: "RustAPI System Dashboard".to_string(),
+            replay_api_path: "/__rustapi/replays".to_string(),
         }
     }
 
@@ -61,6 +67,14 @@ impl DashboardConfig {
     /// Set the page title shown in the browser and the dashboard header.
     pub fn title(mut self, title: impl Into<String>) -> Self {
         self.title = title.into();
+        self
+    }
+
+    /// Override the replay admin API path used by the UI replay browser.
+    ///
+    /// This should match `ReplayConfig::admin_route_prefix(...)` when replay is enabled.
+    pub fn replay_api_path(mut self, path: impl Into<String>) -> Self {
+        self.replay_api_path = path.into();
         self
     }
 }
