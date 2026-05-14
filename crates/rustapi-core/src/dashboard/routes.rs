@@ -46,17 +46,12 @@ pub async fn dispatch(
     metrics: &Arc<DashboardMetrics>,
     config: &DashboardConfig,
 ) -> Option<Response> {
-    // Only handle paths inside our prefix
-    if !path.starts_with(config.path.as_str()) {
-        return None;
-    }
-
-    // Strip the prefix to get the sub-path
-    let suffix = path[config.path.len()..].trim_start_matches('/');
+    let prefix = config.normalized_path();
+    let suffix = dashboard_suffix(path, &prefix)?;
 
     match (method, suffix) {
         // HTML page — no auth required (browsers can't easily send Bearer headers)
-        ("GET", "" | "index.html") => Some(serve_html()),
+        ("GET", "" | "index.html") => Some(serve_html(config)),
 
         // JSON API endpoints — auth required when admin_token is set
         ("GET", "api/snapshot") => {
@@ -94,15 +89,37 @@ pub async fn dispatch(
 
 // ─── Private handlers ────────────────────────────────────────────────────────
 
-fn serve_html() -> Response {
+fn serve_html(config: &DashboardConfig) -> Response {
+    let title = escape_html(&config.title);
+    let html = DASHBOARD_HTML.replace("__RUSTAPI_DASHBOARD_TITLE__", &title);
+
     http::Response::builder()
         .status(StatusCode::OK)
         .header(http::header::CONTENT_TYPE, "text/html; charset=utf-8")
         .header(http::header::CACHE_CONTROL, "no-store")
-        .body(Body::Full(Full::new(Bytes::from_static(
-            DASHBOARD_HTML.as_bytes(),
-        ))))
+        .body(Body::Full(Full::new(Bytes::from(html))))
         .unwrap()
+}
+
+fn dashboard_suffix<'a>(path: &'a str, prefix: &str) -> Option<&'a str> {
+    if prefix == "/" {
+        return path.strip_prefix('/');
+    }
+
+    if path == prefix {
+        return Some("");
+    }
+
+    path.strip_prefix(prefix)?.strip_prefix('/')
+}
+
+fn escape_html(value: &str) -> String {
+    value
+        .replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&#39;")
 }
 
 fn serve_snapshot(metrics: &Arc<DashboardMetrics>) -> Response {

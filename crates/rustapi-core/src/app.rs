@@ -1271,10 +1271,11 @@ impl RustApi {
         use std::collections::HashMap;
         use std::sync::Arc;
 
-        let config = match self.dashboard_config.take() {
+        let mut config = match self.dashboard_config.take() {
             Some(c) => c,
             None => return,
         };
+        config.normalize_paths();
 
         // Build route inventory from currently registered routes. This snapshot
         // intentionally happens before dashboard routes are mounted so the UI

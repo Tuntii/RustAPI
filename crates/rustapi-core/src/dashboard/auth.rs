@@ -8,8 +8,8 @@ use serde_json::json;
 
 /// Check the `Authorization: Bearer <token>` header against the expected token.
 ///
-/// Returns `Ok(())` if the token is valid or if `expected` is `None` (no auth configured).
-/// Returns an HTTP 401/403 response on failure.
+/// Returns `Ok(())` if the bearer token is present and matches `expected`.
+/// Returns an HTTP 401 response on failure.
 pub struct DashboardAuth;
 
 impl DashboardAuth {
@@ -22,8 +22,17 @@ impl DashboardAuth {
             .and_then(|v| v.to_str().ok());
 
         match auth_header {
-            Some(value) if value.starts_with("Bearer ") => {
-                let token = &value["Bearer ".len()..];
+            Some(value) => {
+                let Some(token) = bearer_token(value) else {
+                    return Err(json_response(
+                        StatusCode::UNAUTHORIZED,
+                        json!({
+                            "error": "unauthorized",
+                            "message": "Expected 'Authorization: Bearer <token>'"
+                        }),
+                    ));
+                };
+
                 if token == expected {
                     Ok(())
                 } else {
@@ -36,13 +45,6 @@ impl DashboardAuth {
                     ))
                 }
             }
-            Some(_) => Err(json_response(
-                StatusCode::UNAUTHORIZED,
-                json!({
-                    "error": "unauthorized",
-                    "message": "Expected 'Authorization: Bearer <token>'"
-                }),
-            )),
             None => Err(json_response(
                 StatusCode::UNAUTHORIZED,
                 json!({
@@ -52,6 +54,17 @@ impl DashboardAuth {
             )),
         }
     }
+}
+
+fn bearer_token(value: &str) -> Option<&str> {
+    let (scheme, token) = value.split_once(' ')?;
+    if scheme.eq_ignore_ascii_case("Bearer") {
+        let token = token.trim();
+        if !token.is_empty() {
+            return Some(token);
+        }
+    }
+    None
 }
 
 fn json_response(status: StatusCode, body: serde_json::Value) -> Response {

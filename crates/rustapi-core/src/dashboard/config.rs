@@ -37,7 +37,11 @@ impl Default for DashboardConfig {
 }
 
 impl DashboardConfig {
-    /// Create a dashboard configuration with secure defaults.
+    /// Create a dashboard configuration with dev-friendly defaults.
+    ///
+    /// By default, JSON endpoints are unauthenticated so local examples work
+    /// without extra setup. Production deployments should call
+    /// [`admin_token`](Self::admin_token).
     pub fn new() -> Self {
         Self {
             admin_token: None,
@@ -58,9 +62,10 @@ impl DashboardConfig {
 
     /// Override the URL prefix for the dashboard.
     ///
-    /// Must start with `/`. Default: `"/__rustapi/dashboard"`.
+    /// Values are normalized to a single leading `/` and no trailing `/`
+    /// except for the root path. Default: `"/__rustapi/dashboard"`.
     pub fn path(mut self, path: impl Into<String>) -> Self {
-        self.path = path.into();
+        self.path = normalize_path_prefix(path.into());
         self
     }
 
@@ -74,7 +79,35 @@ impl DashboardConfig {
     ///
     /// This should match `ReplayConfig::admin_route_prefix(...)` when replay is enabled.
     pub fn replay_api_path(mut self, path: impl Into<String>) -> Self {
-        self.replay_api_path = path.into();
+        self.replay_api_path = normalize_path_prefix(path.into());
         self
     }
+
+    pub(crate) fn normalize_paths(&mut self) {
+        self.path = normalize_path_prefix(std::mem::take(&mut self.path));
+        self.replay_api_path = normalize_path_prefix(std::mem::take(&mut self.replay_api_path));
+    }
+
+    pub(crate) fn normalized_path(&self) -> String {
+        normalize_path_prefix(self.path.clone())
+    }
+}
+
+fn normalize_path_prefix(path: String) -> String {
+    let trimmed = path.trim();
+    if trimmed.is_empty() {
+        return "/".to_string();
+    }
+
+    let mut normalized = if trimmed.starts_with('/') {
+        trimmed.to_string()
+    } else {
+        format!("/{trimmed}")
+    };
+
+    while normalized.len() > 1 && normalized.ends_with('/') {
+        normalized.pop();
+    }
+
+    normalized
 }

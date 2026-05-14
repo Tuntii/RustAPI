@@ -4,6 +4,7 @@
 
 #![cfg(feature = "dashboard")]
 
+use http_body_util::BodyExt;
 use rustapi_core::dashboard::{
     config::DashboardConfig,
     metrics::{DashboardMetrics, ExecutionPath, RouteInventoryItem},
@@ -30,6 +31,16 @@ fn config_builder() {
     assert_eq!(cfg.path, "/admin/dash");
     assert_eq!(cfg.replay_api_path, "/admin/replays");
     assert_eq!(cfg.title, "My Dashboard");
+}
+
+#[test]
+fn config_normalizes_dashboard_and_replay_paths() {
+    let cfg = DashboardConfig::new()
+        .path("admin/dash/")
+        .replay_api_path("admin/replays/");
+
+    assert_eq!(cfg.path, "/admin/dash");
+    assert_eq!(cfg.replay_api_path, "/admin/replays");
 }
 
 #[test]
@@ -147,11 +158,12 @@ fn make_headers() -> http::HeaderMap {
 }
 
 fn make_headers_with_token(token: &str) -> http::HeaderMap {
+    make_headers_with_auth_value(&format!("Bearer {}", token))
+}
+
+fn make_headers_with_auth_value(value: &str) -> http::HeaderMap {
     let mut h = http::HeaderMap::new();
-    h.insert(
-        http::header::AUTHORIZATION,
-        format!("Bearer {}", token).parse().unwrap(),
-    );
+    h.insert(http::header::AUTHORIZATION, value.parse().unwrap());
     h
 }
 
@@ -173,6 +185,42 @@ async fn dispatch_html_no_auth_required() {
     assert!(resp.is_some());
     let resp = resp.unwrap();
     assert_eq!(resp.status(), http::StatusCode::OK);
+}
+
+#[tokio::test]
+async fn dispatch_html_applies_configured_title() {
+    let m = make_metrics();
+    let cfg = DashboardConfig::new().title("Ops <Dashboard>");
+
+    let resp = dispatch(&make_headers(), "GET", "/__rustapi/dashboard", &m, &cfg)
+        .await
+        .unwrap();
+    let body = resp.into_body().collect().await.unwrap().to_bytes();
+    let html = String::from_utf8_lossy(&body);
+
+    assert!(html.contains("Ops &lt;Dashboard&gt;"));
+    assert!(!html.contains("__RUSTAPI_DASHBOARD_TITLE__"));
+}
+
+#[tokio::test]
+async fn dispatch_trailing_slash_config_matches_normalized_prefix() {
+    let m = make_metrics();
+    let cfg = DashboardConfig::new().path("/__rustapi/dashboard/");
+
+    let resp = dispatch(&make_headers(), "GET", "/__rustapi/dashboard", &m, &cfg).await;
+    assert!(resp.is_some());
+    assert_eq!(resp.unwrap().status(), http::StatusCode::OK);
+
+    let api_resp = dispatch(
+        &make_headers(),
+        "GET",
+        "/__rustapi/dashboard/api/routes",
+        &m,
+        &cfg,
+    )
+    .await;
+    assert!(api_resp.is_some());
+    assert_eq!(api_resp.unwrap().status(), http::StatusCode::OK);
 }
 
 #[tokio::test]
@@ -200,6 +248,23 @@ async fn dispatch_snapshot_with_correct_token() {
 
     let resp = dispatch(
         &make_headers_with_token("secret"),
+        "GET",
+        "/__rustapi/dashboard/api/snapshot",
+        &m,
+        &cfg,
+    )
+    .await;
+    assert!(resp.is_some());
+    assert_eq!(resp.unwrap().status(), http::StatusCode::OK);
+}
+
+#[tokio::test]
+async fn dispatch_snapshot_accepts_case_insensitive_bearer_scheme() {
+    let m = make_metrics();
+    let cfg = DashboardConfig::new().admin_token("secret");
+
+    let resp = dispatch(
+        &make_headers_with_auth_value("bearer secret"),
         "GET",
         "/__rustapi/dashboard/api/snapshot",
         &m,
