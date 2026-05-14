@@ -203,6 +203,46 @@ async fn dispatch_html_applies_configured_title() {
 }
 
 #[tokio::test]
+async fn dispatch_html_sets_security_headers() {
+    let m = make_metrics();
+    let cfg = DashboardConfig::new();
+
+    let resp = dispatch(&make_headers(), "GET", "/__rustapi/dashboard", &m, &cfg)
+        .await
+        .unwrap();
+
+    assert_eq!(
+        resp.headers().get(http::header::CACHE_CONTROL).unwrap(),
+        "no-store"
+    );
+    assert_eq!(
+        resp.headers().get(http::header::REFERRER_POLICY).unwrap(),
+        "no-referrer"
+    );
+    assert_eq!(
+        resp.headers()
+            .get(http::header::CONTENT_SECURITY_POLICY)
+            .unwrap(),
+        "default-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; object-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'"
+    );
+    assert_eq!(
+        resp.headers().get("x-content-type-options").unwrap(),
+        "nosniff"
+    );
+}
+
+#[test]
+fn dashboard_static_sanitizes_method_classes_and_avoids_query_token_guidance() {
+    let html = include_str!("../src/dashboard/dashboard.html");
+    let module_docs = include_str!("../src/dashboard/mod.rs");
+
+    assert!(html.contains("function classToken"));
+    assert!(html.contains("params.has('token')"));
+    assert!(!html.contains("?token=<token>"));
+    assert!(!module_docs.contains("?token=<token>"));
+}
+
+#[tokio::test]
 async fn dispatch_trailing_slash_config_matches_normalized_prefix() {
     let m = make_metrics();
     let cfg = DashboardConfig::new().path("/__rustapi/dashboard/");
@@ -259,6 +299,35 @@ async fn dispatch_snapshot_with_correct_token() {
 }
 
 #[tokio::test]
+async fn dispatch_snapshot_sets_json_security_headers() {
+    let m = make_metrics();
+    let cfg = DashboardConfig::new().admin_token("secret");
+
+    let resp = dispatch(
+        &make_headers_with_token("secret"),
+        "GET",
+        "/__rustapi/dashboard/api/snapshot",
+        &m,
+        &cfg,
+    )
+    .await
+    .unwrap();
+
+    assert_eq!(
+        resp.headers().get(http::header::CACHE_CONTROL).unwrap(),
+        "no-store"
+    );
+    assert_eq!(
+        resp.headers().get(http::header::REFERRER_POLICY).unwrap(),
+        "no-referrer"
+    );
+    assert_eq!(
+        resp.headers().get("x-content-type-options").unwrap(),
+        "nosniff"
+    );
+}
+
+#[tokio::test]
 async fn dispatch_snapshot_accepts_case_insensitive_bearer_scheme() {
     let m = make_metrics();
     let cfg = DashboardConfig::new().admin_token("secret");
@@ -290,6 +359,36 @@ async fn dispatch_snapshot_wrong_token_returns_401() {
     .await;
     assert!(resp.is_some());
     assert_eq!(resp.unwrap().status(), http::StatusCode::UNAUTHORIZED);
+}
+
+#[tokio::test]
+async fn dispatch_snapshot_unauthorized_sets_security_headers() {
+    let m = make_metrics();
+    let cfg = DashboardConfig::new().admin_token("secret");
+
+    let resp = dispatch(
+        &make_headers(),
+        "GET",
+        "/__rustapi/dashboard/api/snapshot",
+        &m,
+        &cfg,
+    )
+    .await
+    .unwrap();
+
+    assert_eq!(resp.status(), http::StatusCode::UNAUTHORIZED);
+    assert_eq!(
+        resp.headers().get(http::header::CACHE_CONTROL).unwrap(),
+        "no-store"
+    );
+    assert_eq!(
+        resp.headers().get(http::header::REFERRER_POLICY).unwrap(),
+        "no-referrer"
+    );
+    assert_eq!(
+        resp.headers().get("x-content-type-options").unwrap(),
+        "nosniff"
+    );
 }
 
 #[tokio::test]

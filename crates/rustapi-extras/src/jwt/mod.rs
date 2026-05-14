@@ -59,15 +59,20 @@ impl Default for JwtValidation {
 impl JwtValidation {
     /// Convert to jsonwebtoken's Validation struct
     fn to_jsonwebtoken_validation(&self) -> Validation {
-        let mut validation = Validation::new(
-            self.algorithms
-                .first()
-                .copied()
-                .unwrap_or(jsonwebtoken::Algorithm::HS256),
-        );
+        let algorithms = if self.algorithms.is_empty() {
+            vec![jsonwebtoken::Algorithm::HS256]
+        } else {
+            self.algorithms.clone()
+        };
+        let mut validation = Validation::new(algorithms[0]);
         validation.leeway = self.leeway;
         validation.validate_exp = self.validate_exp;
-        validation.set_required_spec_claims::<&str>(&[]);
+        validation.algorithms = algorithms;
+        if self.validate_exp {
+            validation.set_required_spec_claims(&["exp"]);
+        } else {
+            validation.set_required_spec_claims::<&str>(&[]);
+        }
         validation
     }
 }
@@ -422,6 +427,11 @@ mod tests {
         custom_field: Option<String>,
     }
 
+    #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+    struct NoExpClaims {
+        sub: String,
+    }
+
     /// Create a test request with optional Authorization header
     fn create_test_request(auth_header: Option<&str>) -> Request {
         create_test_request_for_path("/test", auth_header)
@@ -471,6 +481,16 @@ mod tests {
     /// Strategy for generating optional custom fields
     fn custom_field_strategy() -> impl Strategy<Value = Option<String>> {
         prop_oneof![Just(None), "[a-zA-Z0-9 ]{1,100}".prop_map(Some),]
+    }
+
+    fn create_token_with_algorithm<T: Serialize>(
+        claims: &T,
+        secret: &str,
+        algorithm: jsonwebtoken::Algorithm,
+    ) -> String {
+        let encoding_key = jsonwebtoken::EncodingKey::from_secret(secret.as_bytes());
+        let header = jsonwebtoken::Header::new(algorithm);
+        jsonwebtoken::encode(&header, claims, &encoding_key).unwrap()
     }
 
     /// Helper to setup stack with JWT layer
@@ -815,6 +835,57 @@ mod tests {
         // Token should have 3 parts separated by dots
         let parts: Vec<&str> = token.split('.').collect();
         assert_eq!(parts.len(), 3);
+    }
+
+    #[test]
+    fn test_validate_token_requires_exp_by_default() {
+        let layer = JwtLayer::<NoExpClaims>::new("secret");
+        let claims = NoExpClaims {
+            sub: "user123".to_string(),
+        };
+        let token = create_token(&claims, "secret").unwrap();
+
+        let result = layer.validate_token(&token);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_validate_token_can_opt_out_of_required_exp() {
+        let layer = JwtLayer::<NoExpClaims>::new("secret").with_validation(JwtValidation {
+            validate_exp: false,
+            ..JwtValidation::default()
+        });
+        let claims = NoExpClaims {
+            sub: "user123".to_string(),
+        };
+        let token = create_token(&claims, "secret").unwrap();
+
+        let result = layer.validate_token(&token);
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), claims);
+    }
+
+    #[test]
+    fn test_validation_uses_all_configured_algorithms() {
+        let layer = JwtLayer::<TestClaims>::new("secret").with_validation(JwtValidation {
+            algorithms: vec![
+                jsonwebtoken::Algorithm::HS256,
+                jsonwebtoken::Algorithm::HS512,
+            ],
+            ..JwtValidation::default()
+        });
+        let claims = TestClaims {
+            sub: "user123".to_string(),
+            exp: future_timestamp(3600),
+            custom_field: None,
+        };
+        let token = create_token_with_algorithm(&claims, "secret", jsonwebtoken::Algorithm::HS512);
+
+        let result = layer.validate_token(&token);
+
+        assert!(result.is_ok());
     }
 
     #[test]

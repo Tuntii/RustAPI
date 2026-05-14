@@ -758,7 +758,7 @@ function renderRoutes(routes) {
 
   tbody.innerHTML = filtered.map(r => {
     const methods = (r.methods || []).map(m =>
-      `<span class="method-badge m-${m}">${m}</span>`
+      `<span class="method-badge m-${classToken(m)}">${escapeHtml(m)}</span>`
     ).join('');
     const tags = (r.tags || []).map(t => `<span class="small-pill">#${escapeHtml(t)}</span>`).join('');
     const gates = (r.feature_gates || []).map(g => `<span class="small-pill">${escapeHtml(g)}</span>`).join('');
@@ -795,6 +795,13 @@ function escapeHtml(s) {
 
 function escapeAttr(s) {
   return escapeHtml(s).replace(/'/g, '&#39;');
+}
+
+function classToken(s) {
+  return String(s ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'unknown';
 }
 
 // ── Refresh ───────────────────────────────────────────────────────────────────
@@ -930,7 +937,7 @@ function renderReplayList(entries) {
     const status = e.response?.status || '—';
     return `
       <div class="replay-item${active}" data-id="${escapeAttr(e.id)}">
-        <div><span class="method-badge m-${method}">${escapeHtml(method)}</span> <span class="path-text">${escapeHtml(path)}</span></div>
+        <div><span class="method-badge m-${classToken(method)}">${escapeHtml(method)}</span> <span class="path-text">${escapeHtml(path)}</span></div>
         <div class="topology-meta"><span>Status ${escapeHtml(status)}</span><span>${escapeHtml(e.meta?.duration_ms ?? '—')}ms</span></div>
         <div class="replay-id">${escapeHtml(e.id)}</div>
       </div>

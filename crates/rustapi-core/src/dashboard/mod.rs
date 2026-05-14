@@ -19,8 +19,8 @@
 //! ```
 //!
 //! Then open `http://localhost:8080/__rustapi/dashboard` in your browser.
-//! For the JSON API endpoints prefix the URL with `?token=<token>` or pass
-//! `Authorization: Bearer <token>`.
+//! Enter the dashboard token in the UI field or pass `Authorization: Bearer <token>`
+//! when calling JSON API endpoints directly.
 
 pub mod auth;
 pub mod config;

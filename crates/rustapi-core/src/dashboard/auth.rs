@@ -33,7 +33,7 @@ impl DashboardAuth {
                     ));
                 };
 
-                if token == expected {
+                if constant_time_eq(token.as_bytes(), expected.as_bytes()) {
                     Ok(())
                 } else {
                     Err(json_response(
@@ -67,11 +67,27 @@ fn bearer_token(value: &str) -> Option<&str> {
     None
 }
 
+fn constant_time_eq(left: &[u8], right: &[u8]) -> bool {
+    let max_len = left.len().max(right.len());
+    let mut diff = left.len() ^ right.len();
+
+    for idx in 0..max_len {
+        let left_byte = left.get(idx).copied().unwrap_or(0);
+        let right_byte = right.get(idx).copied().unwrap_or(0);
+        diff |= (left_byte ^ right_byte) as usize;
+    }
+
+    diff == 0
+}
+
 fn json_response(status: StatusCode, body: serde_json::Value) -> Response {
     let bytes = serde_json::to_vec(&body).unwrap_or_default();
     http::Response::builder()
         .status(status)
         .header(http::header::CONTENT_TYPE, "application/json")
+        .header(http::header::CACHE_CONTROL, "no-store")
+        .header(http::header::REFERRER_POLICY, "no-referrer")
+        .header("x-content-type-options", "nosniff")
         .body(Body::Full(Full::new(Bytes::from(bytes))))
         .unwrap()
 }

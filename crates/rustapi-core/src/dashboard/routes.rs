@@ -21,6 +21,18 @@ use serde_json::json;
 use std::sync::Arc;
 
 static DASHBOARD_HTML: &str = include_str!("dashboard.html");
+const DASHBOARD_CSP: &str = concat!(
+    "default-src 'none'; ",
+    "base-uri 'none'; ",
+    "form-action 'none'; ",
+    "frame-ancestors 'none'; ",
+    "object-src 'none'; ",
+    "script-src 'unsafe-inline'; ",
+    "style-src 'unsafe-inline'; ",
+    "img-src 'self' data:; ",
+    "font-src 'self'; ",
+    "connect-src 'self'"
+);
 
 // The macro must be defined BEFORE it is used in `dispatch` below.
 macro_rules! check_auth {
@@ -97,6 +109,9 @@ fn serve_html(config: &DashboardConfig) -> Response {
         .status(StatusCode::OK)
         .header(http::header::CONTENT_TYPE, "text/html; charset=utf-8")
         .header(http::header::CACHE_CONTROL, "no-store")
+        .header(http::header::REFERRER_POLICY, "no-referrer")
+        .header(http::header::CONTENT_SECURITY_POLICY, DASHBOARD_CSP)
+        .header("x-content-type-options", "nosniff")
         .body(Body::Full(Full::new(Bytes::from(html))))
         .unwrap()
 }
@@ -166,6 +181,8 @@ fn json_ok(body: serde_json::Value) -> Response {
         .status(StatusCode::OK)
         .header(http::header::CONTENT_TYPE, "application/json")
         .header(http::header::CACHE_CONTROL, "no-store")
+        .header(http::header::REFERRER_POLICY, "no-referrer")
+        .header("x-content-type-options", "nosniff")
         .body(Body::Full(Full::new(Bytes::from(bytes))))
         .unwrap()
 }

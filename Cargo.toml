@@ -26,7 +26,7 @@ homepage = "https://github.com/Tuntii/RustAPI"
 documentation = "https://docs.rs/rustapi-rs"
 keywords = ["web", "framework", "api", "rest", "http"]
 categories = ["web-programming::http-server"]
-rust-version = "1.78"
+rust-version = "1.85"
 
 [workspace.dependencies]
 # Async runtime
@@ -62,13 +62,13 @@ proc-macro2 = "1.0"
 linkme = "0.3"
 
 # Validation
-validator = { version = "0.18", features = ["derive"] }
+validator = { version = "0.19", features = ["derive"] }
 
 # UUID
 uuid = { version = "1.6", features = ["v4"] }
 
 # Metrics
-prometheus = "0.13"
+prometheus = { version = "0.14", default-features = false }
 
 # TOON format
 toon-format = { version = "0.4", default-features = false }
@@ -112,7 +112,6 @@ quinn = "0.11"
 h3 = "0.0.8"
 h3-quinn = "0.0.10"
 rustls = { version = "0.23", default-features = false, features = ["ring", "std"] }
-rustls-pemfile = "2.2"
 rcgen = "0.13"
 
 # ============================================
