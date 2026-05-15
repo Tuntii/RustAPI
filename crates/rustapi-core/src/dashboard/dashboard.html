@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+<title>__RUSTAPI_DASHBOARD_TITLE__</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: rgba(22, 27, 34, 0.85);
+    --surface2: rgba(30, 36, 46, 0.8);
+    --border: rgba(48, 54, 61, 0.7);
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --red: #f85149;
+    --purple: #bc8cff;
+    --orange: #ffa657;
+    --text: #e6edf3;
+    --muted: #7d8590;
+    --blur: blur(20px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-size: 13px;
+    min-height: 100vh;
+    padding: 16px;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(88, 166, 255, 0.08), transparent),
+      radial-gradient(ellipse 50% 40% at 80% 80%, rgba(188, 140, 255, 0.06), transparent);
+  }
+
+  /* ── Header ────────────────────────────────────────────────────────────── */
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding: 14px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    backdrop-filter: var(--blur);
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, #58a6ff 0%, #bc8cff 100%);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+  }
+  .header h1 { font-size: 16px; font-weight: 600; }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .live-badge {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--green);
+    padding: 4px 10px;
+    background: rgba(63, 185, 80, 0.1);
+    border: 1px solid rgba(63, 185, 80, 0.3);
+    border-radius: 20px;
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    background: var(--green);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+  .uptime { color: var(--muted); font-size: 12px; }
+  #token-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 5px 10px;
+    font-size: 12px;
+    width: 180px;
+  }
+  #token-input::placeholder { color: var(--muted); }
+
+  /* ── Stat Cards ─────────────────────────────────────────────────────────── */
+  .stat-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    backdrop-filter: var(--blur);
+    position: relative;
+    overflow: hidden;
+  }
+  .stat-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  }
+  .stat-card.blue::before  { background: linear-gradient(90deg, var(--accent), transparent); }
+  .stat-card.green::before { background: linear-gradient(90deg, var(--green), transparent); }
+  .stat-card.purple::before { background: linear-gradient(90deg, var(--purple), transparent); }
+  .stat-card.orange::before { background: linear-gradient(90deg, var(--orange), transparent); }
+  .stat-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+  .stat-value { font-size: 28px; font-weight: 700; line-height: 1; }
+  .stat-value.blue   { color: var(--accent); }
+  .stat-value.green  { color: var(--green); }
+  .stat-value.purple { color: var(--purple); }
+  .stat-value.orange { color: var(--orange); }
+  .stat-sub { color: var(--muted); font-size: 11px; margin-top: 4px; }
+
+  /* ── Main Grid ──────────────────────────────────────────────────────────── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    grid-template-rows: auto auto;
+    gap: 12px;
+  }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    backdrop-filter: var(--blur);
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .panel-title { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); }
+  .panel-body { padding: 16px; }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(13,17,23,.25);
+  }
+  .toolbar select,
+  .toolbar input,
+  .replay-controls input,
+  .replay-controls select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+  .toolbar input { min-width: 220px; flex: 1; }
+  .small-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 10px;
+    margin-right: 4px;
+    margin-bottom: 2px;
+    background: rgba(255,255,255,.03);
+  }
+
+  /* ── Isometric Execution Paths ──────────────────────────────────────────── */
+  #iso-canvas {
+    display: block;
+    width: 100%;
+    height: 220px;
+  }
+  .exec-legend {
+    display: flex; flex-direction: column; gap: 8px;
+    margin-top: 12px;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+  }
+  .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+  .legend-name { font-size: 12px; font-weight: 500; flex: 1; }
+  .legend-count { font-size: 18px; font-weight: 700; }
+  .legend-pct { font-size: 11px; color: var(--muted); margin-left: 4px; }
+
+  /* ── Route Topology ─────────────────────────────────────────────────────── */
+  .route-table { width: 100%; border-collapse: collapse; }
+  .route-table th {
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    border-bottom: 1px solid var(--border);
+  }
+  .route-table td {
+    padding: 9px 12px;
+    border-bottom: 1px solid rgba(48,54,61,.4);
+    font-size: 12px;
+  }
+  .route-table tr:last-child td { border-bottom: none; }
+  .route-table tr:hover td { background: rgba(88,166,255,.04); }
+  .method-badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    margin-right: 4px;
+    margin-bottom: 2px;
+  }
+  .m-GET    { background: rgba(63,185,80,.15);  color: var(--green); }
+  .m-POST   { background: rgba(88,166,255,.15); color: var(--accent); }
+  .m-PUT    { background: rgba(255,166,87,.15); color: var(--orange); }
+  .m-PATCH  { background: rgba(210,153,34,.15); color: var(--yellow); }
+  .m-DELETE { background: rgba(248,81,73,.15);  color: var(--red); }
+  .path-text { font-family: 'SF Mono', 'Fira Code', monospace; color: var(--text); }
+  .hit-bar-wrap { display: flex; align-items: center; gap: 8px; min-width: 80px; }
+  .hit-bar { height: 4px; background: rgba(88,166,255,.2); border-radius: 2px; flex: 1; }
+  .hit-bar-fill { height: 4px; background: var(--accent); border-radius: 2px; transition: width .5s; }
+  .latency { color: var(--muted); font-size: 11px; }
+  .no-routes { padding: 32px; text-align: center; color: var(--muted); }
+
+  .topology-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .topology-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px;
+  }
+  .topology-group { font-weight: 700; font-size: 12px; margin-bottom: 6px; }
+  .topology-meta { color: var(--muted); font-size: 11px; display: flex; gap: 8px; flex-wrap: wrap; }
+
+  /* ── Live Chart ─────────────────────────────────────────────────────────── */
+  .chart-wrap { padding: 16px; height: 180px; position: relative; }
+
+  /* ── Replay Browser ─────────────────────────────────────────────────────── */
+  .replay-panel { margin-top: 12px; }
+  .replay-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr 120px 1fr 1fr auto;
+    gap: 8px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .btn {
+    border: 1px solid rgba(88,166,255,.45);
+    background: rgba(88,166,255,.12);
+    color: var(--accent);
+    border-radius: 6px;
+    padding: 6px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+  }
+  .btn:hover { background: rgba(88,166,255,.2); }
+  .replay-grid {
+    display: grid;
+    grid-template-columns: minmax(280px, 420px) 1fr;
+    gap: 12px;
+    padding: 16px;
+  }
+  .replay-list {
+    max-height: 360px;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+  }
+  .replay-item {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(48,54,61,.5);
+    cursor: pointer;
+  }
+  .replay-item:last-child { border-bottom: none; }
+  .replay-item:hover { background: rgba(88,166,255,.05); }
+  .replay-item.active { background: rgba(88,166,255,.1); }
+  .replay-id { color: var(--muted); font-size: 10px; font-family: 'SF Mono', monospace; }
+  .replay-detail {
+    min-height: 360px;
+    max-height: 520px;
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: rgba(13,17,23,.35);
+    padding: 12px;
+    white-space: pre-wrap;
+    font-family: 'SF Mono', 'Fira Code', monospace;
+    font-size: 11px;
+    color: var(--text);
+  }
+  .replay-actions { display: flex; gap: 8px; margin-bottom: 10px; }
+
+  @media (max-width: 980px) {
+    .stat-row, .main-grid, .replay-grid { grid-template-columns: 1fr; }
+    .replay-controls { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* ── Error banner ───────────────────────────────────────────────────────── */
+  #error-banner {
+    display: none;
+    background: rgba(248,81,73,.1);
+    border: 1px solid rgba(248,81,73,.4);
+    color: var(--red);
+    padding: 10px 16px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-size: 12px;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo">⚡</div>
+    <div>
+      <h1>__RUSTAPI_DASHBOARD_TITLE__</h1>
+      <div id="page-subtitle" style="font-size:11px;color:var(--muted);margin-top:2px;">System Overview</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <input id="token-input" type="password" placeholder="Admin token (optional)" autocomplete="off">
+    <div class="live-badge"><div class="live-dot"></div>Live</div>
+    <div class="uptime">Uptime: <span id="uptime-val">—</span></div>
+  </div>
+</div>
+
+<!-- Error banner -->
+<div id="error-banner"></div>
+
+<!-- Stat Cards -->
+<div class="stat-row">
+  <div class="stat-card blue">
+    <div class="stat-label">Total Requests</div>
+    <div class="stat-value blue" id="s-total">—</div>
+    <div class="stat-sub" id="s-rps">— req/s</div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-label">Ultra Fast Path</div>
+    <div class="stat-value green" id="s-uf">—</div>
+    <div class="stat-sub" id="s-uf-pct">No middleware, no interceptors</div>
+  </div>
+  <div class="stat-card purple">
+    <div class="stat-label">Fast Path</div>
+    <div class="stat-value purple" id="s-fast">—</div>
+    <div class="stat-sub" id="s-fast-pct">Interceptors only</div>
+  </div>
+  <div class="stat-card orange">
+    <div class="stat-label">Full Path</div>
+    <div class="stat-value orange" id="s-full">—</div>
+    <div class="stat-sub" id="s-full-pct">Middleware layers</div>
+  </div>
+</div>
+
+<!-- Main Grid -->
+<div class="main-grid">
+
+  <!-- Left: Isometric Execution Paths -->
+  <div>
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Execution Flow</span>
+        <span style="font-size:11px;color:var(--muted)">Isometric</span>
+      </div>
+      <div class="panel-body">
+        <canvas id="iso-canvas"></canvas>
+        <div class="exec-legend">
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#3fb950"></div>
+            <div>
+              <div class="legend-name">Ultra Fast</div>
+              <div style="font-size:10px;color:var(--muted)">No middleware, no interceptors</div>
+            </div>
+            <div>
+              <span class="legend-count" style="color:var(--green)" id="l-uf">0</span>
+              <span class="legend-pct" id="l-uf-pct">(—%)</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#58a6ff"></div>
+            <div>
+              <div class="legend-name">Fast</div>
+              <div style="font-size:10px;color:var(--muted)">Interceptors only</div>
+            </div>
+            <div>
+              <span class="legend-count" style="color:var(--accent)" id="l-fast">0</span>
+              <span class="legend-pct" id="l-fast-pct">(—%)</span>
+            </div>
+          </div>
+          <div class="legend-item">
+            <div class="legend-dot" style="background:#ffa657"></div>
+            <div>
+              <div class="legend-name">Full</div>
+              <div style="font-size:10px;color:var(--muted)">Middleware layers</div>
+            </div>
+            <div>
+              <span class="legend-count" style="color:var(--orange)" id="l-full">0</span>
+              <span class="legend-pct" id="l-full-pct">(—%)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right top: Route Topology -->
+  <div class="panel" style="grid-row: 1 / 3">
+    <div class="panel-header">
+      <span class="panel-title">Route Topology</span>
+      <span id="route-count-badge" style="font-size:11px;color:var(--muted)">— routes</span>
+    </div>
+    <div class="topology-cards" id="topology-cards"></div>
+    <div class="toolbar">
+      <select id="group-filter" aria-label="Filter routes by group"><option value="">All groups</option></select>
+      <select id="method-filter" aria-label="Filter routes by method"><option value="">All methods</option></select>
+      <select id="tag-filter" aria-label="Filter routes by tag"><option value="">All tags</option></select>
+      <input id="route-search" type="search" placeholder="Search path, group, tag…" autocomplete="off">
+    </div>
+    <div style="overflow-y:auto;max-height:520px">
+      <table class="route-table">
+        <thead>
+          <tr>
+            <th>Path</th>
+            <th>Group</th>
+            <th>Methods</th>
+            <th>Signals</th>
+            <th>Hits</th>
+            <th>Avg ms</th>
+          </tr>
+        </thead>
+        <tbody id="routes-tbody">
+          <tr><td colspan="6" class="no-routes">Loading…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Left bottom: Requests per second chart -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Request Rate</span>
+      <span style="font-size:11px;color:var(--muted)">last 60s</span>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="rps-chart"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<!-- Replay Browser -->
+<div class="panel replay-panel">
+  <div class="panel-header">
+    <span class="panel-title">Replay Browser</span>
+    <span id="replay-status" style="font-size:11px;color:var(--muted)">Uses ReplayLayer admin API when enabled</span>
+  </div>
+  <div class="replay-controls">
+    <input id="replay-api-path" placeholder="Replay API path" value="/__rustapi/replays" autocomplete="off">
+    <input id="replay-token" type="password" placeholder="Replay token (defaults to dashboard token)" autocomplete="off">
+    <select id="replay-method">
+      <option value="">Any method</option>
+      <option>GET</option><option>POST</option><option>PUT</option><option>PATCH</option><option>DELETE</option>
+    </select>
+    <input id="replay-path-filter" placeholder="Path contains…" autocomplete="off">
+    <input id="replay-target" placeholder="Diff target URL (optional)" autocomplete="off">
+    <button class="btn" id="replay-load">Load</button>
+  </div>
+  <div class="replay-grid">
+    <div class="replay-list" id="replay-list">
+      <div class="no-routes">ReplayLayer not loaded yet, or no entries.</div>
+    </div>
+    <div>
+      <div class="replay-actions">
+        <button class="btn" id="replay-show" disabled>Show selected</button>
+        <button class="btn" id="replay-diff" disabled>Diff selected</button>
+      </div>
+      <pre class="replay-detail" id="replay-detail">Select a replay entry to inspect request/response details. Diff needs a target URL.</pre>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────────
+const BASE = window.location.origin;
+const DASHBOARD_PATH = window.location.pathname.replace(/\/+$/, '');
+const API  = BASE + (DASHBOARD_PATH || '') + '/api';
+const REFRESH_MS = 3000;
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let prevTotal = null;
+let prevTs    = null;
+const rpsHistory = new Array(20).fill(0);
+let latestRoutes = [];
+let selectedReplayId = null;
+
+// ── Token ─────────────────────────────────────────────────────────────────────
+function getToken() {
+  // Read only from the input field; URL token is migrated to the field on load
+  const inp = document.getElementById('token-input').value.trim();
+  return inp || null;
+}
+
+// ── Fetch helper ──────────────────────────────────────────────────────────────
+async function apiFetch(endpoint) {
+  const headers = { 'Accept': 'application/json' };
+  const tok = getToken();
+  if (tok) headers['Authorization'] = 'Bearer ' + tok;
+  const resp = await fetch(API + endpoint, { headers });
+  if (!resp.ok) throw new Error(resp.status + ' ' + resp.statusText);
+  return resp.json();
+}
+
+// ── Utilities ─────────────────────────────────────────────────────────────────
+function fmtNum(n) {
+  if (n === undefined || n === null) return '—';
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M';
+  if (n >= 1_000)     return (n / 1_000).toFixed(1) + 'K';
+  return String(n);
+}
+function fmtUptime(secs) {
+  if (secs < 60) return secs + 's';
+  if (secs < 3600) return Math.floor(secs/60) + 'm ' + (secs%60) + 's';
+  const h = Math.floor(secs/3600);
+  const m = Math.floor((secs%3600)/60);
+  return h + 'h ' + m + 'm';
+}
+function pct(v, total) {
+  if (!total) return '—%';
+  return (v/total*100).toFixed(1) + '%';
+}
+
+// ── Isometric Canvas ──────────────────────────────────────────────────────────
+function drawIso(canvas, uf, fast, full) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth;
+  const H = 220;
+  canvas.width  = W * devicePixelRatio;
+  canvas.height = H * devicePixelRatio;
+  ctx.scale(devicePixelRatio, devicePixelRatio);
+  ctx.clearRect(0, 0, W, H);
+
+  const total = uf + fast + full || 1;
+  const MAX_H = 110;
+  const MIN_H = 8;
+
+  const blocks = [
+    { val: uf,   color: '#3fb950', label: 'Ultra Fast', shadow: '#2ea043' },
+    { val: fast, color: '#58a6ff', label: 'Fast',       shadow: '#1f6feb' },
+    { val: full, color: '#ffa657', label: 'Full',       shadow: '#d18616' },
+  ];
+
+  // Isometric projection helpers
+  function isoX(gx, gy) { return (gx - gy) * 28 + W / 2; }
+  function isoY(gx, gy, gz) { return (gx + gy) * 14 - gz * 1.6 + H - 30; }
+
+  blocks.forEach((b, i) => {
+    const h = Math.max(MIN_H, Math.round((b.val / total) * MAX_H));
+    const gx = i;
+    const gy = 0;
+
+    // Top face
+    ctx.beginPath();
+    ctx.moveTo(isoX(gx,   gy  ), isoY(gx,   gy,   h));
+    ctx.lineTo(isoX(gx+1, gy  ), isoY(gx+1, gy,   h));
+    ctx.lineTo(isoX(gx+1, gy+1), isoY(gx+1, gy+1, h));
+    ctx.lineTo(isoX(gx,   gy+1), isoY(gx,   gy+1, h));
+    ctx.closePath();
+    ctx.fillStyle = b.color;
+    ctx.globalAlpha = 0.92;
+    ctx.fill();
+
+    // Right face
+    ctx.beginPath();
+    ctx.moveTo(isoX(gx+1, gy  ), isoY(gx+1, gy,   h));
+    ctx.lineTo(isoX(gx+1, gy+1), isoY(gx+1, gy+1, h));
+    ctx.lineTo(isoX(gx+1, gy+1), isoY(gx+1, gy+1, 0));
+    ctx.lineTo(isoX(gx+1, gy  ), isoY(gx+1, gy,   0));
+    ctx.closePath();
+    ctx.fillStyle = b.shadow;
+    ctx.globalAlpha = 0.88;
+    ctx.fill();
+
+    // Left face
+    ctx.beginPath();
+    ctx.moveTo(isoX(gx,   gy+1), isoY(gx,   gy+1, h));
+    ctx.lineTo(isoX(gx+1, gy+1), isoY(gx+1, gy+1, h));
+    ctx.lineTo(isoX(gx+1, gy+1), isoY(gx+1, gy+1, 0));
+    ctx.lineTo(isoX(gx,   gy+1), isoY(gx,   gy+1, 0));
+    ctx.closePath();
+    ctx.fillStyle = b.shadow;
+    ctx.globalAlpha = 0.72;
+    ctx.fill();
+
+    ctx.globalAlpha = 1;
+
+    // Height label on top
+    ctx.fillStyle = '#fff';
+    ctx.font = `bold 11px -apple-system, sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(
+      fmtNum(b.val),
+      isoX(gx + 0.5, gy + 0.5),
+      isoY(gx + 0.5, gy + 0.5, h) - 6
+    );
+  });
+}
+
+// ── RPS Chart (inline canvas sparkline — no external dependencies) ────────────
+function drawRpsChart() {
+  const canvas = document.getElementById('rps-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const W = canvas.offsetWidth || 300;
+  const H = canvas.offsetHeight || 148;
+  canvas.width  = W * dpr;
+  canvas.height = H * dpr;
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, W, H);
+
+  const data = rpsHistory;
+  if (data.length < 2) return;
+
+  const maxVal = data.reduce((m, v) => Math.max(m, v), 0.001);
+  const pad = { top: 8, right: 8, bottom: 24, left: 36 };
+  const cW = W - pad.left - pad.right;
+  const cH = H - pad.top - pad.bottom;
+
+  // Grid lines + y-axis labels
+  const gridLines = 4;
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= gridLines; i++) {
+    const y = pad.top + (cH / gridLines) * i;
+    ctx.strokeStyle = 'rgba(48,54,61,0.5)';
+    ctx.beginPath();
+    ctx.moveTo(pad.left, y);
+    ctx.lineTo(pad.left + cW, y);
+    ctx.stroke();
+    const val = maxVal * (1 - i / gridLines);
+    ctx.fillStyle = '#7d8590';
+    ctx.font = '10px -apple-system, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(val.toFixed(1), pad.left - 4, y + 3);
+  }
+
+  const pts = data.map((v, i) => ({
+    x: pad.left + (i / (data.length - 1)) * cW,
+    y: pad.top + cH - (v / maxVal) * cH,
+  }));
+
+  // Filled area under curve
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) {
+    const cp = (pts[i].x + pts[i - 1].x) / 2;
+    ctx.bezierCurveTo(cp, pts[i - 1].y, cp, pts[i].y, pts[i].x, pts[i].y);
+  }
+  ctx.lineTo(pts[pts.length - 1].x, pad.top + cH);
+  ctx.lineTo(pts[0].x, pad.top + cH);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(88,166,255,0.08)';
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) {
+    const cp = (pts[i].x + pts[i - 1].x) / 2;
+    ctx.bezierCurveTo(cp, pts[i - 1].y, cp, pts[i].y, pts[i].x, pts[i].y);
+  }
+  ctx.strokeStyle = '#58a6ff';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+}
+
+// ── Route Table ───────────────────────────────────────────────────────────────
+function renderTopology(routeGraph) {
+  const host = document.getElementById('topology-cards');
+  if (!host) return;
+  const groups = (routeGraph && routeGraph.groups) || [];
+  if (!groups.length) {
+    host.innerHTML = '<div class="topology-card"><div class="topology-group">No topology yet</div><div class="topology-meta">Register routes to see groups.</div></div>';
+    return;
+  }
+  host.innerHTML = groups.map(g => `
+    <div class="topology-card">
+      <div class="topology-group">/${escapeHtml(g.group)}</div>
+      <div class="topology-meta">
+        <span>${g.route_count} routes</span>
+        <span>${g.method_count} methods</span>
+        <span>${fmtNum(g.hit_count)} hits</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateRouteFilters(routes) {
+  setSelectOptions('group-filter', [...new Set(routes.map(r => r.group).filter(Boolean))], 'All groups');
+  setSelectOptions('method-filter', [...new Set(routes.flatMap(r => r.methods || []))], 'All methods');
+  setSelectOptions('tag-filter', [...new Set(routes.flatMap(r => r.tags || []))], 'All tags');
+}
+
+function setSelectOptions(id, values, label) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const current = el.value;
+  const sorted = values.sort((a, b) => a.localeCompare(b));
+  el.innerHTML = `<option value="">${label}</option>` + sorted.map(v => `<option value="${escapeAttr(v)}">${escapeHtml(v)}</option>`).join('');
+  if (sorted.includes(current)) el.value = current;
+}
+
+function filteredRoutes(routes) {
+  const group = document.getElementById('group-filter')?.value || '';
+  const method = document.getElementById('method-filter')?.value || '';
+  const tag = document.getElementById('tag-filter')?.value || '';
+  const q = (document.getElementById('route-search')?.value || '').toLowerCase();
+  return routes.filter(r => {
+    if (group && r.group !== group) return false;
+    if (method && !(r.methods || []).includes(method)) return false;
+    if (tag && !(r.tags || []).includes(tag)) return false;
+    if (q) {
+      const haystack = [r.path, r.group, ...(r.tags || []), ...(r.feature_gates || [])].join(' ').toLowerCase();
+      if (!haystack.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function renderRoutes(routes) {
+  const tbody = document.getElementById('routes-tbody');
+  const filtered = filteredRoutes(routes || []);
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="no-routes">No routes match the current filters</td></tr>';
+    return;
+  }
+  document.getElementById('route-count-badge').textContent = filtered.length + ' / ' + routes.length + ' routes';
+
+  const maxHits = Math.max(...filtered.map(r => r.hit_count || 0), 1);
+
+  tbody.innerHTML = filtered.map(r => {
+    const methods = (r.methods || []).map(m =>
+      `<span class="method-badge m-${classToken(m)}">${escapeHtml(m)}</span>`
+    ).join('');
+    const tags = (r.tags || []).map(t => `<span class="small-pill">#${escapeHtml(t)}</span>`).join('');
+    const gates = (r.feature_gates || []).map(g => `<span class="small-pill">${escapeHtml(g)}</span>`).join('');
+    const signals = [
+      r.health_eligible ? '<span class="small-pill">health</span>' : '',
+      r.replay_eligible ? '<span class="small-pill">replay</span>' : '<span class="small-pill">no replay</span>',
+      tags,
+      gates,
+    ].join('');
+    const barW = Math.round((r.hit_count / maxHits) * 100);
+    const avg  = r.avg_latency_ms ? r.avg_latency_ms.toFixed(1) : '0.0';
+    const errStyle = r.error_count > 0 ? 'color:var(--red)' : '';
+    return `
+      <tr>
+        <td><span class="path-text">${escapeHtml(r.path)}</span></td>
+        <td><span class="small-pill">/${escapeHtml(r.group || 'root')}</span></td>
+        <td>${methods}</td>
+        <td>${signals || '<span class="small-pill">—</span>'}</td>
+        <td>
+          <div class="hit-bar-wrap">
+            <div class="hit-bar"><div class="hit-bar-fill" style="width:${barW}%"></div></div>
+            <span style="${errStyle}">${fmtNum(r.hit_count)}</span>
+          </div>
+        </td>
+        <td class="latency">${avg}ms</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function escapeHtml(s) {
+  return String(s ?? '').replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));
+}
+
+function escapeAttr(s) {
+  return escapeHtml(s).replace(/'/g, '&#39;');
+}
+
+function classToken(s) {
+  return String(s ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'unknown';
+}
+
+// ── Refresh ───────────────────────────────────────────────────────────────────
+async function refresh() {
+  const banner = document.getElementById('error-banner');
+  try {
+    const snap = await apiFetch('/snapshot');
+    banner.style.display = 'none';
+
+    const now = Date.now();
+    const total = snap.total_reqs || 0;
+
+    // RPS calculation
+    let rps = 0;
+    if (prevTotal !== null && prevTs !== null) {
+      const dt = (now - prevTs) / 1000;
+      rps = dt > 0 ? (total - prevTotal) / dt : 0;
+    }
+    prevTotal = total;
+    prevTs    = now;
+
+    // ── Stat cards
+    setText('s-total', fmtNum(total));
+    setText('s-rps',   rps.toFixed(2) + ' req/s');
+    setText('s-uf',    fmtNum(snap.ultra_fast_reqs));
+    setText('s-fast',  fmtNum(snap.fast_reqs));
+    setText('s-full',  fmtNum(snap.full_reqs));
+    setText('s-uf-pct',   pct(snap.ultra_fast_reqs, total));
+    setText('s-fast-pct', pct(snap.fast_reqs, total));
+    setText('s-full-pct', pct(snap.full_reqs, total));
+
+    // ── Legend
+    setText('l-uf',       fmtNum(snap.ultra_fast_reqs));
+    setText('l-fast',     fmtNum(snap.fast_reqs));
+    setText('l-full',     fmtNum(snap.full_reqs));
+    setText('l-uf-pct',   '(' + pct(snap.ultra_fast_reqs, total) + ')');
+    setText('l-fast-pct', '(' + pct(snap.fast_reqs, total) + ')');
+    setText('l-full-pct', '(' + pct(snap.full_reqs, total) + ')');
+
+    // ── Uptime
+    setText('uptime-val', fmtUptime(snap.uptime_secs || 0));
+
+    // ── Isometric canvas
+    const canvas = document.getElementById('iso-canvas');
+    drawIso(canvas, snap.ultra_fast_reqs || 0, snap.fast_reqs || 0, snap.full_reqs || 0);
+
+    // ── Route topology + table
+    latestRoutes = snap.routes || [];
+    updateRouteFilters(latestRoutes);
+    renderTopology(snap.route_graph);
+    renderRoutes(latestRoutes);
+
+    if (snap.replay_index && snap.replay_index.admin_path) {
+      const replayPath = document.getElementById('replay-api-path');
+      if (replayPath && !replayPath.dataset.userEdited) replayPath.value = snap.replay_index.admin_path;
+    }
+
+    // ── RPS chart
+    rpsHistory.shift();
+    rpsHistory.push(parseFloat(rps.toFixed(3)));
+    drawRpsChart();
+
+  } catch (e) {
+    banner.style.display = 'block';
+    const msg = e.message.includes('401') || e.message.includes('Unauthorized')
+      ? '⚠ API endpoint requires an admin token. Enter your token in the header field.'
+      : '⚠ Could not reach dashboard API: ' + e.message;
+    banner.textContent = msg;
+  }
+}
+
+function setText(id, val) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = val;
+}
+
+// ── Replay Browser ───────────────────────────────────────────────────────────
+function replayBaseUrl() {
+  const path = (document.getElementById('replay-api-path')?.value || '/__rustapi/replays').trim() || '/__rustapi/replays';
+  return BASE + (path.startsWith('/') ? path : '/' + path);
+}
+
+function replayToken() {
+  return (document.getElementById('replay-token')?.value || '').trim() || getToken();
+}
+
+async function replayFetch(path, options = {}) {
+  const headers = { 'Accept': 'application/json', ...(options.headers || {}) };
+  const tok = replayToken();
+  if (tok) headers['Authorization'] = 'Bearer ' + tok;
+  const resp = await fetch(replayBaseUrl() + path, { ...options, headers });
+  const text = await resp.text();
+  let body;
+  try { body = text ? JSON.parse(text) : null; } catch { body = text; }
+  if (!resp.ok) {
+    const msg = body && body.message ? body.message : resp.status + ' ' + resp.statusText;
+    throw new Error(msg);
+  }
+  return body;
+}
+
+async function loadReplays() {
+  const status = document.getElementById('replay-status');
+  const list = document.getElementById('replay-list');
+  const params = new URLSearchParams({ limit: '25' });
+  const method = document.getElementById('replay-method')?.value || '';
+  const path = document.getElementById('replay-path-filter')?.value || '';
+  if (method) params.set('method', method);
+  if (path) params.set('path', path);
+
+  try {
+    status.textContent = 'Loading replay entries…';
+    const data = await replayFetch('?' + params.toString());
+    const entries = data.entries || [];
+    status.textContent = `${entries.length} shown / ${data.total ?? '—'} total`;
+    renderReplayList(entries);
+  } catch (e) {
+    status.textContent = 'Replay unavailable';
+    list.innerHTML = `<div class="no-routes">Replay API unavailable: ${escapeHtml(e.message)}<br>Enable ReplayLayer and enter its admin token.</div>`;
+  }
+}
+
+function renderReplayList(entries) {
+  const list = document.getElementById('replay-list');
+  if (!entries.length) {
+    list.innerHTML = '<div class="no-routes">No replay entries match the filters.</div>';
+    return;
+  }
+  list.innerHTML = entries.map(e => {
+    const active = e.id === selectedReplayId ? ' active' : '';
+    const method = e.request?.method || '—';
+    const path = e.request?.path || e.request?.uri || '—';
+    const status = e.response?.status || '—';
+    return `
+      <div class="replay-item${active}" data-id="${escapeAttr(e.id)}">
+        <div><span class="method-badge m-${classToken(method)}">${escapeHtml(method)}</span> <span class="path-text">${escapeHtml(path)}</span></div>
+        <div class="topology-meta"><span>Status ${escapeHtml(status)}</span><span>${escapeHtml(e.meta?.duration_ms ?? '—')}ms</span></div>
+        <div class="replay-id">${escapeHtml(e.id)}</div>
+      </div>
+    `;
+  }).join('');
+  list.querySelectorAll('.replay-item').forEach(el => {
+    el.addEventListener('click', () => selectReplay(el.dataset.id));
+  });
+}
+
+function selectReplay(id) {
+  selectedReplayId = id;
+  document.querySelectorAll('.replay-item').forEach(el => el.classList.toggle('active', el.dataset.id === id));
+  document.getElementById('replay-show').disabled = false;
+  document.getElementById('replay-diff').disabled = false;
+  showReplay();
+}
+
+async function showReplay() {
+  if (!selectedReplayId) return;
+  const detail = document.getElementById('replay-detail');
+  try {
+    detail.textContent = 'Loading replay detail…';
+    const data = await replayFetch('/' + encodeURIComponent(selectedReplayId));
+    detail.textContent = JSON.stringify(data, null, 2);
+  } catch (e) {
+    detail.textContent = 'Could not load replay detail: ' + e.message;
+  }
+}
+
+async function diffReplay() {
+  if (!selectedReplayId) return;
+  const target = (document.getElementById('replay-target')?.value || '').trim();
+  const detail = document.getElementById('replay-detail');
+  if (!target) {
+    detail.textContent = 'Enter a diff target URL first, for example http://localhost:3000';
+    return;
+  }
+  try {
+    detail.textContent = 'Running replay diff…';
+    const data = await replayFetch('/' + encodeURIComponent(selectedReplayId) + '/diff?target=' + encodeURIComponent(target), { method: 'POST' });
+    detail.textContent = JSON.stringify(data, null, 2);
+  } catch (e) {
+    detail.textContent = 'Replay diff failed: ' + e.message;
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  // Move ?token= from URL into the input field and strip it from the address bar
+  // to prevent the token from appearing in browser history or server logs.
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('token')) {
+    document.getElementById('token-input').value = params.get('token');
+    params.delete('token');
+    const newSearch = params.toString();
+    const newUrl = window.location.pathname +
+      (newSearch ? '?' + newSearch : '') +
+      window.location.hash;
+    history.replaceState(null, '', newUrl);
+  }
+  refresh();
+  setInterval(refresh, REFRESH_MS);
+  document.getElementById('token-input').addEventListener('change', () => refresh());
+  ['group-filter', 'method-filter', 'tag-filter', 'route-search'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', () => renderRoutes(latestRoutes));
+  });
+  document.getElementById('replay-api-path')?.addEventListener('input', e => { e.target.dataset.userEdited = '1'; });
+  document.getElementById('replay-load')?.addEventListener('click', () => loadReplays());
+  document.getElementById('replay-show')?.addEventListener('click', () => showReplay());
+  document.getElementById('replay-diff')?.addEventListener('click', () => diffReplay());
+});
+</script>
+</body>
+</html>

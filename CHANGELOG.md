@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Embedded dashboard snapshots now include request-stage counters, route topology groups, health endpoint summary, and replay admin API discovery metadata.
+- Dashboard UI adds route group/method/tag filters plus a replay browser that reuses the existing `ReplayLayer` admin API for list, detail, and diff workflows.
+- Replay admin list endpoint now accepts UI-friendly pagination and filters: `offset`, `status_max`, `from`, `to`, `tag`, and `order`.
+
+### Documentation
+
+- Added a cookbook recipe and SVG preview for the embedded dashboard and replay browser workflow, including the inspection-first state rewind model and disabled-feature performance budget.
+
 ## [0.1.410] - 2026-03-09
 
 ### Added

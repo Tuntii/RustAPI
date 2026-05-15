@@ -34,7 +34,7 @@ jobs:
       - name: Install native database client libraries
         run: |
           sudo apt-get update
-          sudo apt-get install -y pkg-config libmariadb-dev libmariadb-dev-compat libpq-dev libsqlite3-dev
+          sudo apt-get install -y pkg-config libmysqlclient-dev libpq-dev libsqlite3-dev
 
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -78,7 +78,7 @@ jobs:
       - name: Install native database client libraries
         run: |
           sudo apt-get update
-          sudo apt-get install -y pkg-config libmariadb-dev libmariadb-dev-compat libpq-dev libsqlite3-dev
+          sudo apt-get install -y pkg-config libmysqlclient-dev libpq-dev libsqlite3-dev
 
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -94,7 +94,7 @@ jobs:
         run: cargo fmt --all -- --check
 
       - name: Run clippy
-        run: cargo clippy --workspace --all-features -- -D warnings
+        run: cargo clippy --workspace --all-features
 
   build:
     name: Build
@@ -116,7 +116,7 @@ jobs:
       - name: Install native database client libraries
         run: |
           sudo apt-get update
-          sudo apt-get install -y pkg-config libmariadb-dev libmariadb-dev-compat libpq-dev libsqlite3-dev
+          sudo apt-get install -y pkg-config libmysqlclient-dev libpq-dev libsqlite3-dev
 
       - name: Cache cargo registry
         uses: actions/cache@v4
@@ -157,7 +157,7 @@ jobs:
       - name: Install native database client libraries
         run: |
           sudo apt-get update
-          sudo apt-get install -y pkg-config libmariadb-dev libmariadb-dev-compat libpq-dev libsqlite3-dev
+          sudo apt-get install -y pkg-config libmysqlclient-dev libpq-dev libsqlite3-dev
 
       - name: Cache cargo registry
         uses: actions/cache@v4

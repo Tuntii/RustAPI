@@ -59,15 +59,20 @@ impl Default for JwtValidation {
 impl JwtValidation {
     /// Convert to jsonwebtoken's Validation struct
     fn to_jsonwebtoken_validation(&self) -> Validation {
-        let mut validation = Validation::new(
-            self.algorithms
-                .first()
-                .copied()
-                .unwrap_or(jsonwebtoken::Algorithm::HS256),
-        );
+        let algorithms = if self.algorithms.is_empty() {
+            vec![jsonwebtoken::Algorithm::HS256]
+        } else {
+            self.algorithms.clone()
+        };
+        let mut validation = Validation::new(algorithms[0]);
         validation.leeway = self.leeway;
         validation.validate_exp = self.validate_exp;
-        validation.set_required_spec_claims::<&str>(&[]);
+        validation.algorithms = algorithms;
+        if self.validate_exp {
+            validation.set_required_spec_claims(&["exp"]);
+        } else {
+            validation.set_required_spec_claims::<&str>(&[]);
+        }
         validation
     }
 }
@@ -122,6 +127,7 @@ impl<T: DeserializeOwned + Clone + Send + Sync + 'static> JwtLayer<T> {
     /// Skip JWT validation for specific paths.
     ///
     /// Paths that start with any of the provided prefixes will bypass JWT validation.
+    /// The root path `/` is treated specially and matches only `/`, not every path.
     /// This is useful for public endpoints like health checks, documentation, and login.
     ///
     /// # Example
@@ -170,7 +176,7 @@ impl<T: DeserializeOwned + Clone + Send + Sync + 'static> MiddlewareLayer for Jw
         Box::pin(async move {
             // Check if this path should skip JWT validation
             let path = req.uri().path();
-            if skip_paths.iter().any(|skip| path.starts_with(skip)) {
+            if skip_paths.iter().any(|skip| should_skip_path(path, skip)) {
                 return next(req).await;
             }
 
@@ -243,6 +249,14 @@ impl<T: DeserializeOwned + Clone + Send + Sync + 'static> MiddlewareLayer for Jw
 /// Internal wrapper for validated claims stored in request extensions
 #[derive(Clone)]
 pub struct ValidatedClaims<T>(pub T);
+
+fn should_skip_path(path: &str, skip: &str) -> bool {
+    if skip == "/" {
+        path == "/"
+    } else {
+        path.starts_with(skip)
+    }
+}
 
 /// Create a 401 Unauthorized JSON response
 fn create_unauthorized_response(message: &str) -> Response {
@@ -413,9 +427,19 @@ mod tests {
         custom_field: Option<String>,
     }
 
+    #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+    struct NoExpClaims {
+        sub: String,
+    }
+
     /// Create a test request with optional Authorization header
     fn create_test_request(auth_header: Option<&str>) -> Request {
-        let uri: http::Uri = "/test".parse().unwrap();
+        create_test_request_for_path("/test", auth_header)
+    }
+
+    /// Create a test request for a specific path with optional Authorization header
+    fn create_test_request_for_path(path: &str, auth_header: Option<&str>) -> Request {
+        let uri: http::Uri = path.parse().unwrap();
         let mut builder = http::Request::builder().method(Method::GET).uri(uri);
 
         if let Some(auth) = auth_header {
@@ -457,6 +481,16 @@ mod tests {
     /// Strategy for generating optional custom fields
     fn custom_field_strategy() -> impl Strategy<Value = Option<String>> {
         prop_oneof![Just(None), "[a-zA-Z0-9 ]{1,100}".prop_map(Some),]
+    }
+
+    fn create_token_with_algorithm<T: Serialize>(
+        claims: &T,
+        secret: &str,
+        algorithm: jsonwebtoken::Algorithm,
+    ) -> String {
+        let encoding_key = jsonwebtoken::EncodingKey::from_secret(secret.as_bytes());
+        let header = jsonwebtoken::Header::new(algorithm);
+        jsonwebtoken::encode(&header, claims, &encoding_key).unwrap()
     }
 
     /// Helper to setup stack with JWT layer
@@ -747,6 +781,37 @@ mod tests {
         assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
     }
 
+    #[tokio::test]
+    async fn test_skip_paths_root_matches_only_root() {
+        let mut stack = LayerStack::new();
+        stack.push(Box::new(
+            JwtLayer::<TestClaims>::new("secret").skip_paths(vec!["/"]),
+        ));
+        let handler = dummy_handler();
+
+        let root_request = create_test_request_for_path("/", None);
+        let root_response = stack.execute(root_request, handler.clone()).await;
+        assert_eq!(root_response.status(), StatusCode::OK);
+
+        let protected_request = create_test_request_for_path("/protected", None);
+        let protected_response = stack.execute(protected_request, handler).await;
+        assert_eq!(protected_response.status(), StatusCode::UNAUTHORIZED);
+    }
+
+    #[tokio::test]
+    async fn test_skip_paths_prefix_still_matches_nested_paths() {
+        let mut stack = LayerStack::new();
+        stack.push(Box::new(
+            JwtLayer::<TestClaims>::new("secret").skip_paths(vec!["/docs"]),
+        ));
+        let handler = dummy_handler();
+
+        let docs_request = create_test_request_for_path("/docs/openapi.json", None);
+        let docs_response = stack.execute(docs_request, handler).await;
+
+        assert_eq!(docs_response.status(), StatusCode::OK);
+    }
+
     #[test]
     fn test_auth_user_extractor_without_middleware() {
         let request = create_test_request(None);
@@ -770,6 +835,57 @@ mod tests {
         // Token should have 3 parts separated by dots
         let parts: Vec<&str> = token.split('.').collect();
         assert_eq!(parts.len(), 3);
+    }
+
+    #[test]
+    fn test_validate_token_requires_exp_by_default() {
+        let layer = JwtLayer::<NoExpClaims>::new("secret");
+        let claims = NoExpClaims {
+            sub: "user123".to_string(),
+        };
+        let token = create_token(&claims, "secret").unwrap();
+
+        let result = layer.validate_token(&token);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_validate_token_can_opt_out_of_required_exp() {
+        let layer = JwtLayer::<NoExpClaims>::new("secret").with_validation(JwtValidation {
+            validate_exp: false,
+            ..JwtValidation::default()
+        });
+        let claims = NoExpClaims {
+            sub: "user123".to_string(),
+        };
+        let token = create_token(&claims, "secret").unwrap();
+
+        let result = layer.validate_token(&token);
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), claims);
+    }
+
+    #[test]
+    fn test_validation_uses_all_configured_algorithms() {
+        let layer = JwtLayer::<TestClaims>::new("secret").with_validation(JwtValidation {
+            algorithms: vec![
+                jsonwebtoken::Algorithm::HS256,
+                jsonwebtoken::Algorithm::HS512,
+            ],
+            ..JwtValidation::default()
+        });
+        let claims = TestClaims {
+            sub: "user123".to_string(),
+            exp: future_timestamp(3600),
+            custom_field: None,
+        };
+        let token = create_token_with_algorithm(&claims, "secret", jsonwebtoken::Algorithm::HS512);
+
+        let result = layer.validate_token(&token);
+
+        assert!(result.is_ok());
     }
 
     #[test]

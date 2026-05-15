@@ -236,9 +236,9 @@ impl AuditStore for FileAuditStore {
 
         // Sort by timestamp
         if query.newest_first {
-            results.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
+            results.sort_by_key(|b| std::cmp::Reverse(b.timestamp));
         } else {
-            results.sort_by(|a, b| a.timestamp.cmp(&b.timestamp));
+            results.sort_by_key(|a| a.timestamp);
         }
 
         // Apply offset and limit

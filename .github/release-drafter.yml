@@ -46,3 +46,32 @@ version-resolver:
 template: |
   ## What's Changed
   $CHANGES
+
+autolabeler:
+  - label: 'feat'
+    branch:
+      - '/^feat\/.+/'
+    title:
+      - '/^feat(\(.+\))?:/i'
+  - label: 'fix'
+    branch:
+      - '/^fix\/.+/'
+    title:
+      - '/^fix(\(.+\))?:/i'
+  - label: 'docs'
+    branch:
+      - '/^docs?\/.+/'
+    title:
+      - '/^docs?(\(.+\))?:/i'
+  - label: 'chore'
+    branch:
+      - '/^chore\/.+/'
+      - '/^ci\/.+/'
+      - '/^refactor\/.+/'
+    title:
+      - '/^(chore|ci|refactor)(\(.+\))?:/i'
+  - label: 'perf'
+    branch:
+      - '/^perf\/.+/'
+    title:
+      - '/^perf(\(.+\))?:/i'

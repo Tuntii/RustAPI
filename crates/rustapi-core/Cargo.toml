@@ -72,17 +72,19 @@ quinn = { workspace = true, optional = true }
 h3 = { version = "0.0.8", optional = true }
 h3-quinn = { version = "0.0.10", optional = true }
 rustls = { workspace = true, optional = true }
-rustls-pemfile = { workspace = true, optional = true }
 rcgen = { workspace = true, optional = true }
 
 # Replay (feature-gated)
 async-trait = { workspace = true, optional = true }
 
+# Dashboard (feature-gated)
+dashmap = { version = "6.0", optional = true }
+
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 proptest = "1.4"
 rustapi-testing = { workspace = true }
-reqwest = { version = "0.12", features = ["json", "stream"] }
+reqwest = { version = "0.12", default-features = false, features = ["json", "stream", "rustls-tls"] }
 async-stream = "0.3"
 async-trait = { workspace = true }
 [features]
@@ -97,9 +99,10 @@ compression = ["dep:flate2"]
 compression-brotli = ["compression", "dep:brotli"]
 simd-json = ["dep:simd-json"]
 tracing = []
-http3 = ["dep:quinn", "dep:h3", "dep:h3-quinn", "dep:rustls", "dep:rustls-pemfile"]
+http3 = ["dep:quinn", "dep:h3", "dep:h3-quinn", "dep:rustls"]
 http3-dev = ["http3", "dep:rcgen"]
 replay = ["dep:async-trait"]
+dashboard = ["dep:dashmap"]
 
 
 

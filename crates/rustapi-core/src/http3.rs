@@ -29,7 +29,7 @@ use h3::server::RequestStream;
 use h3_quinn::BidiStream;
 use http::{header, StatusCode};
 use quinn::{Endpoint, ServerConfig};
-use rustls::pki_types::{CertificateDer, PrivateKeyDer};
+use rustls::pki_types::{pem::PemObject, CertificateDer, PrivateKeyDer};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use tracing::{error, info};
@@ -375,17 +375,9 @@ impl Http3Server {
         cert_path: &str,
         key_path: &str,
     ) -> Result<ServerConfig, Box<dyn std::error::Error + Send + Sync>> {
-        use std::fs::File;
-        use std::io::BufReader;
-
-        let cert_file = File::open(cert_path)?;
-        let key_file = File::open(key_path)?;
-
-        let certs: Vec<CertificateDer> =
-            rustls_pemfile::certs(&mut BufReader::new(cert_file)).collect::<Result<Vec<_>, _>>()?;
-
-        let key = rustls_pemfile::private_key(&mut BufReader::new(key_file))?
-            .ok_or("No private key found")?;
+        let certs: Vec<CertificateDer<'static>> =
+            CertificateDer::pem_file_iter(cert_path)?.collect::<Result<Vec<_>, _>>()?;
+        let key = PrivateKeyDer::from_pem_file(key_path)?;
 
         Self::create_server_config(certs, key)
     }

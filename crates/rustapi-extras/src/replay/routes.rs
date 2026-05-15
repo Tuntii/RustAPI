@@ -52,7 +52,9 @@ pub async fn dispatch(
             let id = path.trim_end_matches("/run");
             let target = extract_query_param(uri, "target");
             match target {
-                Some(target_url) => Some(handle_run(id, &target_url, store).await),
+                Some(target_url) => {
+                    Some(handle_run(id, &target_url, store, config.max_response_body).await)
+                }
                 None => Some(json_response(
                     StatusCode::BAD_REQUEST,
                     json!({"error": "bad_request", "message": "Missing 'target' query parameter"}),
@@ -65,7 +67,9 @@ pub async fn dispatch(
             let id = path.trim_end_matches("/diff");
             let target = extract_query_param(uri, "target");
             match target {
-                Some(target_url) => Some(handle_diff(id, &target_url, store).await),
+                Some(target_url) => {
+                    Some(handle_diff(id, &target_url, store, config.max_response_body).await)
+                }
                 None => Some(json_response(
                     StatusCode::BAD_REQUEST,
                     json!({"error": "bad_request", "message": "Missing 'target' query parameter"}),
@@ -84,24 +88,7 @@ pub async fn dispatch(
 }
 
 async fn handle_list(uri: &http::Uri, store: &dyn ReplayStore) -> Response {
-    let mut query = ReplayQuery::new();
-
-    if let Some(limit) = extract_query_param(uri, "limit") {
-        if let Ok(n) = limit.parse::<usize>() {
-            query = query.limit(n);
-        }
-    }
-    if let Some(method) = extract_query_param(uri, "method") {
-        query = query.method(method);
-    }
-    if let Some(path) = extract_query_param(uri, "path") {
-        query = query.path_contains(path);
-    }
-    if let Some(status_min) = extract_query_param(uri, "status_min") {
-        if let Ok(s) = status_min.parse::<u16>() {
-            query = query.status_min(s);
-        }
-    }
+    let query = replay_query_from_uri(uri);
 
     match store.list(&query).await {
         Ok(entries) => {
@@ -123,6 +110,63 @@ async fn handle_list(uri: &http::Uri, store: &dyn ReplayStore) -> Response {
     }
 }
 
+fn replay_query_from_uri(uri: &http::Uri) -> ReplayQuery {
+    let mut query = ReplayQuery::new();
+
+    if let Some(limit) = extract_query_param(uri, "limit") {
+        if let Ok(n) = limit.parse::<usize>() {
+            query = query.limit(n);
+        }
+    }
+    if let Some(offset) = extract_query_param(uri, "offset") {
+        if let Ok(n) = offset.parse::<usize>() {
+            query = query.offset(n);
+        }
+    }
+    if let Some(method) = extract_query_param(uri, "method") {
+        if !method.is_empty() {
+            query = query.method(method.to_ascii_uppercase());
+        }
+    }
+    if let Some(path) = extract_query_param(uri, "path") {
+        if !path.is_empty() {
+            query = query.path_contains(path);
+        }
+    }
+    if let Some(status_min) = extract_query_param(uri, "status_min") {
+        if let Ok(s) = status_min.parse::<u16>() {
+            query = query.status_min(s);
+        }
+    }
+    if let Some(status_max) = extract_query_param(uri, "status_max") {
+        if let Ok(s) = status_max.parse::<u16>() {
+            query = query.status_max(s);
+        }
+    }
+    if let Some(from) = extract_query_param(uri, "from") {
+        if let Ok(ts) = from.parse::<u64>() {
+            query = query.from_timestamp(ts);
+        }
+    }
+    if let Some(to) = extract_query_param(uri, "to") {
+        if let Ok(ts) = to.parse::<u64>() {
+            query = query.to_timestamp(ts);
+        }
+    }
+    if let Some(tag) = extract_query_param(uri, "tag") {
+        if let Some((key, value)) = tag.split_once('=') {
+            if !key.is_empty() {
+                query = query.tag(key.to_string(), value.to_string());
+            }
+        }
+    }
+    if let Some(order) = extract_query_param(uri, "order") {
+        query = query.newest_first(!matches!(order.as_str(), "asc" | "oldest" | "oldest_first"));
+    }
+
+    query
+}
+
 async fn handle_show(id: &str, store: &dyn ReplayStore) -> Response {
     match store.get(id).await {
         Ok(Some(entry)) => json_response(StatusCode::OK, serde_json::to_value(&entry).unwrap()),
@@ -137,7 +181,17 @@ async fn handle_show(id: &str, store: &dyn ReplayStore) -> Response {
     }
 }
 
-async fn handle_run(id: &str, target_url: &str, store: &dyn ReplayStore) -> Response {
+async fn handle_run(
+    id: &str,
+    target_url: &str,
+    store: &dyn ReplayStore,
+    max_response_body: usize,
+) -> Response {
+    let target_url = match parse_target_url(target_url) {
+        Ok(target_url) => target_url,
+        Err(_) => return invalid_target_response(),
+    };
+
     let entry = match store.get(id).await {
         Ok(Some(entry)) => entry,
         Ok(None) => {
@@ -155,7 +209,10 @@ async fn handle_run(id: &str, target_url: &str, store: &dyn ReplayStore) -> Resp
     };
 
     let client = ReplayClient::new();
-    match client.replay(&entry, target_url).await {
+    match client
+        .replay_with_limit(&entry, &target_url, Some(max_response_body))
+        .await
+    {
         Ok(replayed) => json_response(
             StatusCode::OK,
             json!({
@@ -171,7 +228,17 @@ async fn handle_run(id: &str, target_url: &str, store: &dyn ReplayStore) -> Resp
     }
 }
 
-async fn handle_diff(id: &str, target_url: &str, store: &dyn ReplayStore) -> Response {
+async fn handle_diff(
+    id: &str,
+    target_url: &str,
+    store: &dyn ReplayStore,
+    max_response_body: usize,
+) -> Response {
+    let target_url = match parse_target_url(target_url) {
+        Ok(target_url) => target_url,
+        Err(_) => return invalid_target_response(),
+    };
+
     let entry = match store.get(id).await {
         Ok(Some(entry)) => entry,
         Ok(None) => {
@@ -189,7 +256,10 @@ async fn handle_diff(id: &str, target_url: &str, store: &dyn ReplayStore) -> Res
     };
 
     let client = ReplayClient::new();
-    match client.replay(&entry, target_url).await {
+    match client
+        .replay_with_limit(&entry, &target_url, Some(max_response_body))
+        .await
+    {
         Ok(replayed) => {
             let ignore_headers = vec![
                 "date".to_string(),
@@ -235,16 +305,39 @@ async fn handle_delete(id: &str, store: &dyn ReplayStore) -> Response {
 
 /// Helper to extract a query parameter value from a URI.
 fn extract_query_param(uri: &http::Uri, key: &str) -> Option<String> {
-    uri.query().and_then(|q| {
-        q.split('&').find_map(|pair| {
-            let (k, v) = pair.split_once('=')?;
-            if k == key {
-                Some(v.to_string())
-            } else {
-                None
-            }
-        })
-    })
+    let query = uri.query()?;
+    serde_urlencoded::from_str::<Vec<(String, String)>>(query)
+        .ok()?
+        .into_iter()
+        .find_map(|(k, v)| (k == key).then_some(v))
+}
+
+#[derive(Debug, Clone, Copy)]
+struct InvalidTargetUrl;
+
+fn parse_target_url(target_url: &str) -> Result<String, InvalidTargetUrl> {
+    let trimmed = target_url.trim();
+    let parsed = reqwest::Url::parse(trimmed).map_err(|_| InvalidTargetUrl)?;
+
+    if !matches!(parsed.scheme(), "http" | "https") || parsed.host_str().is_none() {
+        return Err(InvalidTargetUrl);
+    }
+
+    if parsed.query().is_some() || parsed.fragment().is_some() {
+        return Err(InvalidTargetUrl);
+    }
+
+    Ok(trimmed.to_string())
+}
+
+fn invalid_target_response() -> Response {
+    json_response(
+        StatusCode::BAD_REQUEST,
+        json!({
+            "error": "bad_request",
+            "message": "Target must be an absolute http or https URL without query or fragment",
+        }),
+    )
 }
 
 /// Helper to create a JSON response.
@@ -253,6 +346,86 @@ fn json_response(status: StatusCode, body: serde_json::Value) -> Response {
     http::Response::builder()
         .status(status)
         .header(http::header::CONTENT_TYPE, "application/json")
+        .header(http::header::CACHE_CONTROL, "no-store")
+        .header(http::header::REFERRER_POLICY, "no-referrer")
+        .header("x-content-type-options", "nosniff")
         .body(ResponseBody::Full(Full::new(Bytes::from(body_bytes))))
         .unwrap()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{
+        extract_query_param, invalid_target_response, parse_target_url, replay_query_from_uri,
+    };
+
+    #[test]
+    fn replay_query_from_uri_supports_ui_filters() {
+        let uri: http::Uri = "/__rustapi/replays?limit=20&offset=40&method=get&path=/api&status_min=400&status_max=499&from=1000&to=2000&tag=tenant=acme&order=asc"
+            .parse()
+            .unwrap();
+
+        let query = replay_query_from_uri(&uri);
+
+        assert_eq!(query.limit, Some(20));
+        assert_eq!(query.offset, Some(40));
+        assert_eq!(query.method.as_deref(), Some("GET"));
+        assert_eq!(query.path_contains.as_deref(), Some("/api"));
+        assert_eq!(query.status_min, Some(400));
+        assert_eq!(query.status_max, Some(499));
+        assert_eq!(query.from_timestamp, Some(1000));
+        assert_eq!(query.to_timestamp, Some(2000));
+        assert_eq!(
+            query.tag.as_ref().map(|(k, v)| (k.as_str(), v.as_str())),
+            Some(("tenant", "acme"))
+        );
+        assert!(!query.newest_first);
+    }
+
+    #[test]
+    fn extract_query_param_decodes_url_encoded_values() {
+        let uri: http::Uri =
+            "/__rustapi/replays?target=https%3A%2F%2Fexample.com%3A8443&path=%2Fapi+users"
+                .parse()
+                .unwrap();
+
+        assert_eq!(
+            extract_query_param(&uri, "target").as_deref(),
+            Some("https://example.com:8443")
+        );
+        assert_eq!(
+            extract_query_param(&uri, "path").as_deref(),
+            Some("/api users")
+        );
+    }
+
+    #[test]
+    fn validate_target_url_accepts_absolute_http_urls() {
+        let https_target = match parse_target_url(" https://example.com:8443 ") {
+            Ok(target) => target,
+            Err(_) => panic!("expected https target to be accepted"),
+        };
+        let http_target = match parse_target_url("http://127.0.0.1:3000") {
+            Ok(target) => target,
+            Err(_) => panic!("expected http target to be accepted"),
+        };
+
+        assert_eq!(https_target, "https://example.com:8443");
+        assert_eq!(http_target, "http://127.0.0.1:3000");
+    }
+
+    #[test]
+    fn validate_target_url_rejects_relative_empty_and_non_http_urls() {
+        for target in [
+            "",
+            "/relative",
+            "example.com",
+            "ftp://example.com",
+            "data:text/plain,hi",
+        ] {
+            assert!(parse_target_url(target).is_err());
+            let response = invalid_target_response();
+            assert_eq!(response.status(), http::StatusCode::BAD_REQUEST);
+        }
+    }
 }

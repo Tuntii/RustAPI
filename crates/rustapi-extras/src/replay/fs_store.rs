@@ -196,9 +196,9 @@ impl ReplayStore for FsReplayStore {
             entries.into_iter().filter(|e| query.matches(e)).collect();
 
         if query.newest_first {
-            filtered.sort_by(|a, b| b.recorded_at.cmp(&a.recorded_at));
+            filtered.sort_by_key(|b| std::cmp::Reverse(b.recorded_at));
         } else {
-            filtered.sort_by(|a, b| a.recorded_at.cmp(&b.recorded_at));
+            filtered.sort_by_key(|a| a.recorded_at);
         }
 
         let offset = query.offset.unwrap_or(0);

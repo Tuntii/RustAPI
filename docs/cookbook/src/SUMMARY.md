@@ -56,6 +56,7 @@
     - [Response Compression](recipes/compression.md)
     - [Resilience Patterns](recipes/resilience.md)
     - [Observability](recipes/observability.md)
+    - [Embedded Dashboard](recipes/dashboard.md)
     - [Middleware Debugging](recipes/middleware_debugging.md)
     - [Graceful Shutdown](recipes/graceful_shutdown.md)
     - [Audit Logging](recipes/audit_logging.md)

@@ -215,9 +215,31 @@ async fn handle_request(
     let method = req.method().clone();
     let path = req.uri().path().to_owned();
 
-    // Only measure time when tracing is enabled
-    #[cfg(feature = "tracing")]
+    // Only measure time when tracing OR dashboard is enabled
+    #[cfg(any(feature = "tracing", feature = "dashboard"))]
     let start = std::time::Instant::now();
+
+    // Dashboard: grab metrics handle from state before consuming the request.
+    #[cfg(feature = "dashboard")]
+    let dashboard_metrics = router
+        .state_ref()
+        .get::<std::sync::Arc<crate::dashboard::DashboardMetrics>>()
+        .cloned();
+
+    #[cfg(feature = "dashboard")]
+    if let Some(ref metrics) = dashboard_metrics {
+        metrics.record_stage(crate::dashboard::RequestStage::Received);
+    }
+
+    // Dashboard: classify execution path before branching.
+    #[cfg(feature = "dashboard")]
+    let exec_path = if layers.is_empty() && interceptors.is_empty() {
+        crate::dashboard::ExecutionPath::UltraFast
+    } else if layers.is_empty() {
+        crate::dashboard::ExecutionPath::Fast
+    } else {
+        crate::dashboard::ExecutionPath::Full
+    };
 
     // Convert hyper request to our Request type
     let (parts, body) = req.into_parts();
@@ -265,6 +287,22 @@ async fn handle_request(
 
     #[cfg(feature = "tracing")]
     log_request(&method, &path, response.status(), start);
+
+    // Dashboard: record this request after the response is built.
+    #[cfg(feature = "dashboard")]
+    if let Some(ref metrics) = dashboard_metrics {
+        let duration_ms = start.elapsed().as_millis() as u64;
+        let is_error = response.status().is_server_error();
+        if response.status() != StatusCode::NOT_FOUND {
+            metrics.record_stage(crate::dashboard::RequestStage::Routed);
+        }
+        metrics.record_stage(crate::dashboard::RequestStage::Completed);
+        if response.status().is_client_error() || response.status().is_server_error() {
+            metrics.record_stage(crate::dashboard::RequestStage::Failed);
+        }
+        let metrics_path = crate::dashboard::metrics::metrics_key_for_path(&path);
+        metrics.record_request(&metrics_path, duration_ms, exec_path, is_error);
+    }
 
     response
 }
