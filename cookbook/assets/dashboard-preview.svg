@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
+  <title id="title">RustAPI Embedded Dashboard preview</title>
+  <desc id="desc">A stylized preview of the RustAPI embedded dashboard with live counters, isometric execution flow, route topology, and replay browser panels.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#0d1117"/>
+      <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" x2="1">
+      <stop offset="0" stop-color="#58a6ff"/>
+      <stop offset="1" stop-color="#bc8cff"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="12" stdDeviation="18" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+    <style>
+      .panel { fill: rgba(22,27,34,.92); stroke: rgba(88,166,255,.18); stroke-width: 1.2; filter: url(#shadow); }
+      .muted { fill: #7d8590; font: 500 18px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif; }
+      .label { fill: #7d8590; font: 700 14px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif; letter-spacing: 1px; }
+      .title { fill: #e6edf3; font: 700 28px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif; }
+      .value { fill: #e6edf3; font: 800 38px -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif; }
+      .mono { fill: #e6edf3; font: 500 16px SFMono-Regular, Consolas, monospace; }
+      .pill { fill: rgba(88,166,255,.12); stroke: rgba(88,166,255,.35); stroke-width: 1; }
+      .grid { stroke: rgba(125,133,144,.18); stroke-width: 1; }
+    </style>
+  </defs>
+
+  <rect width="1280" height="720" fill="url(#bg)"/>
+  <circle cx="1030" cy="90" r="260" fill="#58a6ff" opacity=".09"/>
+  <circle cx="1120" cy="650" r="300" fill="#bc8cff" opacity=".08"/>
+
+  <rect x="42" y="34" width="1196" height="74" rx="18" class="panel"/>
+  <rect x="66" y="54" width="38" height="38" rx="10" fill="url(#accent)"/>
+  <text x="117" y="73" class="title">RustAPI Embedded Dashboard</text>
+  <text x="117" y="95" class="muted">System overview, route topology, and replay inspection</text>
+  <rect x="1032" y="57" width="78" height="28" rx="14" fill="rgba(63,185,80,.12)" stroke="rgba(63,185,80,.35)"/>
+  <circle cx="1052" cy="71" r="5" fill="#3fb950"/>
+  <text x="1064" y="77" fill="#3fb950" font-size="15" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Live</text>
+  <text x="1130" y="78" class="muted">Uptime 2h 14m</text>
+
+  <g transform="translate(42 126)">
+    <rect width="282" height="110" rx="18" class="panel"/>
+    <text x="22" y="32" class="label">TOTAL REQUESTS</text>
+    <text x="22" y="78" class="value">128.4K</text>
+    <text x="22" y="99" class="muted">42.8 req/s</text>
+    <rect x="0" y="0" width="282" height="4" rx="2" fill="#58a6ff" opacity=".9"/>
+  </g>
+  <g transform="translate(342 126)">
+    <rect width="282" height="110" rx="18" class="panel"/>
+    <text x="22" y="32" class="label">ULTRA FAST PATH</text>
+    <text x="22" y="78" class="value" fill="#3fb950">91.2K</text>
+    <text x="22" y="99" class="muted">No middleware</text>
+    <rect x="0" y="0" width="282" height="4" rx="2" fill="#3fb950" opacity=".9"/>
+  </g>
+  <g transform="translate(642 126)">
+    <rect width="282" height="110" rx="18" class="panel"/>
+    <text x="22" y="32" class="label">FAST PATH</text>
+    <text x="22" y="78" class="value" fill="#bc8cff">22.5K</text>
+    <text x="22" y="99" class="muted">Interceptors only</text>
+    <rect x="0" y="0" width="282" height="4" rx="2" fill="#bc8cff" opacity=".9"/>
+  </g>
+  <g transform="translate(942 126)">
+    <rect width="296" height="110" rx="18" class="panel"/>
+    <text x="22" y="32" class="label">FULL PATH</text>
+    <text x="22" y="78" class="value" fill="#ffa657">14.7K</text>
+    <text x="22" y="99" class="muted">Tower layers</text>
+    <rect x="0" y="0" width="296" height="4" rx="2" fill="#ffa657" opacity=".9"/>
+  </g>
+
+  <g transform="translate(42 258)">
+    <rect width="352" height="268" rx="18" class="panel"/>
+    <text x="22" y="34" class="label">EXECUTION FLOW</text>
+    <g transform="translate(92 76)">
+      <polygon points="0,82 52,56 104,82 52,108" fill="#3fb950"/>
+      <polygon points="104,82 104,132 52,158 52,108" fill="#2ea043" opacity=".85"/>
+      <polygon points="0,82 52,108 52,158 0,132" fill="#238636" opacity=".85"/>
+      <polygon points="86,52 138,26 190,52 138,78" fill="#58a6ff"/>
+      <polygon points="190,52 190,120 138,146 138,78" fill="#1f6feb" opacity=".85"/>
+      <polygon points="86,52 138,78 138,146 86,120" fill="#1f6feb" opacity=".65"/>
+      <polygon points="172,92 224,66 276,92 224,118" fill="#ffa657"/>
+      <polygon points="276,92 276,132 224,158 224,118" fill="#d18616" opacity=".85"/>
+      <polygon points="172,92 224,118 224,158 172,132" fill="#b26b12" opacity=".75"/>
+    </g>
+    <rect x="22" y="206" width="90" height="28" rx="14" class="pill"/><text x="40" y="226" fill="#3fb950" font-size="14">ultra</text>
+    <rect x="124" y="206" width="78" height="28" rx="14" class="pill"/><text x="145" y="226" fill="#58a6ff" font-size="14">fast</text>
+    <rect x="214" y="206" width="74" height="28" rx="14" class="pill"/><text x="233" y="226" fill="#ffa657" font-size="14">full</text>
+  </g>
+
+  <g transform="translate(420 258)">
+    <rect width="818" height="268" rx="18" class="panel"/>
+    <text x="22" y="34" class="label">ROUTE TOPOLOGY</text>
+    <rect x="22" y="56" width="170" height="54" rx="12" fill="rgba(88,166,255,.08)" stroke="rgba(88,166,255,.2)"/>
+    <text x="40" y="80" class="mono">/api</text><text x="40" y="101" class="muted">12 routes · 31K hits</text>
+    <rect x="206" y="56" width="170" height="54" rx="12" fill="rgba(188,140,255,.08)" stroke="rgba(188,140,255,.2)"/>
+    <text x="224" y="80" class="mono">/users</text><text x="224" y="101" class="muted">7 routes · 18K hits</text>
+    <rect x="390" y="56" width="170" height="54" rx="12" fill="rgba(63,185,80,.08)" stroke="rgba(63,185,80,.2)"/>
+    <text x="408" y="80" class="mono">/health</text><text x="408" y="101" class="muted">3 probes</text>
+    <line x1="22" y1="136" x2="796" y2="136" class="grid"/>
+    <text x="28" y="164" class="mono">GET</text><text x="84" y="164" class="mono">/api/users/{id}</text><text x="628" y="164" class="muted">#users · replay</text>
+    <text x="28" y="204" class="mono">POST</text><text x="84" y="204" class="mono">/api/orders</text><text x="628" y="204" class="muted">#orders · replay</text>
+    <text x="28" y="244" class="mono">GET</text><text x="84" y="244" class="mono">/ready</text><text x="628" y="244" class="muted">health · no replay</text>
+  </g>
+
+  <g transform="translate(42 548)">
+    <rect width="1196" height="130" rx="18" class="panel"/>
+    <text x="22" y="34" class="label">REPLAY BROWSER</text>
+    <rect x="22" y="54" width="300" height="50" rx="12" fill="rgba(13,17,23,.6)" stroke="rgba(125,133,144,.25)"/>
+    <text x="42" y="84" class="mono">GET /api/users/42</text>
+    <rect x="342" y="54" width="300" height="50" rx="12" fill="rgba(13,17,23,.6)" stroke="rgba(125,133,144,.25)"/>
+    <text x="362" y="84" class="mono">200 · 4ms · req-9f1a</text>
+    <rect x="662" y="54" width="230" height="50" rx="12" fill="rgba(88,166,255,.12)" stroke="rgba(88,166,255,.35)"/>
+    <text x="700" y="84" fill="#58a6ff" font-size="18" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Inspect detail</text>
+    <rect x="912" y="54" width="230" height="50" rx="12" fill="rgba(188,140,255,.12)" stroke="rgba(188,140,255,.35)"/>
+    <text x="956" y="84" fill="#bc8cff" font-size="18" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, sans-serif">Run diff</text>
+  </g>
+</svg>

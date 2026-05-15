@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-01cbbb90.js";
+            window.path_to_searchindex_js = "searchindex-bedad13c.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-c37e91f3.js"></script>
+        <script src="toc-7c9f2a15.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -5755,6 +5755,130 @@ async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + 
 <li><a href="#graceful-shutdown-1">Graceful Shutdown</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="embedded-dashboard"><a class="header" href="#embedded-dashboard">Embedded dashboard</a></h1>
+<p>Use the embedded dashboard when you want a local, opt-in control plane for route topology, execution-path counters, request-stage telemetry, health endpoint discovery, and replay inspection.</p>
+<blockquote>
+<p><strong>Security notice</strong>
+Keep the dashboard disabled by default in production-like environments unless it is protected by an admin token and your normal ingress/auth policy.</p>
+</blockquote>
+<p><img src="assets/dashboard-preview.svg" alt="Embedded dashboard preview"></p>
+<h2 id="prerequisites-7"><a class="header" href="#prerequisites-7">Prerequisites</a></h2>
+<p>Enable the canonical dashboard feature on the public facade:</p>
+<pre><code class="language-toml">[dependencies]
+rustapi-rs = { version = "0.1.335", features = ["core-dashboard"] }
+</code></pre>
+<p>If you also want the replay browser panel to load recorded traffic, enable replay too:</p>
+<pre><code class="language-toml">[dependencies]
+rustapi-rs = { version = "0.1.335", features = ["core-dashboard", "extras-replay"] }
+</code></pre>
+<h2 id="usage-4"><a class="header" href="#usage-4">Usage</a></h2>
+<pre><code class="language-rust ignore">use rustapi_rs::prelude::*;
+
+#[rustapi_rs::get("/api/users")]
+#[tag("users")]
+#[summary("List users")]
+#[description("Returns the current user collection.")]
+async fn list_users() -&gt; Json&lt;Vec&lt;&amp;'static str&gt;&gt; {
+    Json(vec!["Alice", "Bob"])
+}
+
+#[rustapi_rs::main]
+async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    RustApi::auto()
+        .health_endpoints()
+        .dashboard(
+            DashboardConfig::new()
+                .admin_token("local-dashboard-token")
+                .path("/__rustapi/dashboard"),
+        )
+        .run("127.0.0.1:8080")
+        .await
+}</code></pre>
+<p>Open <code>http://127.0.0.1:8080/__rustapi/dashboard</code> and enter the token in the header field. The HTML shell is served without bearer headers so that browsers can load it, but JSON dashboard endpoints require the token when configured.</p>
+<h2 id="configuration-2"><a class="header" href="#configuration-2">Configuration</a></h2>
+<p><code>DashboardConfig</code> supports:</p>
+<ul>
+<li><code>.admin_token("...")</code> — protects <code>/api/*</code> dashboard JSON endpoints with <code>Authorization: Bearer &lt;token&gt;</code>.</li>
+<li><code>.path("/__rustapi/dashboard")</code> — changes where the dashboard is mounted.</li>
+<li><code>.title("...")</code> — labels the page for custom deployments.</li>
+<li><code>.replay_api_path("/__rustapi/replays")</code> — points the replay browser at the replay admin API path.</li>
+</ul>
+<p>The dashboard snapshot includes:</p>
+<ul>
+<li>execution path counters: <strong>Ultra Fast</strong>, <strong>Fast</strong>, and <strong>Full</strong></li>
+<li>request-stage counters: received, routed, completed, failed</li>
+<li>route inventory: path, methods, OpenAPI tags, feature gates, health/replay eligibility</li>
+<li>route graph groups for topology filtering</li>
+<li>health endpoint summary</li>
+<li>replay admin API discovery metadata</li>
+</ul>
+<h2 id="replay-browser"><a class="header" href="#replay-browser">Replay browser</a></h2>
+<p>The dashboard does not create a new replay storage path. It reuses the existing replay admin API exposed by <code>ReplayLayer</code>.</p>
+<pre><code class="language-rust ignore">use rustapi_rs::extras::replay::{InMemoryReplayStore, ReplayConfig, ReplayLayer};
+use rustapi_rs::prelude::*;
+
+let replay = ReplayLayer::new(
+    ReplayConfig::new()
+        .enabled(true)
+        .admin_token("local-replay-token")
+        .admin_route_prefix("/__rustapi/replays"),
+)
+.with_store(InMemoryReplayStore::new(200));
+
+let app = RustApi::auto()
+    .layer(replay)
+    .dashboard(
+        DashboardConfig::new()
+            .admin_token("local-dashboard-token")
+            .replay_api_path("/__rustapi/replays"),
+    );</code></pre>
+<p>Use the replay panel to:</p>
+<ol>
+<li>list recent recordings with method/path filters</li>
+<li>inspect request and response details</li>
+<li>run a diff against a target URL</li>
+</ol>
+<p>The replay token can be different from the dashboard token. If the replay token field is empty, the dashboard token is reused.</p>
+<h2 id="state-rewind-model"><a class="header" href="#state-rewind-model">State rewind model</a></h2>
+<p>The dashboard intentionally ships an <strong>inspection-first</strong> time-travel workflow:</p>
+<ul>
+<li>captured requests and responses are browsed through <code>ReplayLayer</code></li>
+<li>selected requests can be replayed against a local/staging target</li>
+<li>diffs show response-level behavior changes</li>
+</ul>
+<p>Generic application state rewind is not enabled implicitly. RustAPI cannot safely roll back arbitrary databases, queues, caches, external calls, or in-memory state without an application-specific contract. If an app needs true state rewind later, it should add explicit opt-in snapshot hooks around its own state boundaries and keep those hooks separate from the default dashboard surface.</p>
+<p>For this dashboard version, full state rollback is therefore <strong>not required</strong>; replay inspection and diffing are the supported baseline.</p>
+<h2 id="disabled-feature-performance-budget"><a class="header" href="#disabled-feature-performance-budget">Disabled-feature performance budget</a></h2>
+<p>The dashboard feature is opt-in through <code>core-dashboard</code>. Builds that do not enable that feature compile out the dashboard module, route mounting, and request-stage instrumentation.</p>
+<p>The budget for dashboard-disabled builds is:</p>
+<ul>
+<li>no dashboard routes are registered</li>
+<li>no <code>DashboardMetrics</code> state is inserted</li>
+<li>no dashboard-specific atomics are touched on the request path</li>
+<li>the ultra-fast, fast, and full execution tiers stay unchanged</li>
+</ul>
+<p>Any future dashboard work that touches <code>server.rs</code>, <code>router.rs</code>, or the execution-path dispatch should rerun the perf snapshot:</p>
+<pre><code class="language-powershell">cargo run -p rustapi-core --example perf_snapshot
+</code></pre>
+<p>See <a href="../../PERFORMANCE_BENCHMARKS.html">Performance Benchmarks</a> for the canonical benchmark policy.</p>
+<h2 id="verification-2"><a class="header" href="#verification-2">Verification</a></h2>
+<p>After enabling the dashboard:</p>
+<ol>
+<li>start the app</li>
+<li>visit <code>/__rustapi/dashboard</code></li>
+<li>enter the dashboard token</li>
+<li>hit one or more application routes</li>
+<li>confirm counters, route groups, and request-stage values update</li>
+<li>if replay is enabled, load the replay panel and inspect a captured entry</li>
+<li>disable <code>core-dashboard</code> in a normal build and confirm the dashboard route is not mounted</li>
+</ol>
+<h2 id="see-also-2"><a class="header" href="#see-also-2">See also</a></h2>
+<ul>
+<li><a href="#replay-workflow-time-travel-debugging">Time-Travel Debugging (Replay)</a></li>
+<li><a href="#observability-1">Observability</a></li>
+<li><a href="#production-tuning">Production Tuning</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="middleware-debugging"><a class="header" href="#middleware-debugging">Middleware Debugging</a></h1>
 <p>Middleware bugs are rarely glamorous. They usually look like:</p>
 <ul>
@@ -6039,7 +6163,7 @@ async fn hello() -&gt; &amp;'static str {
 <h1 id="audit-logging--compliance"><a class="header" href="#audit-logging--compliance">Audit Logging &amp; Compliance</a></h1>
 <p>In many enterprise applications, maintaining a detailed audit trail is crucial for security, compliance (GDPR, SOC2), and troubleshooting. RustAPI provides a comprehensive audit logging system in <code>rustapi-extras</code>.</p>
 <p>This recipe covers how to create, log, and query audit events.</p>
-<h2 id="prerequisites-7"><a class="header" href="#prerequisites-7">Prerequisites</a></h2>
+<h2 id="prerequisites-8"><a class="header" href="#prerequisites-8">Prerequisites</a></h2>
 <p>Add <code>rustapi-extras</code> with the <code>audit</code> feature to your <code>Cargo.toml</code>.</p>
 <pre><code class="language-toml">[dependencies]
 rustapi-extras = { version = "0.1.335", features = ["audit"] }
@@ -6139,7 +6263,7 @@ Replay is intended for <strong>development, staging, canary, and incident-respon
 <li>you want to rerun critical requests before promoting a new version to canary</li>
 <li>you are asking, “why did this request work yesterday but break today?” and want a time-machine-style answer</li>
 </ul>
-<h2 id="prerequisites-8"><a class="header" href="#prerequisites-8">Prerequisites</a></h2>
+<h2 id="prerequisites-9"><a class="header" href="#prerequisites-9">Prerequisites</a></h2>
 <p>Enable the canonical replay feature in your application:</p>
 <pre><code class="language-toml">[dependencies]
 rustapi-rs = { version = "0.1.335", features = ["extras-replay"] }
@@ -6416,7 +6540,7 @@ impl ReplayStore for MyCustomStore {
 <li><strong>Railway</strong>: Generate <code>railway.toml</code> and project setup.</li>
 <li><strong>Shuttle.rs</strong>: Generate <code>Shuttle.toml</code> and setup instructions.</li>
 </ul>
-<h2 id="usage-4"><a class="header" href="#usage-4">Usage</a></h2>
+<h2 id="usage-5"><a class="header" href="#usage-5">Usage</a></h2>
 <h3 id="docker"><a class="header" href="#docker">Docker</a></h3>
 <p>Generate a <code>Dockerfile</code> optimized for RustAPI applications:</p>
 <pre><code class="language-bash">cargo rustapi deploy docker
