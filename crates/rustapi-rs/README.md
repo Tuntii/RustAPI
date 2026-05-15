@@ -72,16 +72,9 @@ async fn hello() -> Json<HelloResponse> {
     })
 }
 
-/// Run the server
 #[rustapi_rs::main]
 async fn main() -> Result<()> {
-    RustApi::new()
-        .api_name("My Awesome API")
-        .api_version("1.0.0")
-        .mount_route(hello_route()) // Auto-generated route handler
-        .docs("/docs")              // Enable Swagger UI
-        .run("127.0.0.1:8080")
-        .await
+    RustApi::auto().run("127.0.0.1:8080").await
 }
 ```
 

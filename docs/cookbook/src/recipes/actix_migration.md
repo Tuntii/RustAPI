@@ -128,9 +128,9 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
 
 ### Migration note
 
-- `RustApi::new()` is the main application entry point.
+- `RustApi::auto()` is the primary entry point — macro-annotated handlers are registered automatically, no wiring needed.
+- `RustApi::new()` is available for manual route registration and maps directly to Actix's explicit `.route()` pattern.
 - `RustApi::route()` is the closest equivalent to explicit Actix route registration.
-- For macro-annotated handlers, `RustApi::auto()` can remove repetitive wiring.
 
 ## 4. Auto-registration can replace repetitive `.service(...)`
 

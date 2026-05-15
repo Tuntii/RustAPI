@@ -151,39 +151,40 @@ impl RustApi {
         }
     }
 
-    /// Create a zero-config RustAPI application.
+    /// The primary way to build a RustAPI application.
     ///
-    /// All routes decorated with `#[rustapi::get]`, `#[rustapi::post]`, etc.
-    /// are automatically registered. Swagger UI is enabled at `/docs` by default.
+    /// Collects all routes decorated with `#[rustapi_rs::get]`, `#[rustapi_rs::post]`, etc.
+    /// at link time via `linkme` and registers them automatically — no manual `.route()`
+    /// or `.mount_route()` calls needed. This is baked into the core and requires no
+    /// feature flags.
+    ///
+    /// When the `swagger-ui` feature is enabled (included in the default `core` feature),
+    /// Swagger UI is served at `/docs`. Without it, only the auto-discovered routes are
+    /// registered.
+    ///
+    /// Use [`RustApi::new()`] when handlers are plain `async fn` not annotated with
+    /// the route macros, or when you need full manual control over route registration.
     ///
     /// # Example
     ///
     /// ```rust,ignore
     /// use rustapi_rs::prelude::*;
     ///
-    /// #[rustapi::get("/users")]
+    /// #[rustapi_rs::get("/users")]
     /// async fn list_users() -> Json<Vec<User>> {
     ///     Json(vec![])
     /// }
     ///
-    /// #[rustapi::main]
+    /// #[rustapi_rs::main]
     /// async fn main() -> Result<()> {
-    ///     // Zero config - routes are auto-registered!
-    ///     RustApi::auto()
-    ///         .run("0.0.0.0:8080")
-    ///         .await
+    ///     RustApi::auto().run("0.0.0.0:8080").await
     /// }
     /// ```
     #[cfg(feature = "swagger-ui")]
     pub fn auto() -> Self {
-        // Build app with grouped auto-routes and auto-schemas, then enable docs.
         Self::new().mount_auto_routes_grouped().docs("/docs")
     }
 
-    /// Create a zero-config RustAPI application (without swagger-ui feature).
-    ///
-    /// All routes decorated with `#[rustapi::get]`, `#[rustapi::post]`, etc.
-    /// are automatically registered.
     #[cfg(not(feature = "swagger-ui"))]
     pub fn auto() -> Self {
         Self::new().mount_auto_routes_grouped()

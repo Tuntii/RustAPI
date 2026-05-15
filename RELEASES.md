@@ -1,3 +1,131 @@
+# RustAPI v0.1.470 Release Notes
+
+**Release Date**: May 15, 2026
+**Full Changelog**: https://github.com/Tuntii/RustAPI/compare/v0.1.410...v0.1.470
+
+---
+
+## 🎯 Highlights
+
+v0.1.470 delivers the **Embedded Isometric System Dashboard** — an opt-in, self-contained control plane that lives inside your RustAPI process. No external observability stack required.
+
+| Feature | Crate | Impact |
+|---------|-------|--------|
+| Embedded Dashboard (`/__rustapi/dashboard`) | `rustapi-core` | Visual control plane with execution-path counters, route topology, and health summary |
+| Dashboard JSON API | `rustapi-core` | 7 bearer-protected endpoints: snapshot, routes, metrics, topology, events, health, replay |
+| Route Inventory | `rustapi-core` | Per-route hit counts, average latency, error rate, group/method/tag metadata |
+| Replay Browser | `rustapi-core` + `rustapi-extras` | UI-native replay list/detail/diff wired to `ReplayLayer` admin API |
+| Execution-Path Telemetry | `rustapi-core` | Atomic counters for Ultra Fast / Fast / Full paths with near-zero overhead |
+| `DashboardConfig` | `rustapi-core` | `.admin_token()`, `.path()`, `.title()`, `.replay_api_path()` builder |
+| Public re-exports | `rustapi-rs` | `DashboardConfig`, `DashboardMetrics`, `DashboardSnapshot` in prelude |
+| Dashboard cookbook recipe | `docs/cookbook` | Full walkthrough with SVG preview, feature flags, and security notice |
+
+---
+
+## 📊 Embedded Isometric System Dashboard
+
+Enable the dashboard with a single builder call:
+
+```rust
+use rustapi_rs::prelude::*;
+
+#[tokio::main]
+async fn main() {
+    RustApi::new()
+        .route("/api/users", get(list_users))
+        .health_endpoints()
+        .dashboard(
+            DashboardConfig::new()
+                .admin_token("my-secret-token")
+        )
+        .run("127.0.0.1:8080")
+        .await;
+}
+```
+
+Open `http://localhost:8080/__rustapi/dashboard` in your browser and enter the admin token. The HTML shell loads without authentication; all JSON API endpoints require `Authorization: Bearer <token>` when `admin_token` is configured.
+
+### Dashboard JSON API
+
+| Endpoint | Description |
+|----------|-------------|
+| `GET /__rustapi/dashboard/api/snapshot` | Full telemetry snapshot |
+| `GET /__rustapi/dashboard/api/routes` | Route inventory with method / tag / group metadata |
+| `GET /__rustapi/dashboard/api/metrics` | Live atomic counters |
+| `GET /__rustapi/dashboard/api/topology` | Route graph for topology visualizations |
+| `GET /__rustapi/dashboard/api/events` | Request-stage counters (received / routed / completed / failed) |
+| `GET /__rustapi/dashboard/api/health` | Health endpoint discovery summary |
+| `GET /__rustapi/dashboard/api/replay` | Replay index wired to `ReplayLayer` admin API |
+
+### Execution-path telemetry
+
+The dashboard tracks which server execution branch handled each request using lock-free atomics:
+
+| Path | Condition |
+|------|-----------|
+| **Ultra Fast** | No middleware AND no interceptors |
+| **Fast** | No middleware, has interceptors |
+| **Full** | Has middleware layers |
+
+Telemetry is compiled out when the `core-dashboard` feature is not enabled — no overhead at all for standard builds.
+
+### Replay browser
+
+When `extras-replay` is also enabled, the dashboard surfaces a replay browser panel that pages through recorded traffic, shows request/response detail, and renders diffs. It reuses the existing `ReplayLayer` admin HTTP surface and adds UI-friendly `offset`, `status_max`, `from`, `to`, `tag`, and `order` query parameters.
+
+---
+
+## ⚙️ Feature flag
+
+```toml
+[dependencies]
+# Dashboard only
+rustapi-rs = { version = "0.1.470", features = ["core-dashboard"] }
+
+# Dashboard + replay browser
+rustapi-rs = { version = "0.1.470", features = ["core-dashboard", "extras-replay"] }
+```
+
+The feature is **opt-in**. Nothing is exposed unless `core-dashboard` is enabled in your `Cargo.toml`.
+
+---
+
+## 🔒 Security
+
+- The HTML page is served without bearer auth so browsers can load it — consistent with the browser's inability to set `Authorization` headers on page navigations.
+- All JSON API endpoints enforce `Authorization: Bearer <token>` when `admin_token` is configured.
+- The HTML response sets a strict `Content-Security-Policy`: `default-src 'none'` with narrow allowances for inline scripts/styles and `connect-src 'self'` only.
+- `Referrer-Policy: no-referrer` and `X-Content-Type-Options: nosniff` are set on every dashboard response.
+- Dashboard routes are never exposed unless you call `.dashboard(...)` explicitly on the `RustApi` builder.
+
+---
+
+## 📦 Changed files
+
+| File | Change |
+|------|--------|
+| `crates/rustapi-core/src/dashboard/` | New module: `auth`, `config`, `metrics`, `routes`, embedded HTML |
+| `crates/rustapi-core/src/server.rs` | Dashboard dispatch wired into request pipeline |
+| `crates/rustapi-core/src/app.rs` | `.dashboard()` builder method |
+| `crates/rustapi-extras/src/replay/routes.rs` | Pagination/filter params for UI consumption |
+| `crates/rustapi-rs/src/lib.rs` | Re-exports: `DashboardConfig`, `DashboardMetrics`, `DashboardSnapshot` |
+| `api/public/rustapi-rs.all-features.txt` | Snapshot updated with new public types |
+| `docs/cookbook/src/recipes/dashboard.md` | New recipe with SVG preview and security guidance |
+
+---
+
+## ✅ Upgrade path from v0.1.410
+
+No breaking changes. The dashboard is purely additive behind a feature flag.
+
+1. Add `features = ["core-dashboard"]` to your `rustapi-rs` dependency.
+2. Call `.dashboard(DashboardConfig::new().admin_token("..."))` on your `RustApi` builder.
+3. Open `/__rustapi/dashboard` in your browser.
+
+Existing code without the feature flag is unaffected.
+
+---
+
 # RustAPI v0.1.410 Release Notes
 
 **Release Date**: March 9, 2026
