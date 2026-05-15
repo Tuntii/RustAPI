@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-bedad13c.js";
+            window.path_to_searchindex_js = "searchindex-ad6cc1e8.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-7c9f2a15.js"></script>
@@ -4765,9 +4765,9 @@ async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + 
 }</code></pre>
 <h3 id="migration-note-1-1"><a class="header" href="#migration-note-1-1">Migration note</a></h3>
 <ul>
-<li><code>RustApi::new()</code> is the main application entry point.</li>
+<li><code>RustApi::auto()</code> is the primary entry point — macro-annotated handlers are registered automatically, no wiring needed.</li>
+<li><code>RustApi::new()</code> is available for manual route registration and maps directly to Actix’s explicit <code>.route()</code> pattern.</li>
 <li><code>RustApi::route()</code> is the closest equivalent to explicit Actix route registration.</li>
-<li>For macro-annotated handlers, <code>RustApi::auto()</code> can remove repetitive wiring.</li>
 </ul>
 <h2 id="4-auto-registration-can-replace-repetitive-service"><a class="header" href="#4-auto-registration-can-replace-repetitive-service">4. Auto-registration can replace repetitive <code>.service(...)</code></a></h2>
 <p>If your Actix-web app registers many handlers manually, RustAPI can let the route macros do more of the work.</p>
