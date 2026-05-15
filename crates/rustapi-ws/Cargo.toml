@@ -44,7 +44,7 @@ async-trait = { workspace = true }
 url = "2.5"
 
 # SHA-1 for WebSocket handshake
-sha1 = "0.10"
+sha1 = "0.11"
 base64 = "0.22"
 
 [dev-dependencies]
