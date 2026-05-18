@@ -1,16 +1,21 @@
-//! Watch command for development with native hot-reload
+//! Watch command for development with hot-reload
 //!
-//! Uses the `notify` crate for zero-dependency filesystem watching.
+//! Uses a std-only polling watcher by default and the `notify` crate when the
+//! `native-watch` feature is enabled.
 //! Detects file changes, rebuilds the project, and restarts the server
 //! automatically — no external tools (cargo-watch) required.
 
 use anyhow::{Context, Result};
 use clap::Args;
 use console::{style, Emoji};
+#[cfg(feature = "native-watch")]
 use notify_debouncer_mini::{new_debouncer, DebouncedEventKind};
-use std::path::PathBuf;
+use std::collections::HashMap;
+use std::fs;
+use std::path::{Path, PathBuf};
+#[cfg(feature = "native-watch")]
 use std::sync::mpsc;
-use std::time::{Duration, Instant};
+use std::time::{Duration, Instant, SystemTime};
 use tokio::process::{Child, Command};
 use tokio::sync::mpsc as tokio_mpsc;
 
@@ -55,7 +60,9 @@ pub struct WatchArgs {
     #[arg(long)]
     pub no_restart_on_fail: bool,
 
-    /// Poll for changes instead of using filesystem events
+    /// Poll for changes instead of using native filesystem events.
+    ///
+    /// This is the default when cargo-rustapi is built without the `native-watch` feature.
     #[arg(long)]
     pub poll: bool,
 
@@ -89,6 +96,158 @@ fn is_ignored(path: &std::path::Path, ignore_paths: &[String]) -> bool {
                 .components()
                 .any(|c| c.as_os_str().to_string_lossy() == *ignored)
     })
+}
+
+fn collect_watch_snapshot(
+    watch_paths: &[String],
+    ignore_paths: &[String],
+    extensions: &[String],
+) -> Result<(usize, HashMap<PathBuf, SystemTime>)> {
+    let mut roots_watched = 0;
+    let mut snapshot = HashMap::new();
+
+    for watch_path in watch_paths {
+        let path = PathBuf::from(watch_path);
+        if path.exists() {
+            roots_watched += 1;
+            collect_path_snapshot(&path, ignore_paths, extensions, &mut snapshot)?;
+        }
+    }
+
+    Ok((roots_watched, snapshot))
+}
+
+fn collect_path_snapshot(
+    path: &Path,
+    ignore_paths: &[String],
+    extensions: &[String],
+    snapshot: &mut HashMap<PathBuf, SystemTime>,
+) -> Result<()> {
+    if is_ignored(path, ignore_paths) {
+        return Ok(());
+    }
+
+    let metadata = match fs::metadata(path) {
+        Ok(metadata) => metadata,
+        Err(_) => return Ok(()),
+    };
+
+    if metadata.is_dir() {
+        for entry in
+            fs::read_dir(path).with_context(|| format!("Failed to scan {}", path.display()))?
+        {
+            let entry = match entry {
+                Ok(entry) => entry,
+                Err(_) => continue,
+            };
+            collect_path_snapshot(&entry.path(), ignore_paths, extensions, snapshot)?;
+        }
+    } else if metadata.is_file() && is_watched_extension(path, extensions) {
+        let modified = metadata.modified().unwrap_or(SystemTime::UNIX_EPOCH);
+        snapshot.insert(path.to_path_buf(), modified);
+    }
+
+    Ok(())
+}
+
+fn setup_polling_watcher(
+    args: &WatchArgs,
+    extensions: &[String],
+    debounce_duration: Duration,
+) -> Result<tokio_mpsc::Receiver<()>> {
+    let (paths_watched, mut snapshot) =
+        collect_watch_snapshot(&args.watch_paths, &args.ignore_paths, extensions)?;
+
+    if paths_watched == 0 {
+        anyhow::bail!(
+            "No valid paths to watch. Ensure at least one of [{}] exists.",
+            args.watch_paths.join(", ")
+        );
+    }
+
+    let watch_paths = args.watch_paths.clone();
+    let ignore_paths = args.ignore_paths.clone();
+    let extensions = extensions.to_vec();
+    let poll_interval = debounce_duration.max(Duration::from_millis(100));
+    let (async_tx, async_rx) = tokio_mpsc::channel::<()>(1);
+
+    std::thread::spawn(move || loop {
+        if async_tx.is_closed() {
+            break;
+        }
+
+        std::thread::sleep(poll_interval);
+
+        let Ok((_, next_snapshot)) =
+            collect_watch_snapshot(&watch_paths, &ignore_paths, &extensions)
+        else {
+            continue;
+        };
+
+        if next_snapshot != snapshot {
+            snapshot = next_snapshot;
+            if async_tx.blocking_send(()).is_err() {
+                break;
+            }
+        }
+    });
+
+    Ok(async_rx)
+}
+
+#[cfg(feature = "native-watch")]
+fn setup_native_watcher(
+    args: &WatchArgs,
+    extensions: &[String],
+    debounce_duration: Duration,
+) -> Result<(tokio_mpsc::Receiver<()>, Box<dyn std::any::Any>)> {
+    let (tx, rx) = mpsc::channel();
+    let mut debouncer =
+        new_debouncer(debounce_duration, tx).context("Failed to create file watcher")?;
+
+    let mut paths_watched = 0;
+    for watch_path in &args.watch_paths {
+        let path = PathBuf::from(watch_path);
+        if path.exists() {
+            debouncer
+                .watcher()
+                .watch(&path, notify::RecursiveMode::Recursive)
+                .with_context(|| format!("Failed to watch path: {watch_path}"))?;
+            paths_watched += 1;
+        }
+    }
+
+    if paths_watched == 0 {
+        anyhow::bail!(
+            "No valid paths to watch. Ensure at least one of [{}] exists.",
+            args.watch_paths.join(", ")
+        );
+    }
+
+    let (async_tx, async_rx) = tokio_mpsc::channel::<()>(1);
+    let ignore_paths = args.ignore_paths.clone();
+    let ext_clone = extensions.to_vec();
+    std::thread::spawn(move || {
+        for result in rx {
+            match result {
+                Ok(events) => {
+                    let has_relevant = events.iter().any(|event| {
+                        event.kind == DebouncedEventKind::Any
+                            && !is_ignored(&event.path, &ignore_paths)
+                            && is_watched_extension(&event.path, &ext_clone)
+                    });
+                    if has_relevant && async_tx.blocking_send(()).is_err() {
+                        break;
+                    }
+                }
+                Err(e) => {
+                    tracing::warn!("File watcher error: {e}");
+                }
+            }
+        }
+    });
+
+    Ok((async_rx, Box::new(debouncer)))
 }
 
 /// Build the project, returning (success, duration, error_output)
@@ -218,55 +377,30 @@ pub async fn watch(args: WatchArgs) -> Result<()> {
         println!();
     }
 
-    // ─── Set up native file watcher via notify ──────────────────────────
-    let (tx, rx) = mpsc::channel();
+    // ─── Set up file watcher ────────────────────────────────────────────
     let debounce_duration = Duration::from_millis(args.delay as u64);
-
-    let mut debouncer =
-        new_debouncer(debounce_duration, tx).context("Failed to create file watcher")?;
-
-    let mut paths_watched = 0;
-    for watch_path in &args.watch_paths {
-        let path = PathBuf::from(watch_path);
-        if path.exists() {
-            debouncer
-                .watcher()
-                .watch(&path, notify::RecursiveMode::Recursive)
-                .with_context(|| format!("Failed to watch path: {watch_path}"))?;
-            paths_watched += 1;
-        }
-    }
-
-    if paths_watched == 0 {
-        anyhow::bail!(
-            "No valid paths to watch. Ensure at least one of [{}] exists.",
-            args.watch_paths.join(", ")
-        );
-    }
-
-    // Bridge sync notify channel → async tokio channel
-    let (async_tx, mut async_rx) = tokio_mpsc::channel::<()>(1);
-    let ignore_paths = args.ignore_paths.clone();
-    let ext_clone = extensions.clone();
-    std::thread::spawn(move || {
-        for result in rx {
-            match result {
-                Ok(events) => {
-                    let has_relevant = events.iter().any(|event| {
-                        event.kind == DebouncedEventKind::Any
-                            && !is_ignored(&event.path, &ignore_paths)
-                            && is_watched_extension(&event.path, &ext_clone)
-                    });
-                    if has_relevant {
-                        let _ = async_tx.blocking_send(());
-                    }
-                }
-                Err(e) => {
-                    tracing::warn!("File watcher error: {e}");
-                }
+    let (mut async_rx, _watcher_guard): (tokio_mpsc::Receiver<()>, Option<Box<dyn std::any::Any>>) = {
+        #[cfg(feature = "native-watch")]
+        {
+            if !args.poll {
+                let (rx, guard) = setup_native_watcher(&args, &extensions, debounce_duration)?;
+                (rx, Some(guard))
+            } else {
+                (
+                    setup_polling_watcher(&args, &extensions, debounce_duration)?,
+                    None,
+                )
             }
         }
-    });
+
+        #[cfg(not(feature = "native-watch"))]
+        {
+            (
+                setup_polling_watcher(&args, &extensions, debounce_duration)?,
+                None,
+            )
+        }
+    };
 
     // ─── Initial build & start ──────────────────────────────────────────
     if !args.quiet {
@@ -450,6 +584,30 @@ mod tests {
         ));
         assert!(is_ignored(std::path::Path::new(".git/HEAD"), &ignore));
         assert!(!is_ignored(std::path::Path::new("src/main.rs"), &ignore));
+    }
+
+    #[test]
+    fn test_collect_watch_snapshot_skips_ignored_dirs() {
+        let temp = tempfile::tempdir().unwrap();
+        let src = temp.path().join("src");
+        let target = temp.path().join("target");
+        fs::create_dir_all(&src).unwrap();
+        fs::create_dir_all(&target).unwrap();
+        fs::write(src.join("main.rs"), "fn main() {}").unwrap();
+        fs::write(target.join("generated.rs"), "fn ignored() {}").unwrap();
+
+        let watch_paths = vec![temp.path().to_string_lossy().to_string()];
+        let ignore_paths = vec!["target".to_string()];
+        let extensions = vec!["rs".to_string()];
+
+        let (roots, snapshot) =
+            collect_watch_snapshot(&watch_paths, &ignore_paths, &extensions).unwrap();
+
+        assert_eq!(roots, 1);
+        assert!(snapshot.keys().any(|path| path.ends_with("src/main.rs")));
+        assert!(!snapshot
+            .keys()
+            .any(|path| path.ends_with("target/generated.rs")));
     }
 
     #[test]

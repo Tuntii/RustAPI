@@ -1,49 +1,69 @@
 //! WebSocket error types
 
-use thiserror::Error;
+use std::fmt;
 
 /// Error type for WebSocket operations
-#[derive(Error, Debug)]
+#[derive(Debug)]
 pub enum WebSocketError {
     /// Invalid WebSocket upgrade request
-    #[error("Invalid WebSocket upgrade request: {0}")]
     InvalidUpgrade(String),
-
     /// WebSocket handshake failed
-    #[error("WebSocket handshake failed: {0}")]
     HandshakeFailed(String),
-
     /// Connection closed unexpectedly
-    #[error("Connection closed unexpectedly")]
     ConnectionClosed,
-
     /// Failed to send message
-    #[error("Failed to send message: {0}")]
     SendFailed(String),
-
     /// Failed to receive message
-    #[error("Failed to receive message: {0}")]
     ReceiveFailed(String),
-
     /// Message serialization error
-    #[error("Message serialization error: {0}")]
     SerializationError(String),
-
     /// Message deserialization error
-    #[error("Message deserialization error: {0}")]
     DeserializationError(String),
-
     /// Protocol error
-    #[error("WebSocket protocol error: {0}")]
     ProtocolError(String),
-
     /// IO error
-    #[error("IO error: {0}")]
-    IoError(#[from] std::io::Error),
-
+    IoError(std::io::Error),
     /// Tungstenite error
-    #[error("WebSocket error: {0}")]
-    Tungstenite(#[from] tungstenite::Error),
+    Tungstenite(tungstenite::Error),
+}
+
+impl fmt::Display for WebSocketError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::InvalidUpgrade(msg) => write!(f, "Invalid WebSocket upgrade request: {}", msg),
+            Self::HandshakeFailed(msg) => write!(f, "WebSocket handshake failed: {}", msg),
+            Self::ConnectionClosed => write!(f, "Connection closed unexpectedly"),
+            Self::SendFailed(msg) => write!(f, "Failed to send message: {}", msg),
+            Self::ReceiveFailed(msg) => write!(f, "Failed to receive message: {}", msg),
+            Self::SerializationError(msg) => write!(f, "Message serialization error: {}", msg),
+            Self::DeserializationError(msg) => write!(f, "Message deserialization error: {}", msg),
+            Self::ProtocolError(msg) => write!(f, "WebSocket protocol error: {}", msg),
+            Self::IoError(e) => write!(f, "IO error: {}", e),
+            Self::Tungstenite(e) => write!(f, "WebSocket error: {}", e),
+        }
+    }
+}
+
+impl std::error::Error for WebSocketError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::IoError(e) => Some(e),
+            Self::Tungstenite(e) => Some(e),
+            _ => None,
+        }
+    }
+}
+
+impl From<std::io::Error> for WebSocketError {
+    fn from(e: std::io::Error) -> Self {
+        Self::IoError(e)
+    }
+}
+
+impl From<tungstenite::Error> for WebSocketError {
+    fn from(e: tungstenite::Error) -> Self {
+        Self::Tungstenite(e)
+    }
 }
 
 impl WebSocketError {

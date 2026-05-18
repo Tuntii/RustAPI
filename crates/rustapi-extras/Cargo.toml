@@ -29,7 +29,6 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 
 # Utilities
-thiserror = { workspace = true }
 tracing = { workspace = true }
 
 # JWT (feature-gated)

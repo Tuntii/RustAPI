@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use rustapi_jobs::{InMemoryBackend, Job, JobContext, JobQueue, Result};
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
@@ -16,7 +15,6 @@ struct EmailJob {
     processed: Arc<Mutex<Vec<EmailJobData>>>,
 }
 
-#[async_trait]
 impl Job for EmailJob {
     const NAME: &'static str = "email_job";
     type Data = EmailJobData;
@@ -102,7 +100,6 @@ struct FailingJob {
     attempts: Arc<Mutex<u32>>,
 }
 
-#[async_trait]
 impl Job for FailingJob {
     const NAME: &'static str = "failing_job";
     type Data = (); // No data needed

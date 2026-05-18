@@ -3,32 +3,38 @@
 //! Defines the [`ReplayStore`] trait for pluggable storage backends.
 
 use async_trait::async_trait;
+use std::fmt;
 
 use super::entry::ReplayEntry;
 
 /// Errors from replay store operations.
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum ReplayStoreError {
     /// IO error (file, network, etc.).
-    #[error("IO error: {0}")]
     Io(String),
-
     /// Serialization/deserialization error.
-    #[error("Serialization error: {0}")]
     Serialization(String),
-
     /// Entry not found.
-    #[error("Entry not found: {0}")]
     NotFound(String),
-
     /// Store is full.
-    #[error("Store full")]
     StoreFull,
-
     /// Other error.
-    #[error("Store error: {0}")]
     Other(String),
 }
+
+impl fmt::Display for ReplayStoreError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Io(msg) => write!(f, "IO error: {}", msg),
+            Self::Serialization(msg) => write!(f, "Serialization error: {}", msg),
+            Self::NotFound(msg) => write!(f, "Entry not found: {}", msg),
+            Self::StoreFull => write!(f, "Store full"),
+            Self::Other(msg) => write!(f, "Store error: {}", msg),
+        }
+    }
+}
+
+impl std::error::Error for ReplayStoreError {}
 
 /// Convenience result type for replay store operations.
 pub type ReplayStoreResult<T> = Result<T, ReplayStoreError>;

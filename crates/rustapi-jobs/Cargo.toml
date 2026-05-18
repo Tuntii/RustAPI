@@ -21,10 +21,8 @@ postgres = ["dep:sqlx"]
 async-trait = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
-thiserror = { workspace = true }
 tracing = { workspace = true }
-futures-util = { workspace = true }
-tokio = { workspace = true, features = ["full"] }
+tokio = { workspace = true, features = ["sync", "time"] }
 uuid = { workspace = true, features = ["v4", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 
@@ -36,4 +34,4 @@ sqlx = { version = "0.8", features = ["postgres", "runtime-tokio", "tls-rustls",
 
 [dev-dependencies]
 proptest = "1.8.0"
-tokio = { workspace = true, features = ["test-util"] }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "sync", "test-util", "time"] }

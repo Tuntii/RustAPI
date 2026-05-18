@@ -1,4 +1,3 @@
-use async_trait::async_trait;
 use rustapi_jobs::{EnqueueOptions, InMemoryBackend, Job, JobContext, JobQueue, Result};
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex};
@@ -14,7 +13,6 @@ struct SimpleJob {
     processed_ids: Arc<Mutex<Vec<i32>>>,
 }
 
-#[async_trait]
 impl Job for SimpleJob {
     const NAME: &'static str = "simple_job";
     type Data = SimpleJobData;

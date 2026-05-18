@@ -1,7 +1,8 @@
 use super::{JobBackend, JobRequest};
 use crate::error::{JobError, Result};
-use async_trait::async_trait;
 use std::collections::VecDeque;
+use std::future::Future;
+use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 
 /// In-memory job backend (not persistent, for testing/dev)
@@ -17,52 +18,67 @@ impl InMemoryBackend {
     }
 }
 
-#[async_trait]
 impl JobBackend for InMemoryBackend {
-    async fn push(&self, job: JobRequest) -> Result<()> {
-        let mut q = self
-            .queue
-            .lock()
-            .map_err(|_| JobError::BackendError("Lock poisoned".to_string()))?;
-        q.push_back(job);
-        Ok(())
+    fn push<'a>(
+        &'a self,
+        job: JobRequest,
+    ) -> Pin<Box<dyn Future<Output = Result<()>> + Send + 'a>> {
+        Box::pin(async move {
+            let mut q = self
+                .queue
+                .lock()
+                .map_err(|_| JobError::BackendError("Lock poisoned".to_string()))?;
+            q.push_back(job);
+            Ok(())
+        })
     }
 
-    async fn pop(&self) -> Result<Option<JobRequest>> {
-        let mut q = self
-            .queue
-            .lock()
-            .map_err(|_| JobError::BackendError("Lock poisoned".to_string()))?;
+    fn pop<'a>(
+        &'a self,
+    ) -> Pin<Box<dyn Future<Output = Result<Option<JobRequest>>> + Send + 'a>> {
+        Box::pin(async move {
+            let mut q = self
+                .queue
+                .lock()
+                .map_err(|_| JobError::BackendError("Lock poisoned".to_string()))?;
 
-        let now = chrono::Utc::now();
-        let mut index_to_remove = None;
+            let now = chrono::Utc::now();
+            let mut index_to_remove = None;
 
-        // Scan the queue for the first ready job
-        for (i, job) in q.iter().enumerate() {
-            if let Some(run_at) = job.run_at {
-                if run_at > now {
-                    continue;
+            // Scan the queue for the first ready job
+            for (i, job) in q.iter().enumerate() {
+                if let Some(run_at) = job.run_at {
+                    if run_at > now {
+                        continue;
+                    }
                 }
+                // Found a ready job (no run_at, or run_at <= now)
+                index_to_remove = Some(i);
+                break;
             }
-            // Found a ready job (no run_at, or run_at <= now)
-            index_to_remove = Some(i);
-            break;
-        }
 
-        if let Some(i) = index_to_remove {
-            Ok(q.remove(i))
-        } else {
-            Ok(None)
-        }
+            if let Some(i) = index_to_remove {
+                Ok(q.remove(i))
+            } else {
+                Ok(None)
+            }
+        })
     }
 
-    async fn complete(&self, _job_id: &str) -> Result<()> {
+    fn complete<'a>(
+        &'a self,
+        _job_id: &'a str,
+    ) -> Pin<Box<dyn Future<Output = Result<()>> + Send + 'a>> {
         // No-op for simple in-memory queue that removes on pop
-        Ok(())
+        Box::pin(async move { Ok(()) })
     }
 
-    async fn fail(&self, _job_id: &str, _error: &str) -> Result<()> {
+    fn fail<'a>(
+        &'a self,
+        _job_id: &'a str,
+        _error: &'a str,
+    ) -> Pin<Box<dyn Future<Output = Result<()>> + Send + 'a>> {
         // In a real implementation we might move to DLQ or re-queue
-        Ok(())
+        Box::pin(async move { Ok(()) })
     }
 }

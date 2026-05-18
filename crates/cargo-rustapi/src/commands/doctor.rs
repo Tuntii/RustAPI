@@ -6,7 +6,6 @@ use console::{style, Emoji};
 use std::fs;
 use std::path::{Path, PathBuf};
 use tokio::process::Command;
-use walkdir::WalkDir;
 
 #[derive(Args, Debug, Clone)]
 pub struct DoctorArgs {
@@ -382,61 +381,86 @@ fn build_project_checks(workspace_root: &Path) -> Result<Vec<DoctorCheck>> {
 fn scan_workspace_signals(workspace_root: &Path) -> Result<WorkspaceSignals> {
     let mut signals = WorkspaceSignals::default();
 
-    for entry in WalkDir::new(workspace_root)
-        .into_iter()
-        .filter_entry(|entry| should_scan(entry.path()))
-    {
+    scan_workspace_dir(workspace_root, &mut signals)?;
+
+    Ok(signals)
+}
+
+fn scan_workspace_dir(dir: &Path, signals: &mut WorkspaceSignals) -> Result<()> {
+    if !should_scan(dir) {
+        return Ok(());
+    }
+
+    for entry in fs::read_dir(dir).with_context(|| format!("failed to read {}", dir.display()))? {
         let entry = entry?;
-        if !entry.file_type().is_file() || !is_scannable_file(entry.path()) {
+        let path = entry.path();
+
+        if !should_scan(&path) {
             continue;
         }
 
-        let contents = match fs::read_to_string(entry.path()) {
+        let file_type = match entry.file_type() {
+            Ok(file_type) => file_type,
+            Err(_) => continue,
+        };
+
+        if file_type.is_dir() {
+            scan_workspace_dir(&path, signals)?;
+            continue;
+        }
+
+        if !file_type.is_file() || !is_scannable_file(&path) {
+            continue;
+        }
+
+        let contents = match fs::read_to_string(&path) {
             Ok(contents) => contents,
             Err(_) => continue,
         };
 
-        signals.production_defaults |= contains_any(
-            &contents,
-            &[".production_defaults(", ".production_defaults_with_config("],
-        );
-        signals.health_endpoints |= contains_any(
-            &contents,
-            &[
-                ".health_endpoints(",
-                ".health_endpoint_config(",
-                "HealthEndpointConfig",
-            ],
-        );
-        signals.health_checks |= contents.contains(".with_health_check(");
-        signals.request_id |= contents.contains("RequestIdLayer");
-        signals.tracing |= contains_any(&contents, &["TracingLayer", "tracing_subscriber"]);
-        signals.shutdown |= contents.contains("run_with_shutdown(");
-        signals.shutdown_hooks |= contents.contains(".on_shutdown(");
-        signals.structured_logging |= contains_any(
-            &contents,
-            &["StructuredLoggingLayer", "structured_logging("],
-        );
-        signals.otel |= contains_any(&contents, &["OtelLayer", "otel("]);
-        signals.rate_limit |= contains_any(&contents, &["RateLimitLayer", "rate_limit("]);
-        signals.security_headers |=
-            contains_any(&contents, &["SecurityHeadersLayer", "security_headers("]);
-        signals.timeout |= contains_any(&contents, &["TimeoutLayer", "timeout("]);
-        signals.cors |= contains_any(&contents, &["CorsLayer", "cors("]);
-        signals.body_limit |= contains_any(&contents, &["BodyLimitLayer", ".body_limit("]);
-        signals.env_production |= contains_any(
-            &contents,
-            &[
-                "RUSTAPI_ENV=production",
-                "RUSTAPI_ENV: production",
-                "RUSTAPI_ENV = \"production\"",
-                "RUSTAPI_ENV','production",
-                "RUSTAPI_ENV\", \"production\"",
-            ],
-        );
+        apply_workspace_signals(signals, &contents);
     }
 
-    Ok(signals)
+    Ok(())
+}
+
+fn apply_workspace_signals(signals: &mut WorkspaceSignals, contents: &str) {
+    signals.production_defaults |= contains_any(
+        contents,
+        &[".production_defaults(", ".production_defaults_with_config("],
+    );
+    signals.health_endpoints |= contains_any(
+        contents,
+        &[
+            ".health_endpoints(",
+            ".health_endpoint_config(",
+            "HealthEndpointConfig",
+        ],
+    );
+    signals.health_checks |= contents.contains(".with_health_check(");
+    signals.request_id |= contents.contains("RequestIdLayer");
+    signals.tracing |= contains_any(contents, &["TracingLayer", "tracing_subscriber"]);
+    signals.shutdown |= contents.contains("run_with_shutdown(");
+    signals.shutdown_hooks |= contents.contains(".on_shutdown(");
+    signals.structured_logging |=
+        contains_any(contents, &["StructuredLoggingLayer", "structured_logging("]);
+    signals.otel |= contains_any(contents, &["OtelLayer", "otel("]);
+    signals.rate_limit |= contains_any(contents, &["RateLimitLayer", "rate_limit("]);
+    signals.security_headers |=
+        contains_any(contents, &["SecurityHeadersLayer", "security_headers("]);
+    signals.timeout |= contains_any(contents, &["TimeoutLayer", "timeout("]);
+    signals.cors |= contains_any(contents, &["CorsLayer", "cors("]);
+    signals.body_limit |= contains_any(contents, &["BodyLimitLayer", ".body_limit("]);
+    signals.env_production |= contains_any(
+        contents,
+        &[
+            "RUSTAPI_ENV=production",
+            "RUSTAPI_ENV: production",
+            "RUSTAPI_ENV = \"production\"",
+            "RUSTAPI_ENV','production",
+            "RUSTAPI_ENV\", \"production\"",
+        ],
+    );
 }
 
 fn find_workspace_root(start: &Path) -> Option<PathBuf> {

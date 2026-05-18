@@ -36,8 +36,6 @@ futures-util = { workspace = true }
 tracing = { workspace = true }
 
 # Error handling
-thiserror = { workspace = true }
-
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 serde_json = { workspace = true }

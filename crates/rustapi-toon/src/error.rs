@@ -1,27 +1,33 @@
 //! TOON Error types and conversions
 
+use std::fmt;
 use rustapi_core::ApiError;
-use thiserror::Error;
 
 /// Error type for TOON operations
-#[derive(Error, Debug)]
+#[derive(Debug)]
 pub enum ToonError {
     /// Error during TOON encoding (serialization)
-    #[error("TOON encoding error: {0}")]
     Encode(String),
-
     /// Error during TOON decoding (parsing/deserialization)
-    #[error("TOON decoding error: {0}")]
     Decode(String),
-
     /// Invalid content type for TOON request
-    #[error("Invalid content type: expected application/toon or text/toon")]
     InvalidContentType,
-
     /// Empty body provided
-    #[error("Empty request body")]
     EmptyBody,
 }
+
+impl fmt::Display for ToonError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Encode(msg) => write!(f, "TOON encoding error: {}", msg),
+            Self::Decode(msg) => write!(f, "TOON decoding error: {}", msg),
+            Self::InvalidContentType => write!(f, "Invalid content type: expected application/toon or text/toon"),
+            Self::EmptyBody => write!(f, "Empty request body"),
+        }
+    }
+}
+
+impl std::error::Error for ToonError {}
 
 impl From<toon_format::ToonError> for ToonError {
     fn from(err: toon_format::ToonError) -> Self {

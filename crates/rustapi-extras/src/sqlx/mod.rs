@@ -62,22 +62,38 @@ use rustapi_core::ApiError;
 ))]
 use std::sync::Arc;
 use std::time::Duration;
-use thiserror::Error;
-
 /// Error type for pool operations
-#[derive(Debug, Error)]
+#[derive(Debug)]
 pub enum PoolError {
     /// Configuration error
-    #[error("Pool configuration error: {0}")]
     Configuration(String),
-
     /// Connection error
-    #[error("Database connection error: {0}")]
     Connection(String),
-
     /// SQLx error
-    #[error("SQLx error: {0}")]
-    Sqlx(#[from] sqlx::Error),
+    Sqlx(sqlx::Error),
+}
+
+impl std::fmt::Display for PoolError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Configuration(msg) => write!(f, "Pool configuration error: {}", msg),
+            Self::Connection(msg) => write!(f, "Database connection error: {}", msg),
+            Self::Sqlx(e) => write!(f, "SQLx error: {}", e),
+        }
+    }
+}
+
+impl std::error::Error for PoolError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Sqlx(e) => Some(e),
+            _ => None,
+        }
+    }
+}
+
+impl From<sqlx::Error> for PoolError {
+    fn from(e: sqlx::Error) -> Self { Self::Sqlx(e) }
 }
 
 /// Configuration for SQLx connection pool
