@@ -10,6 +10,7 @@ repository.workspace = true
 homepage.workspace = true
 
 [dependencies]
+percent-encoding = "2.3"
 # Async
 tokio = { workspace = true, features = ["rt", "net", "time", "fs", "macros", "io-util"] }
 futures-util = { workspace = true }

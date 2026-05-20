@@ -253,8 +253,13 @@ impl StaticFile {
         relative_path: &str,
         config: &StaticFileConfig,
     ) -> Result<Response, ApiError> {
-        // Sanitize path to prevent directory traversal
-        let clean_path = sanitize_path(relative_path);
+        // Percent-decode the path first
+        let decoded_path = percent_encoding::percent_decode_str(relative_path)
+            .decode_utf8()
+            .unwrap_or(std::borrow::Cow::Borrowed(relative_path));
+
+        // Sanitize path to prevent basic directory traversal
+        let clean_path = sanitize_path(&decoded_path);
         let file_path = config.root.join(&clean_path);
 
         // Check if it's a directory
@@ -282,6 +287,21 @@ impl StaticFile {
 
     /// Serve a specific file
     async fn serve_file(path: &Path, config: &StaticFileConfig) -> Result<Response, ApiError> {
+        // Security check: ensure the resolved path is within the root directory
+        let canonical_root = match tokio::fs::canonicalize(&config.root).await {
+            Ok(root) => root,
+            Err(_) => return Err(ApiError::internal("Static file root directory not found")),
+        };
+
+        let canonical_file = match tokio::fs::canonicalize(path).await {
+            Ok(file) => file,
+            Err(_) => return Err(ApiError::not_found("File not found")),
+        };
+
+        if !canonical_file.starts_with(&canonical_root) {
+            return Err(ApiError::not_found("File not found"));
+        }
+
         // Check if file exists
         let metadata = fs::metadata(path)
             .await
