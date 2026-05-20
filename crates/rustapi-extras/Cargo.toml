@@ -33,7 +33,7 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 
 # JWT (feature-gated)
-jsonwebtoken = { version = "=10.3.0", optional = true, default-features = false, features = ["aws_lc_rs"] }
+jsonwebtoken = { version = "=10.4.0", optional = true, default-features = false, features = ["aws_lc_rs"] }
 aws-lc-rs = { version = "1.17", optional = true, features = ["prebuilt-nasm"] }
 
 # Rate limiting (feature-gated)
