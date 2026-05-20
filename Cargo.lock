@@ -3272,7 +3272,7 @@ dependencies = [
  "opentelemetry_sdk 0.32.0",
  "proptest",
  "r2d2",
- "rand 0.8.6",
+ "rand 0.9.4",
  "redis",
  "reqwest",
  "rustapi-core",
