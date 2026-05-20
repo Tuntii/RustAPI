@@ -32,7 +32,9 @@ impl std::error::Error for ReplayClientError {
 }
 
 impl From<reqwest::Error> for ReplayClientError {
-    fn from(e: reqwest::Error) -> Self { Self::Http(e) }
+    fn from(e: reqwest::Error) -> Self {
+        Self::Http(e)
+    }
 }
 
 /// HTTP client for replaying recorded requests against a target server.

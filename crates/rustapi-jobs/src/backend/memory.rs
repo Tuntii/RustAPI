@@ -33,9 +33,7 @@ impl JobBackend for InMemoryBackend {
         })
     }
 
-    fn pop<'a>(
-        &'a self,
-    ) -> Pin<Box<dyn Future<Output = Result<Option<JobRequest>>> + Send + 'a>> {
+    fn pop<'a>(&'a self) -> Pin<Box<dyn Future<Output = Result<Option<JobRequest>>> + Send + 'a>> {
         Box::pin(async move {
             let mut q = self
                 .queue

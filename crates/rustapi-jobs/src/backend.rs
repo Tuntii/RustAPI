@@ -28,16 +28,12 @@ pub struct JobRequest {
 /// Backend storage for jobs (dyn-compatible via boxed futures)
 pub trait JobBackend: Send + Sync {
     /// Push a new job to the queue
-    fn push<'a>(
-        &'a self,
-        job: JobRequest,
-    ) -> Pin<Box<dyn Future<Output = Result<()>> + Send + 'a>>;
+    fn push<'a>(&'a self, job: JobRequest)
+        -> Pin<Box<dyn Future<Output = Result<()>> + Send + 'a>>;
 
     /// Pop the next available job
     /// Should return None if no job is available or ready
-    fn pop<'a>(
-        &'a self,
-    ) -> Pin<Box<dyn Future<Output = Result<Option<JobRequest>>> + Send + 'a>>;
+    fn pop<'a>(&'a self) -> Pin<Box<dyn Future<Output = Result<Option<JobRequest>>> + Send + 'a>>;
 
     /// Mark a job as completed successfully
     fn complete<'a>(

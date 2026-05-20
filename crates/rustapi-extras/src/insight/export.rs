@@ -44,11 +44,15 @@ impl std::error::Error for ExportError {
 }
 
 impl From<std::io::Error> for ExportError {
-    fn from(e: std::io::Error) -> Self { Self::Io(e) }
+    fn from(e: std::io::Error) -> Self {
+        Self::Io(e)
+    }
 }
 
 impl From<serde_json::Error> for ExportError {
-    fn from(e: serde_json::Error) -> Self { Self::Serialization(e) }
+    fn from(e: serde_json::Error) -> Self {
+        Self::Serialization(e)
+    }
 }
 
 /// Result type for export operations.

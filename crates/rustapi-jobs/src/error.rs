@@ -33,7 +33,9 @@ impl std::error::Error for JobError {
 }
 
 impl From<serde_json::Error> for JobError {
-    fn from(e: serde_json::Error) -> Self { Self::SerializationError(e) }
+    fn from(e: serde_json::Error) -> Self {
+        Self::SerializationError(e)
+    }
 }
 
 pub type Result<T> = std::result::Result<T, JobError>;

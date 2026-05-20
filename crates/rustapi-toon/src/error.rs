@@ -1,7 +1,7 @@
 //! TOON Error types and conversions
 
-use std::fmt;
 use rustapi_core::ApiError;
+use std::fmt;
 
 /// Error type for TOON operations
 #[derive(Debug)]
@@ -21,7 +21,10 @@ impl fmt::Display for ToonError {
         match self {
             Self::Encode(msg) => write!(f, "TOON encoding error: {}", msg),
             Self::Decode(msg) => write!(f, "TOON decoding error: {}", msg),
-            Self::InvalidContentType => write!(f, "Invalid content type: expected application/toon or text/toon"),
+            Self::InvalidContentType => write!(
+                f,
+                "Invalid content type: expected application/toon or text/toon"
+            ),
             Self::EmptyBody => write!(f, "Empty request body"),
         }
     }

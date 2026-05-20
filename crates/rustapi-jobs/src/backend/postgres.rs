@@ -78,9 +78,7 @@ impl JobBackend for PostgresBackend {
         })
     }
 
-    fn pop<'a>(
-        &'a self,
-    ) -> Pin<Box<dyn Future<Output = Result<Option<JobRequest>>> + Send + 'a>> {
+    fn pop<'a>(&'a self) -> Pin<Box<dyn Future<Output = Result<Option<JobRequest>>> + Send + 'a>> {
         Box::pin(async move {
             // Atomic pop using DELETE ... RETURNING with locking
             let query = format!(

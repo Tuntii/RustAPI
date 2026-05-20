@@ -93,7 +93,9 @@ impl std::error::Error for PoolError {
 }
 
 impl From<sqlx::Error> for PoolError {
-    fn from(e: sqlx::Error) -> Self { Self::Sqlx(e) }
+    fn from(e: sqlx::Error) -> Self {
+        Self::Sqlx(e)
+    }
 }
 
 /// Configuration for SQLx connection pool

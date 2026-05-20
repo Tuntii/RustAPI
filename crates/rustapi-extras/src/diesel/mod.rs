@@ -24,9 +24,9 @@
 //! ```
 
 use rustapi_core::health::{HealthCheck, HealthCheckBuilder, HealthStatus};
+use std::fmt;
 use std::sync::Arc;
 use std::time::Duration;
-use std::fmt;
 
 /// Error type for Diesel pool operations
 #[derive(Debug)]

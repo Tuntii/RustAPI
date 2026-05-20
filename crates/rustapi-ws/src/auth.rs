@@ -24,8 +24,8 @@
 //! ```
 
 use std::collections::HashMap;
-use std::sync::Arc;
 use std::fmt;
+use std::sync::Arc;
 
 /// Error type for WebSocket authentication
 #[derive(Debug, Clone)]

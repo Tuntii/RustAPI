@@ -21,11 +21,8 @@ pub trait Job: Send + Sync + 'static {
     type Data: Serialize + DeserializeOwned + Send + Sync + Debug;
 
     /// Execute the job
-    fn execute(
-        &self,
-        ctx: JobContext,
-        data: Self::Data,
-    ) -> impl Future<Output = Result<()>> + Send;
+    fn execute(&self, ctx: JobContext, data: Self::Data)
+        -> impl Future<Output = Result<()>> + Send;
 }
 
 /// A type-erased job handler (dyn-compatible via boxed futures)
