@@ -19,7 +19,10 @@ async fn test_directory_traversal_blocked() {
     // Double encoded
     let relative_path_double = "%2e%2e%2f%2e%2e%2fetc%2fpasswd";
     let res_double = StaticFile::serve(relative_path_double, &config).await;
-    assert!(res_double.is_err(), "Double encoded traversal should be blocked");
+    assert!(
+        res_double.is_err(),
+        "Double encoded traversal should be blocked"
+    );
 }
 
 #[tokio::test]
@@ -41,7 +44,10 @@ async fn test_valid_file_with_spaces_served() {
 
     let relative_path = "file%20with%20spaces.txt";
     let res = StaticFile::serve(relative_path, &config).await;
-    assert!(res.is_ok(), "File with percent-encoded spaces should be served");
+    assert!(
+        res.is_ok(),
+        "File with percent-encoded spaces should be served"
+    );
 
     let _ = std::fs::remove_dir_all("./test_dir");
 }
