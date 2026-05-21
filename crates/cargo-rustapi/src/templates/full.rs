@@ -170,7 +170,7 @@ pub async fn login(Json(body): Json<LoginRequest>) -> Result<Json<LoginResponse>
     // TODO: Validate credentials against your database
     if body.username == "admin" && body.password == "password" {
         let jwt_secret = std::env::var("JWT_SECRET")
-            .unwrap_or_else(|_| "dev-secret-change-in-production".to_string());
+            .map_err(|_| ApiError::internal("JWT_SECRET environment variable not set"))?;
         
         let claims = UserClaims {
             sub: "1".to_string(),
