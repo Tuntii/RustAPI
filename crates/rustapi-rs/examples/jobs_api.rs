@@ -6,8 +6,6 @@ fn main() {
 }
 
 #[cfg(any(feature = "extras-jobs", feature = "jobs"))]
-use async_trait::async_trait;
-#[cfg(any(feature = "extras-jobs", feature = "jobs"))]
 use rustapi_rs::extras::jobs::{InMemoryBackend, Job, JobContext, JobQueue};
 #[cfg(any(feature = "extras-jobs", feature = "jobs"))]
 use rustapi_rs::prelude::*;
@@ -38,7 +36,6 @@ struct SendEmailJob {
 }
 
 #[cfg(any(feature = "extras-jobs", feature = "jobs"))]
-#[async_trait]
 impl Job for SendEmailJob {
     const NAME: &'static str = "send_email";
     type Data = EmailJobData;
