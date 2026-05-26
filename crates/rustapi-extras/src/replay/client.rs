@@ -5,15 +5,36 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 /// Error from replay HTTP client operations.
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum ReplayClientError {
     /// HTTP request error.
-    #[error("HTTP error: {0}")]
-    Http(#[from] reqwest::Error),
-
+    Http(reqwest::Error),
     /// Invalid URL.
-    #[error("Invalid URL: {0}")]
     InvalidUrl(String),
+}
+
+impl std::fmt::Display for ReplayClientError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Http(e) => write!(f, "HTTP error: {}", e),
+            Self::InvalidUrl(url) => write!(f, "Invalid URL: {}", url),
+        }
+    }
+}
+
+impl std::error::Error for ReplayClientError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Http(e) => Some(e),
+            _ => None,
+        }
+    }
+}
+
+impl From<reqwest::Error> for ReplayClientError {
+    fn from(e: reqwest::Error) -> Self {
+        Self::Http(e)
+    }
 }
 
 /// HTTP client for replaying recorded requests against a target server.

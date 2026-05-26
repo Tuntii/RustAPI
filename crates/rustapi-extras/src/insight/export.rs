@@ -10,23 +10,49 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 /// Error type for export operations.
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum ExportError {
     /// IO error during export.
-    #[error("IO error: {0}")]
-    Io(#[from] std::io::Error),
-
+    Io(std::io::Error),
     /// Serialization error.
-    #[error("Serialization error: {0}")]
-    Serialization(#[from] serde_json::Error),
-
+    Serialization(serde_json::Error),
     /// HTTP error during webhook export.
-    #[error("HTTP error: {0}")]
     Http(String),
-
     /// Export sink is closed or unavailable.
-    #[error("Export sink unavailable: {0}")]
     Unavailable(String),
+}
+
+impl std::fmt::Display for ExportError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Io(e) => write!(f, "IO error: {}", e),
+            Self::Serialization(e) => write!(f, "Serialization error: {}", e),
+            Self::Http(msg) => write!(f, "HTTP error: {}", msg),
+            Self::Unavailable(msg) => write!(f, "Export sink unavailable: {}", msg),
+        }
+    }
+}
+
+impl std::error::Error for ExportError {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Self::Io(e) => Some(e),
+            Self::Serialization(e) => Some(e),
+            _ => None,
+        }
+    }
+}
+
+impl From<std::io::Error> for ExportError {
+    fn from(e: std::io::Error) -> Self {
+        Self::Io(e)
+    }
+}
+
+impl From<serde_json::Error> for ExportError {
+    fn from(e: serde_json::Error) -> Self {
+        Self::Serialization(e)
+    }
 }
 
 /// Result type for export operations.

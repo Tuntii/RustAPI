@@ -344,9 +344,40 @@ fn parse_window_bits(value: &str) -> Option<u8> {
     }
 }
 
+/// RFC 4648 standard base64 encode (no external crate)
+fn base64_encode(input: &[u8]) -> String {
+    const ALPHA: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut out = String::with_capacity(input.len().div_ceil(3) * 4);
+    for chunk in input.chunks(3) {
+        let b0 = chunk[0] as usize;
+        let b1 = if chunk.len() > 1 {
+            chunk[1] as usize
+        } else {
+            0
+        };
+        let b2 = if chunk.len() > 2 {
+            chunk[2] as usize
+        } else {
+            0
+        };
+        out.push(ALPHA[b0 >> 2] as char);
+        out.push(ALPHA[((b0 & 3) << 4) | (b1 >> 4)] as char);
+        out.push(if chunk.len() > 1 {
+            ALPHA[((b1 & 0xf) << 2) | (b2 >> 6)] as char
+        } else {
+            '='
+        });
+        out.push(if chunk.len() > 2 {
+            ALPHA[b2 & 63] as char
+        } else {
+            '='
+        });
+    }
+    out
+}
+
 /// Generate the Sec-WebSocket-Accept key from the client's Sec-WebSocket-Key
 fn generate_accept_key(key: &str) -> String {
-    use base64::Engine;
     use sha1::{Digest, Sha1};
 
     const GUID: &str = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
@@ -356,7 +387,7 @@ fn generate_accept_key(key: &str) -> String {
     hasher.update(GUID.as_bytes());
     let hash = hasher.finalize();
 
-    base64::engine::general_purpose::STANDARD.encode(hash)
+    base64_encode(&hash)
 }
 
 /// Validate that a request is a valid WebSocket upgrade request

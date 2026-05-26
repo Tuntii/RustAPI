@@ -1,7 +1,8 @@
 use crate::error::Result;
-use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use std::future::Future;
+use std::pin::Pin;
 
 pub mod memory;
 
@@ -24,20 +25,27 @@ pub struct JobRequest {
     pub run_at: Option<DateTime<Utc>>,
 }
 
-/// Backend storage for jobs
-#[async_trait]
+/// Backend storage for jobs (dyn-compatible via boxed futures)
 pub trait JobBackend: Send + Sync {
     /// Push a new job to the queue
-    async fn push(&self, job: JobRequest) -> Result<()>;
+    fn push<'a>(&'a self, job: JobRequest)
+        -> Pin<Box<dyn Future<Output = Result<()>> + Send + 'a>>;
 
     /// Pop the next available job
     /// Should return None if no job is available or ready
-    async fn pop(&self) -> Result<Option<JobRequest>>;
+    fn pop<'a>(&'a self) -> Pin<Box<dyn Future<Output = Result<Option<JobRequest>>> + Send + 'a>>;
 
     /// Mark a job as completed successfully
-    async fn complete(&self, job_id: &str) -> Result<()>;
+    fn complete<'a>(
+        &'a self,
+        job_id: &'a str,
+    ) -> Pin<Box<dyn Future<Output = Result<()>> + Send + 'a>>;
 
     /// Mark a job as failed
     /// The manager will decide whether to retry (re-push) or move to DLQ
-    async fn fail(&self, job_id: &str, error: &str) -> Result<()>;
+    fn fail<'a>(
+        &'a self,
+        job_id: &'a str,
+        error: &'a str,
+    ) -> Pin<Box<dyn Future<Output = Result<()>> + Send + 'a>>;
 }

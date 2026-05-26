@@ -2,6 +2,7 @@
 
 use super::event::AuditEvent;
 use super::query::AuditQueryBuilder;
+use std::fmt;
 use std::future::Future;
 use std::pin::Pin;
 
@@ -9,36 +10,39 @@ use std::pin::Pin;
 pub type AuditResult<T> = Result<T, AuditError>;
 
 /// Errors that can occur during audit operations.
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum AuditError {
     /// Failed to write audit event.
-    #[error("Failed to write audit event: {0}")]
     WriteError(String),
-
     /// Failed to read audit events.
-    #[error("Failed to read audit events: {0}")]
     ReadError(String),
-
     /// Storage is full.
-    #[error("Audit storage is full")]
     StorageFull,
-
     /// Event not found.
-    #[error("Audit event not found: {0}")]
     NotFound(String),
-
     /// Serialization error.
-    #[error("Serialization error: {0}")]
     SerializationError(String),
-
     /// IO error.
-    #[error("IO error: {0}")]
     IoError(String),
-
     /// Configuration error.
-    #[error("Configuration error: {0}")]
     ConfigError(String),
 }
+
+impl fmt::Display for AuditError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::WriteError(msg) => write!(f, "Failed to write audit event: {}", msg),
+            Self::ReadError(msg) => write!(f, "Failed to read audit events: {}", msg),
+            Self::StorageFull => write!(f, "Audit storage is full"),
+            Self::NotFound(msg) => write!(f, "Audit event not found: {}", msg),
+            Self::SerializationError(msg) => write!(f, "Serialization error: {}", msg),
+            Self::IoError(msg) => write!(f, "IO error: {}", msg),
+            Self::ConfigError(msg) => write!(f, "Configuration error: {}", msg),
+        }
+    }
+}
+
+impl std::error::Error for AuditError {}
 
 /// Trait for audit event storage backends.
 pub trait AuditStore: Send + Sync {

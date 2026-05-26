@@ -159,7 +159,6 @@ mod property_tests {
     use super::*;
     use crate::backend::memory::InMemoryBackend as MemoryBackend;
     use crate::JobError;
-    use async_trait::async_trait;
     use proptest::prelude::*;
     use serde::{Deserialize, Serialize};
     use std::sync::Arc;
@@ -186,7 +185,6 @@ mod property_tests {
         execution_count: Arc<RwLock<u32>>,
     }
 
-    #[async_trait]
     impl Job for TestJob {
         const NAME: &'static str = "test_job";
         type Data = TestJobData;

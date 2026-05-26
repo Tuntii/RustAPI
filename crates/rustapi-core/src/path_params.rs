@@ -1,39 +1,25 @@
-//! Path parameter types with optimized storage
-//!
-//! This module provides efficient path parameter storage using stack allocation
-//! for the common case of having 4 or fewer parameters.
+//! Path parameter types.
 
-use smallvec::SmallVec;
 use std::collections::HashMap;
 
-/// Maximum number of path parameters to store on the stack.
-/// Most routes have 1-4 parameters, so this covers the majority of cases
-/// without heap allocation.
-pub const STACK_PARAMS_CAPACITY: usize = 4;
-
-/// Path parameters with stack-optimized storage.
-///
-/// Uses `SmallVec` to store up to 4 key-value pairs on the stack,
-/// avoiding heap allocation for the common case.
+/// Path parameters collection.
 #[derive(Debug, Clone, Default)]
 pub struct PathParams {
-    inner: SmallVec<[(String, String); STACK_PARAMS_CAPACITY]>,
+    inner: Vec<(String, String)>,
 }
 
 impl PathParams {
     /// Create a new empty path params collection.
     #[inline]
     pub fn new() -> Self {
-        Self {
-            inner: SmallVec::new(),
-        }
+        Self { inner: Vec::new() }
     }
 
     /// Create path params with pre-allocated capacity.
     #[inline]
     pub fn with_capacity(capacity: usize) -> Self {
         Self {
-            inner: SmallVec::with_capacity(capacity),
+            inner: Vec::with_capacity(capacity),
         }
     }
 
@@ -126,7 +112,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_small_params_on_stack() {
+    fn test_small_params() {
         let mut params = PathParams::new();
         params.insert("id".to_string(), "123".to_string());
         params.insert("name".to_string(), "test".to_string());
@@ -134,21 +120,16 @@ mod tests {
         assert_eq!(params.get("id"), Some(&"123".to_string()));
         assert_eq!(params.get("name"), Some(&"test".to_string()));
         assert_eq!(params.len(), 2);
-
-        // Should be on stack (not spilled)
-        assert!(!params.inner.spilled());
     }
 
     #[test]
-    fn test_many_params_spill_to_heap() {
+    fn test_many_params() {
         let mut params = PathParams::new();
         for i in 0..10 {
             params.insert(format!("key{}", i), format!("value{}", i));
         }
 
         assert_eq!(params.len(), 10);
-        // Should have spilled to heap
-        assert!(params.inner.spilled());
     }
 
     #[test]

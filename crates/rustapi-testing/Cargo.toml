@@ -13,21 +13,18 @@ rust-version.workspace = true
 description = "Testing utilities for RustAPI applications. Provides checking helpers, test servers, and fluid assertions."
 
 [dependencies]
-tokio = { workspace = true, features = ["full"] }
-hyper = { workspace = true, features = ["full"] }
-hyper-util = { workspace = true, features = ["full"] }
+tokio = { workspace = true, features = ["macros", "net", "rt", "sync"] }
+hyper = { workspace = true, features = ["http1", "server"] }
+hyper-util = { workspace = true, features = ["http1", "server-auto", "tokio"] }
 http = { workspace = true }
 http-body-util = { workspace = true }
 bytes = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
-thiserror = { workspace = true }
-tracing = { workspace = true }
-futures-util = { workspace = true }
 rustapi-core = { workspace = true }
 
 [dev-dependencies]
 proptest = "1.8.0"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
-tokio = { workspace = true, features = ["full", "test-util"] }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "test-util"] }
 

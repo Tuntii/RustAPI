@@ -1,7 +1,8 @@
 use crate::error::Result;
-use async_trait::async_trait;
 use serde::{de::DeserializeOwned, Serialize};
 use std::fmt::Debug;
+use std::future::Future;
+use std::pin::Pin;
 
 /// Context passed to job execution
 #[derive(Debug, Clone)]
@@ -12,7 +13,6 @@ pub struct JobContext {
 }
 
 /// A job that can be executed
-#[async_trait]
 pub trait Job: Send + Sync + 'static {
     /// The job name/type
     const NAME: &'static str;
@@ -21,19 +21,28 @@ pub trait Job: Send + Sync + 'static {
     type Data: Serialize + DeserializeOwned + Send + Sync + Debug;
 
     /// Execute the job
-    async fn execute(&self, ctx: JobContext, data: Self::Data) -> Result<()>;
+    fn execute(&self, ctx: JobContext, data: Self::Data)
+        -> impl Future<Output = Result<()>> + Send;
 }
 
-/// A type-erased job handler
-#[async_trait]
+/// A type-erased job handler (dyn-compatible via boxed futures)
 pub trait JobHandler: Send + Sync {
-    async fn handle(&self, ctx: JobContext, data: serde_json::Value) -> Result<()>;
+    fn handle<'a>(
+        &'a self,
+        ctx: JobContext,
+        data: serde_json::Value,
+    ) -> Pin<Box<dyn Future<Output = Result<()>> + Send + 'a>>;
 }
 
-#[async_trait]
 impl<J: Job> JobHandler for J {
-    async fn handle(&self, ctx: JobContext, data: serde_json::Value) -> Result<()> {
-        let data: J::Data = serde_json::from_value(data)?;
-        self.execute(ctx, data).await
+    fn handle<'a>(
+        &'a self,
+        ctx: JobContext,
+        data: serde_json::Value,
+    ) -> Pin<Box<dyn Future<Output = Result<()>> + Send + 'a>> {
+        Box::pin(async move {
+            let data: J::Data = serde_json::from_value(data)?;
+            self.execute(ctx, data).await
+        })
     }
 }

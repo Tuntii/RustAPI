@@ -24,36 +24,40 @@
 //! ```
 
 use std::collections::HashMap;
+use std::fmt;
 use std::sync::Arc;
-use thiserror::Error;
 
 /// Error type for WebSocket authentication
-#[derive(Error, Debug, Clone)]
+#[derive(Debug, Clone)]
 pub enum AuthError {
     /// Token is missing from the request
-    #[error("Authentication token missing")]
     TokenMissing,
-
     /// Token format is invalid
-    #[error("Invalid token format: {0}")]
     InvalidFormat(String),
-
     /// Token has expired
-    #[error("Token has expired")]
     TokenExpired,
-
     /// Token signature is invalid
-    #[error("Invalid token signature")]
     InvalidSignature,
-
     /// Token validation failed
-    #[error("Token validation failed: {0}")]
     ValidationFailed(String),
-
     /// Insufficient permissions
-    #[error("Insufficient permissions: {0}")]
     InsufficientPermissions(String),
 }
+
+impl fmt::Display for AuthError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::TokenMissing => write!(f, "Authentication token missing"),
+            Self::InvalidFormat(msg) => write!(f, "Invalid token format: {}", msg),
+            Self::TokenExpired => write!(f, "Token has expired"),
+            Self::InvalidSignature => write!(f, "Invalid token signature"),
+            Self::ValidationFailed(msg) => write!(f, "Token validation failed: {}", msg),
+            Self::InsufficientPermissions(msg) => write!(f, "Insufficient permissions: {}", msg),
+        }
+    }
+}
+
+impl std::error::Error for AuthError {}
 
 impl AuthError {
     /// Create a validation failed error

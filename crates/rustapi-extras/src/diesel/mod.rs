@@ -24,25 +24,32 @@
 //! ```
 
 use rustapi_core::health::{HealthCheck, HealthCheckBuilder, HealthStatus};
+use std::fmt;
 use std::sync::Arc;
 use std::time::Duration;
-use thiserror::Error;
 
 /// Error type for Diesel pool operations
-#[derive(Debug, Error)]
+#[derive(Debug)]
 pub enum DieselPoolError {
     /// Configuration error
-    #[error("Pool configuration error: {0}")]
     Configuration(String),
-
     /// Connection error
-    #[error("Database connection error: {0}")]
     Connection(String),
-
     /// R2D2 pool error
-    #[error("Pool error: {0}")]
     Pool(String),
 }
+
+impl fmt::Display for DieselPoolError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Configuration(msg) => write!(f, "Pool configuration error: {}", msg),
+            Self::Connection(msg) => write!(f, "Database connection error: {}", msg),
+            Self::Pool(msg) => write!(f, "Pool error: {}", msg),
+        }
+    }
+}
+
+impl std::error::Error for DieselPoolError {}
 
 /// Configuration for Diesel connection pool
 ///

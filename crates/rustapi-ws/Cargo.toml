@@ -37,7 +37,6 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 
 # Utilities
-thiserror = { workspace = true }
 tracing = { workspace = true }
 pin-project-lite = { workspace = true }
 async-trait = { workspace = true }
@@ -45,7 +44,6 @@ url = "2.5"
 
 # SHA-1 for WebSocket handshake
 sha1 = "0.10"
-base64 = "0.22"
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }

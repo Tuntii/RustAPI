@@ -989,8 +989,40 @@ impl RustApi {
         description: Option<&str>,
     ) -> Self {
         use crate::router::MethodRouter;
-        use base64::{engine::general_purpose::STANDARD, Engine};
         use std::collections::HashMap;
+
+        #[inline]
+        fn base64_encode(input: &[u8]) -> String {
+            const ALPHA: &[u8; 64] =
+                b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+            let mut out = String::with_capacity(input.len().div_ceil(3) * 4);
+            for chunk in input.chunks(3) {
+                let b0 = chunk[0] as usize;
+                let b1 = if chunk.len() > 1 {
+                    chunk[1] as usize
+                } else {
+                    0
+                };
+                let b2 = if chunk.len() > 2 {
+                    chunk[2] as usize
+                } else {
+                    0
+                };
+                out.push(ALPHA[b0 >> 2] as char);
+                out.push(ALPHA[((b0 & 3) << 4) | (b1 >> 4)] as char);
+                out.push(if chunk.len() > 1 {
+                    ALPHA[((b1 & 0xf) << 2) | (b2 >> 6)] as char
+                } else {
+                    '='
+                });
+                out.push(if chunk.len() > 2 {
+                    ALPHA[b2 & 63] as char
+                } else {
+                    '='
+                });
+            }
+            out
+        }
 
         // Update spec info
         self.openapi_spec.info.title = title.to_string();
@@ -1004,7 +1036,7 @@ impl RustApi {
 
         // Create expected auth header value
         let credentials = format!("{}:{}", username, password);
-        let encoded = STANDARD.encode(credentials.as_bytes());
+        let encoded = base64_encode(credentials.as_bytes());
         let expected_auth = format!("Basic {}", encoded);
 
         // Clone values for closures

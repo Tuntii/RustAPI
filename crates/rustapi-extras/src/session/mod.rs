@@ -55,6 +55,7 @@ use rustapi_openapi::{Operation, OperationModifier};
 use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::{BTreeMap, HashMap};
+use std::fmt;
 use std::future::Future;
 use std::pin::Pin;
 use std::sync::Arc;
@@ -70,28 +71,33 @@ pub type SessionResult<T> = std::result::Result<T, SessionError>;
 pub type SessionData = BTreeMap<String, Value>;
 
 /// Errors that can occur when loading, mutating, or persisting sessions.
-#[derive(Debug, thiserror::Error)]
+#[derive(Debug)]
 pub enum SessionError {
     /// The configured store failed to read data.
-    #[error("Failed to read session data: {0}")]
     Read(String),
-
     /// The configured store failed to persist data.
-    #[error("Failed to persist session data: {0}")]
     Write(String),
-
     /// A serialized value could not be converted to JSON.
-    #[error("Failed to serialize session value: {0}")]
     Serialize(String),
-
     /// A JSON value could not be converted back to the requested type.
-    #[error("Failed to deserialize session value: {0}")]
     Deserialize(String),
-
     /// A store-specific configuration error occurred.
-    #[error("Invalid session store configuration: {0}")]
     Config(String),
 }
+
+impl fmt::Display for SessionError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Read(msg) => write!(f, "Failed to read session data: {}", msg),
+            Self::Write(msg) => write!(f, "Failed to persist session data: {}", msg),
+            Self::Serialize(msg) => write!(f, "Failed to serialize session value: {}", msg),
+            Self::Deserialize(msg) => write!(f, "Failed to deserialize session value: {}", msg),
+            Self::Config(msg) => write!(f, "Invalid session store configuration: {}", msg),
+        }
+    }
+}
+
+impl std::error::Error for SessionError {}
 
 impl From<SessionError> for ApiError {
     fn from(error: SessionError) -> Self {

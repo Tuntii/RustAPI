@@ -16,9 +16,6 @@ homepage.workspace = true
 serde = { workspace = true }
 serde_json = { workspace = true }
 
-# Error handling
-thiserror = { workspace = true }
-
 # HTTP types for response
 http = { workspace = true }
 

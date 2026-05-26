@@ -1,8 +1,6 @@
 //! OAuth2 token types and errors
 
 use std::time::{Duration, Instant};
-use thiserror::Error;
-
 /// OAuth2 token response from the authorization server.
 #[derive(Debug, Clone)]
 pub struct TokenResponse {
@@ -103,44 +101,45 @@ impl TokenResponse {
 }
 
 /// Errors that can occur during OAuth2 operations.
-#[derive(Debug, Error)]
+#[derive(Debug)]
 pub enum TokenError {
     /// The authorization request was denied.
-    #[error("Authorization denied: {0}")]
     AuthorizationDenied(String),
-
     /// Invalid authorization code.
-    #[error("Invalid authorization code")]
     InvalidCode,
-
     /// Invalid CSRF state.
-    #[error("Invalid CSRF state - possible CSRF attack")]
     InvalidState,
-
     /// Token exchange failed.
-    #[error("Token exchange failed: {0}")]
     ExchangeFailed(String),
-
     /// Token refresh failed.
-    #[error("Token refresh failed: {0}")]
     RefreshFailed(String),
-
     /// Network error.
-    #[error("Network error: {0}")]
     NetworkError(String),
-
     /// Invalid response from the authorization server.
-    #[error("Invalid response: {0}")]
     InvalidResponse(String),
-
     /// Token is expired.
-    #[error("Token is expired")]
     TokenExpired,
-
     /// Missing required field in response.
-    #[error("Missing required field: {0}")]
     MissingField(String),
 }
+
+impl std::fmt::Display for TokenError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::AuthorizationDenied(msg) => write!(f, "Authorization denied: {}", msg),
+            Self::InvalidCode => write!(f, "Invalid authorization code"),
+            Self::InvalidState => write!(f, "Invalid CSRF state - possible CSRF attack"),
+            Self::ExchangeFailed(msg) => write!(f, "Token exchange failed: {}", msg),
+            Self::RefreshFailed(msg) => write!(f, "Token refresh failed: {}", msg),
+            Self::NetworkError(msg) => write!(f, "Network error: {}", msg),
+            Self::InvalidResponse(msg) => write!(f, "Invalid response: {}", msg),
+            Self::TokenExpired => write!(f, "Token is expired"),
+            Self::MissingField(msg) => write!(f, "Missing required field: {}", msg),
+        }
+    }
+}
+
+impl std::error::Error for TokenError {}
 
 /// PKCE (Proof Key for Code Exchange) verifier.
 #[derive(Debug, Clone)]

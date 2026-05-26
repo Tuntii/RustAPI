@@ -33,7 +33,6 @@ bytes = { workspace = true }
 tokio = { workspace = true, features = ["sync"] }
 
 # Utilities
-thiserror = { workspace = true }
 tracing = { workspace = true }
 
 [dev-dependencies]
