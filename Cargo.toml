@@ -30,7 +30,7 @@ rust-version = "1.85"
 
 [workspace.dependencies]
 # Async runtime
-tokio = "1.50"
+tokio = "1.52"
 
 # HTTP
 hyper = "1.1"
