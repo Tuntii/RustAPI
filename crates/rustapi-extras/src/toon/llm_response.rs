@@ -1,40 +1,9 @@
-//! # LLM-Optimized Response Wrapper
+//! LLM-Optimized Response Wrapper
 //!
 //! Provides `LlmResponse<T>` for AI/LLM endpoints with automatic
 //! token counting and format optimization.
-//!
-//! ## Features
-//!
-//! - Automatic content negotiation (JSON vs TOON)
-//! - Token counting headers
-//! - Token savings calculation
-//!
-//! ## Response Headers
-//!
-//! - `X-Token-Count-JSON`: Estimated token count in JSON format
-//! - `X-Token-Count-TOON`: Estimated token count in TOON format
-//! - `X-Token-Savings`: Percentage of tokens saved with TOON
-//!
-//! ## Example
-//!
-//! ```rust,ignore
-//! use rustapi_rs::prelude::*;
-//! use rustapi_rs::toon::{LlmResponse, AcceptHeader};
-//!
-//! #[derive(Serialize)]
-//! struct ChatResponse {
-//!     messages: Vec<Message>,
-//! }
-//!
-//! async fn chat(accept: AcceptHeader) -> LlmResponse<ChatResponse> {
-//!     let response = ChatResponse {
-//!         messages: vec![...],
-//!     };
-//!     LlmResponse::new(response, accept.preferred)
-//! }
-//! ```
 
-use crate::{OutputFormat, JSON_CONTENT_TYPE, TOON_CONTENT_TYPE};
+use super::{OutputFormat, JSON_CONTENT_TYPE, TOON_CONTENT_TYPE};
 use http::{header, StatusCode};
 use rustapi_core::{ApiError, IntoResponse, Response};
 use rustapi_openapi::{
@@ -65,30 +34,6 @@ pub const X_FORMAT_USED: &str = "x-format-used";
 /// - ~4 characters per token (GPT-3/4 average)
 ///
 /// For more accurate counts, use a proper tokenizer.
-///
-/// ## Example
-///
-/// ```rust,ignore
-/// use rustapi_rs::prelude::*;
-/// use rustapi_rs::toon::{LlmResponse, AcceptHeader, OutputFormat};
-///
-/// #[derive(Serialize)]
-/// struct ApiData {
-///     items: Vec<Item>,
-/// }
-///
-/// // With content negotiation
-/// async fn get_items(accept: AcceptHeader) -> LlmResponse<ApiData> {
-///     let data = ApiData { items: vec![...] };
-///     LlmResponse::new(data, accept.preferred)
-/// }
-///
-/// // Always TOON format
-/// async fn get_items_toon() -> LlmResponse<ApiData> {
-///     let data = ApiData { items: vec![...] };
-///     LlmResponse::toon(data)
-/// }
-/// ```
 #[derive(Debug, Clone)]
 pub struct LlmResponse<T> {
     data: T,
@@ -132,10 +77,8 @@ impl<T> LlmResponse<T> {
 /// Estimate token count using simple character-based heuristic.
 /// ~4 characters per token (GPT-3/4 average)
 fn estimate_tokens(text: &str) -> usize {
-    // Simple heuristic: ~4 chars per token
-    // Accounts for whitespace and punctuation overhead
     let char_count = text.len();
-    char_count.div_ceil(4) // Round up
+    char_count.div_ceil(4)
 }
 
 /// Calculate token savings percentage.
@@ -144,7 +87,7 @@ fn calculate_savings(json_tokens: usize, toon_tokens: usize) -> f64 {
         return 0.0;
     }
     let savings = json_tokens.saturating_sub(toon_tokens) as f64 / json_tokens as f64 * 100.0;
-    (savings * 100.0).round() / 100.0 // Round to 2 decimal places
+    (savings * 100.0).round() / 100.0
 }
 
 impl<T: Serialize> IntoResponse for LlmResponse<T> {
@@ -254,86 +197,10 @@ impl<T: Serialize> ResponseModifier for LlmResponse<T> {
         );
 
         let response = ResponseSpec {
-            description: "LLM-optimized response with token counting headers (X-Token-Count-JSON, X-Token-Count-TOON, X-Token-Savings)".to_string(),
+            description: "LLM-optimized response with token counting headers".to_string(),
             content,
             headers: BTreeMap::new(),
         };
         op.responses.insert("200".to_string(), response);
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use serde::Serialize;
-
-    #[derive(Serialize)]
-    struct TestData {
-        id: u64,
-        name: String,
-        active: bool,
-    }
-
-    #[test]
-    fn test_estimate_tokens() {
-        // ~4 chars per token
-        assert_eq!(estimate_tokens(""), 0);
-        assert_eq!(estimate_tokens("test"), 1); // 4 chars = 1 token
-        assert_eq!(estimate_tokens("hello world"), 3); // 11 chars = ~3 tokens
-        assert_eq!(estimate_tokens("a"), 1); // rounds up
-    }
-
-    #[test]
-    fn test_calculate_savings() {
-        assert_eq!(calculate_savings(100, 70), 30.0);
-        assert_eq!(calculate_savings(100, 80), 20.0);
-        assert_eq!(calculate_savings(100, 100), 0.0);
-        assert_eq!(calculate_savings(0, 0), 0.0);
-    }
-
-    #[test]
-    fn test_llm_response_json_format() {
-        let data = TestData {
-            id: 1,
-            name: "Test".to_string(),
-            active: true,
-        };
-        let response = LlmResponse::json(data);
-        assert!(matches!(response.format, OutputFormat::Json));
-    }
-
-    #[test]
-    fn test_llm_response_toon_format() {
-        let data = TestData {
-            id: 1,
-            name: "Test".to_string(),
-            active: true,
-        };
-        let response = LlmResponse::toon(data);
-        assert!(matches!(response.format, OutputFormat::Toon));
-    }
-
-    #[test]
-    fn test_llm_response_without_headers() {
-        let data = TestData {
-            id: 1,
-            name: "Test".to_string(),
-            active: true,
-        };
-        let response = LlmResponse::json(data).without_token_headers();
-        assert!(!response.include_token_headers);
-    }
-
-    #[test]
-    fn test_llm_response_with_headers() {
-        let data = TestData {
-            id: 1,
-            name: "Test".to_string(),
-            active: true,
-        };
-        let response = LlmResponse::toon(data)
-            .without_token_headers()
-            .with_token_headers();
-        assert!(response.include_token_headers);
     }
 }

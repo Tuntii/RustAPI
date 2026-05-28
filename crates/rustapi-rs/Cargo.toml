@@ -16,10 +16,7 @@ readme = "README.md"
 rustapi-core = { workspace = true, default-features = false }
 rustapi-macros = { workspace = true }
 rustapi-extras = { workspace = true, optional = true }
-rustapi-jobs = { workspace = true, optional = true }
-rustapi-toon = { workspace = true, optional = true }
 rustapi-ws = { workspace = true, optional = true }
-rustapi-view = { workspace = true, optional = true }
 rustapi-grpc = { workspace = true, optional = true }
 rustapi-validate = { workspace = true }
 async-trait = { workspace = true }
@@ -57,9 +54,9 @@ core-http3-dev = ["rustapi-core/http3-dev"]
 core-dashboard = ["rustapi-core/dashboard"]
 
 # Canonical protocol features
-protocol-toon = ["dep:rustapi-toon"]
+protocol-toon = ["dep:rustapi-extras", "rustapi-extras/toon"]
 protocol-ws = ["dep:rustapi-ws"]
-protocol-view = ["dep:rustapi-view"]
+protocol-view = ["dep:rustapi-extras", "rustapi-extras/view"]
 protocol-grpc = ["dep:rustapi-grpc"]
 protocol-http3 = ["core-http3"]
 protocol-http3-dev = ["core-http3-dev"]
@@ -88,7 +85,7 @@ extras-replay = ["dep:rustapi-extras", "rustapi-extras/replay"]
 extras-oauth2-client = ["dep:rustapi-extras", "rustapi-extras/oauth2-client"]
 extras-session = ["dep:rustapi-extras", "rustapi-extras/session"]
 extras-session-redis = ["dep:rustapi-extras", "rustapi-extras/session-redis"]
-extras-jobs = ["dep:rustapi-jobs"]
+extras-jobs = ["dep:rustapi-extras", "rustapi-extras/jobs"]
 extras-all = [
     "extras-jwt",
     "extras-cors",

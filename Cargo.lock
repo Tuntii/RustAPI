@@ -1561,7 +1561,7 @@ dependencies = [
  "tokio",
  "tokio-rustls",
  "tower-service",
- "webpki-roots 1.0.7",
+ "webpki-roots",
 ]
 
 [[package]]
@@ -2205,16 +2205,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
  "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "num-bigint"
-version = "0.4.6"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a5e44f723f1133c9deac646763579fdb3ac745e418f2a7af9cd0c431da1f20b9"
-dependencies = [
- "num-integer",
- "num-traits",
 ]
 
 [[package]]
@@ -2967,11 +2957,9 @@ dependencies = [
  "combine",
  "futures-util",
  "itoa",
- "num-bigint",
  "percent-encoding",
  "pin-project-lite",
  "ryu",
- "sha1_smol",
  "socket2",
  "tokio",
  "tokio-util",
@@ -3085,7 +3073,7 @@ dependencies = [
  "wasm-bindgen-futures",
  "wasm-streams",
  "web-sys",
- "webpki-roots 1.0.7",
+ "webpki-roots",
 ]
 
 [[package]]
@@ -3215,7 +3203,6 @@ dependencies = [
  "rcgen",
  "reqwest",
  "rustapi-openapi",
- "rustapi-testing",
  "rustapi-validate",
  "rustls",
  "serde",
@@ -3239,6 +3226,7 @@ dependencies = [
  "aws-lc-rs",
  "base64",
  "bytes",
+ "chrono",
  "cookie",
  "dashmap",
  "diesel",
@@ -3259,7 +3247,6 @@ dependencies = [
  "reqwest",
  "rustapi-core",
  "rustapi-openapi",
- "rustapi-testing",
  "serde",
  "serde_json",
  "serde_urlencoded",
@@ -3267,7 +3254,9 @@ dependencies = [
  "sha2 0.11.0",
  "sqlx",
  "tempfile",
+ "tera",
  "tokio",
+ "toon-format",
  "tracing",
  "tracing-opentelemetry",
  "urlencoding",
@@ -3283,22 +3272,6 @@ dependencies = [
  "tokio",
  "tonic",
  "tonic-health",
-]
-
-[[package]]
-name = "rustapi-jobs"
-version = "0.1.478"
-dependencies = [
- "async-trait",
- "chrono",
- "proptest",
- "redis",
- "serde",
- "serde_json",
- "sqlx",
- "tokio",
- "tracing",
- "uuid",
 ]
 
 [[package]]
@@ -3336,12 +3309,9 @@ dependencies = [
  "rustapi-core",
  "rustapi-extras",
  "rustapi-grpc",
- "rustapi-jobs",
  "rustapi-macros",
  "rustapi-openapi",
- "rustapi-toon",
  "rustapi-validate",
- "rustapi-view",
  "rustapi-ws",
  "serde",
  "serde_json",
@@ -3349,40 +3319,6 @@ dependencies = [
  "tracing",
  "uuid",
  "validator",
-]
-
-[[package]]
-name = "rustapi-testing"
-version = "0.1.478"
-dependencies = [
- "bytes",
- "http",
- "http-body-util",
- "hyper",
- "hyper-util",
- "proptest",
- "reqwest",
- "rustapi-core",
- "serde",
- "serde_json",
- "tokio",
-]
-
-[[package]]
-name = "rustapi-toon"
-version = "0.1.478"
-dependencies = [
- "bytes",
- "futures-util",
- "http",
- "http-body-util",
- "rustapi-core",
- "rustapi-openapi",
- "serde",
- "serde_json",
- "tokio",
- "toon-format",
- "tracing",
 ]
 
 [[package]]
@@ -3399,22 +3335,6 @@ dependencies = [
  "serde",
  "serde_json",
  "tokio",
-]
-
-[[package]]
-name = "rustapi-view"
-version = "0.1.478"
-dependencies = [
- "bytes",
- "http",
- "http-body-util",
- "rustapi-core",
- "rustapi-openapi",
- "serde",
- "serde_json",
- "tera",
- "tokio",
- "tracing",
 ]
 
 [[package]]
@@ -3761,12 +3681,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "sha1_smol"
-version = "1.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bbfa15b3dddfee50a0fff136974b3e1bde555604ba463834a7eb7deb6417705d"
-
-[[package]]
 name = "sha2"
 version = "0.10.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3948,7 +3862,6 @@ checksum = "ee6798b1838b6a0f69c007c133b8df5866302197e404e8b6ee8ed3e3a5e68dc6"
 dependencies = [
  "base64",
  "bytes",
- "chrono",
  "crc",
  "crossbeam-queue",
  "either",
@@ -3964,7 +3877,6 @@ dependencies = [
  "memchr",
  "once_cell",
  "percent-encoding",
- "rustls",
  "serde",
  "serde_json",
  "sha2 0.10.9",
@@ -3974,8 +3886,6 @@ dependencies = [
  "tokio-stream",
  "tracing",
  "url",
- "uuid",
- "webpki-roots 0.26.11",
 ]
 
 [[package]]
@@ -4027,7 +3937,6 @@ dependencies = [
  "bitflags 2.11.1",
  "byteorder",
  "bytes",
- "chrono",
  "crc",
  "digest 0.10.7",
  "dotenvy",
@@ -4056,7 +3965,6 @@ dependencies = [
  "stringprep",
  "thiserror 2.0.18",
  "tracing",
- "uuid",
  "whoami",
 ]
 
@@ -4070,7 +3978,6 @@ dependencies = [
  "base64",
  "bitflags 2.11.1",
  "byteorder",
- "chrono",
  "crc",
  "dotenvy",
  "etcetera",
@@ -4095,7 +4002,6 @@ dependencies = [
  "stringprep",
  "thiserror 2.0.18",
  "tracing",
- "uuid",
  "whoami",
 ]
 
@@ -4106,7 +4012,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2d12fe70b2c1b4401038055f90f151b78208de1f9f89a7dbfd41587a10c3eea"
 dependencies = [
  "atoi",
- "chrono",
  "flume",
  "futures-channel",
  "futures-core",
@@ -4122,7 +4027,6 @@ dependencies = [
  "thiserror 2.0.18",
  "tracing",
  "url",
- "uuid",
 ]
 
 [[package]]
@@ -5106,15 +5010,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f31141ce3fc3e300ae89b78c0dd67f9708061d1d2eda54b8209346fd6be9a92c"
 dependencies = [
  "rustls-pki-types",
-]
-
-[[package]]
-name = "webpki-roots"
-version = "0.26.11"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "521bc38abb08001b01866da9f51eb7c5d647a19260e00054a8c7fd5f9e57f7a9"
-dependencies = [
- "webpki-roots 1.0.7",
 ]
 
 [[package]]

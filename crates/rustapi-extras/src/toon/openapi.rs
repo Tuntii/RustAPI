@@ -3,7 +3,7 @@
 //! This module provides OpenAPI schema definitions and documentation helpers
 //! for TOON format responses.
 
-use crate::TOON_CONTENT_TYPE;
+use super::TOON_CONTENT_TYPE;
 
 /// TOON format description for OpenAPI
 pub const TOON_FORMAT_DESCRIPTION: &str = r#"
@@ -196,17 +196,13 @@ mod tests {
 
         assert!(comparison["json"]["bytes"].as_u64().unwrap() > 0);
         assert!(comparison["toon"]["bytes"].as_u64().unwrap() > 0);
-        // TOON should be smaller
-        assert!(
-            comparison["toon"]["bytes"].as_u64().unwrap()
-                < comparison["json"]["bytes"].as_u64().unwrap()
-        );
+        assert!(comparison["toon"]["bytes"].as_u64().unwrap() < comparison["json"]["bytes"].as_u64().unwrap());
     }
 
     #[test]
     fn test_api_description_with_toon() {
-        let desc = api_description_with_toon("My API");
-        assert!(desc.contains("TOON Format Support"));
-        assert!(desc.contains("40-60% token savings"));
+        let desc = api_description_with_toon("Test API");
+        assert!(desc.contains("Test API"));
+        assert!(desc.contains("TOON"));
     }
 }

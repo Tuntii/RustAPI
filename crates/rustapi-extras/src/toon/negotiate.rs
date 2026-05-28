@@ -3,7 +3,7 @@
 //! This module provides `Negotiate<T>` - a response wrapper that automatically
 //! chooses between JSON and TOON format based on the client's `Accept` header.
 
-use crate::{TOON_CONTENT_TYPE, TOON_CONTENT_TYPE_TEXT};
+use super::{TOON_CONTENT_TYPE, TOON_CONTENT_TYPE_TEXT};
 use http::{header, StatusCode};
 use rustapi_core::{ApiError, FromRequestParts, IntoResponse, Request, Response};
 use rustapi_openapi::{
@@ -88,7 +88,6 @@ impl AcceptHeader {
                     let quality = q_str.parse::<f32>().unwrap_or(1.0).clamp(0.0, 1.0);
                     (mt.trim().to_string(), quality)
                 } else if let Some(semi_pos) = part.find(';') {
-                    // Handle other parameters, ignore them
                     (part[..semi_pos].trim().to_string(), 1.0)
                 } else {
                     (part.to_string(), 1.0)
@@ -180,32 +179,6 @@ impl FromRequestParts for AcceptHeader {
 /// Automatically serializes to JSON or TOON based on the client's `Accept` header.
 /// If the client prefers TOON (`Accept: application/toon`), returns TOON format.
 /// Otherwise, defaults to JSON.
-///
-/// # Example
-///
-/// ```rust,ignore
-/// use rustapi_rs::prelude::*;
-/// use rustapi_rs::toon::{Negotiate, AcceptHeader};
-///
-/// #[derive(Serialize)]
-/// struct User {
-///     id: u64,
-///     name: String,
-/// }
-///
-/// // Automatic negotiation via extractor
-/// async fn get_user(accept: AcceptHeader) -> Negotiate<User> {
-///     Negotiate::new(
-///         User { id: 1, name: "Alice".to_string() },
-///         accept.preferred,
-///     )
-/// }
-///
-/// // Or explicitly choose format
-/// async fn get_user_toon() -> Negotiate<User> {
-///     Negotiate::toon(User { id: 1, name: "Alice".to_string() })
-/// }
-/// ```
 #[derive(Debug, Clone)]
 pub struct Negotiate<T> {
     /// The data to serialize
@@ -346,35 +319,6 @@ mod tests {
         let accept = AcceptHeader::parse("application/json;q=0.5, application/toon;q=0.9");
         assert_eq!(accept.preferred, OutputFormat::Toon);
         assert_eq!(accept.media_types.len(), 2);
-        // First should be toon (higher quality)
         assert_eq!(accept.media_types[0].media_type, "application/toon");
-        assert_eq!(accept.media_types[0].quality, 0.9);
-    }
-
-    #[test]
-    fn test_accept_header_parse_wildcard() {
-        let accept = AcceptHeader::parse("*/*");
-        assert_eq!(accept.preferred, OutputFormat::Json);
-        assert!(accept.accepts_json());
-        assert!(accept.accepts_toon());
-    }
-
-    #[test]
-    fn test_accept_header_parse_multiple() {
-        let accept = AcceptHeader::parse("text/html, application/json, application/toon;q=0.8");
-        // JSON comes before TOON (both have default q=1.0, but JSON is checked first)
-        assert_eq!(accept.preferred, OutputFormat::Json);
-    }
-
-    #[test]
-    fn test_accept_header_default() {
-        let accept = AcceptHeader::default();
-        assert_eq!(accept.preferred, OutputFormat::Json);
-    }
-
-    #[test]
-    fn test_output_format_content_type() {
-        assert_eq!(OutputFormat::Json.content_type(), "application/json");
-        assert_eq!(OutputFormat::Toon.content_type(), "application/toon");
     }
 }

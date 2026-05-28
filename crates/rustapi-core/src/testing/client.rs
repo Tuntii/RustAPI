@@ -7,7 +7,7 @@
 //!
 //! ```rust,ignore
 //! use rustapi_core::{RustApi, get};
-//! use rustapi_testing::TestClient;
+//! use rustapi_core::testing::TestClient;
 //!
 //! async fn hello() -> &'static str {
 //!     "Hello, World!"
@@ -27,8 +27,8 @@
 use bytes::Bytes;
 use http::{header, HeaderMap, HeaderValue, Method, StatusCode};
 use http_body_util::BodyExt;
-use rustapi_core::middleware::{BodyLimitLayer, BoxedNext, LayerStack, DEFAULT_BODY_LIMIT};
-use rustapi_core::{ApiError, BodyVariant, IntoResponse, Request, Response, RouteMatch, Router};
+use crate::middleware::{BodyLimitLayer, BoxedNext, LayerStack, DEFAULT_BODY_LIMIT};
+use crate::{ApiError, BodyVariant, IntoResponse, Request, Response, RouteMatch, Router};
 use serde::{de::DeserializeOwned, Serialize};
 use std::future::Future;
 use std::pin::Pin;
@@ -52,7 +52,7 @@ impl TestClient {
     /// let app = RustApi::new().route("/", get(handler));
     /// let client = TestClient::new(app);
     /// ```
-    pub fn new(app: rustapi_core::RustApi) -> Self {
+    pub fn new(app: crate::RustApi) -> Self {
         // Get the router and layers from the app
         let layers = app.layers().clone();
         let router = app.into_router();
@@ -68,7 +68,7 @@ impl TestClient {
     }
 
     /// Create a new test client with custom body limit
-    pub fn with_body_limit(app: rustapi_core::RustApi, limit: usize) -> Self {
+    pub fn with_body_limit(app: crate::RustApi, limit: usize) -> Self {
         let layers = app.layers().clone();
         let router = app.into_router();
 

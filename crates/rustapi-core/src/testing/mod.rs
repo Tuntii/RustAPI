@@ -1,6 +1,9 @@
 //! Testing utilities for RustAPI
 //!
-//! r# "Mock Server"
+//! This module provides test helpers for integration testing
+//! without network binding. Available behind the `test-utils` feature.
+//!
+//! # Mock Server
 //!
 //! The `MockServer` allows you to mock HTTP services for integration testing.
 

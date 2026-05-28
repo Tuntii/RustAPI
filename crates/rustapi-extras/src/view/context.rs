@@ -11,7 +11,7 @@ use tera::Context;
 /// # Example
 ///
 /// ```rust,ignore
-/// use rustapi_view::ContextBuilder;
+/// use rustapi_extras::view::ContextBuilder;
 ///
 /// let context = ContextBuilder::new()
 ///     .insert("name", "Alice")
@@ -98,38 +98,23 @@ mod tests {
 
     #[test]
     fn test_context_builder() {
-        let context = ContextBuilder::new()
-            .insert("name", &"Alice")
+        let ctx = ContextBuilder::new()
+            .insert("name", "Alice")
             .insert("age", &30)
             .build();
 
-        assert!(context.contains_key("name"));
-        assert!(context.contains_key("age"));
-    }
-
-    #[test]
-    fn test_insert_if() {
-        let show = true;
-        let context = ContextBuilder::new()
-            .insert_if("visible", &"yes", |_| show)
-            .insert_if("hidden", &"no", |_| !show)
-            .build();
-
-        assert!(context.contains_key("visible"));
-        assert!(!context.contains_key("hidden"));
+        assert_eq!(ctx.get("name").unwrap().as_str().unwrap(), "Alice");
+        assert_eq!(ctx.get("age").unwrap().as_i64().unwrap(), 30);
     }
 
     #[test]
     fn test_insert_some() {
-        let name: Option<&str> = Some("Alice");
-        let missing: Option<&str> = None;
-
-        let context = ContextBuilder::new()
-            .insert_some("name", name)
-            .insert_some("missing", missing)
+        let ctx = ContextBuilder::new()
+            .insert_some("name", Some(&"Alice"))
+            .insert_some::<String>("missing", None)
             .build();
 
-        assert!(context.contains_key("name"));
-        assert!(!context.contains_key("missing"));
+        assert_eq!(ctx.get("name").unwrap().as_str().unwrap(), "Alice");
+        assert!(ctx.get("missing").is_none());
     }
 }

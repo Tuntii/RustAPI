@@ -131,7 +131,7 @@ mod tests {
     use super::*;
     use http::StatusCode;
     use rustapi_core::{get, post, RustApi};
-    use rustapi_testing::{TestClient, TestRequest, TestResponse};
+    use rustapi_core::testing::{TestClient, TestRequest, TestResponse};
 
     async fn handler() -> &'static str {
         "ok"

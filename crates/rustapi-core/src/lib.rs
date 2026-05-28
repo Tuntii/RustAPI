@@ -81,6 +81,8 @@ pub mod sse;
 pub mod static_files;
 pub mod status;
 pub mod stream;
+#[cfg(feature = "test-utils")]
+pub mod testing;
 pub mod typed_path;
 pub mod validation;
 #[macro_use]

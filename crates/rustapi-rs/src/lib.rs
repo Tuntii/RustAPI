@@ -60,7 +60,7 @@ pub use core::*;
 pub mod protocol {
     #[cfg(any(feature = "protocol-toon", feature = "toon"))]
     pub mod toon {
-        pub use rustapi_toon::*;
+        pub use rustapi_extras::toon::*;
     }
 
     #[cfg(any(feature = "protocol-ws", feature = "ws"))]
@@ -70,7 +70,7 @@ pub mod protocol {
 
     #[cfg(any(feature = "protocol-view", feature = "view"))]
     pub mod view {
-        pub use rustapi_view::*;
+        pub use rustapi_extras::view::*;
     }
 
     #[cfg(any(feature = "protocol-grpc", feature = "grpc"))]
@@ -221,7 +221,7 @@ pub mod extras {
 
     #[cfg(any(feature = "extras-jobs", feature = "jobs"))]
     pub mod jobs {
-        pub use rustapi_jobs::{
+        pub use rustapi_extras::jobs::{
             EnqueueOptions, InMemoryBackend, Job, JobBackend, JobContext, JobError, JobQueue,
             JobRequest,
         };
@@ -336,7 +336,7 @@ pub use rustapi_extras::{
 pub use rustapi_extras::RedisSessionStore;
 
 #[cfg(any(feature = "extras-jobs", feature = "jobs"))]
-pub use rustapi_jobs::{
+pub use rustapi_extras::jobs::{
     EnqueueOptions, InMemoryBackend, Job, JobBackend, JobContext, JobError, JobQueue, JobRequest,
 };
 

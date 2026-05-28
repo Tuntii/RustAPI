@@ -4,7 +4,7 @@ use proptest::prelude::*;
 use rustapi_core::post;
 use rustapi_core::BodyStream;
 use rustapi_core::RustApi;
-use rustapi_testing::{TestClient, TestRequest};
+use rustapi_core::testing::{TestClient, TestRequest};
 
 #[tokio::test]
 async fn test_streaming_body_buffered_small() {

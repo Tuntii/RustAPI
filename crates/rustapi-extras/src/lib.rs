@@ -197,6 +197,15 @@ pub mod csrf;
 #[cfg(feature = "csrf")]
 pub use csrf::{CsrfConfig, CsrfLayer, CsrfToken};
 
+#[cfg(feature = "view")]
+pub mod view;
+
+#[cfg(feature = "toon")]
+pub mod toon;
+
+#[cfg(feature = "jobs")]
+pub mod jobs;
+
 #[cfg(feature = "oauth2-client")]
 pub mod oauth2;
 

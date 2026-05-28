@@ -762,7 +762,7 @@ mod tests {
     use http::StatusCode;
     use rustapi_core::{get, post, Body, Json, NoContent, RustApi};
     use rustapi_openapi::ResponseModifier;
-    use rustapi_testing::{TestClient, TestRequest};
+    use rustapi_core::testing::{TestClient, TestRequest};
     use serde::{Deserialize, Serialize};
 
     #[derive(Debug, Deserialize, Serialize)]
@@ -857,7 +857,7 @@ mod tests {
         TestSessionResponse::Empty
     }
 
-    fn set_cookie_value(response: &rustapi_testing::TestResponse) -> String {
+    fn set_cookie_value(response: &rustapi_core::testing::TestResponse) -> String {
         response
             .headers()
             .get(header::SET_COOKIE)

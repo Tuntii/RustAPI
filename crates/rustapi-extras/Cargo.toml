@@ -73,6 +73,15 @@ base64 = { version = "0.22", optional = true }
 # OAuth2 (feature-gated)
 sha2 = { version = "0.11", optional = true }
 
+# View/Templates (feature-gated)
+tera = { workspace = true, optional = true }
+
+# TOON format (feature-gated)
+toon-format = { workspace = true, optional = true }
+
+# Jobs (feature-gated)
+chrono = { version = "0.4", features = ["serde"], optional = true }
+
 # Replay (feature-gated)
 uuid = { workspace = true, optional = true }
 serde_urlencoded = { version = "0.7", optional = true }
@@ -81,7 +90,6 @@ serde_urlencoded = { version = "0.7", optional = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 proptest = "1.4"
 rustapi-core = { workspace = true, features = ["test-utils"] }
-rustapi-testing = { workspace = true }
 tempfile = "3.26"
 serial_test = "3.4"
 
@@ -127,6 +135,17 @@ oauth2-client = ["dep:sha2", "dep:rand", "dep:base64", "dep:reqwest", "dep:urlen
 audit = ["dep:rand"]
 session = ["dep:cookie", "dep:uuid"]
 session-redis = ["session", "dep:redis"]
+
+# View/template rendering
+view = ["dep:tera"]
+
+# TOON format
+toon = ["dep:toon-format"]
+
+# Jobs/background processing
+jobs = ["dep:uuid", "dep:chrono"]
+jobs-redis = ["jobs", "dep:redis"]
+jobs-postgres = ["jobs", "sqlx"]
 
 # Replay (time-travel debugging)
 replay = ["dep:reqwest", "dep:dashmap", "dep:uuid", "dep:serde_urlencoded", "rustapi-core/replay"]

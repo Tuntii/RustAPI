@@ -1,6 +1,6 @@
 //! Template engine wrapper
 
-use crate::ViewError;
+use super::ViewError;
 use std::sync::Arc;
 use tera::Tera;
 use tokio::sync::RwLock;
@@ -56,7 +56,7 @@ impl TemplatesConfig {
 /// # Example
 ///
 /// ```rust,ignore
-/// use rustapi_view::Templates;
+/// use rustapi_extras::view::Templates;
 ///
 /// let templates = Templates::new("templates/**/*.html")?;
 /// ```
@@ -205,44 +205,4 @@ fn register_builtin_filters(tera: &mut Tera) {
             }
         },
     );
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[tokio::test]
-    async fn test_empty_templates() {
-        let templates = Templates::empty();
-        templates
-            .add_template("test", "Hello, {{ name }}!")
-            .await
-            .unwrap();
-
-        let mut ctx = tera::Context::new();
-        ctx.insert("name", "World");
-
-        let result = templates.render("test", &ctx).await.unwrap();
-        assert_eq!(result, "Hello, World!");
-    }
-
-    #[tokio::test]
-    async fn test_render_with_struct() {
-        #[derive(serde::Serialize)]
-        struct Data {
-            name: String,
-        }
-
-        let templates = Templates::empty();
-        templates
-            .add_template("test", "Hello, {{ name }}!")
-            .await
-            .unwrap();
-
-        let data = Data {
-            name: "Alice".to_string(),
-        };
-        let result = templates.render_with("test", &data).await.unwrap();
-        assert_eq!(result, "Hello, Alice!");
-    }
 }

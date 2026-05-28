@@ -1,6 +1,6 @@
 //! View response type
 
-use crate::{Templates, ViewError};
+use super::{Templates, ViewError};
 use http::{header, Response, StatusCode};
 use rustapi_core::{IntoResponse, ResponseBody};
 use rustapi_openapi::{MediaType, Operation, ResponseModifier, ResponseSpec, SchemaRef};
@@ -15,7 +15,7 @@ use std::marker::PhantomData;
 /// # Example
 ///
 /// ```rust,ignore
-/// use rustapi_view::{View, Templates};
+/// use rustapi_extras::view::{View, Templates};
 /// use serde::Serialize;
 ///
 /// #[derive(Serialize)]
