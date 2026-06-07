@@ -16,7 +16,6 @@ readme = "README.md"
 rustapi-core = { workspace = true, default-features = false }
 rustapi-macros = { workspace = true }
 rustapi-extras = { workspace = true, optional = true }
-rustapi-jobs = { workspace = true, optional = true }
 rustapi-toon = { workspace = true, optional = true }
 rustapi-ws = { workspace = true, optional = true }
 rustapi-view = { workspace = true, optional = true }
@@ -88,7 +87,7 @@ extras-replay = ["dep:rustapi-extras", "rustapi-extras/replay"]
 extras-oauth2-client = ["dep:rustapi-extras", "rustapi-extras/oauth2-client"]
 extras-session = ["dep:rustapi-extras", "rustapi-extras/session"]
 extras-session-redis = ["dep:rustapi-extras", "rustapi-extras/session-redis"]
-extras-jobs = ["dep:rustapi-jobs"]
+extras-jobs = ["dep:rustapi-extras", "rustapi-extras/jobs"]
 extras-all = [
     "extras-jwt",
     "extras-cors",

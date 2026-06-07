@@ -73,8 +73,11 @@ base64 = { version = "0.22", optional = true }
 # OAuth2 (feature-gated)
 sha2 = { version = "0.11", optional = true }
 
-# Replay (feature-gated)
+# Jobs (feature-gated)
+chrono = { version = "0.4", features = ["serde"], optional = true }
 uuid = { workspace = true, optional = true }
+
+# Replay (feature-gated)
 serde_urlencoded = { version = "0.7", optional = true }
 
 [dev-dependencies]
@@ -128,6 +131,11 @@ audit = ["dep:rand"]
 session = ["dep:cookie", "dep:uuid"]
 session-redis = ["session", "dep:redis"]
 
+# Background job processing
+jobs = ["dep:chrono", "dep:uuid"]
+jobs-redis = ["jobs", "dep:redis"]
+jobs-postgres = ["jobs", "dep:sqlx", "sqlx/postgres", "sqlx/runtime-tokio", "sqlx/tls-rustls", "sqlx/chrono", "sqlx/uuid"]
+
 # Replay (time-travel debugging)
 replay = ["dep:reqwest", "dep:dashmap", "dep:uuid", "dep:serde_urlencoded", "rustapi-core/replay"]
 
@@ -138,4 +146,4 @@ extras = ["jwt", "cors", "rate-limit"]
 observability = ["otel", "structured-logging"]
 
 # Full feature set (retry temporarily disabled)
-full = ["extras", "config", "cookies", "sqlx", "insight", "webhook", "timeout", "guard", "logging", "circuit-breaker", "security-headers", "api-key", "cache", "dedup", "sanitization", "retry", "otel", "structured-logging", "csrf", "oauth2-client", "audit", "session", "session-redis", "replay"]
+full = ["extras", "config", "cookies", "sqlx", "insight", "webhook", "timeout", "guard", "logging", "circuit-breaker", "security-headers", "api-key", "cache", "dedup", "sanitization", "retry", "otel", "structured-logging", "csrf", "oauth2-client", "audit", "session", "session-redis", "jobs", "jobs-redis", "jobs-postgres", "replay"]

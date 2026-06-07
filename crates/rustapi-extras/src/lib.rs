@@ -227,6 +227,15 @@ pub use audit::{
     ComplianceInfo, FileAuditStore, InMemoryAuditStore,
 };
 
+// Background job processing
+#[cfg(feature = "jobs")]
+pub mod jobs;
+
+#[cfg(feature = "jobs")]
+pub use jobs::{
+    EnqueueOptions, InMemoryBackend, Job, JobBackend, JobContext, JobError, JobQueue, JobRequest,
+};
+
 // Replay middleware (time-travel debugging)
 #[cfg(feature = "replay")]
 pub mod replay;

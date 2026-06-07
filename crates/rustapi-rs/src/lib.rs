@@ -221,7 +221,7 @@ pub mod extras {
 
     #[cfg(any(feature = "extras-jobs", feature = "jobs"))]
     pub mod jobs {
-        pub use rustapi_jobs::{
+        pub use rustapi_extras::jobs::{
             EnqueueOptions, InMemoryBackend, Job, JobBackend, JobContext, JobError, JobQueue,
             JobRequest,
         };
@@ -336,7 +336,7 @@ pub use rustapi_extras::{
 pub use rustapi_extras::RedisSessionStore;
 
 #[cfg(any(feature = "extras-jobs", feature = "jobs"))]
-pub use rustapi_jobs::{
+pub use rustapi_extras::jobs::{
     EnqueueOptions, InMemoryBackend, Job, JobBackend, JobContext, JobError, JobQueue, JobRequest,
 };
 
