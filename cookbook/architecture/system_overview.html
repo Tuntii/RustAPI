@@ -15,8 +15,8 @@
         <link rel="icon" href="../favicon-de23e50b.svg">
         <link rel="shortcut icon" href="../favicon-8114d1fc.png">
         <link rel="stylesheet" href="../css/variables-8adf115d.css">
-        <link rel="stylesheet" href="../css/general-2459343d.css">
-        <link rel="stylesheet" href="../css/chrome-ae938929.css">
+        <link rel="stylesheet" href="../css/general-0392ca55.css">
+        <link rel="stylesheet" href="../css/chrome-fc474251.css">
         <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
 
         <!-- Fonts -->
@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-ad6cc1e8.js";
+            window.path_to_searchindex_js = "../searchindex-e1de7911.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-7c9f2a15.js"></script>
+        <script src="../toc-118679de.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -210,10 +210,8 @@
         direction LR
         OpenAPI["rustapi-openapi&lt;br&gt;OpenAPI 3.1 + Docs"]
         Validate["rustapi-validate&lt;br&gt;Validation (v2 native)"]
-        Toon["rustapi-toon&lt;br&gt;LLM Optimization"]
-        Extras["rustapi-extras&lt;br&gt;JWT/CORS/RateLimit"]
+        Extras["rustapi-extras&lt;br&gt;JWT/CORS/RateLimit&lt;br&gt;+TOON/View/Jobs"]
         WsCrate["rustapi-ws&lt;br&gt;WebSocket Support"]
-        ViewCrate["rustapi-view&lt;br&gt;Template Engine"]
     end
 
     subgraph Foundation["🏗️ Foundation Layer"]
@@ -284,10 +282,8 @@
         Macros[rustapi-macros]
         OpenAPI[rustapi-openapi]
         Validate[rustapi-validate]
-        Toon[rustapi-toon]
         Extras[rustapi-extras]
         WS[rustapi-ws]
-        View[rustapi-view]
     end
 
     subgraph External["External Dependencies"]
@@ -348,12 +344,8 @@
 <tr><td><code>rustapi-macros</code></td><td>Procedural macros: <code>#[rustapi_rs::get]</code>, <code>#[rustapi_rs::main]</code></td></tr>
 <tr><td><code>rustapi-openapi</code></td><td>Native OpenAPI 3.1 model, schema registry, and docs endpoints</td></tr>
 <tr><td><code>rustapi-validate</code></td><td>Validation runtime (v2 native default, legacy validator optional)</td></tr>
-<tr><td><code>rustapi-toon</code></td><td>TOON format serializer, content negotiation, LLM headers</td></tr>
-<tr><td><code>rustapi-extras</code></td><td>JWT auth, CORS, rate limiting, audit logging</td></tr>
+<tr><td><code>rustapi-extras</code></td><td>JWT, CORS, rate limiting, TOON, view templates, jobs, testing, replay, and more</td></tr>
 <tr><td><code>rustapi-ws</code></td><td>WebSocket support with broadcast channels</td></tr>
-<tr><td><code>rustapi-view</code></td><td>Template engine (Tera) for server-side rendering</td></tr>
-<tr><td><code>rustapi-jobs</code></td><td>Background job processing (Redis/Postgres)</td></tr>
-<tr><td><code>rustapi-testing</code></td><td>Test utilities, matchers, expectations</td></tr>
 </tbody>
 </table>
 </div>
@@ -402,11 +394,11 @@
 
         <script src="../elasticlunr-ef4e11c1.min.js"></script>
         <script src="../mark-09e88c2c.min.js"></script>
-        <script src="../searcher-c2a407aa.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
 
         <script src="../clipboard-1626706a.min.js"></script>
         <script src="../highlight-abc7f01d.js"></script>
-        <script src="../book-a0b12cfe.js"></script>
+        <script src="../book-c22b7243.js"></script>
 
         <!-- Custom JS scripts -->
 

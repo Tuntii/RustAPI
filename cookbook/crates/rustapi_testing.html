@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>rustapi-testing: The Auditor - RustAPI Architecture Cookbook</title>
+        <title>Testing Utilities - RustAPI Architecture Cookbook</title>
 
 
         <!-- Custom HTML head -->
@@ -15,8 +15,8 @@
         <link rel="icon" href="../favicon-de23e50b.svg">
         <link rel="shortcut icon" href="../favicon-8114d1fc.png">
         <link rel="stylesheet" href="../css/variables-8adf115d.css">
-        <link rel="stylesheet" href="../css/general-2459343d.css">
-        <link rel="stylesheet" href="../css/chrome-ae938929.css">
+        <link rel="stylesheet" href="../css/general-0392ca55.css">
+        <link rel="stylesheet" href="../css/chrome-fc474251.css">
         <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
 
         <!-- Fonts -->
@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-ad6cc1e8.js";
+            window.path_to_searchindex_js = "../searchindex-e1de7911.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-7c9f2a15.js"></script>
+        <script src="../toc-118679de.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -181,24 +181,22 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="rustapi-testing-the-auditor"><a class="header" href="#rustapi-testing-the-auditor">rustapi-testing: The Auditor</a></h1>
+                        <h1 id="testing-utilities-rustapi-core-test-utils-feature"><a class="header" href="#testing-utilities-rustapi-core-test-utils-feature">Testing Utilities (rustapi-core <code>test-utils</code> feature)</a></h1>
 <p><strong>Lens</strong>: “The Auditor”
 <strong>Philosophy</strong>: “Trust, but verify.”</p>
-<p><code>rustapi-testing</code> provides a comprehensive suite of tools for integration testing your RustAPI applications. It focuses on two main areas:</p>
-<ol>
-<li><strong>In-process API testing</strong>: Testing your endpoints without binding to a real TCP port.</li>
-<li><strong>External service mocking</strong>: Mocking downstream services (like payment gateways or auth providers) that your API calls.</li>
-</ol>
-<h2 id="installation"><a class="header" href="#installation">Installation</a></h2>
-<p>Add the crate to your <code>dev-dependencies</code>:</p>
+<blockquote>
+<p>The <code>rustapi-testing</code> crate has been merged into <code>rustapi-core</code> behind the <code>test-utils</code> feature flag.
+All functionality remains identical; only the import path has changed.</p>
+</blockquote>
+<p>Testing utilities are now part of <code>rustapi-core</code>. Enable the <code>test-utils</code> feature in your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dev-dependencies]
-rustapi-testing = { version = "0.1.335" }
+rustapi-core = { version = "0.1", features = ["test-utils"] }
 </code></pre>
 <h2 id="the-testclient"><a class="header" href="#the-testclient">The <code>TestClient</code></a></h2>
 <p>Integration testing is often slow and painful because it involves spinning up a server, waiting for ports, and managing child processes. <code>TestClient</code> solves this by wrapping your <code>RustApi</code> application and executing requests directly against the service layer.</p>
 <h3 id="basic-usage"><a class="header" href="#basic-usage">Basic Usage</a></h3>
 <pre><code class="language-rust ignore">use rustapi_rs::prelude::*;
-use rustapi_testing::TestClient;
+use rustapi_core::testing::TestClient;
 
 #[tokio::test]
 async fn test_hello_world() {
@@ -237,7 +235,7 @@ async fn test_create_user() {
 <h2 id="mocking-services-with-mockserver"><a class="header" href="#mocking-services-with-mockserver">Mocking Services with <code>MockServer</code></a></h2>
 <p>Real-world applications usually talk to other services. <code>MockServer</code> allows you to spin up a lightweight HTTP server that responds to requests based on pre-defined expectations.</p>
 <h3 id="setting-up-a-mock-server"><a class="header" href="#setting-up-a-mock-server">Setting up a Mock Server</a></h3>
-<pre><code class="language-rust ignore">use rustapi_testing::{MockServer, MockResponse, RequestMatcher};
+<pre><code class="language-rust ignore">use rustapi_core::testing::{MockServer, MockResponse, RequestMatcher};
 
 #[tokio::test]
 async fn test_external_integration() {
@@ -295,7 +293,7 @@ server.expect(RequestMatcher::new(Method::POST, "/charge"))
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="../crates/cargo_rustapi.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../crates/rustapi_ws.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -309,7 +307,7 @@ server.expect(RequestMatcher::new(Method::POST, "/charge"))
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="../crates/cargo_rustapi.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../crates/rustapi_ws.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>
@@ -331,11 +329,11 @@ server.expect(RequestMatcher::new(Method::POST, "/charge"))
 
         <script src="../elasticlunr-ef4e11c1.min.js"></script>
         <script src="../mark-09e88c2c.min.js"></script>
-        <script src="../searcher-c2a407aa.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
 
         <script src="../clipboard-1626706a.min.js"></script>
         <script src="../highlight-abc7f01d.js"></script>
-        <script src="../book-a0b12cfe.js"></script>
+        <script src="../book-c22b7243.js"></script>
 
         <!-- Custom JS scripts -->
 

@@ -16,8 +16,8 @@
         <link rel="icon" href="favicon-de23e50b.svg">
         <link rel="shortcut icon" href="favicon-8114d1fc.png">
         <link rel="stylesheet" href="css/variables-8adf115d.css">
-        <link rel="stylesheet" href="css/general-2459343d.css">
-        <link rel="stylesheet" href="css/chrome-ae938929.css">
+        <link rel="stylesheet" href="css/general-0392ca55.css">
+        <link rel="stylesheet" href="css/chrome-fc474251.css">
         <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
 
         <!-- Fonts -->
@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-ad6cc1e8.js";
+            window.path_to_searchindex_js = "searchindex-e1de7911.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-7c9f2a15.js"></script>
+        <script src="toc-118679de.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -498,10 +498,8 @@ impl IntoResponse for ApiError {
         direction LR
         OpenAPI["rustapi-openapi&lt;br&gt;OpenAPI 3.1 + Docs"]
         Validate["rustapi-validate&lt;br&gt;Validation (v2 native)"]
-        Toon["rustapi-toon&lt;br&gt;LLM Optimization"]
-        Extras["rustapi-extras&lt;br&gt;JWT/CORS/RateLimit"]
+        Extras["rustapi-extras&lt;br&gt;JWT/CORS/RateLimit&lt;br&gt;+TOON/View/Jobs"]
         WsCrate["rustapi-ws&lt;br&gt;WebSocket Support"]
-        ViewCrate["rustapi-view&lt;br&gt;Template Engine"]
     end
 
     subgraph Foundation["🏗️ Foundation Layer"]
@@ -572,10 +570,8 @@ impl IntoResponse for ApiError {
         Macros[rustapi-macros]
         OpenAPI[rustapi-openapi]
         Validate[rustapi-validate]
-        Toon[rustapi-toon]
         Extras[rustapi-extras]
         WS[rustapi-ws]
-        View[rustapi-view]
     end
 
     subgraph External["External Dependencies"]
@@ -636,12 +632,8 @@ impl IntoResponse for ApiError {
 <tr><td><code>rustapi-macros</code></td><td>Procedural macros: <code>#[rustapi_rs::get]</code>, <code>#[rustapi_rs::main]</code></td></tr>
 <tr><td><code>rustapi-openapi</code></td><td>Native OpenAPI 3.1 model, schema registry, and docs endpoints</td></tr>
 <tr><td><code>rustapi-validate</code></td><td>Validation runtime (v2 native default, legacy validator optional)</td></tr>
-<tr><td><code>rustapi-toon</code></td><td>TOON format serializer, content negotiation, LLM headers</td></tr>
-<tr><td><code>rustapi-extras</code></td><td>JWT auth, CORS, rate limiting, audit logging</td></tr>
+<tr><td><code>rustapi-extras</code></td><td>JWT, CORS, rate limiting, TOON, view templates, jobs, testing, replay, and more</td></tr>
 <tr><td><code>rustapi-ws</code></td><td>WebSocket support with broadcast channels</td></tr>
-<tr><td><code>rustapi-view</code></td><td>Template engine (Tera) for server-side rendering</td></tr>
-<tr><td><code>rustapi-jobs</code></td><td>Background job processing (Redis/Postgres)</td></tr>
-<tr><td><code>rustapi-testing</code></td><td>Test utilities, matchers, expectations</td></tr>
 </tbody>
 </table>
 </div>
@@ -1500,9 +1492,17 @@ let app = RustApi::new()
     .layer(ReplayLayer::new(replay_config).with_store(store));
 <span class="boring">}</span></code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="rustapi-toon-the-diplomat"><a class="header" href="#rustapi-toon-the-diplomat">rustapi-toon: The Diplomat</a></h1>
+<h1 id="toon-rustapi-extras-toon-feature"><a class="header" href="#toon-rustapi-extras-toon-feature">TOON (rustapi-extras <code>toon</code> feature)</a></h1>
 <p><strong>Lens</strong>: “The Diplomat”
 <strong>Philosophy</strong>: “Optimizing for Silicon Intelligence.”</p>
+<blockquote>
+<p>The <code>rustapi-toon</code> crate has been merged into <code>rustapi-extras</code> behind the <code>toon</code> feature flag.
+All functionality remains identical; only the import path has changed.</p>
+</blockquote>
+<p>Enable the feature in your <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[dependencies]
+rustapi-rs = { version = "0.1", features = ["protocol-toon"] }
+</code></pre>
 <h2 id="what-is-toon"><a class="header" href="#what-is-toon">What is TOON?</a></h2>
 <p><strong>T</strong>oken-<strong>O</strong>riented <strong>O</strong>bject <strong>N</strong>otation is a format designed to be consumed by Large Language Models (LLMs). It reduces token usage by stripping unnecessary syntax (braces, quotes) while maintaining semantic structure.</p>
 <h2 id="content-negotiation"><a class="header" href="#content-negotiation">Content Negotiation</a></h2>
@@ -1517,77 +1517,17 @@ let app = RustApi::new()
 <h2 id="token-savings"><a class="header" href="#token-savings">Token Savings</a></h2>
 <p>TOON often reduces token count by 30-50% compared to JSON, saving significant costs and context window space when communicating with models like GPT-4 or Gemini.</p>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="rustapi-ws-the-live-wire"><a class="header" href="#rustapi-ws-the-live-wire">rustapi-ws: The Live Wire</a></h1>
-<p><strong>Lens</strong>: “The Live Wire”
-<strong>Philosophy</strong>: “Real-time, persistent connections made simple.”</p>
-<h2 id="the-websocket-extractor"><a class="header" href="#the-websocket-extractor">The WebSocket Extractor</a></h2>
-<p>Upgrading an HTTP connection to a WebSocket uses the standard extractor pattern:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>async fn ws_handler(
-    ws: WebSocket,
-) -&gt; impl IntoResponse {
-    ws.on_upgrade(handle_socket)
-}
-<span class="boring">}</span></code></pre>
-<h2 id="architecture"><a class="header" href="#architecture">Architecture</a></h2>
-<p>We recommend an <strong>Actor Model</strong> for WebSocket state.</p>
-<ol>
-<li>Each connection spawns a new async task (the actor).</li>
-<li>Use <code>tokio::sync::broadcast</code> channels for global events (like chat rooms).</li>
-<li>Use <code>mpsc</code> channels for direct messaging.</li>
-</ol>
-<div style="break-before: page; page-break-before: always;"></div>
-<h1 id="rustapi-grpc-the-bridge"><a class="header" href="#rustapi-grpc-the-bridge">rustapi-grpc: The Bridge</a></h1>
-<p><strong>Lens</strong>: “The Bridge”<br><strong>Philosophy</strong>: “HTTP and gRPC, one runtime.”</p>
-<p><code>rustapi-grpc</code> is an optional crate that helps you run a RustAPI HTTP server and a Tonic gRPC server in the same process.</p>
-<h2 id="what-you-get"><a class="header" href="#what-you-get">What You Get</a></h2>
-<ul>
-<li><code>run_concurrently(http, grpc)</code> for running two server futures side-by-side.</li>
-<li><code>run_rustapi_and_grpc(app, http_addr, grpc)</code> convenience helper.</li>
-<li><code>run_rustapi_and_grpc_with_shutdown(app, http_addr, signal, grpc_with_shutdown)</code> for graceful shared shutdown.</li>
-<li>Re-exports of <code>tonic</code> and <code>prost</code>.</li>
-</ul>
-<h2 id="enable-it"><a class="header" href="#enable-it">Enable It</a></h2>
-<pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["grpc"] }
-</code></pre>
-<h2 id="basic-usage"><a class="header" href="#basic-usage">Basic Usage</a></h2>
-<pre><code class="language-rust ignore">use rustapi_rs::grpc::{run_rustapi_and_grpc, tonic};
-use rustapi_rs::prelude::*;
-
-#[rustapi_rs::get("/health")]
-async fn health() -&gt; &amp;'static str { "ok" }
-
-#[tokio::main]
-async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
-    let http_app = RustApi::new().route("/health", get(health));
-
-    let grpc_addr = "127.0.0.1:50051".parse()?;
-    let grpc_server = tonic::transport::Server::builder()
-        .add_service(MyGreeterServer::new(MyGreeter::default()))
-        .serve(grpc_addr);
-
-    run_rustapi_and_grpc(http_app, "127.0.0.1:8080", grpc_server).await?;
-    Ok(())
-}</code></pre>
-<h2 id="graceful-shutdown"><a class="header" href="#graceful-shutdown">Graceful Shutdown</a></h2>
-<pre><code class="language-rust ignore">use rustapi_rs::grpc::{run_rustapi_and_grpc_with_shutdown, tonic};
-
-run_rustapi_and_grpc_with_shutdown(
-    http_app,
-    "127.0.0.1:8080",
-    tokio::signal::ctrl_c(),
-    move |shutdown| {
-        tonic::transport::Server::builder()
-            .add_service(MyGreeterServer::new(MyGreeter::default()))
-            .serve_with_shutdown("127.0.0.1:50051".parse().unwrap(), shutdown)
-    },
-).await?;</code></pre>
-<div style="break-before: page; page-break-before: always;"></div>
-<h1 id="rustapi-view-the-artist"><a class="header" href="#rustapi-view-the-artist">rustapi-view: The Artist</a></h1>
+<h1 id="template-engine-rustapi-extras-view-feature"><a class="header" href="#template-engine-rustapi-extras-view-feature">Template Engine (rustapi-extras <code>view</code> feature)</a></h1>
 <p><strong>Lens</strong>: “The Artist”
 <strong>Philosophy</strong>: “Server-side rendering with modern tools.”</p>
+<blockquote>
+<p>The <code>rustapi-view</code> crate has been merged into <code>rustapi-extras</code> behind the <code>view</code> feature flag.
+All functionality remains identical; only the import path has changed.</p>
+</blockquote>
+<p>Enable the feature in your <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[dependencies]
+rustapi-rs = { version = "0.1", features = ["protocol-view"] }
+</code></pre>
 <h2 id="tera-integration"><a class="header" href="#tera-integration">Tera Integration</a></h2>
 <p>We use <strong>Tera</strong>, a Jinja2-like template engine, for rendering HTML on the server.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -1604,11 +1544,19 @@ run_rustapi_and_grpc_with_shutdown(
 <h2 id="layouts-and-inheritance"><a class="header" href="#layouts-and-inheritance">Layouts and Inheritance</a></h2>
 <p>Tera supports template inheritance, allowing you to define a base layout (<code>base.html</code>) and extend it in child templates (<code>index.html</code>), keeping your frontend DRY.</p>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="rustapi-jobs-the-workhorse"><a class="header" href="#rustapi-jobs-the-workhorse">rustapi-jobs: The Workhorse</a></h1>
+<h1 id="background-jobs-rustapi-extras-jobs-feature"><a class="header" href="#background-jobs-rustapi-extras-jobs-feature">Background Jobs (rustapi-extras <code>jobs</code> feature)</a></h1>
 <p><strong>Lens</strong>: “The Workhorse”
 <strong>Philosophy</strong>: “Fire and forget, with reliability guarantees.”</p>
+<blockquote>
+<p>The <code>rustapi-jobs</code> crate has been merged into <code>rustapi-extras</code> behind the <code>jobs</code> feature flag.
+All functionality remains identical; only the import path has changed.</p>
+</blockquote>
+<p>Enable the feature in your <code>Cargo.toml</code>:</p>
+<pre><code class="language-toml">[dependencies]
+rustapi-rs = { version = "0.1", features = ["extras-jobs"] }
+</code></pre>
 <h2 id="background-processing"><a class="header" href="#background-processing">Background Processing</a></h2>
-<p>Long-running tasks shouldn’t block HTTP requests. <code>rustapi-jobs</code> provides a robust queue system that can run in-memory or be backed by Redis/Postgres.</p>
+<p>Long-running tasks shouldn’t block HTTP requests. The <code>jobs</code> feature in <code>rustapi-extras</code> provides a robust queue system that can run in-memory or be backed by Redis/Postgres.</p>
 <h2 id="usage-example"><a class="header" href="#usage-example">Usage Example</a></h2>
 <p>Here is how to set up a simple background job queue using the in-memory backend.</p>
 <h3 id="1-define-the-job-and-data"><a class="header" href="#1-define-the-job-and-data">1. Define the Job and Data</a></h3>
@@ -1620,7 +1568,7 @@ run_rustapi_and_grpc_with_shutdown(
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use serde::{Deserialize, Serialize};
-use rustapi_jobs::{Job, JobContext, Result};
+use rustapi_rs::extras::jobs::{Job, JobContext, JobError};
 use async_trait::async_trait;
 
 // 1. The payload data
@@ -1724,24 +1672,22 @@ let queue = JobQueue::new(backend);
 <li><strong>Concurrency Control</strong>: Limit the number of concurrent workers to prevent overloading your system.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="rustapi-testing-the-auditor"><a class="header" href="#rustapi-testing-the-auditor">rustapi-testing: The Auditor</a></h1>
+<h1 id="testing-utilities-rustapi-core-test-utils-feature"><a class="header" href="#testing-utilities-rustapi-core-test-utils-feature">Testing Utilities (rustapi-core <code>test-utils</code> feature)</a></h1>
 <p><strong>Lens</strong>: “The Auditor”
 <strong>Philosophy</strong>: “Trust, but verify.”</p>
-<p><code>rustapi-testing</code> provides a comprehensive suite of tools for integration testing your RustAPI applications. It focuses on two main areas:</p>
-<ol>
-<li><strong>In-process API testing</strong>: Testing your endpoints without binding to a real TCP port.</li>
-<li><strong>External service mocking</strong>: Mocking downstream services (like payment gateways or auth providers) that your API calls.</li>
-</ol>
-<h2 id="installation-1"><a class="header" href="#installation-1">Installation</a></h2>
-<p>Add the crate to your <code>dev-dependencies</code>:</p>
+<blockquote>
+<p>The <code>rustapi-testing</code> crate has been merged into <code>rustapi-core</code> behind the <code>test-utils</code> feature flag.
+All functionality remains identical; only the import path has changed.</p>
+</blockquote>
+<p>Testing utilities are now part of <code>rustapi-core</code>. Enable the <code>test-utils</code> feature in your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dev-dependencies]
-rustapi-testing = { version = "0.1.335" }
+rustapi-core = { version = "0.1", features = ["test-utils"] }
 </code></pre>
 <h2 id="the-testclient"><a class="header" href="#the-testclient">The <code>TestClient</code></a></h2>
 <p>Integration testing is often slow and painful because it involves spinning up a server, waiting for ports, and managing child processes. <code>TestClient</code> solves this by wrapping your <code>RustApi</code> application and executing requests directly against the service layer.</p>
-<h3 id="basic-usage-1"><a class="header" href="#basic-usage-1">Basic Usage</a></h3>
+<h3 id="basic-usage"><a class="header" href="#basic-usage">Basic Usage</a></h3>
 <pre><code class="language-rust ignore">use rustapi_rs::prelude::*;
-use rustapi_testing::TestClient;
+use rustapi_core::testing::TestClient;
 
 #[tokio::test]
 async fn test_hello_world() {
@@ -1780,7 +1726,7 @@ async fn test_create_user() {
 <h2 id="mocking-services-with-mockserver"><a class="header" href="#mocking-services-with-mockserver">Mocking Services with <code>MockServer</code></a></h2>
 <p>Real-world applications usually talk to other services. <code>MockServer</code> allows you to spin up a lightweight HTTP server that responds to requests based on pre-defined expectations.</p>
 <h3 id="setting-up-a-mock-server"><a class="header" href="#setting-up-a-mock-server">Setting up a Mock Server</a></h3>
-<pre><code class="language-rust ignore">use rustapi_testing::{MockServer, MockResponse, RequestMatcher};
+<pre><code class="language-rust ignore">use rustapi_core::testing::{MockServer, MockResponse, RequestMatcher};
 
 #[tokio::test]
 async fn test_external_integration() {
@@ -1829,6 +1775,74 @@ server.expect(RequestMatcher::new(Method::POST, "/charge"))
 <li><strong>Isolation</strong>: Create a new <code>MockServer</code> for each test case to ensure no shared state or interference.</li>
 <li><strong>Fluent Assertions</strong>: Use the chainable assertion methods on <code>TestResponse</code> to keep tests readable.</li>
 </ol>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="rustapi-ws-the-live-wire"><a class="header" href="#rustapi-ws-the-live-wire">rustapi-ws: The Live Wire</a></h1>
+<p><strong>Lens</strong>: “The Live Wire”
+<strong>Philosophy</strong>: “Real-time, persistent connections made simple.”</p>
+<h2 id="the-websocket-extractor"><a class="header" href="#the-websocket-extractor">The WebSocket Extractor</a></h2>
+<p>Upgrading an HTTP connection to a WebSocket uses the standard extractor pattern:</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>async fn ws_handler(
+    ws: WebSocket,
+) -&gt; impl IntoResponse {
+    ws.on_upgrade(handle_socket)
+}
+<span class="boring">}</span></code></pre>
+<h2 id="architecture"><a class="header" href="#architecture">Architecture</a></h2>
+<p>We recommend an <strong>Actor Model</strong> for WebSocket state.</p>
+<ol>
+<li>Each connection spawns a new async task (the actor).</li>
+<li>Use <code>tokio::sync::broadcast</code> channels for global events (like chat rooms).</li>
+<li>Use <code>mpsc</code> channels for direct messaging.</li>
+</ol>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="rustapi-grpc-the-bridge"><a class="header" href="#rustapi-grpc-the-bridge">rustapi-grpc: The Bridge</a></h1>
+<p><strong>Lens</strong>: “The Bridge”<br><strong>Philosophy</strong>: “HTTP and gRPC, one runtime.”</p>
+<p><code>rustapi-grpc</code> is an optional crate that helps you run a RustAPI HTTP server and a Tonic gRPC server in the same process.</p>
+<h2 id="what-you-get"><a class="header" href="#what-you-get">What You Get</a></h2>
+<ul>
+<li><code>run_concurrently(http, grpc)</code> for running two server futures side-by-side.</li>
+<li><code>run_rustapi_and_grpc(app, http_addr, grpc)</code> convenience helper.</li>
+<li><code>run_rustapi_and_grpc_with_shutdown(app, http_addr, signal, grpc_with_shutdown)</code> for graceful shared shutdown.</li>
+<li>Re-exports of <code>tonic</code> and <code>prost</code>.</li>
+</ul>
+<h2 id="enable-it"><a class="header" href="#enable-it">Enable It</a></h2>
+<pre><code class="language-toml">[dependencies]
+rustapi-rs = { version = "0.1.335", features = ["grpc"] }
+</code></pre>
+<h2 id="basic-usage-1"><a class="header" href="#basic-usage-1">Basic Usage</a></h2>
+<pre><code class="language-rust ignore">use rustapi_rs::grpc::{run_rustapi_and_grpc, tonic};
+use rustapi_rs::prelude::*;
+
+#[rustapi_rs::get("/health")]
+async fn health() -&gt; &amp;'static str { "ok" }
+
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    let http_app = RustApi::new().route("/health", get(health));
+
+    let grpc_addr = "127.0.0.1:50051".parse()?;
+    let grpc_server = tonic::transport::Server::builder()
+        .add_service(MyGreeterServer::new(MyGreeter::default()))
+        .serve(grpc_addr);
+
+    run_rustapi_and_grpc(http_app, "127.0.0.1:8080", grpc_server).await?;
+    Ok(())
+}</code></pre>
+<h2 id="graceful-shutdown"><a class="header" href="#graceful-shutdown">Graceful Shutdown</a></h2>
+<pre><code class="language-rust ignore">use rustapi_rs::grpc::{run_rustapi_and_grpc_with_shutdown, tonic};
+
+run_rustapi_and_grpc_with_shutdown(
+    http_app,
+    "127.0.0.1:8080",
+    tokio::signal::ctrl_c(),
+    move |shutdown| {
+        tonic::transport::Server::builder()
+            .add_service(MyGreeterServer::new(MyGreeter::default()))
+            .serve_with_shutdown("127.0.0.1:50051".parse().unwrap(), shutdown)
+    },
+).await?;</code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="cargo-rustapi-the-architect"><a class="header" href="#cargo-rustapi-the-architect">cargo-rustapi: The Architect</a></h1>
 <p><strong>Lens</strong>: “The Architect”
@@ -7335,7 +7349,7 @@ RustApi::auto()
 <li><strong>Building Blocks</strong>: Try the <a href="#creating-resources">Creating Resources</a> recipe.</li>
 <li><strong>Security</strong>: Implement <a href="#jwt-authentication">JWT Authentication</a> and <a href="#csrf-protection-1">CSRF Protection</a>.</li>
 <li><strong>Advanced</strong>: Explore <a href="#production-tuning">Performance Tuning</a> and <a href="#http3-quic-support">HTTP/3</a>.</li>
-<li><strong>Background Jobs</strong>: Master <a href="#rustapi-jobs-the-workhorse">rustapi-jobs</a> for async processing.</li>
+<li><strong>Background Jobs</strong>: Master <a href="#background-jobs-rustapi-extras-jobs-feature">rustapi-jobs</a> for async processing.</li>
 </ol>
 <h3 id="why-use-the-examples-repository"><a class="header" href="#why-use-the-examples-repository">Why Use the Examples Repository?</a></h3>
 <div class="table-wrapper">
@@ -7400,7 +7414,7 @@ RustApi::auto()
 <strong>Related Cookbook Recipes:</strong></p>
 </blockquote>
 <ul>
-<li><a href="#rustapi-jobs-the-workhorse">rustapi-jobs</a></li>
+<li><a href="#background-jobs-rustapi-extras-jobs-feature">rustapi-jobs</a></li>
 <li><a href="#custom-middleware">Custom Middleware</a></li>
 <li><a href="#production-tuning">Production Tuning</a></li>
 <li><a href="#deployment">Deployment</a></li>
@@ -7444,7 +7458,7 @@ RustApi::auto()
 </div>
 <p><strong>Related Cookbook Recipes:</strong></p>
 <ul>
-<li><a href="#rustapi-toon-the-diplomat">rustapi-toon: The Diplomat</a></li>
+<li><a href="#toon-rustapi-extras-toon-feature">rustapi-toon: The Diplomat</a></li>
 </ul>
 <hr>
 <h3 id="-path-5-enterprise-platform"><a class="header" href="#-path-5-enterprise-platform">🏢 Path 5: Enterprise Platform</a></h3>
@@ -7459,18 +7473,18 @@ RustApi::auto()
 <tr><td>2</td><td><strong>Resilience</strong></td><td>Implement <a href="#resilience-patterns">Circuit Breakers and Retries</a></td></tr>
 <tr><td>3</td><td><strong>Advanced Security</strong></td><td>Add <a href="#advanced-security">OAuth2 and Security Headers</a></td></tr>
 <tr><td>4</td><td><strong>Optimization</strong></td><td>Configure <a href="#optimization">Caching and Deduplication</a></td></tr>
-<tr><td>5</td><td><strong>Background Jobs</strong></td><td>Implement <a href="#rustapi-jobs-the-workhorse">Reliable Job Queues</a></td></tr>
+<tr><td>5</td><td><strong>Background Jobs</strong></td><td>Implement <a href="#background-jobs-rustapi-extras-jobs-feature">Reliable Job Queues</a></td></tr>
 <tr><td>6</td><td><strong>Debugging</strong></td><td>Set up <a href="#replay-workflow-time-travel-debugging">Time-Travel Debugging</a></td></tr>
-<tr><td>7</td><td><strong>Reliable Testing</strong></td><td>Master <a href="#rustapi-testing-the-auditor">Mocking and Integration Testing</a></td></tr>
+<tr><td>7</td><td><strong>Reliable Testing</strong></td><td>Master <a href="#testing-utilities-rustapi-core-test-utils-feature">Mocking and Integration Testing</a></td></tr>
 </tbody>
 </table>
 </div>
 <p><strong>Related Cookbook Recipes:</strong></p>
 <ul>
-<li><a href="#rustapi-testing-the-auditor">rustapi-testing: The Auditor</a></li>
+<li><a href="#testing-utilities-rustapi-core-test-utils-feature">rustapi-testing: The Auditor</a></li>
 <li><a href="#rustapi-extras-the-toolbox">rustapi-extras: The Toolbox</a></li>
 <li><a href="#replay-workflow-time-travel-debugging">Time-Travel Debugging</a></li>
-<li><a href="#rustapi-jobs-the-workhorse">rustapi-jobs: The Workhorse</a></li>
+<li><a href="#background-jobs-rustapi-extras-jobs-feature">rustapi-jobs: The Workhorse</a></li>
 <li><a href="#resilience-patterns">Resilience Patterns</a></li>
 </ul>
 <hr>
@@ -7993,7 +8007,7 @@ cargo test
 <strong>Requirements:</strong></p>
 <ul>
 <li><strong>Ingestion:</strong> HTTP/3 endpoint receiving JSON events.</li>
-<li><strong>Processing:</strong> Push events to a <code>rustapi-jobs</code> queue (Redis backend).</li>
+<li><strong>Processing:</strong> Push events to a background job queue using the <code>extras-jobs</code> feature (Redis backend).</li>
 <li><strong>Storage:</strong> Workers process events and store aggregates in a database.</li>
 <li><strong>Observability:</strong> Full tracing from ingestion to storage.</li>
 <li><strong>Audit:</strong> Log all configuration changes to the system.</li>
@@ -8007,7 +8021,7 @@ cargo test
 <ul>
 <li><strong>Prerequisites:</strong> Phase 2.</li>
 <li><strong>Reading:</strong> <a href="#server-side-rendering-ssr">SSR Recipe</a>.</li>
-<li><strong>Task:</strong> Create a dashboard showing system status using <code>rustapi-view</code>.</li>
+<li><strong>Task:</strong> Create a dashboard showing system status using the <code>protocol-view</code> feature (Tera templates).</li>
 <li><strong>Expected Output:</strong> HTML page rendered with Tera templates, displaying dynamic data.</li>
 <li><strong>Pitfalls:</strong> Forgetting to create the <code>templates/</code> directory.</li>
 </ul>
@@ -8092,11 +8106,11 @@ cargo test
 
         <script src="elasticlunr-ef4e11c1.min.js"></script>
         <script src="mark-09e88c2c.min.js"></script>
-        <script src="searcher-c2a407aa.js"></script>
+        <script src="searcher-09f2665d.js"></script>
 
         <script src="clipboard-1626706a.min.js"></script>
         <script src="highlight-abc7f01d.js"></script>
-        <script src="book-a0b12cfe.js"></script>
+        <script src="book-c22b7243.js"></script>
 
         <!-- Custom JS scripts -->
 

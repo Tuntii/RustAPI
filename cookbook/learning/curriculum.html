@@ -15,8 +15,8 @@
         <link rel="icon" href="../favicon-de23e50b.svg">
         <link rel="shortcut icon" href="../favicon-8114d1fc.png">
         <link rel="stylesheet" href="../css/variables-8adf115d.css">
-        <link rel="stylesheet" href="../css/general-2459343d.css">
-        <link rel="stylesheet" href="../css/chrome-ae938929.css">
+        <link rel="stylesheet" href="../css/general-0392ca55.css">
+        <link rel="stylesheet" href="../css/chrome-fc474251.css">
         <link rel="stylesheet" href="../css/print-9e4910d8.css" media="print">
 
         <!-- Fonts -->
@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-ad6cc1e8.js";
+            window.path_to_searchindex_js = "../searchindex-e1de7911.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-7c9f2a15.js"></script>
+        <script src="../toc-118679de.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -521,7 +521,7 @@
 <strong>Requirements:</strong></p>
 <ul>
 <li><strong>Ingestion:</strong> HTTP/3 endpoint receiving JSON events.</li>
-<li><strong>Processing:</strong> Push events to a <code>rustapi-jobs</code> queue (Redis backend).</li>
+<li><strong>Processing:</strong> Push events to a background job queue using the <code>extras-jobs</code> feature (Redis backend).</li>
 <li><strong>Storage:</strong> Workers process events and store aggregates in a database.</li>
 <li><strong>Observability:</strong> Full tracing from ingestion to storage.</li>
 <li><strong>Audit:</strong> Log all configuration changes to the system.</li>
@@ -535,7 +535,7 @@
 <ul>
 <li><strong>Prerequisites:</strong> Phase 2.</li>
 <li><strong>Reading:</strong> <a href="../recipes/server_side_rendering.html">SSR Recipe</a>.</li>
-<li><strong>Task:</strong> Create a dashboard showing system status using <code>rustapi-view</code>.</li>
+<li><strong>Task:</strong> Create a dashboard showing system status using the <code>protocol-view</code> feature (Tera templates).</li>
 <li><strong>Expected Output:</strong> HTML page rendered with Tera templates, displaying dynamic data.</li>
 <li><strong>Pitfalls:</strong> Forgetting to create the <code>templates/</code> directory.</li>
 </ul>
@@ -626,11 +626,11 @@
 
         <script src="../elasticlunr-ef4e11c1.min.js"></script>
         <script src="../mark-09e88c2c.min.js"></script>
-        <script src="../searcher-c2a407aa.js"></script>
+        <script src="../searcher-09f2665d.js"></script>
 
         <script src="../clipboard-1626706a.min.js"></script>
         <script src="../highlight-abc7f01d.js"></script>
-        <script src="../book-a0b12cfe.js"></script>
+        <script src="../book-c22b7243.js"></script>
 
         <!-- Custom JS scripts -->
 
