@@ -962,10 +962,12 @@ async fn user_page(
 
 ## Testing
 
-### Using `rustapi-testing` (Recommended)
+### Using `rustapi-core` test-utils (Recommended)
+
+Formerly the `rustapi-testing` crate; now part of `rustapi-core` behind the `test-utils` feature.
 
 ```rust
-use rustapi_testing::{TestServer, Matcher};
+use rustapi_core::testing::{TestClient, MockServer};
 
 #[tokio::test]
 async fn test_api() {
@@ -1181,12 +1183,12 @@ rustapi-rs = { version = "0.1.335", features = ["full"] }
 
 ## Background Jobs
 
-Process tasks asynchronously with `rustapi-jobs`.
+Process tasks asynchronously with the `jobs` feature in `rustapi-extras` (formerly the `rustapi-jobs` crate).
 
 ### Basic Usage
 
 ```rust
-use rustapi_jobs::{Job, JobQueue, MemoryBackend};
+use rustapi_rs::extras::jobs::{Job, JobQueue, InMemoryBackend};
 
 // Define a job
 #[derive(Serialize, Deserialize)]
@@ -1214,7 +1216,7 @@ queue.process(|job| async move {
 ### Redis Backend (Production)
 
 ```rust
-use rustapi_jobs::{JobQueue, RedisBackend};
+use rustapi_rs::extras::jobs::{JobQueue, RedisBackend};
 
 let backend = RedisBackend::new("redis://localhost:6379").await?;
 let queue = JobQueue::new(backend);

@@ -294,7 +294,7 @@ Create a system where users can request a "Report".
 **Objective:** Architect a system capable of handling thousands of events per second.
 **Requirements:**
 - **Ingestion:** HTTP/3 endpoint receiving JSON events.
-- **Processing:** Push events to a `rustapi-jobs` queue (Redis backend).
+- **Processing:** Push events to a background job queue using the `extras-jobs` feature (Redis backend).
 - **Storage:** Workers process events and store aggregates in a database.
 - **Observability:** Full tracing from ingestion to storage.
 - **Audit:** Log all configuration changes to the system.
@@ -310,7 +310,7 @@ Create a system where users can request a "Report".
 ### Module 15: Server-Side Rendering (SSR)
 - **Prerequisites:** Phase 2.
 - **Reading:** [SSR Recipe](../recipes/server_side_rendering.md).
-- **Task:** Create a dashboard showing system status using `rustapi-view`.
+- **Task:** Create a dashboard showing system status using the `protocol-view` feature (Tera templates).
 - **Expected Output:** HTML page rendered with Tera templates, displaying dynamic data.
 - **Pitfalls:** Forgetting to create the `templates/` directory.
 

@@ -1,7 +1,17 @@
-# rustapi-toon: The Diplomat
+# TOON (rustapi-extras `toon` feature)
 
 **Lens**: "The Diplomat"
 **Philosophy**: "Optimizing for Silicon Intelligence."
+
+> The `rustapi-toon` crate has been merged into `rustapi-extras` behind the `toon` feature flag.
+> All functionality remains identical; only the import path has changed.
+
+Enable the feature in your `Cargo.toml`:
+
+```toml
+[dependencies]
+rustapi-rs = { version = "0.1", features = ["protocol-toon"] }
+```
 
 ## What is TOON?
 

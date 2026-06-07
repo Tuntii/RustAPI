@@ -9,8 +9,7 @@ This document defines compatibility guarantees for the RustAPI workspace.
   - `cargo-rustapi` (CLI surface)
 - Internal implementation crates (best-effort, no stability guarantee):
   - `rustapi-core`, `rustapi-openapi`, `rustapi-validate`, `rustapi-macros`
-  - `rustapi-extras`, `rustapi-ws`, `rustapi-toon`, `rustapi-view`, `rustapi-grpc`
-  - `rustapi-testing`, `rustapi-jobs`
+  - `rustapi-extras`, `rustapi-ws`, `rustapi-grpc`
 
 Do not depend on internal crate APIs for long-term compatibility.
 

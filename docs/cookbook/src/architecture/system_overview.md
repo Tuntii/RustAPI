@@ -31,10 +31,8 @@ graph TB
         direction LR
         OpenAPI["rustapi-openapi<br>OpenAPI 3.1 + Docs"]
         Validate["rustapi-validate<br>Validation (v2 native)"]
-        Toon["rustapi-toon<br>LLM Optimization"]
-        Extras["rustapi-extras<br>JWT/CORS/RateLimit"]
+        Extras["rustapi-extras<br>JWT/CORS/RateLimit<br>+TOON/View/Jobs"]
         WsCrate["rustapi-ws<br>WebSocket Support"]
-        ViewCrate["rustapi-view<br>Template Engine"]
     end
 
     subgraph Foundation["🏗️ Foundation Layer"]
@@ -111,10 +109,8 @@ graph BT
         Macros[rustapi-macros]
         OpenAPI[rustapi-openapi]
         Validate[rustapi-validate]
-        Toon[rustapi-toon]
         Extras[rustapi-extras]
         WS[rustapi-ws]
-        View[rustapi-view]
     end
 
     subgraph External["External Dependencies"]
@@ -168,9 +164,5 @@ graph BT
 | `rustapi-macros` | Procedural macros: `#[rustapi_rs::get]`, `#[rustapi_rs::main]` |
 | `rustapi-openapi` | Native OpenAPI 3.1 model, schema registry, and docs endpoints |
 | `rustapi-validate` | Validation runtime (v2 native default, legacy validator optional) |
-| `rustapi-toon` | TOON format serializer, content negotiation, LLM headers |
-| `rustapi-extras` | JWT auth, CORS, rate limiting, audit logging |
+| `rustapi-extras` | JWT, CORS, rate limiting, TOON, view templates, jobs, testing, replay, and more |
 | `rustapi-ws` | WebSocket support with broadcast channels |
-| `rustapi-view` | Template engine (Tera) for server-side rendering |
-| `rustapi-jobs` | Background job processing (Redis/Postgres) |
-| `rustapi-testing` | Test utilities, matchers, expectations |

@@ -1,19 +1,16 @@
-# rustapi-testing: The Auditor
+# Testing Utilities (rustapi-core `test-utils` feature)
 
 **Lens**: "The Auditor"
 **Philosophy**: "Trust, but verify."
 
-`rustapi-testing` provides a comprehensive suite of tools for integration testing your RustAPI applications. It focuses on two main areas:
-1. **In-process API testing**: Testing your endpoints without binding to a real TCP port.
-2. **External service mocking**: Mocking downstream services (like payment gateways or auth providers) that your API calls.
+> The `rustapi-testing` crate has been merged into `rustapi-core` behind the `test-utils` feature flag.
+> All functionality remains identical; only the import path has changed.
 
-## Installation
-
-Add the crate to your `dev-dependencies`:
+Testing utilities are now part of `rustapi-core`. Enable the `test-utils` feature in your `Cargo.toml`:
 
 ```toml
 [dev-dependencies]
-rustapi-testing = { version = "0.1.335" }
+rustapi-core = { version = "0.1", features = ["test-utils"] }
 ```
 
 ## The `TestClient`
@@ -24,7 +21,7 @@ Integration testing is often slow and painful because it involves spinning up a 
 
 ```rust,ignore
 use rustapi_rs::prelude::*;
-use rustapi_testing::TestClient;
+use rustapi_core::testing::TestClient;
 
 #[tokio::test]
 async fn test_hello_world() {
@@ -74,7 +71,7 @@ Real-world applications usually talk to other services. `MockServer` allows you 
 ### Setting up a Mock Server
 
 ```rust,ignore
-use rustapi_testing::{MockServer, MockResponse, RequestMatcher};
+use rustapi_core::testing::{MockServer, MockResponse, RequestMatcher};
 
 #[tokio::test]
 async fn test_external_integration() {

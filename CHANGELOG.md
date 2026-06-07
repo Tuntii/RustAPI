@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Crate consolidation (13 → 9):** `rustapi-testing` merged into `rustapi-core` (`test-utils` feature), `rustapi-jobs` into `rustapi-extras` (`jobs` feature), `rustapi-view` into `rustapi-extras` (`view` feature), `rustapi-toon` into `rustapi-extras` (`toon` feature). Removed crates are no longer published; all functionality remains accessible via feature flags on the surviving crates.
+
 ### Added
 
 - Embedded dashboard snapshots now include request-stage counters, route topology groups, health endpoint summary, and replay admin API discovery metadata.

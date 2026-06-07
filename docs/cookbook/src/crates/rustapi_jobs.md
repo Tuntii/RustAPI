@@ -1,11 +1,21 @@
-# rustapi-jobs: The Workhorse
+# Background Jobs (rustapi-extras `jobs` feature)
 
 **Lens**: "The Workhorse"
 **Philosophy**: "Fire and forget, with reliability guarantees."
 
+> The `rustapi-jobs` crate has been merged into `rustapi-extras` behind the `jobs` feature flag.
+> All functionality remains identical; only the import path has changed.
+
+Enable the feature in your `Cargo.toml`:
+
+```toml
+[dependencies]
+rustapi-rs = { version = "0.1", features = ["extras-jobs"] }
+```
+
 ## Background Processing
 
-Long-running tasks shouldn't block HTTP requests. `rustapi-jobs` provides a robust queue system that can run in-memory or be backed by Redis/Postgres.
+Long-running tasks shouldn't block HTTP requests. The `jobs` feature in `rustapi-extras` provides a robust queue system that can run in-memory or be backed by Redis/Postgres.
 
 ## Usage Example
 
@@ -19,7 +29,7 @@ Jobs are separated into two parts:
 
 ```rust
 use serde::{Deserialize, Serialize};
-use rustapi_jobs::{Job, JobContext, Result};
+use rustapi_rs::extras::jobs::{Job, JobContext, JobError};
 use async_trait::async_trait;
 
 // 1. The payload data

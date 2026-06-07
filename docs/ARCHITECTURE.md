@@ -29,21 +29,13 @@ RustAPI uses a **layered facade architecture** where complexity is hidden behind
 │  HTTP Engine    │ │ Proc Macros     │ │ Swagger/OpenAPI │
 └─────────────────┘ └─────────────────┘ └─────────────────┘
           │
-          ├─────────────────┬─────────────────┬─────────────────┐
-          ▼                 ▼                 ▼                 ▼
-┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
-│rustapi-validate │ │  rustapi-toon   │ │ rustapi-extras  │ │   rustapi-ws    │
-│  Validation     │ │  LLM Format     │ │ JWT/CORS/Rate   │ │   WebSocket     │
-└─────────────────┘ └─────────────────┘ └─────────────────┘ └─────────────────┘
-          │                 │                 │                 │
-          └─────────────────┴─────────────────┴─────────────────┤
-                              │                                 ▼
-                              │                       ┌─────────────────┐
-                              │                       │  rustapi-view   │
-                              │                       │ Template Engine │
-                              │                       └─────────────────┘
-                              │                                 │
-                              └─────────────────────────────────┘
+          ├─────────────────┬─────────────────┐
+          ▼                 ▼                 ▼
+┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+│rustapi-validate │ │ rustapi-extras  │ │   rustapi-ws    │
+│  Validation     │ │ JWT/CORS/Rate   │ │   WebSocket     │
+│                 │ │ +toon/view/jobs │ │                 │
+└─────────────────┘ └─────────────────┘ └─────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
@@ -196,9 +188,11 @@ async fn create(ValidatedJson(user): ValidatedJson<CreateUser>) -> Json<User> {
 }
 ```
 
-### `rustapi-toon` — LLM Optimization
+### TOON — LLM Optimization (in `rustapi-extras`, feature `toon`)
 
 **Token-Oriented Object Notation for AI.**
+
+Formerly the `rustapi-toon` crate; now part of `rustapi-extras` behind the `toon` feature flag.
 
 | Type | Purpose |
 |------|---------|
@@ -228,9 +222,11 @@ Headers provided by `LlmResponse`:
 | **Circuit Breaker** | default | Fault tolerance patterns |
 | **Retry** | default | Automatic retry with backoff |
 
-### `rustapi-jobs` — Background Job Processing ⭐ NEW
+### Background Jobs (in `rustapi-extras`, feature `jobs`)
 
 **Async job queue with multiple backends.**
+
+Formerly the `rustapi-jobs` crate; now part of `rustapi-extras` behind the `jobs` feature flag (with `jobs-redis` and `jobs-postgres` sub-features).
 
 | Component | Purpose |
 |-----------|---------|
@@ -246,9 +242,11 @@ Features:
 - Scheduled and delayed execution
 - Job status tracking
 
-### `rustapi-testing` — Test Utilities ⭐ NEW
+### Testing Utilities (in `rustapi-core`, feature `test-utils`)
 
 **Helpers for integration and unit testing.**
+
+Formerly the `rustapi-testing` crate; now part of `rustapi-core` behind the `test-utils` feature flag (dev-only).
 
 | Type | Purpose |
 |------|---------|
@@ -268,9 +266,11 @@ Features:
 | `Message` | Text, Binary, Ping, Pong, Close |
 | `Broadcast` | Pub/sub channel for broadcasting |
 
-### `rustapi-view` — Template Engine
+### Template Engine (in `rustapi-extras`, feature `view`)
 
 **Server-side HTML rendering with Tera.**
+
+Formerly the `rustapi-view` crate; now part of `rustapi-extras` behind the `view` feature flag.
 
 | Type | Purpose |
 |------|---------|
@@ -670,8 +670,8 @@ The facade pattern is the key: `rustapi-rs` provides a stable surface, while int
   - `cargo-rustapi`: CLI tool.
 - **Internal/Support Crates**:
   - `rustapi-core`, `rustapi-macros`, `rustapi-validate`;
-  - `rustapi-openapi`, `rustapi-extras`, `rustapi-toon`, `rustapi-grpc`;
-  - `rustapi-ws`, `rustapi-view`, `rustapi-testing`, `rustapi-jobs`.
+  - `rustapi-openapi`, `rustapi-extras`, `rustapi-grpc`;
+  - `rustapi-ws`.
 
 ### Semver Policy
 
@@ -681,4 +681,4 @@ The facade pattern is the key: `rustapi-rs` provides a stable surface, while int
 
 ### Workspace Members
 
-12 Library Crates + 2 Bench suites + 1 CLI (`crates/cargo-rustapi`).
+8 Library Crates + 2 Bench suites + 1 CLI (`crates/cargo-rustapi`).

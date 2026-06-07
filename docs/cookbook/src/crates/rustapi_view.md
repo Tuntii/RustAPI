@@ -1,7 +1,17 @@
-# rustapi-view: The Artist
+# Template Engine (rustapi-extras `view` feature)
 
 **Lens**: "The Artist"
 **Philosophy**: "Server-side rendering with modern tools."
+
+> The `rustapi-view` crate has been merged into `rustapi-extras` behind the `view` feature flag.
+> All functionality remains identical; only the import path has changed.
+
+Enable the feature in your `Cargo.toml`:
+
+```toml
+[dependencies]
+rustapi-rs = { version = "0.1", features = ["protocol-view"] }
+```
 
 ## Tera Integration
 

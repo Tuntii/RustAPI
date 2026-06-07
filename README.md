@@ -109,7 +109,7 @@ Run HTTP/1.1 (TCP) and HTTP/3 (QUIC/UDP) simultaneously on the same server. Enab
 
 ### Background Jobs
 
-`rustapi-jobs` provides an async job queue with three backends (Memory, Redis, Postgres), retry with exponential backoff, dead letter queues, and scheduled execution.
+The `extras-jobs` feature (formerly the `rustapi-jobs` crate) provides an async job queue with three backends (Memory, Redis, Postgres), retry with exponential backoff, dead letter queues, and scheduled execution — now part of `rustapi-extras`.
 
 ### Side-by-Side gRPC + HTTP
 
@@ -232,18 +232,17 @@ Features are organized into three namespaces:
 
 Meta features: `core` (default), `protocol-all`, `extras-all`, `full`.
 
-## Recent Changes (v0.1.335)
+## Recent Changes
 
+- **Crate consolidation (13 → 9):** `rustapi-testing`, `rustapi-jobs`, `rustapi-view`, and `rustapi-toon` merged into `rustapi-core` and `rustapi-extras` as feature-gated modules.
+- **Embedded Isometric System Dashboard:** Live `/dashboard` with bento-grid layout, execution-flow visualization, and time-travel replay browser.
 - Dual-stack runtime: simultaneous HTTP/1.1 (TCP) and HTTP/3 (QUIC/UDP)
 - WebSocket permessage-deflate compression
-- Improved OpenAPI reference integrity and validation documentation
-- Async validation with application state integration
 - `rustapi-grpc` crate: optional Tonic/Prost-based gRPC alongside HTTP (`run_rustapi_and_grpc`)
-- `cargo rustapi new` now includes `grpc` in interactive feature selection
 
 ## Roadmap (June 2026)
 
-- [ ] Embedded Isometric System Dashboard (`/dashboard`)
+- [x] Embedded Isometric System Dashboard (`/dashboard`)
   - Built-in control plane that boots automatically with a bento-grid layout, dark mode, and glassmorphism styling.
   - Live architectural view of request routing across the **Ultra Fast**, **Fast**, and **Full** execution paths.
   - Interactive endpoint visualization for topology inspection, route grouping, and runtime status awareness.
