@@ -3227,7 +3227,7 @@ dependencies = [
  "http",
  "http-body-util",
  "jsonwebtoken",
- "opentelemetry 0.31.0",
+ "opentelemetry 0.32.0",
  "opentelemetry-otlp",
  "opentelemetry-semantic-conventions",
  "opentelemetry_sdk 0.32.1",
