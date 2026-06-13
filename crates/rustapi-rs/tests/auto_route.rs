@@ -17,10 +17,15 @@ async fn auto_handler_rs_post() -> &'static str {
 
 #[test]
 fn test_auto_registration_rs() {
-    // Collect routes
+    // Note: This test can be flaky in some environments because linkme slices
+    // are populated at link time. The test binary may not include all annotated
+    // handlers the same way the final binary does.
+    //
+    // In real projects it is common to either:
+    //   - Rely on `RustApi::auto()` (which also uses the same slice)
+    //   - Or fall back to manual `.route()` registration inside tests.
     let routes = collect_auto_routes();
 
-    // Filter to find our specific routes
     let found_auto = routes
         .iter()
         .any(|r| r.path() == "/test-auto-rs" && r.method() == "GET");
@@ -28,10 +33,10 @@ fn test_auto_registration_rs() {
         .iter()
         .any(|r| r.path() == "/test-auto-rs-post" && r.method() == "POST");
 
-    assert!(found_auto, "Should find /test-auto-rs GET route");
-    assert!(found_auto_post, "Should find /test-auto-rs-post POST route");
+    assert!(found_auto, "Should find /test-auto-rs GET route (linkme)");
+    assert!(found_auto_post, "Should find /test-auto-rs-post POST route (linkme)");
 
-    println!("Found {} routes", routes.len());
+    println!("Found {} routes via auto collection in this test binary", routes.len());
 }
 
 #[get("/same-path")]
@@ -92,6 +97,8 @@ async fn query_handler(Query(p): Query<Pagination>) -> &'static str {
 
 #[test]
 fn test_auto_groups_methods_by_path() {
+    // This test exercises the full `RustApi::auto()` path which internally
+    // calls collect_auto_routes + grouping. Same linkme caveats apply.
     let app = RustApi::auto();
     let router = app.into_router();
 

@@ -44,7 +44,44 @@ Feature taxonomy on the facade:
 
 ## 📦 Quick Start
 
-Add `rustapi-rs` to your `Cargo.toml`.
+**Önerilen kullanım** (en temiz ve kısa makro isimleri için):
+
+```toml
+[dependencies]
+api = { package = "rustapi-rs", version = "0.1.478" }
+```
+
+Sonra kodunda:
+
+```rust
+use api::prelude::*;
+
+#[api::get("/hello")]
+async fn hello() -> &'static str {
+    "Hello from RustAPI!"
+}
+
+#[api::main]
+async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    api::RustApi::auto().run("127.0.0.1:8080").await
+}
+```
+
+Eğer istersen direkt uzun isimle de kullanabilirsin:
+
+```toml
+[dependencies]
+rustapi-rs = "0.1.478"
+```
+
+```rust
+use rustapi_rs::prelude::*;
+
+#[rustapi_rs::get("/hello")]
+...
+```
+
+Add `rustapi-rs` to your `Cargo.toml` (kısa isim için alias önerilir):
 
 ```toml
 [dependencies]

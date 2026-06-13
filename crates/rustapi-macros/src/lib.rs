@@ -114,6 +114,7 @@ pub fn schema(_attr: TokenStream, item: TokenStream) -> TokenStream {
         #input
 
         #[allow(non_upper_case_globals)]
+        // Schema registration via linkme (for the `#[schema]` attribute on types)
         #[#rustapi_path::__private::linkme::distributed_slice(#rustapi_path::__private::AUTO_SCHEMAS)]
         #[linkme(crate = #rustapi_path::__private::linkme)]
         static #registrar_ident: fn(&mut #rustapi_path::__private::openapi::OpenApiSpec) =
@@ -784,7 +785,9 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
                 #chained_calls
         }
 
-        // Auto-register route with linkme
+        // Auto-register this route factory using linkme distributed slices.
+        // The `#[linkme(crate = ...)]` attribute is required for correct
+        // operation when the user renames the `rustapi-rs` crate.
         #[doc(hidden)]
         #[allow(non_upper_case_globals)]
         #[#rustapi_path::__private::linkme::distributed_slice(#rustapi_path::__private::AUTO_ROUTES)]
@@ -798,8 +801,12 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
             #( spec.register_in_place::<#schema_types>(); )*
         }
 
+        // Auto-register schema population function (linkme).
+        // See the route registration above for why the `#[linkme(crate = ...)]`
+        // attribute is present.
         #[doc(hidden)]
         #[allow(non_upper_case_globals)]
+        // Schema registration via linkme (for the `#[schema]` attribute on types)
         #[#rustapi_path::__private::linkme::distributed_slice(#rustapi_path::__private::AUTO_SCHEMAS)]
         #[linkme(crate = #rustapi_path::__private::linkme)]
         static #auto_schema_name: fn(&mut #rustapi_path::__private::openapi::OpenApiSpec) = #schema_reg_fn_name;

@@ -494,6 +494,29 @@ impl RustApi {
 
     fn mount_auto_routes_grouped(mut self) -> Self {
         let routes = crate::auto_route::collect_auto_routes();
+
+        if routes.is_empty() {
+            // This is a common source of confusion with linkme-based auto registration.
+            // We emit a clear warning so users know their annotated handlers were not linked.
+            tracing::warn!(
+                target: "rustapi::auto",
+                count = 0,
+                "RustApi::auto() collected 0 routes. \
+                 This usually means either:\n\
+                 - No handlers were annotated with #[rustapi_rs::get], #[post], etc.\n\
+                 - The binary/test was not linked with the annotated modules (common in some test setups).\n\
+                 - You are building a library (cdylib/rlib) where linkme distributed slices may not be populated.\n\n\
+                 You can still register routes manually with .route() or check with rustapi_rs::auto_route_count()."
+            );
+        } else {
+            #[cfg(feature = "tracing")]
+            tracing::debug!(
+                target: "rustapi::auto",
+                count = routes.len(),
+                "Auto route collection found handlers"
+            );
+        }
+
         // Use BTreeMap for deterministic route registration order
         let mut by_path: BTreeMap<String, MethodRouter> = BTreeMap::new();
 

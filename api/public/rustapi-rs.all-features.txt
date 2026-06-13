@@ -518,6 +518,8 @@ pub use rustapi_rs::prelude::route
 pub use rustapi_rs::prelude::run_concurrently
 pub use rustapi_rs::prelude::run_rustapi_and_grpc
 pub use rustapi_rs::prelude::run_rustapi_and_grpc_with_shutdown
+pub use rustapi_rs::prelude::run_rustapi_and_mcp
+pub use rustapi_rs::prelude::run_rustapi_and_mcp_with_shutdown
 pub use rustapi_rs::prelude::serve_dir
 pub use rustapi_rs::prelude::sse_from_iter
 pub use rustapi_rs::prelude::sse_response
@@ -529,6 +531,8 @@ pub use rustapi_rs::protocol::grpc::<<rustapi_grpc::*>>
 pub mod rustapi_rs::protocol::http3
 pub use rustapi_rs::protocol::http3::Http3Config
 pub use rustapi_rs::protocol::http3::Http3Server
+pub mod rustapi_rs::protocol::mcp
+pub use rustapi_rs::protocol::mcp::<<rustapi_mcp::*>>
 pub mod rustapi_rs::protocol::toon
 pub use rustapi_rs::protocol::toon::<<rustapi_extras::toon::*>>
 pub mod rustapi_rs::protocol::view

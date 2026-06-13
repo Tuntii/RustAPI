@@ -25,6 +25,7 @@
         - [Testing Utilities](crates/rustapi_testing.md)
     - [rustapi-ws: The Live Wire](crates/rustapi_ws.md)
     - [rustapi-grpc: The Bridge](crates/rustapi_grpc.md)
+    - [rustapi-mcp: The Agent Bridge](crates/rustapi_mcp.md)
     - [cargo-rustapi: The Architect](crates/cargo_rustapi.md)
 
 - [Part III.5: Reference](reference/README.md)
@@ -52,6 +53,7 @@
     - [Real-time Chat](recipes/websockets.md)
     - [Server-Side Rendering (SSR)](recipes/server_side_rendering.md)
     - [AI Integration (TOON)](recipes/ai_integration.md)
+    - [MCP Integration (Agent Tools)](recipes/mcp_integration.md)
     - [Production Tuning](recipes/high_performance.md)
     - [Response Compression](recipes/compression.md)
     - [Resilience Patterns](recipes/resilience.md)
@@ -64,6 +66,7 @@
     - [Deployment](recipes/deployment.md)
     - [HTTP/3 (QUIC)](recipes/http3_quic.md)
     - [gRPC Integration](recipes/grpc_integration.md)
+    - [MCP Integration (Agent Tools)](recipes/mcp_integration.md)
     - [Automatic Status Page](recipes/status_page.md)
 
 - [Troubleshooting: Common Gotchas](troubleshooting.md)
