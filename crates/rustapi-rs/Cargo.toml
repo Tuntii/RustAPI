@@ -40,6 +40,11 @@ tokio = { workspace = true, features = ["macros", "rt-multi-thread", "signal"] }
 doc-comment = "0.3"
 uuid = { workspace = true, features = ["serde", "v4"] }
 
+# Screenshot example dependencies
+screenshots = "0.8"
+image = { version = "0.25", default-features = false, features = ["png"] }
+base64 = "0.22"
+
 [features]
 default = ["core"]
 
