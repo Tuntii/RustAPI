@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Embedded dashboard snapshots now include request-stage counters, route topology groups, health endpoint summary, and replay admin API discovery metadata.
 - Dashboard UI adds route group/method/tag filters plus a replay browser that reuses the existing `ReplayLayer` admin API for list, detail, and diff workflows.
 - Replay admin list endpoint now accepts UI-friendly pagination and filters: `offset`, `status_max`, `from`, `to`, `tag`, and `order`.
+- `mcp_tools` example under `crates/rustapi-rs/examples/` showing concurrent RustAPI HTTP + MCP sidecar with tag-based tool exposure (run with `--features protocol-mcp`).
+- Comprehensive e2e tests for the MCP transport (initialize, tag-filtered `tools/list`, real proxied `tools/call` for GET+body routes, error handling for hidden tools).
+- Cookbook recipe "MCP Integration (Agent Tools)" plus `rustapi_mcp.md` crate deep-dive page.
 
 ### Documentation
 

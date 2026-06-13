@@ -96,6 +96,23 @@ Then open:
 - `http://127.0.0.1:3000/slow`
 - `http://127.0.0.1:3000/flaky`
 
+### `mcp_tools`
+
+Demonstrates running your normal HTTP API together with a Native MCP server. Selected routes (those tagged `"agent"`) are automatically exposed as discoverable tools for LLMs and agent clients (Claude, Cursor, etc.). Tool calls are proxied through the full RustAPI request pipeline.
+
+Run it with:
+
+```sh
+cargo run -p rustapi-rs --example mcp_tools --features protocol-mcp
+```
+
+The example starts two listeners:
+
+- HTTP API on `http://127.0.0.1:8080`
+- MCP endpoint on `http://127.0.0.1:9090` (point your MCP client here)
+
+You can also drive it manually with `curl` (see the comments at the top of the example file for ready-to-paste JSON-RPC commands).
+
 ## Notes
 
 - Keep this file aligned with the actual `.rs` files in this directory.

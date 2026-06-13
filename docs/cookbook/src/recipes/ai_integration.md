@@ -92,7 +92,7 @@ curl -H "Accept: application/toon" http://localhost:3000/users
 
 ## Providing Context to AI
 
-When building an MCP (Model Context Protocol) server or simply feeding data to an LLM, use the TOON format to maximize the context window.
+When building an MCP (Model Context Protocol) server or simply feeding data to an LLM, use the TOON format to maximize the context window. See the [MCP Integration (Agent Tools)](mcp_integration.md) recipe for exposing your endpoints as callable tools for Claude, Cursor and other agents.
 
 ```rust,ignore
 // Example: Generating a prompt with TOON data

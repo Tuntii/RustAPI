@@ -274,13 +274,12 @@ impl McpServer {
     /// Start serving the MCP protocol over HTTP on the given address.
     ///
     /// This starts a sidecar HTTP server (separate from your main RustAPI HTTP server)
-    /// that MCP clients (Claude, etc.) can connect to for tool discovery.
+    /// that MCP clients (Claude, etc.) can connect to for tool discovery and invocation.
     ///
-    /// Currently supports a minimal JSON-RPC over POST transport for:
+    /// Supports a minimal JSON-RPC over POST transport for:
     /// - `initialize`
     /// - `tools/list`
-    ///
-    /// `tools/call` returns "not implemented yet" (see Milestone 3).
+    /// - `tools/call` (proxies to the main RustAPI server so full middleware / validation / error handling applies)
     pub async fn serve(self, addr: &str) -> Result<()> {
         self.serve_with_shutdown(addr, std::future::pending()).await
     }
@@ -421,12 +420,55 @@ async fn handle_mcp_http_request(
             }
         }
         "tools/call" => {
-            // Invocation is part of Milestone 3
-            Ok(jsonrpc_error_response(
-                id,
-                -32601,
-                "tools/call not implemented yet (Milestone 3)",
-            ))
+            let params = json.get("params").cloned().unwrap_or(serde_json::json!({}));
+            let name = params
+                .get("name")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string();
+            let arguments: std::collections::HashMap<String, serde_json::Value> = params
+                .get("arguments")
+                .and_then(|v| serde_json::from_value(v.clone()).ok())
+                .unwrap_or_default();
+
+            let tool_req = crate::types::ToolCallRequest { name, arguments };
+
+            match mcp.call_tool(tool_req).await {
+                Ok(resp) => {
+                    // Shape the response per MCP tools/call convention (protocol 2024-11-05):
+                    // The result contains a "content" array of content blocks + "isError" flag.
+                    // We serialize non-string content as pretty JSON text for broad client compatibility.
+                    let text = if resp.content.is_null() {
+                        String::new()
+                    } else if let Some(s) = resp.content.as_str() {
+                        s.to_owned()
+                    } else {
+                        serde_json::to_string_pretty(&resp.content)
+                            .unwrap_or_else(|_| resp.content.to_string())
+                    };
+
+                    let result = serde_json::json!({
+                        "content": [{
+                            "type": "text",
+                            "text": text
+                        }],
+                        "isError": resp.is_error
+                    });
+                    Ok(jsonrpc_success_response(id, result))
+                }
+                Err(e) => {
+                    // Surface execution errors as a successful JSON-RPC but with isError inside the result
+                    // (this is the MCP convention so the client knows it was a tool-level failure).
+                    let result = serde_json::json!({
+                        "content": [{
+                            "type": "text",
+                            "text": format!("Tool execution error: {}", e)
+                        }],
+                        "isError": true
+                    });
+                    Ok(jsonrpc_success_response(id, result))
+                }
+            }
         }
         _ => Ok(jsonrpc_error_response(id, -32601, "method not found")),
     }

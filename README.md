@@ -254,6 +254,7 @@ Meta features: `core` (default), `protocol-all`, `extras-all`, `full`.
 
 - **Crate consolidation (13 → 9):** `rustapi-testing`, `rustapi-jobs`, `rustapi-view`, and `rustapi-toon` merged into `rustapi-core` and `rustapi-extras` as feature-gated modules.
 - **Embedded Isometric System Dashboard:** Live `/dashboard` with bento-grid layout, execution-flow visualization, and time-travel replay browser.
+- **Native MCP progress:** Cookbook recipe, `mcp_tools` runnable example, and end-to-end tests for tool discovery + real proxied invocation.
 - Dual-stack runtime: simultaneous HTTP/1.1 (TCP) and HTTP/3 (QUIC/UDP)
 - WebSocket permessage-deflate compression
 - `rustapi-grpc` crate: optional Tonic/Prost-based gRPC alongside HTTP (`run_rustapi_and_grpc`)
@@ -265,10 +266,11 @@ Meta features: `core` (default), `protocol-all`, `extras-all`, `full`.
   - Live architectural view of request routing across the **Ultra Fast**, **Fast**, and **Full** execution paths.
   - Interactive endpoint visualization for topology inspection, route grouping, and runtime status awareness.
   - Time-travel replay UI for browsing recorded HTTP traffic, selecting a historical request, and inspecting replay state directly from the dashboard.
-- [ ] Native MCP (Model Context Protocol) Orchestration
+- [~] Native MCP (Model Context Protocol) Orchestration
   - Embedded MCP server that exposes RustAPI endpoints as discoverable tools for LLMs and external AI agents.
   - Automatic capability discovery and direct tool-style invocation for compatible clients such as Claude and other multi-agent runtimes.
-  - Framework-level orchestration layer for agent-to-endpoint communication, authorization, and operational policy enforcement.
+  - Framework-level orchestration layer for agent-to-endpoint communication (core + examples + cookbook + e2e tests done: discovery + proxied invocation through full pipeline + sidecar runner + runnable `mcp_tools` example).
+  - Remaining polish: admin token enforcement in transport, optional zero-copy in-process invoker (current design uses correct localhost proxy), more client conformance tests.
 
 
 ## Documentation
