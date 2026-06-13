@@ -382,7 +382,7 @@ checksum = "1e748733b7cbc798e1434b6ac524f0c1ff2ab456fe201501e6497c8417a4fc33"
 
 [[package]]
 name = "cargo-rustapi"
-version = "0.1.478"
+version = "0.1.500"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -2950,6 +2950,7 @@ dependencies = [
  "percent-encoding",
  "pin-project-lite",
  "ryu",
+ "sha1_smol",
  "socket2",
  "tokio",
  "tokio-util",
@@ -3166,7 +3167,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-core"
-version = "0.1.478"
+version = "0.1.500"
 dependencies = [
  "async-stream",
  "async-trait",
@@ -3211,7 +3212,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-extras"
-version = "0.1.478"
+version = "0.1.500"
 dependencies = [
  "async-trait",
  "aws-lc-rs",
@@ -3255,7 +3256,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-grpc"
-version = "0.1.478"
+version = "0.1.500"
 dependencies = [
  "prost",
  "rustapi-core",
@@ -3266,7 +3267,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-macros"
-version = "0.1.478"
+version = "0.1.500"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -3279,7 +3280,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-mcp"
-version = "0.1.478"
+version = "0.1.500"
 dependencies = [
  "async-trait",
  "bytes",
@@ -3301,7 +3302,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-openapi"
-version = "0.1.478"
+version = "0.1.500"
 dependencies = [
  "bytes",
  "http",
@@ -3313,7 +3314,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-rs"
-version = "0.1.478"
+version = "0.1.500"
 dependencies = [
  "async-trait",
  "doc-comment",
@@ -3338,7 +3339,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-testing"
-version = "0.1.478"
+version = "0.1.500"
 dependencies = [
  "bytes",
  "http",
@@ -3355,7 +3356,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-toon"
-version = "0.1.478"
+version = "0.1.500"
 dependencies = [
  "bytes",
  "futures-util",
@@ -3372,7 +3373,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-validate"
-version = "0.1.478"
+version = "0.1.500"
 dependencies = [
  "async-trait",
  "http",
@@ -3388,7 +3389,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-view"
-version = "0.1.478"
+version = "0.1.500"
 dependencies = [
  "bytes",
  "http",
@@ -3404,7 +3405,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-ws"
-version = "0.1.478"
+version = "0.1.500"
 dependencies = [
  "async-trait",
  "bytes",
@@ -3728,6 +3729,12 @@ dependencies = [
  "cpufeatures 0.2.17",
  "digest 0.10.7",
 ]
+
+[[package]]
+name = "sha1_smol"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bbfa15b3dddfee50a0fff136974b3e1bde555604ba463834a7eb7deb6417705d"
 
 [[package]]
 name = "sha2"

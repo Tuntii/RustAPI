@@ -133,6 +133,24 @@ jobs:
         if: github.event.inputs.dry_run != 'true'
         run: sleep 30
 
+      - name: Publish rustapi-grpc
+        if: github.event.inputs.dry_run != 'true'
+        run: cargo publish -p rustapi-grpc --token ${{ secrets.CRATES_IO_TOKEN }} --no-verify --allow-dirty
+        continue-on-error: true
+
+      - name: Wait for crates.io index update
+        if: github.event.inputs.dry_run != 'true'
+        run: sleep 30
+
+      - name: Publish rustapi-mcp
+        if: github.event.inputs.dry_run != 'true'
+        run: cargo publish -p rustapi-mcp --token ${{ secrets.CRATES_IO_TOKEN }} --no-verify --allow-dirty
+        continue-on-error: true
+
+      - name: Wait for crates.io index update
+        if: github.event.inputs.dry_run != 'true'
+        run: sleep 30
+
       - name: Publish rustapi-rs (main crate)
         if: github.event.inputs.dry_run != 'true'
         run: cargo publish -p rustapi-rs --token ${{ secrets.CRATES_IO_TOKEN }}
@@ -154,6 +172,8 @@ jobs:
           cargo publish -p rustapi-toon --dry-run
           cargo publish -p rustapi-view --dry-run
           cargo publish -p rustapi-ws --dry-run
+          cargo publish -p rustapi-grpc --dry-run
+          cargo publish -p rustapi-mcp --dry-run
           cargo publish -p rustapi-rs --dry-run
           cargo publish -p cargo-rustapi --dry-run
           echo "All packages verified successfully!"
