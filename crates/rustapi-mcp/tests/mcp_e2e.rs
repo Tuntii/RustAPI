@@ -8,7 +8,7 @@
 use std::time::Duration;
 
 use rustapi_rs::prelude::*;
-use rustapi_rs::protocol::mcp::{McpConfig, McpServer, run_rustapi_and_mcp_with_shutdown};
+use rustapi_rs::protocol::mcp::{run_rustapi_and_mcp_with_shutdown, McpConfig, McpServer};
 use serde::{Deserialize, Serialize};
 use tokio::sync::oneshot;
 
@@ -86,15 +86,9 @@ async fn test_mcp_initialize_and_filtered_tools_list() {
     let (shutdown_tx, shutdown_rx) = oneshot::channel();
 
     let server_handle = tokio::spawn(async move {
-        run_rustapi_and_mcp_with_shutdown(
-            app,
-            &http_addr_str,
-            mcp,
-            &mcp_addr_str,
-            async move {
-                let _ = shutdown_rx.await;
-            },
-        )
+        run_rustapi_and_mcp_with_shutdown(app, &http_addr_str, mcp, &mcp_addr_str, async move {
+            let _ = shutdown_rx.await;
+        })
         .await
     });
 
@@ -153,9 +147,13 @@ async fn test_mcp_initialize_and_filtered_tools_list() {
         .collect();
 
     // Should contain the two agent-tagged tools, but not the admin one
-    assert!(tool_names.iter().any(|n| n.contains("get_weather") || n.contains("weather")));
+    assert!(tool_names
+        .iter()
+        .any(|n| n.contains("get_weather") || n.contains("weather")));
     assert!(tool_names.iter().any(|n| n.contains("compute")));
-    assert!(!tool_names.iter().any(|n| n.contains("secret") || n.contains("admin")));
+    assert!(!tool_names
+        .iter()
+        .any(|n| n.contains("secret") || n.contains("admin")));
 
     // Trigger shutdown
     let _ = shutdown_tx.send(());
@@ -188,13 +186,9 @@ async fn test_mcp_tool_call_get_with_path_param_and_post_body() {
     let (shutdown_tx, shutdown_rx) = oneshot::channel();
 
     let server_handle = tokio::spawn(async move {
-        run_rustapi_and_mcp_with_shutdown(
-            app,
-            &http_addr_str,
-            mcp,
-            &mcp_addr_str,
-            async move { let _ = shutdown_rx.await; },
-        )
+        run_rustapi_and_mcp_with_shutdown(app, &http_addr_str, mcp, &mcp_addr_str, async move {
+            let _ = shutdown_rx.await;
+        })
         .await
     });
 
@@ -221,8 +215,7 @@ async fn test_mcp_tool_call_get_with_path_param_and_post_body() {
     let weather_tool = tools
         .iter()
         .find(|t| t["name"].as_str().unwrap_or("").contains("weather"))
-        .expect("weather tool should be discoverable")
-        ["name"]
+        .expect("weather tool should be discoverable")["name"]
         .as_str()
         .unwrap()
         .to_string();
@@ -230,8 +223,7 @@ async fn test_mcp_tool_call_get_with_path_param_and_post_body() {
     let compute_tool = tools
         .iter()
         .find(|t| t["name"].as_str().unwrap_or("").contains("compute"))
-        .expect("compute tool should be discoverable")
-        ["name"]
+        .expect("compute tool should be discoverable")["name"]
         .as_str()
         .unwrap()
         .to_string();
@@ -257,9 +249,17 @@ async fn test_mcp_tool_call_get_with_path_param_and_post_body() {
 
     let body: serde_json::Value = res.json().await.unwrap();
     let result = &body["result"];
-    assert_eq!(result["isError"], false, "GET tool call should succeed: {:?}", result);
+    assert_eq!(
+        result["isError"], false,
+        "GET tool call should succeed: {:?}",
+        result
+    );
     let text = result["content"][0]["text"].as_str().unwrap();
-    assert!(text.contains("Istanbul") || text.contains("22"), "response text should contain city or temp: {}", text);
+    assert!(
+        text.contains("Istanbul") || text.contains("22"),
+        "response text should contain city or temp: {}",
+        text
+    );
 
     // --- Call POST tool with body (using discovered name) ---
     let call_post = serde_json::json!({
@@ -282,9 +282,17 @@ async fn test_mcp_tool_call_get_with_path_param_and_post_body() {
 
     let body: serde_json::Value = res.json().await.unwrap();
     let result = &body["result"];
-    assert_eq!(result["isError"], false, "POST tool call should succeed: {:?}", result);
+    assert_eq!(
+        result["isError"], false,
+        "POST tool call should succeed: {:?}",
+        result
+    );
     let text = result["content"][0]["text"].as_str().unwrap();
-    assert!(text.contains("42") || text.contains("sum"), "response should contain sum result: {}", text);
+    assert!(
+        text.contains("42") || text.contains("sum"),
+        "response should contain sum result: {}",
+        text
+    );
 
     // Shutdown
     let _ = shutdown_tx.send(());
@@ -314,13 +322,9 @@ async fn test_mcp_tool_not_found_for_untagged_route() {
     let (shutdown_tx, shutdown_rx) = oneshot::channel();
 
     let server_handle = tokio::spawn(async move {
-        run_rustapi_and_mcp_with_shutdown(
-            app,
-            &http_addr_str,
-            mcp,
-            &mcp_addr_str,
-            async move { let _ = shutdown_rx.await; },
-        )
+        run_rustapi_and_mcp_with_shutdown(app, &http_addr_str, mcp, &mcp_addr_str, async move {
+            let _ = shutdown_rx.await;
+        })
         .await
     });
 

@@ -28,7 +28,7 @@
 //!     -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"get_agent_weather_city","arguments":{"city":"Istanbul"}}}'
 
 use rustapi_rs::prelude::*;
-use rustapi_rs::protocol::mcp::{McpConfig, McpServer, run_rustapi_and_mcp_with_shutdown};
+use rustapi_rs::protocol::mcp::{run_rustapi_and_mcp_with_shutdown, McpConfig, McpServer};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Schema)]
@@ -105,15 +105,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     println!();
     println!("Press Ctrl+C to stop both servers cleanly.");
 
-    run_rustapi_and_mcp_with_shutdown(
-        app,
-        http_addr,
-        mcp,
-        mcp_addr,
-        async {
-            let _ = tokio::signal::ctrl_c().await;
-        },
-    )
+    run_rustapi_and_mcp_with_shutdown(app, http_addr, mcp, mcp_addr, async {
+        let _ = tokio::signal::ctrl_c().await;
+    })
     .await?;
 
     Ok(())

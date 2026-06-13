@@ -34,9 +34,15 @@ fn test_auto_registration_rs() {
         .any(|r| r.path() == "/test-auto-rs-post" && r.method() == "POST");
 
     assert!(found_auto, "Should find /test-auto-rs GET route (linkme)");
-    assert!(found_auto_post, "Should find /test-auto-rs-post POST route (linkme)");
+    assert!(
+        found_auto_post,
+        "Should find /test-auto-rs-post POST route (linkme)"
+    );
 
-    println!("Found {} routes via auto collection in this test binary", routes.len());
+    println!(
+        "Found {} routes via auto collection in this test binary",
+        routes.len()
+    );
 }
 
 #[get("/same-path")]

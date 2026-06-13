@@ -31,9 +31,9 @@ pub mod __private {
 
 /// Stable core surface exposed by the facade.
 pub mod core {
-    pub use rustapi_core::{auto_route_count, collect_auto_routes};
     pub use rustapi_core::validation::Validatable;
     pub use rustapi_core::EventBus;
+    pub use rustapi_core::{auto_route_count, collect_auto_routes};
     pub use rustapi_core::{
         delete, delete_route, get, get_route, patch, patch_route, post, post_route, put, put_route,
         route, serve_dir, sse_from_iter, sse_response, ApiError, AsyncValidatedJson, Body,
@@ -450,9 +450,7 @@ pub mod prelude {
     };
 
     #[cfg(any(feature = "protocol-mcp", feature = "mcp"))]
-    pub use crate::protocol::mcp::{
-        run_rustapi_and_mcp, run_rustapi_and_mcp_with_shutdown,
-    };
+    pub use crate::protocol::mcp::{run_rustapi_and_mcp, run_rustapi_and_mcp_with_shutdown};
 }
 
 #[cfg(test)]

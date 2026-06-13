@@ -206,6 +206,37 @@ cargo clippy --workspace --all-features -- -D warnings
 cargo clippy --workspace -- -W clippy::all -D warnings
 ```
 
+### Pre-commit Hooks (Recommended)
+
+We provide committed pre-commit scripts that run the same formatting + strict clippy checks (and mdBook validation for cookbook changes) as the CI lint job.
+
+This prevents "lint failed on main" surprises.
+
+#### One-time setup
+
+**Unix / Git Bash (recommended):**
+
+```bash
+cp scripts/pre-commit.sh .git/hooks/pre-commit
+chmod +x .git/hooks/pre-commit
+```
+
+**Windows (PowerShell):**
+
+```powershell
+Copy-Item scripts\pre-commit.ps1 .git\hooks\pre-commit.ps1
+```
+
+After setup, the checks will run automatically on `git commit` for relevant staged files.
+
+You can also run the full local CI simulation anytime:
+
+```bash
+pwsh -File scripts/simulate_ci.ps1
+# or the more thorough quality script
+pwsh -File scripts/check_quality.ps1
+```
+
 ### Documentation
 
 - **Public APIs must have rustdoc comments**
@@ -280,7 +311,7 @@ Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
 Before submitting, ensure:
 
-- [ ] Code follows style guidelines (`cargo fmt`, `cargo clippy`)
+- [ ] Code follows style guidelines (`cargo fmt`, `cargo clippy`); pre-commit hook recommended (see above)
 - [ ] All tests pass (`cargo test --workspace`)
 - [ ] New tests added for new functionality
 - [ ] Documentation updated (if applicable)

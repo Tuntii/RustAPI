@@ -112,7 +112,7 @@ mod property_tests {
     /// - Empty matcher SHALL match all requests
     /// - Multiple criteria SHALL be combined with AND logic
     /// - Header matching SHALL be case-sensitive for values
-
+    ///
     /// Strategy for generating HTTP methods
     fn method_strategy() -> impl Strategy<Value = Method> {
         prop_oneof![

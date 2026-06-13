@@ -58,7 +58,10 @@ where
 
     // Automatically configure the MCP server to proxy tool calls back to the main HTTP API.
     // This makes end-to-end tool invocation work out of the box.
-    let http_base = format!("http://127.0.0.1:{}", extract_port_or_default(&http_addr, 8080));
+    let http_base = format!(
+        "http://127.0.0.1:{}",
+        extract_port_or_default(&http_addr, 8080)
+    );
     let mcp = mcp.with_http_base(http_base);
 
     let http_task = async move { app.run(&http_addr).await };
@@ -84,7 +87,10 @@ where
     let http_addr = http_addr.as_ref().to_string();
     let mcp_addr = mcp_addr.as_ref().to_string();
 
-    let http_base = format!("http://127.0.0.1:{}", extract_port_or_default(&http_addr, 8080));
+    let http_base = format!(
+        "http://127.0.0.1:{}",
+        extract_port_or_default(&http_addr, 8080)
+    );
     let mcp = mcp.with_http_base(http_base);
 
     let (shutdown_tx, shutdown_rx) = watch::channel(false);
@@ -97,9 +103,7 @@ where
     let http_shutdown = shutdown_notifier(shutdown_rx.clone());
     let mcp_shutdown = shutdown_notifier(shutdown_rx);
 
-    let http_task = async move {
-        app.run_with_shutdown(&http_addr, http_shutdown).await
-    };
+    let http_task = async move { app.run_with_shutdown(&http_addr, http_shutdown).await };
 
     let mcp_task = async move {
         mcp.serve_with_shutdown(&mcp_addr, mcp_shutdown)
@@ -132,7 +136,10 @@ fn extract_port_or_default(addr: &str, default: u16) -> u16 {
     if let Some(colon) = addr.rfind(':') {
         let after = &addr[colon + 1..];
         // strip any trailing path or query (shouldn't be there for addr)
-        let port_str = after.split(|c: char| !c.is_ascii_digit()).next().unwrap_or("");
+        let port_str = after
+            .split(|c: char| !c.is_ascii_digit())
+            .next()
+            .unwrap_or("");
         if let Ok(p) = port_str.parse::<u16>() {
             return p;
         }

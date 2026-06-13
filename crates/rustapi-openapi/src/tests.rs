@@ -1,4 +1,5 @@
 #[cfg(test)]
+#[allow(clippy::module_inception)]
 mod tests {
     use crate::schema::{JsonSchema2020, RustApiSchema, SchemaCtx, SchemaRef};
     use crate::spec::OpenApiSpec;
@@ -344,8 +345,10 @@ mod tests {
             )]),
         });
 
-        let mut callback_path = crate::spec::PathItem::default();
-        callback_path.post = Some(callback_operation);
+        let callback_path = crate::spec::PathItem {
+            post: Some(callback_operation),
+            ..Default::default()
+        };
 
         components.callbacks.insert(
             "badCallback".to_string(),

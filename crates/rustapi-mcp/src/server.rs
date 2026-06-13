@@ -12,10 +12,10 @@ use hyper::Response;
 use hyper_util::rt::TokioIo;
 use rustapi_core::RustApi;
 use rustapi_openapi::OpenApiSpec;
+use std::collections::HashMap;
 use std::convert::Infallible;
 use std::future::Future;
 use std::net::SocketAddr;
-use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::net::TcpListener;
 use tracing::{error, info};
@@ -105,7 +105,10 @@ impl McpServer {
 
         let config = &*self.config;
 
-        let insert_tool = |map: &mut HashMap<String, ToolExecutionInfo>, path: &str, method: &str, op: &rustapi_openapi::Operation| {
+        let insert_tool = |map: &mut HashMap<String, ToolExecutionInfo>,
+                           path: &str,
+                           method: &str,
+                           op: &rustapi_openapi::Operation| {
             if !config.allowed_tags.is_empty() {
                 let has_match = op.tags.iter().any(|t| config.allowed_tags.contains(t));
                 if !has_match {
@@ -207,15 +210,12 @@ impl McpServer {
 
         let path = substitute_path_params(&info.path_template, &req.arguments);
 
-        let base = self
-            .http_base
-            .as_deref()
-            .unwrap_or("http://127.0.0.1:8080");
+        let base = self.http_base.as_deref().unwrap_or("http://127.0.0.1:8080");
 
         let url = format!("{}{}", base.trim_end_matches('/'), path);
 
-        let method = reqwest::Method::from_bytes(info.method.as_bytes())
-            .unwrap_or(reqwest::Method::GET);
+        let method =
+            reqwest::Method::from_bytes(info.method.as_bytes()).unwrap_or(reqwest::Method::GET);
 
         let client = reqwest::Client::new();
 
@@ -289,9 +289,9 @@ impl McpServer {
     where
         F: Future<Output = ()> + Send + 'static,
     {
-        let addr: SocketAddr = addr.parse().map_err(|e| {
-            McpError::Transport(format!("invalid MCP address '{}': {}", addr, e))
-        })?;
+        let addr: SocketAddr = addr
+            .parse()
+            .map_err(|e| McpError::Transport(format!("invalid MCP address '{}': {}", addr, e)))?;
 
         let listener = TcpListener::bind(addr).await.map_err(|e| {
             McpError::Transport(format!("failed to bind MCP listener on {}: {}", addr, e))
@@ -355,7 +355,7 @@ async fn handle_mcp_http_request(
             .status(405)
             .header("content-type", "application/json")
             .body(Full::new(body))
-            .unwrap());
+            .expect("static response must build"));
     }
 
     let body_bytes = match req.collect().await {
@@ -366,7 +366,7 @@ async fn handle_mcp_http_request(
                 .status(400)
                 .header("content-type", "application/json")
                 .body(Full::new(Bytes::from(err_body)))
-                .unwrap());
+                .expect("error response must build"));
         }
     };
 
@@ -399,26 +399,28 @@ async fn handle_mcp_http_request(
             });
             Ok(jsonrpc_success_response(id, result))
         }
-        "tools/list" => {
-            match mcp.list_tools().await {
-                Ok(tools) => {
-                    let tool_defs: Vec<_> = tools
-                        .into_iter()
-                        .map(|t| {
-                            serde_json::json!({
-                                "name": t.name,
-                                "description": t.description,
-                                "inputSchema": t.input_schema
-                            })
+        "tools/list" => match mcp.list_tools().await {
+            Ok(tools) => {
+                let tool_defs: Vec<_> = tools
+                    .into_iter()
+                    .map(|t| {
+                        serde_json::json!({
+                            "name": t.name,
+                            "description": t.description,
+                            "inputSchema": t.input_schema
                         })
-                        .collect();
+                    })
+                    .collect();
 
-                    let result = serde_json::json!({ "tools": tool_defs });
-                    Ok(jsonrpc_success_response(id, result))
-                }
-                Err(e) => Ok(jsonrpc_error_response(id, -32603, &format!("internal error: {}", e))),
+                let result = serde_json::json!({ "tools": tool_defs });
+                Ok(jsonrpc_success_response(id, result))
             }
-        }
+            Err(e) => Ok(jsonrpc_error_response(
+                id,
+                -32603,
+                &format!("internal error: {}", e),
+            )),
+        },
         "tools/call" => {
             let params = json.get("params").cloned().unwrap_or(serde_json::json!({}));
             let name = params
@@ -474,7 +476,10 @@ async fn handle_mcp_http_request(
     }
 }
 
-fn jsonrpc_success_response(id: serde_json::Value, result: serde_json::Value) -> Response<Full<Bytes>> {
+fn jsonrpc_success_response(
+    id: serde_json::Value,
+    result: serde_json::Value,
+) -> Response<Full<Bytes>> {
     let body = serde_json::json!({
         "jsonrpc": "2.0",
         "id": id,
@@ -482,8 +487,10 @@ fn jsonrpc_success_response(id: serde_json::Value, result: serde_json::Value) ->
     });
     Response::builder()
         .header("content-type", "application/json")
-        .body(Full::new(Bytes::from(serde_json::to_vec(&body).unwrap())))
-        .unwrap()
+        .body(Full::new(Bytes::from(
+            serde_json::to_vec(&body).expect("json must serialize"),
+        )))
+        .expect("response must build")
 }
 
 fn jsonrpc_error_response(
@@ -501,8 +508,10 @@ fn jsonrpc_error_response(
     });
     Response::builder()
         .header("content-type", "application/json")
-        .body(Full::new(Bytes::from(serde_json::to_vec(&body).unwrap())))
-        .unwrap()
+        .body(Full::new(Bytes::from(
+            serde_json::to_vec(&body).expect("json must serialize"),
+        )))
+        .expect("response must build")
 }
 
 /// Helpers duplicated from discovery for tool map building (small & self-contained).
@@ -535,7 +544,13 @@ fn generate_tool_name(method: &str, path: &str, op: &rustapi_openapi::Operation)
 
 fn sanitize_name(s: &str) -> String {
     s.chars()
-        .map(|c| if c.is_alphanumeric() || c == '_' { c } else { '_' })
+        .map(|c| {
+            if c.is_alphanumeric() || c == '_' {
+                c
+            } else {
+                '_'
+            }
+        })
         .collect::<String>()
         .trim_matches('_')
         .to_string()
@@ -543,7 +558,10 @@ fn sanitize_name(s: &str) -> String {
 }
 
 /// Substitute {param} placeholders in the path template using values from the MCP arguments.
-fn substitute_path_params(template: &str, args: &std::collections::HashMap<String, serde_json::Value>) -> String {
+fn substitute_path_params(
+    template: &str,
+    args: &std::collections::HashMap<String, serde_json::Value>,
+) -> String {
     let mut result = template.to_string();
     for (key, value) in args {
         let placeholder = format!("{{{}}}", key);

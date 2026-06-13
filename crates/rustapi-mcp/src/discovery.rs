@@ -89,10 +89,7 @@ fn operation_to_tool(
     }
 
     let name = generate_tool_name(method, path, op);
-    let description = op
-        .summary
-        .clone()
-        .or_else(|| op.description.clone());
+    let description = op.summary.clone().or_else(|| op.description.clone());
 
     let input_schema = build_input_schema(op, components);
 
@@ -134,7 +131,13 @@ fn generate_tool_name(method: &str, path: &str, op: &Operation) -> String {
 
 fn sanitize_name(s: &str) -> String {
     s.chars()
-        .map(|c| if c.is_alphanumeric() || c == '_' { c } else { '_' })
+        .map(|c| {
+            if c.is_alphanumeric() || c == '_' {
+                c
+            } else {
+                '_'
+            }
+        })
         .collect::<String>()
         .trim_matches('_')
         .to_string()
@@ -156,87 +159,6 @@ fn build_input_schema(op: &Operation, components: Option<&Components>) -> serde_
 
     // 2. Fallback: build from parameters (path + query + header)
     build_schema_from_parameters(&op.parameters, components)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use rustapi_openapi::{OpenApiSpec, Operation};
-
-    fn make_minimal_spec() -> OpenApiSpec {
-        let mut spec = OpenApiSpec::new("Test API", "1.0.0");
-
-        // Public tool
-        let mut get_user = Operation::new();
-        get_user.summary = Some("Get user by ID".to_string());
-        get_user.tags = vec!["users".to_string(), "public".to_string()];
-        get_user.operation_id = Some("getUser".to_string());
-
-        // Body tool
-        let mut create_user = Operation::new();
-        create_user.summary = Some("Create a user".to_string());
-        create_user.tags = vec!["users".to_string()];
-        create_user.operation_id = Some("createUser".to_string());
-
-        // Internal only (no public tag)
-        let mut admin = Operation::new();
-        admin.summary = Some("Admin only".to_string());
-        admin.tags = vec!["admin".to_string()];
-
-        spec = spec
-            .path("/users/{id}", "GET", get_user)
-            .path("/users", "POST", create_user)
-            .path("/admin/users", "GET", admin);
-
-        spec
-    }
-
-    #[test]
-    fn extracts_tools_with_operation_id_as_name() {
-        let spec = make_minimal_spec();
-        let config = McpConfig::new();
-
-        let tools = extract_tools_from_spec(&spec, &config);
-        assert!(!tools.is_empty());
-
-        let names: Vec<_> = tools.iter().map(|t| t.name.as_str()).collect();
-        assert!(names.contains(&"getuser"));
-        assert!(names.contains(&"createuser"));
-    }
-
-    #[test]
-    fn respects_allowed_tags_filter() {
-        let spec = make_minimal_spec();
-
-        let config = McpConfig::new().allowed_tags(["public"]);
-
-        let tools = extract_tools_from_spec(&spec, &config);
-        let _tags: Vec<Vec<String>> = tools.iter().map(|t| t.tags.clone()).collect();
-
-        // Only the GET /users/{id} should survive (has "public")
-        assert_eq!(tools.len(), 1);
-        assert!(tools[0].name.contains("getuser") || tools[0].tags.contains(&"public".to_string()));
-    }
-
-    #[test]
-    fn respects_path_prefix_filter() {
-        let spec = make_minimal_spec();
-
-        let config = McpConfig::new().allow_path_prefix("/users");
-
-        let tools = extract_tools_from_spec(&spec, &config);
-        // admin path should be filtered out
-        assert!(tools.iter().all(|t| !t.name.contains("admin")));
-    }
-
-    #[test]
-    fn max_tools_limit_is_respected() {
-        let spec = make_minimal_spec();
-        let config = McpConfig::new().max_tools(1);
-
-        let tools = extract_tools_from_spec(&spec, &config);
-        assert!(tools.len() <= 1);
-    }
 }
 
 fn extract_json_schema_from_body(
@@ -292,7 +214,8 @@ fn build_schema_from_parameters(
     });
 
     if !required.is_empty() {
-        schema["required"] = serde_json::to_value(required).unwrap();
+        schema["required"] =
+            serde_json::to_value(required).expect("required field names must serialize");
     }
     schema["additionalProperties"] = serde_json::json!(false);
 
@@ -312,9 +235,8 @@ fn schema_ref_to_json(
                 if let Some(components) = components {
                     if let Some(schema) = components.schemas.get(name) {
                         // Serialize the JsonSchema2020 as value (it will be a valid schema)
-                        return serde_json::to_value(schema).unwrap_or_else(|_| {
-                            serde_json::json!({ "$ref": reference })
-                        });
+                        return serde_json::to_value(schema)
+                            .unwrap_or_else(|_| serde_json::json!({ "$ref": reference }));
                     }
                 }
             }
@@ -325,5 +247,81 @@ fn schema_ref_to_json(
             serde_json::to_value(boxed.as_ref()).unwrap_or(serde_json::json!({}))
         }
         SchemaRef::Inline(val) => val.clone(),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rustapi_openapi::{OpenApiSpec, Operation};
+
+    fn make_minimal_spec() -> OpenApiSpec {
+        let mut spec = OpenApiSpec::new("Test API", "1.0.0");
+
+        let mut get_user = Operation::new();
+        get_user.summary = Some("Get user by ID".to_string());
+        get_user.tags = vec!["users".to_string(), "public".to_string()];
+        get_user.operation_id = Some("getUser".to_string());
+
+        let mut create_user = Operation::new();
+        create_user.summary = Some("Create a user".to_string());
+        create_user.tags = vec!["users".to_string()];
+        create_user.operation_id = Some("createUser".to_string());
+
+        let mut admin = Operation::new();
+        admin.summary = Some("Admin only".to_string());
+        admin.tags = vec!["admin".to_string()];
+
+        spec = spec
+            .path("/users/{id}", "GET", get_user)
+            .path("/users", "POST", create_user)
+            .path("/admin/users", "GET", admin);
+
+        spec
+    }
+
+    #[test]
+    fn extracts_tools_with_operation_id_as_name() {
+        let spec = make_minimal_spec();
+        let config = McpConfig::new();
+
+        let tools = extract_tools_from_spec(&spec, &config);
+        assert!(!tools.is_empty());
+
+        let names: Vec<_> = tools.iter().map(|t| t.name.as_str()).collect();
+        assert!(names.contains(&"getuser"));
+        assert!(names.contains(&"createuser"));
+    }
+
+    #[test]
+    fn respects_allowed_tags_filter() {
+        let spec = make_minimal_spec();
+
+        let config = McpConfig::new().allowed_tags(["public"]);
+
+        let tools = extract_tools_from_spec(&spec, &config);
+        let _tags: Vec<Vec<String>> = tools.iter().map(|t| t.tags.clone()).collect();
+
+        assert_eq!(tools.len(), 1);
+        assert!(tools[0].name.contains("getuser") || tools[0].tags.contains(&"public".to_string()));
+    }
+
+    #[test]
+    fn respects_path_prefix_filter() {
+        let spec = make_minimal_spec();
+
+        let config = McpConfig::new().allow_path_prefix("/users");
+
+        let tools = extract_tools_from_spec(&spec, &config);
+        assert!(tools.iter().all(|t| !t.name.contains("admin")));
+    }
+
+    #[test]
+    fn max_tools_limit_is_respected() {
+        let spec = make_minimal_spec();
+        let config = McpConfig::new().max_tools(1);
+
+        let tools = extract_tools_from_spec(&spec, &config);
+        assert!(tools.len() <= 1);
     }
 }

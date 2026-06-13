@@ -18,7 +18,7 @@ async fn validate_username_available(
 }
 
 // Another custom validator with specific error
-async fn validate_complex_logic(value: &String, _ctx: &ValidationContext) -> Result<(), RuleError> {
+async fn validate_complex_logic(value: &str, _ctx: &ValidationContext) -> Result<(), RuleError> {
     if value.starts_with("fail") {
         Err(RuleError::new("complex", "Complex validation failed"))
     } else {

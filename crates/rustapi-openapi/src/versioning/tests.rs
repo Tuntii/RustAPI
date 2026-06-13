@@ -6,6 +6,7 @@
 //! - Handles deprecation properly
 
 #[cfg(test)]
+#[allow(clippy::module_inception)]
 mod tests {
     use crate::versioning::*;
 
