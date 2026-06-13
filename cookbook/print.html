@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-e1de7911.js";
+            window.path_to_searchindex_js = "searchindex-8f09c680.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-118679de.js"></script>
+        <script src="toc-18ba3ccd.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -1844,6 +1844,8 @@ run_rustapi_and_grpc_with_shutdown(
     },
 ).await?;</code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="rustapi-mcp-the-agent-bridge"><a class="header" href="#rustapi-mcp-the-agent-bridge">rustapi-mcp: The Agent Bridge</a></h1>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="cargo-rustapi-the-architect"><a class="header" href="#cargo-rustapi-the-architect">cargo-rustapi: The Architect</a></h1>
 <p><strong>Lens</strong>: “The Architect”
 <strong>Philosophy</strong>: “Scaffolding best practices from day one.”</p>
@@ -2139,6 +2141,7 @@ async fn get_user(Path(_id): Path&lt;String&gt;) -&gt; Result&lt;&amp;'static st
 <li><a href="#real-time-chat-websockets">Real-time Chat</a></li>
 <li><a href="#server-side-rendering-ssr">Server-Side Rendering (SSR)</a></li>
 <li><a href="#ai-integration">AI Integration (TOON)</a></li>
+<li><a href="#mcp-integration-agent-tools">MCP Integration (Agent Tools)</a></li>
 <li><a href="#production-tuning">Production Tuning</a></li>
 <li><a href="#response-compression">Response Compression</a></li>
 <li><a href="#resilience-patterns">Resilience Patterns</a></li>
@@ -5396,7 +5399,7 @@ async fn main() {
 #   2,Bob,editor
 </code></pre>
 <h2 id="providing-context-to-ai"><a class="header" href="#providing-context-to-ai">Providing Context to AI</a></h2>
-<p>When building an MCP (Model Context Protocol) server or simply feeding data to an LLM, use the TOON format to maximize the context window.</p>
+<p>When building an MCP (Model Context Protocol) server or simply feeding data to an LLM, use the TOON format to maximize the context window. See the <a href="#mcp-integration-agent-tools">MCP Integration (Agent Tools)</a> recipe for exposing your endpoints as callable tools for Claude, Cursor and other agents.</p>
 <pre><code class="language-rust ignore">// Example: Generating a prompt with TOON data
 let data = get_system_status().await;
 let toon_string = rustapi_toon::to_string(&amp;data).unwrap();
@@ -5407,6 +5410,8 @@ let prompt = format!(
 );
 
 // Send `prompt` to OpenAI API...</code></pre>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="mcp-integration-agent-tools"><a class="header" href="#mcp-integration-agent-tools">MCP Integration (Agent Tools)</a></h1>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="production-tuning"><a class="header" href="#production-tuning">Production Tuning</a></h1>
 <p><strong>Problem</strong>: Your API needs to handle extreme load (10k+ requests per second).</p>
