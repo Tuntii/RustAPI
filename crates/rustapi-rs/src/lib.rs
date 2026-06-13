@@ -8,11 +8,22 @@ extern crate self as rustapi_rs;
 pub use rustapi_macros::*;
 
 /// Macro/runtime internals. Not part of the public compatibility contract.
+///
+/// This module is only for use by `rustapi-macros` and internal implementation.
+/// It re-exports `linkme` (used for automatic route & schema registration via
+/// distributed slices) and the raw slices.
+///
+/// External users should never name anything inside `__private`.
 #[doc(hidden)]
 pub mod __private {
     pub use async_trait;
     pub use rustapi_core as core;
-    pub use rustapi_core::__private::{linkme, AUTO_ROUTES, AUTO_SCHEMAS};
+
+    /// Re-export of `linkme` for our proc-macro generated attributes.
+    /// See `rustapi_core::__private::linkme` for more details.
+    pub use rustapi_core::__private::linkme;
+
+    pub use rustapi_core::__private::{AUTO_ROUTES, AUTO_SCHEMAS};
     pub use rustapi_openapi as openapi;
     pub use rustapi_validate as validate;
     pub use serde_json;
@@ -20,7 +31,7 @@ pub mod __private {
 
 /// Stable core surface exposed by the facade.
 pub mod core {
-    pub use rustapi_core::collect_auto_routes;
+    pub use rustapi_core::{auto_route_count, collect_auto_routes};
     pub use rustapi_core::validation::Validatable;
     pub use rustapi_core::EventBus;
     pub use rustapi_core::{
@@ -76,6 +87,11 @@ pub mod protocol {
     #[cfg(any(feature = "protocol-grpc", feature = "grpc"))]
     pub mod grpc {
         pub use rustapi_grpc::*;
+    }
+
+    #[cfg(any(feature = "protocol-mcp", feature = "mcp"))]
+    pub mod mcp {
+        pub use rustapi_mcp::*;
     }
 
     #[cfg(any(feature = "core-http3", feature = "protocol-http3", feature = "http3"))]
@@ -345,16 +361,17 @@ pub mod prelude {
     pub use crate::core::EventBus;
     pub use crate::core::Validatable;
     pub use crate::core::{
-        delete, delete_route, get, get_route, patch, patch_route, post, post_route, put, put_route,
-        route, serve_dir, sse_from_iter, sse_response, ApiError, AsyncValidatedJson, Body,
-        BodyLimitLayer, ClientIp, Created, CursorPaginate, CursorPaginated, Extension, HeaderValue,
-        Headers, HealthCheck, HealthCheckBuilder, HealthCheckResult, HealthEndpointConfig,
-        HealthStatus, Html, IntoResponse, Json, KeepAlive, Multipart, MultipartConfig,
-        MultipartField, NoContent, Paginate, Paginated, Path, ProductionDefaultsConfig, Query,
-        Redirect, Request, RequestId, RequestIdLayer, Response, Result, Route, Router, RustApi,
-        RustApiConfig, Sse, SseEvent, State, StaticFile, StaticFileConfig, StatusCode, StreamBody,
-        StreamingMultipart, StreamingMultipartField, TracingLayer, Typed, TypedPath, UploadedFile,
-        ValidatedJson, WithStatus,
+        auto_route_count, collect_auto_routes, delete, delete_route, get, get_route, patch,
+        patch_route, post, post_route, put, put_route, route, serve_dir, sse_from_iter,
+        sse_response, ApiError, AsyncValidatedJson, Body, BodyLimitLayer, ClientIp, Created,
+        CursorPaginate, CursorPaginated, Extension, HeaderValue, Headers, HealthCheck,
+        HealthCheckBuilder, HealthCheckResult, HealthEndpointConfig, HealthStatus, Html,
+        IntoResponse, Json, KeepAlive, Multipart, MultipartConfig, MultipartField, NoContent,
+        Paginate, Paginated, Path, ProductionDefaultsConfig, Query, Redirect, Request, RequestId,
+        RequestIdLayer, Response, Result, Route, Router, RustApi, RustApiConfig, Sse, SseEvent,
+        State, StaticFile, StaticFileConfig, StatusCode, StreamBody, StreamingMultipart,
+        StreamingMultipartField, TracingLayer, Typed, TypedPath, UploadedFile, ValidatedJson,
+        WithStatus,
     };
 
     #[cfg(any(feature = "core-compression", feature = "compression"))]
@@ -430,6 +447,11 @@ pub mod prelude {
     #[cfg(any(feature = "protocol-grpc", feature = "grpc"))]
     pub use crate::protocol::grpc::{
         run_concurrently, run_rustapi_and_grpc, run_rustapi_and_grpc_with_shutdown,
+    };
+
+    #[cfg(any(feature = "protocol-mcp", feature = "mcp"))]
+    pub use crate::protocol::mcp::{
+        run_rustapi_and_mcp, run_rustapi_and_mcp_with_shutdown,
     };
 }
 

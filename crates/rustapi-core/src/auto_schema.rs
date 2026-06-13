@@ -1,5 +1,13 @@
 //! Auto-schema registration using linkme distributed slices
 //!
+//! **Implementation detail**: Companion to `auto_route`.
+//! Provides link-time registration of types that should appear in the generated
+//! OpenAPI spec (via `#[rustapi_rs::schema]` and implicit schema derivation).
+//!
+//! This is an internal detail. The only stable surface is that schemas referenced
+//! by auto-registered routes (and explicitly annotated types) end up in the
+//! OpenAPI document when using `RustApi::auto()`.
+//!
 //! This module enables zero-config OpenAPI schema registration.
 //! Route macros can register schemas at link-time, and `RustApi::auto()`
 //! will collect and apply them before serving docs.

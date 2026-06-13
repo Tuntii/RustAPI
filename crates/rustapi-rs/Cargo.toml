@@ -20,6 +20,7 @@ rustapi-toon = { workspace = true, optional = true }
 rustapi-ws = { workspace = true, optional = true }
 rustapi-view = { workspace = true, optional = true }
 rustapi-grpc = { workspace = true, optional = true }
+rustapi-mcp = { workspace = true, optional = true }
 rustapi-validate = { workspace = true }
 async-trait = { workspace = true }
 futures-util = { workspace = true }
@@ -60,9 +61,10 @@ protocol-toon = ["dep:rustapi-toon"]
 protocol-ws = ["dep:rustapi-ws"]
 protocol-view = ["dep:rustapi-view"]
 protocol-grpc = ["dep:rustapi-grpc"]
+protocol-mcp = ["dep:rustapi-mcp"]
 protocol-http3 = ["core-http3"]
 protocol-http3-dev = ["core-http3-dev"]
-protocol-all = ["protocol-toon", "protocol-ws", "protocol-view", "protocol-grpc"]
+protocol-all = ["protocol-toon", "protocol-ws", "protocol-view", "protocol-grpc", "protocol-mcp"]
 
 # Canonical extras features
 extras-jwt = ["dep:rustapi-extras", "rustapi-extras/jwt"]
@@ -128,6 +130,7 @@ toon = ["protocol-toon"]
 ws = ["protocol-ws"]
 view = ["protocol-view"]
 grpc = ["protocol-grpc"]
+mcp = ["protocol-mcp"]
 jwt = ["extras-jwt"]
 cors = ["extras-cors"]
 rate-limit = ["extras-rate-limit"]

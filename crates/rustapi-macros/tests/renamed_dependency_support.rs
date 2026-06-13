@@ -26,6 +26,10 @@ struct AliasPath {
 
 #[test]
 fn renamed_dependency_supports_route_macros() {
+    // This test proves that the linkme registration works even when the user
+    // renames the crate (e.g. `api = { package = "rustapi-rs" }`).
+    // The macros use `proc-macro-crate` + explicit `#[linkme(crate = ...)]`
+    // to emit the correct path.
     let routes = rustapi_alias::collect_auto_routes();
     assert!(
         routes

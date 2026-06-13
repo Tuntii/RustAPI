@@ -148,18 +148,25 @@ Current benchmark methodology and canonical published performance claims live in
 
 ## Quick Start
 
+**Recommended usage** (short and clean macro paths):
+
+```toml
+[dependencies]
+api = { package = "rustapi-rs", version = "0.1.478" }
+```
+
 ```rust
-use rustapi_rs::prelude::*;
+use api::prelude::*;
 
 #[derive(Serialize, Schema)]
 struct Message { text: String }
 
-#[rustapi_rs::get("/hello/{name}")]
+#[api::get("/hello/{name}")]
 async fn hello(Path(name): Path<String>) -> Json<Message> {
     Json(Message { text: format!("Hello, {}!", name) })
 }
 
-#[rustapi_rs::main]
+#[api::main]
 async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
   RustApi::auto().run("127.0.0.1:8080").await
 }
@@ -167,12 +174,14 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
 
 `RustApi::auto()` collects all macro-annotated handlers, generates OpenAPI documentation (served at `/docs`), and starts a multi-threaded tokio runtime.
 
+> **Tip:** Crate'i `api` (veya `myapi`, `server` vs.) diye alias'lamak en temiz ve FastAPI benzeri deneyimi verir. Makrolar otomatik olarak `#[api::get]`, `#[api::post]`, `#[api::main]` şeklinde çalışır.
+
 For production deployments, you can enable standard probe endpoints without writing handlers manually:
 
 ```rust
-use rustapi_rs::prelude::*;
+use api::prelude::*;
 
-#[rustapi_rs::main]
+#[api::main]
 async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let health = HealthCheckBuilder::new(true)
         .add_check("database", || async { HealthStatus::healthy() })
@@ -193,9 +202,9 @@ This registers:
 Or use a single production baseline preset:
 
 ```rust
-use rustapi_rs::prelude::*;
+use api::prelude::*;
 
-#[rustapi_rs::main]
+#[api::main]
 async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
   RustApi::auto()
     .production_defaults("users-api")
@@ -206,11 +215,13 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
 
 `production_defaults()` enables request IDs, tracing spans, and standard probe endpoints in one call.
 
-You can shorten the macro prefix by renaming the crate:
+### Using a shorter macro prefix (recommended)
+
+`rustapi-rs` makrolarını `api::get`, `api::post`, `api::main` gibi kısa ve güzel isimlerle kullanmak için crate'i alias'layabilirsiniz:
 
 ```toml
 [dependencies]
-api = { package = "rustapi-rs", version = "0.1.335" }
+api = { package = "rustapi-rs", version = "0.1.478" }
 ```
 
 ```rust
@@ -218,7 +229,14 @@ use api::prelude::*;
 
 #[api::get("/users")]
 async fn list_users() -> &'static str { "ok" }
+
+#[api::main]
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    RustApi::auto().run("127.0.0.1:8080").await
+}
 ```
+
+Bu, hem daha okunabilir hem de FastAPI benzeri bir deneyim sağlar. Makro genişletme sırasında crate ismi otomatik olarak algılanır (`proc-macro-crate` sayesinde).
 
 ## Feature Flags
 

@@ -81,7 +81,7 @@ pub use schemas::{
     ValidationErrorSchema,
 };
 pub use spec::{
-    ApiInfo, MediaType, OpenApiSpec, Operation, OperationModifier, Parameter, PathItem,
+    ApiInfo, Components, MediaType, OpenApiSpec, Operation, OperationModifier, Parameter, PathItem,
     RequestBody, ResponseModifier, ResponseSpec, SchemaRef,
 };
 
