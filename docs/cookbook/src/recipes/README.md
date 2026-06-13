@@ -42,5 +42,4 @@ Each recipe follows a simple structure:
 - [Deployment](deployment.md)
 - [HTTP/3 (QUIC)](http3_quic.md)
 - [gRPC Integration](grpc_integration.md)
-- [MCP Integration (Agent Tools)](mcp_integration.md)
 - [Automatic Status Page](status_page.md)

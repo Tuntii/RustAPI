@@ -66,7 +66,6 @@
     - [Deployment](recipes/deployment.md)
     - [HTTP/3 (QUIC)](recipes/http3_quic.md)
     - [gRPC Integration](recipes/grpc_integration.md)
-    - [MCP Integration (Agent Tools)](recipes/mcp_integration.md)
     - [Automatic Status Page](recipes/status_page.md)
 
 - [Troubleshooting: Common Gotchas](troubleshooting.md)
