@@ -1,3 +1,34 @@
+# RustAPI v0.1.501 Release Notes
+
+**Release Date**: June 13, 2026
+**Full Changelog**: https://github.com/Tuntii/RustAPI/compare/v0.1.499...v0.1.501
+
+---
+
+## 🎯 Highlights
+
+v0.1.501 brings **native MCP (Model Context Protocol) support** to RustAPI. Turn any existing route into a tool that LLMs and AI agents can discover and call — with full middleware, validation, and error handling preserved.
+
+| Feature | Crate | Impact |
+|---------|-------|--------|
+| `rustapi-mcp` | New dedicated crate | `McpServer` + automatic OpenAPI-based tool discovery |
+| Tag-based tool exposure | `rustapi-mcp` + `rustapi-rs` | Only expose the routes you want agents to see (`protocol-mcp` feature) |
+| Real HTTP proxying for `tools/call` | `rustapi-mcp` | Agents call your real endpoints (auth, validation, interceptors all apply) |
+| `mcp_tools` example | `rustapi-rs` | Concurrent HTTP server + MCP sidecar in one binary |
+| MCP Cookbook + deep-dive | docs | "MCP Integration (Agent Tools)" recipe + `rustapi_mcp.md` |
+| Crate consolidation | All | 13 → 9 crates. `testing`, `jobs`, `view`, `toon` merged as features into core crates |
+| Dashboard + Replay UX | `rustapi-core` + `rustapi-extras` | Route filters, pagination, better replay browser integrated with admin API |
+
+**MCP in one line:**
+
+```rust
+.use_mcp(McpConfig::new().allowed_tags(vec!["public", "agent"]))
+```
+
+Agents (Claude, Cursor, custom agents, etc.) can now `tools/list` and `tools/call` your API safely.
+
+---
+
 # RustAPI v0.1.470 Release Notes
 
 **Release Date**: May 15, 2026

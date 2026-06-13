@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.501] - 2026-06-13
 
 ### Changed
 
@@ -13,16 +13,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Embedded dashboard snapshots now include request-stage counters, route topology groups, health endpoint summary, and replay admin API discovery metadata.
-- Dashboard UI adds route group/method/tag filters plus a replay browser that reuses the existing `ReplayLayer` admin API for list, detail, and diff workflows.
-- Replay admin list endpoint now accepts UI-friendly pagination and filters: `offset`, `status_max`, `from`, `to`, `tag`, and `order`.
+- **Native MCP (Model Context Protocol) support** via the new `rustapi-mcp` crate. Expose your existing RustAPI routes as AI agent tools with zero boilerplate.
+  - `McpServer` with tag-based tool filtering.
+  - Automatic discovery from OpenAPI spec.
+  - Real HTTP proxying for `tools/call` (full middleware, validation, error handling preserved).
+  - `protocol-mcp` feature + `McpConfig`.
 - `mcp_tools` example under `crates/rustapi-rs/examples/` showing concurrent RustAPI HTTP + MCP sidecar with tag-based tool exposure (run with `--features protocol-mcp`).
 - Comprehensive e2e tests for the MCP transport (initialize, tag-filtered `tools/list`, real proxied `tools/call` for GET+body routes, error handling for hidden tools).
 - Cookbook recipe "MCP Integration (Agent Tools)" plus `rustapi_mcp.md` crate deep-dive page.
+- Embedded dashboard snapshots now include request-stage counters, route topology groups, health endpoint summary, and replay admin API discovery metadata.
+- Dashboard UI adds route group/method/tag filters plus a replay browser that reuses the existing `ReplayLayer` admin API for list, detail, and diff workflows.
+- Replay admin list endpoint now accepts UI-friendly pagination and filters: `offset`, `status_max`, `from`, `to`, `tag`, and `order`.
 
 ### Documentation
 
 - Added a cookbook recipe and SVG preview for the embedded dashboard and replay browser workflow, including the inspection-first state rewind model and disabled-feature performance budget.
+
+## [Unreleased]
 
 ## [0.1.410] - 2026-03-09
 
