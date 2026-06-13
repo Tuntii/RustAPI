@@ -13,6 +13,7 @@ pub struct RedisBackend {
 }
 
 impl RedisBackend {
+    /// Create a new Redis-backed job backend.
     pub fn new(url: &str, queue_key: &str) -> Result<Self> {
         let client = Client::open(url).map_err(|e| JobError::ConfigError(e.to_string()))?;
 

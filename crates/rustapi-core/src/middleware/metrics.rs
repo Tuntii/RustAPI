@@ -611,7 +611,7 @@ mod tests {
                 // Find http_requests_total metric
                 let requests_total = metric_families
                     .iter()
-                    .find(|mf| mf.get_name() == "http_requests_total");
+                    .find(|mf| mf.name() == "http_requests_total");
                 prop_assert!(
                     requests_total.is_some(),
                     "http_requests_total metric should exist"
@@ -623,13 +623,13 @@ mod tests {
                 // Find the metric with matching labels
                 let matching_metric = metrics_vec.iter().find(|m| {
                     let labels = m.get_label();
-                    let method_label = labels.iter().find(|l| l.get_name() == "method");
-                    let path_label = labels.iter().find(|l| l.get_name() == "path");
-                    let status_label = labels.iter().find(|l| l.get_name() == "status");
+                    let method_label = labels.iter().find(|l| l.name() == "method");
+                    let path_label = labels.iter().find(|l| l.name() == "path");
+                    let status_label = labels.iter().find(|l| l.name() == "status");
 
-                    method_label.map(|l| l.get_value()) == Some(method.as_str())
-                        && path_label.map(|l| l.get_value()) == Some(&path)
-                        && status_label.map(|l| l.get_value()) == Some(&status_code.to_string())
+                    method_label.map(|l| l.value()) == Some(method.as_str())
+                        && path_label.map(|l| l.value()) == Some(&path)
+                        && status_label.map(|l| l.value()) == Some(&status_code.to_string())
                 });
 
                 prop_assert!(
@@ -652,7 +652,7 @@ mod tests {
                 // Find http_request_duration_seconds metric
                 let duration_metric = metric_families
                     .iter()
-                    .find(|mf| mf.get_name() == "http_request_duration_seconds");
+                    .find(|mf| mf.name() == "http_request_duration_seconds");
                 prop_assert!(
                     duration_metric.is_some(),
                     "http_request_duration_seconds metric should exist"
@@ -664,11 +664,11 @@ mod tests {
                 // Find the histogram with matching labels
                 let matching_histogram = duration_vec.iter().find(|m| {
                     let labels = m.get_label();
-                    let method_label = labels.iter().find(|l| l.get_name() == "method");
-                    let path_label = labels.iter().find(|l| l.get_name() == "path");
+                    let method_label = labels.iter().find(|l| l.name() == "method");
+                    let path_label = labels.iter().find(|l| l.name() == "path");
 
-                    method_label.map(|l| l.get_value()) == Some(method.as_str())
-                        && path_label.map(|l| l.get_value()) == Some(&path)
+                    method_label.map(|l| l.value()) == Some(method.as_str())
+                        && path_label.map(|l| l.value()) == Some(&path)
                 });
 
                 prop_assert!(
@@ -729,7 +729,7 @@ mod tests {
             let metric_families = metrics.registry().gather();
             let requests_total = metric_families
                 .iter()
-                .find(|mf| mf.get_name() == "http_requests_total");
+                .find(|mf| mf.name() == "http_requests_total");
             assert!(requests_total.is_some());
         });
     }
@@ -764,7 +764,7 @@ mod tests {
             let metric_families = metrics.registry().gather();
             let requests_total = metric_families
                 .iter()
-                .find(|mf| mf.get_name() == "http_requests_total")
+                .find(|mf| mf.name() == "http_requests_total")
                 .unwrap();
 
             let metrics_vec = requests_total.get_metric();
@@ -772,13 +772,13 @@ mod tests {
                 let labels = m.get_label();
                 labels
                     .iter()
-                    .any(|l| l.get_name() == "method" && l.get_value() == "GET")
+                    .any(|l| l.name() == "method" && l.value() == "GET")
                     && labels
                         .iter()
-                        .any(|l| l.get_name() == "path" && l.get_value() == "/test")
+                        .any(|l| l.name() == "path" && l.value() == "/test")
                     && labels
                         .iter()
-                        .any(|l| l.get_name() == "status" && l.get_value() == "200")
+                        .any(|l| l.name() == "status" && l.value() == "200")
             });
 
             assert!(matching_metric.is_some());

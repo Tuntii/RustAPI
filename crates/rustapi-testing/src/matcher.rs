@@ -103,17 +103,17 @@ mod property_tests {
     use proptest::prelude::*;
     use serde_json::json;
 
-    /// **Feature: v1-features-roadmap, Property 20: Mock server request matching**
-    /// **Validates: Requirements 9.1**
-    ///
-    /// For any HTTP request matcher:
-    /// - Matcher SHALL correctly identify matching requests
-    /// - Matcher SHALL correctly reject non-matching requests
-    /// - Empty matcher SHALL match all requests
-    /// - Multiple criteria SHALL be combined with AND logic
-    /// - Header matching SHALL be case-sensitive for values
-    ///
-    /// Strategy for generating HTTP methods
+    // **Feature: v1-features-roadmap, Property 20: Mock server request matching**
+    // **Validates: Requirements 9.1**
+    //
+    // For any HTTP request matcher:
+    // - Matcher SHALL correctly identify matching requests
+    // - Matcher SHALL correctly reject non-matching requests
+    // - Empty matcher SHALL match all requests
+    // - Multiple criteria SHALL be combined with AND logic
+    // - Header matching SHALL be case-sensitive for values
+    //
+    // Strategy for generating HTTP methods
     fn method_strategy() -> impl Strategy<Value = Method> {
         prop_oneof![
             Just(Method::GET),
@@ -126,12 +126,12 @@ mod property_tests {
         ]
     }
 
-    /// Strategy for generating paths
+    // Strategy for generating paths
     fn path_strategy() -> impl Strategy<Value = String> {
         prop::string::string_regex("/api/[a-z]{3,8}(/[0-9]{1,5})?").unwrap()
     }
 
-    /// Strategy for generating header names
+    // Strategy for generating header names
     fn header_name_strategy() -> impl Strategy<Value = String> {
         prop_oneof![
             Just("Content-Type".to_string()),
@@ -141,7 +141,7 @@ mod property_tests {
         ]
     }
 
-    /// Strategy for generating header values
+    // Strategy for generating header values
     fn header_value_strategy() -> impl Strategy<Value = String> {
         prop_oneof![
             Just("application/json".to_string()),
@@ -151,7 +151,7 @@ mod property_tests {
         ]
     }
 
-    /// Strategy for generating JSON bodies
+    // Strategy for generating JSON bodies
     fn json_body_strategy() -> impl Strategy<Value = Value> {
         prop_oneof![
             Just(json!({"name": "test"})),

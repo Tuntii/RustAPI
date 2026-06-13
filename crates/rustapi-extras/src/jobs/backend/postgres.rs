@@ -12,6 +12,7 @@ pub struct PostgresBackend {
 }
 
 impl PostgresBackend {
+    /// Create a new PostgreSQL-backed job backend.
     pub fn new(pool: Pool<Postgres>, table_name: &str) -> Self {
         Self {
             pool,

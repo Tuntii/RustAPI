@@ -317,27 +317,27 @@ mod property_tests {
     use super::*;
     use proptest::prelude::*;
 
-    /// **Feature: v1-features-roadmap, Property 13: Trace context propagation**
-    /// **Validates: Requirements 7.3**
-    ///
-    /// For any distributed trace:
-    /// - Child spans SHALL inherit parent trace ID
-    /// - Child spans SHALL have unique span IDs
-    /// - Correlation ID SHALL propagate through entire request chain
-    /// - Traceparent format SHALL conform to W3C specification
-    /// - Trace context SHALL survive serialization round-trip
+    // **Feature: v1-features-roadmap, Property 13: Trace context propagation**
+    // **Validates: Requirements 7.3**
+    //
+    // For any distributed trace:
+    // - Child spans SHALL inherit parent trace ID
+    // - Child spans SHALL have unique span IDs
+    // - Correlation ID SHALL propagate through entire request chain
+    // - Traceparent format SHALL conform to W3C specification
+    // - Trace context SHALL survive serialization round-trip
 
-    /// Strategy for generating trace IDs (32 hex chars)
+    // Strategy for generating trace IDs (32 hex chars)
     fn trace_id_strategy() -> impl Strategy<Value = String> {
         prop::string::string_regex("[0-9a-f]{32}").unwrap()
     }
 
-    /// Strategy for generating span IDs (16 hex chars)
+    // Strategy for generating span IDs (16 hex chars)
     fn span_id_strategy() -> impl Strategy<Value = String> {
         prop::string::string_regex("[0-9a-f]{16}").unwrap()
     }
 
-    /// Strategy for generating trace flags
+    // Strategy for generating trace flags
     fn trace_flags_strategy() -> impl Strategy<Value = u8> {
         0u8..=255
     }
@@ -400,7 +400,7 @@ mod property_tests {
             prop_assert_eq!(child3.trace_id, root.trace_id.clone());
 
             // Each span MUST have unique span_id
-            let span_ids = vec![&root.span_id, &child1.span_id, &child2.span_id, &child3.span_id];
+            let span_ids = [&root.span_id, &child1.span_id, &child2.span_id, &child3.span_id];
             for i in 0..span_ids.len() {
                 for j in (i+1)..span_ids.len() {
                     prop_assert_ne!(span_ids[i], span_ids[j]);

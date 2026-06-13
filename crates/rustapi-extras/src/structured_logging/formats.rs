@@ -610,17 +610,17 @@ mod property_tests {
     use proptest::prelude::*;
     use serde_json::Value;
 
-    /// **Feature: v1-features-roadmap, Property 14: Structured log format**
-    /// **Validates: Requirements 7.4**
-    ///
-    /// For any log output:
-    /// - Format SHALL be valid JSON for JSON/Datadog/Splunk formatters
-    /// - All required fields SHALL be present (timestamp, level, message)
-    /// - Round-trip SHALL preserve all data
-    /// - Special characters SHALL be properly escaped
-    /// - Logfmt format SHALL follow key=value specification
+    // **Feature: v1-features-roadmap, Property 14: Structured log format**
+    // **Validates: Requirements 7.4**
+    //
+    // For any log output:
+    // - Format SHALL be valid JSON for JSON/Datadog/Splunk formatters
+    // - All required fields SHALL be present (timestamp, level, message)
+    // - Round-trip SHALL preserve all data
+    // - Special characters SHALL be properly escaped
+    // - Logfmt format SHALL follow key=value specification
 
-    /// Strategy for generating log levels
+    // Strategy for generating log levels
     fn log_level_strategy() -> impl Strategy<Value = String> {
         prop_oneof![
             Just("debug".to_string()),
@@ -630,7 +630,7 @@ mod property_tests {
         ]
     }
 
-    /// Strategy for generating HTTP methods
+    // Strategy for generating HTTP methods
     fn http_method_strategy() -> impl Strategy<Value = String> {
         prop_oneof![
             Just("GET".to_string()),
@@ -643,7 +643,7 @@ mod property_tests {
         ]
     }
 
-    /// Strategy for generating HTTP status codes
+    // Strategy for generating HTTP status codes
     fn status_code_strategy() -> impl Strategy<Value = u16> {
         prop_oneof![
             200u16..=299, // 2xx success
@@ -653,12 +653,12 @@ mod property_tests {
         ]
     }
 
-    /// Strategy for generating URIs
+    // Strategy for generating URIs
     fn uri_strategy() -> impl Strategy<Value = String> {
         prop::string::string_regex("/api/[a-z]{3,10}(/[0-9]{1,5})?").unwrap()
     }
 
-    /// Strategy for generating messages with special characters
+    // Strategy for generating messages with special characters
     fn message_strategy() -> impl Strategy<Value = String> {
         prop::string::string_regex(r#"[a-zA-Z0-9 \n\r\t"'\\]{5,50}"#).unwrap()
     }

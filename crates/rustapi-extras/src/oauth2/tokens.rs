@@ -285,16 +285,16 @@ mod property_tests {
     use super::*;
     use proptest::prelude::*;
 
-    /// **Feature: v1-features-roadmap, Property 16: OAuth2 token exchange**
-    /// **Validates: Requirements 10.1, 10.4**
-    ///
-    /// For any valid OAuth2 token exchange:
-    /// - Authorization code SHALL successfully exchange for access token
-    /// - Token response SHALL contain valid access token and token type
-    /// - PKCE verifier/challenge pairs SHALL validate correctly
-    /// - CSRF state tokens SHALL prevent cross-site request forgery
+    // **Feature: v1-features-roadmap, Property 16: OAuth2 token exchange**
+    // **Validates: Requirements 10.1, 10.4**
+    //
+    // For any valid OAuth2 token exchange:
+    // - Authorization code SHALL successfully exchange for access token
+    // - Token response SHALL contain valid access token and token type
+    // - PKCE verifier/challenge pairs SHALL validate correctly
+    // - CSRF state tokens SHALL prevent cross-site request forgery
 
-    /// Strategy for generating access tokens
+    // Strategy for generating access tokens
     fn access_token_strategy() -> impl Strategy<Value = String> {
         prop::string::string_regex("[a-zA-Z0-9_.-]{20,100}").unwrap()
     }
@@ -315,14 +315,6 @@ mod property_tests {
             prop::string::string_regex("[a-zA-Z0-9_.-]{20,100}")
                 .unwrap()
                 .prop_map(Some),
-        ]
-    }
-
-    /// Strategy for generating expiration durations
-    fn expires_in_strategy() -> impl Strategy<Value = Option<Duration>> {
-        prop_oneof![
-            Just(None),
-            (300u64..86400).prop_map(|secs| Some(Duration::from_secs(secs))),
         ]
     }
 

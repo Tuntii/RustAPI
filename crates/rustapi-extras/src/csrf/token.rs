@@ -67,15 +67,15 @@ mod property_tests {
     use super::*;
     use proptest::prelude::*;
 
-    /// **Feature: v1-features-roadmap, Property 15: CSRF token lifecycle**
-    /// **Validates: Requirements 9.1, 9.2, 9.3, 9.4**
-    ///
-    /// For any CSRF token:
-    /// - Generation SHALL produce unique, cryptographically secure tokens
-    /// - Token round-trip (to string and back) SHALL preserve the value
-    /// - Tokens SHALL be URL-safe base64 encoded
+    // **Feature: v1-features-roadmap, Property 15: CSRF token lifecycle**
+    // **Validates: Requirements 9.1, 9.2, 9.3, 9.4**
+    //
+    // For any CSRF token:
+    // - Generation SHALL produce unique, cryptographically secure tokens
+    // - Token round-trip (to string and back) SHALL preserve the value
+    // - Tokens SHALL be URL-safe base64 encoded
 
-    /// Strategy for generating token lengths
+    // Strategy for generating token lengths
     fn token_length_strategy() -> impl Strategy<Value = usize> {
         16usize..128
     }

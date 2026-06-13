@@ -133,7 +133,7 @@ session-redis = ["session", "dep:redis"]
 
 # Background job processing
 jobs = ["dep:chrono", "dep:uuid"]
-jobs-redis = ["jobs", "dep:redis"]
+jobs-redis = ["jobs", "dep:redis", "redis/script"]
 jobs-postgres = ["jobs", "dep:sqlx", "sqlx/postgres", "sqlx/runtime-tokio", "sqlx/tls-rustls", "sqlx/chrono", "sqlx/uuid"]
 
 # Replay (time-travel debugging)

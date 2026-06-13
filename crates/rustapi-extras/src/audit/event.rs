@@ -530,16 +530,16 @@ mod property_tests {
     use super::*;
     use proptest::prelude::*;
 
-    /// **Feature: v1-features-roadmap, Property 17: Audit event completeness**
-    /// **Validates: Requirements 11.1, 11.2, 11.3**
-    ///
-    /// For any audit event:
-    /// - All required fields (id, timestamp, action) SHALL be populated
-    /// - Serialization SHALL preserve all data including GDPR/SOC2 compliance fields
-    /// - Event IDs SHALL be unique and valid UUID format
-    /// - Timestamps SHALL be monotonically increasing (or equal) within reasonable tolerance
+    // **Feature: v1-features-roadmap, Property 17: Audit event completeness**
+    // **Validates: Requirements 11.1, 11.2, 11.3**
+    //
+    // For any audit event:
+    // - All required fields (id, timestamp, action) SHALL be populated
+    // - Serialization SHALL preserve all data including GDPR/SOC2 compliance fields
+    // - Event IDs SHALL be unique and valid UUID format
+    // - Timestamps SHALL be monotonically increasing (or equal) within reasonable tolerance
 
-    /// Strategy for generating audit actions
+    // Strategy for generating audit actions
     fn audit_action_strategy() -> impl Strategy<Value = AuditAction> {
         prop_oneof![
             Just(AuditAction::Create),
