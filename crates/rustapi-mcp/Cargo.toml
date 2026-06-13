@@ -1,0 +1,46 @@
+[package]
+name = "rustapi-mcp"
+description = "Native Model Context Protocol (MCP) support for RustAPI - expose your endpoints as tools for LLMs and AI agents"
+documentation = "https://docs.rs/rustapi-mcp"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+keywords = ["web", "framework", "api", "mcp", "llm", "ai", "agents"]
+categories = ["web-programming::http-server", "network-programming"]
+rust-version.workspace = true
+readme = "README.md"
+
+[dependencies]
+# Internal RustAPI crates
+rustapi-core = { workspace = true }
+rustapi-openapi = { workspace = true }
+
+# Async & runtime
+tokio = { workspace = true, features = ["macros", "rt", "sync", "time"] }
+async-trait = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# HTTP / transport (for future SSE + HTTP MCP transport)
+http = { workspace = true }
+http-body-util = { workspace = true }
+bytes = { workspace = true }
+hyper = { workspace = true, features = ["server", "http1"] }
+hyper-util = { workspace = true, features = ["tokio"] }
+
+# Utilities
+tracing = { workspace = true }
+thiserror = "1.0"
+uuid = { workspace = true, features = ["v4"] }
+
+# For MCP tool invocation proxy (calls back into the main HTTP API over localhost)
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "json"] }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }
+rustapi-rs = { workspace = true, features = ["protocol-mcp"] }
+# Will add more test deps (e.g. test client, reqwest) when we implement transports
