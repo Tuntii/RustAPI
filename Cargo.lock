@@ -3278,6 +3278,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "rustapi-mcp"
+version = "0.1.478"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "http",
+ "http-body-util",
+ "hyper",
+ "hyper-util",
+ "reqwest",
+ "rustapi-core",
+ "rustapi-openapi",
+ "rustapi-rs",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "rustapi-openapi"
 version = "0.1.478"
 dependencies = [
@@ -3300,6 +3322,7 @@ dependencies = [
  "rustapi-extras",
  "rustapi-grpc",
  "rustapi-macros",
+ "rustapi-mcp",
  "rustapi-openapi",
  "rustapi-toon",
  "rustapi-validate",
