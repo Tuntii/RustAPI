@@ -371,7 +371,9 @@ async fn auto_generate_and_get_spec_path() -> Result<String> {
         .stdout(std::process::Stdio::piped())
         .stderr(std::process::Stdio::inherit())
         .output()
-        .context("Failed to execute `cargo run` for spec dump. Are you inside a RustAPI project?")?;
+        .context(
+            "Failed to execute `cargo run` for spec dump. Are you inside a RustAPI project?",
+        )?;
 
     if !output.status.success() {
         anyhow::bail!(
@@ -380,8 +382,8 @@ async fn auto_generate_and_get_spec_path() -> Result<String> {
         );
     }
 
-    let stdout = String::from_utf8(output.stdout)
-        .context("Captured OpenAPI output was not valid UTF-8")?;
+    let stdout =
+        String::from_utf8(output.stdout).context("Captured OpenAPI output was not valid UTF-8")?;
 
     // The dump prints the JSON (possibly after some startup prints from the app).
     // Find the last occurrence of a top-level OpenAPI object for robustness.
@@ -389,7 +391,7 @@ async fn auto_generate_and_get_spec_path() -> Result<String> {
         // Go back to the opening { of that object
         let start = stdout[..idx].rfind('{').unwrap_or(0);
         let candidate = &stdout[start..];
-        // cut at the last } 
+        // cut at the last }
         if let Some(end) = candidate.rfind('}') {
             candidate[..=end].trim().to_string()
         } else {
@@ -410,10 +412,8 @@ async fn auto_generate_and_get_spec_path() -> Result<String> {
     }
 
     // Write to a temp file so load_openapi_spec can handle it uniformly
-    let temp_path = std::env::temp_dir().join(format!(
-        "rustapi-auto-spec-{}.json",
-        std::process::id()
-    ));
+    let temp_path =
+        std::env::temp_dir().join(format!("rustapi-auto-spec-{}.json", std::process::id()));
     tokio::fs::write(&temp_path, &json_str)
         .await
         .context("Failed to write temp OpenAPI spec")?;
