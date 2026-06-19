@@ -547,6 +547,24 @@ impl RustApi {
         &self.openapi_spec
     }
 
+    /// If RUSTAPI_DUMP_OPENAPI=1 (or true), print the generated OpenAPI spec as JSON
+    /// to stdout and exit immediately. Used by `cargo rustapi mcp generate` to
+    /// extract the spec without needing a running HTTP server.
+    fn maybe_dump_openapi(&self) {
+        if let Ok(val) = std::env::var("RUSTAPI_DUMP_OPENAPI") {
+            if matches!(val.as_str(), "1" | "true" | "yes") {
+                let json = self.openapi_spec.to_json();
+                // Print clean JSON only
+                if let Ok(pretty) = serde_json::to_string_pretty(&json) {
+                    println!("{}", pretty);
+                } else {
+                    println!("{}", json);
+                }
+                std::process::exit(0);
+            }
+        }
+    }
+
     fn mount_auto_routes_grouped(mut self) -> Self {
         let routes = crate::auto_route::collect_auto_routes();
 
@@ -1523,6 +1541,8 @@ impl RustApi {
     ///     .await
     /// ```
     pub async fn run(mut self, addr: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        self.maybe_dump_openapi();
+
         // Hot-reload mode banner
         self.print_hot_reload_banner(addr);
 
@@ -1560,6 +1580,8 @@ impl RustApi {
     where
         F: std::future::Future<Output = ()> + Send + 'static,
     {
+        self.maybe_dump_openapi();
+
         // Hot-reload mode banner
         self.print_hot_reload_banner(addr.as_ref());
 

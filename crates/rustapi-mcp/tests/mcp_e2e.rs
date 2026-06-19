@@ -70,7 +70,8 @@ async fn test_mcp_initialize_and_filtered_tools_list() {
         McpConfig::new()
             .name("test-mcp-server")
             .version("1.0.0-test")
-            .allowed_tags(["agent"]),
+            .allowed_tags(["agent"])
+            .tool_policy(rustapi_mcp::ToolPolicy::All), // test needs write tools
     );
 
     // Ephemeral ports for both servers
@@ -313,7 +314,7 @@ async fn bench_proxy_vs_inprocess() {
 
     // --- Discover tool name (same for both) ---
     let app_disc = RustApi::auto();
-    let mcp_disc = McpServer::from_rustapi(&app_disc, McpConfig::new().allowed_tags(["agent"]));
+    let mcp_disc = McpServer::from_rustapi(&app_disc, McpConfig::new().allowed_tags(["agent"]).tool_policy(rustapi_mcp::ToolPolicy::All));
     let tools = mcp_disc.list_tools().await.unwrap();
     let tool_name = tools
         .iter()
@@ -332,6 +333,7 @@ async fn bench_proxy_vs_inprocess() {
         &app_in,
         McpConfig::new()
             .allowed_tags(["agent"])
+            .tool_policy(rustapi_mcp::ToolPolicy::All)
             .invocation_mode(InvocationMode::InProcess),
     );
 
@@ -355,6 +357,7 @@ async fn bench_proxy_vs_inprocess() {
         &app_p,
         McpConfig::new()
             .allowed_tags(["agent"])
+            .tool_policy(rustapi_mcp::ToolPolicy::All)
             .invocation_mode(InvocationMode::Proxy),
     );
 
@@ -419,7 +422,9 @@ async fn test_mcp_tool_not_found_for_untagged_route() {
 
     let mcp = McpServer::from_rustapi(
         &app,
-        McpConfig::new().allowed_tags(["agent"]), // only agent tools
+        McpConfig::new()
+            .allowed_tags(["agent"])
+            .tool_policy(rustapi_mcp::ToolPolicy::ReadOnly), // only agent tools
     );
 
     let http_listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();

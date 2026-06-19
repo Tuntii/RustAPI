@@ -527,11 +527,24 @@ async fn handle_mcp_http_request(
                 let tool_defs: Vec<_> = tools
                     .into_iter()
                     .map(|t| {
-                        serde_json::json!({
+                        let mut def = serde_json::json!({
                             "name": t.name,
                             "description": t.description,
                             "inputSchema": t.input_schema
-                        })
+                        });
+
+                        // Permission scoping metadata (framework-native)
+                        if let Some(perm) = &t.permission {
+                            def["permission"] = serde_json::Value::String(perm.clone());
+                        }
+                        if let Some(confirm) = t.requires_confirmation {
+                            if confirm {
+                                def["requiresConfirmation"] = serde_json::Value::Bool(true);
+                            }
+                        }
+                        // Future: "confirmationMessage"
+
+                        def
                     })
                     .collect();
 

@@ -11,9 +11,11 @@
 //! - **Zero duplication**: Tool definitions are derived from your existing routes,
 //!   `#[derive(Schema)]` types, and OpenAPI metadata.
 //! - **Security first**: Nothing is exposed as a tool unless you explicitly allow it
-//!   (tags, paths, or manual registration).
+//!   (tags, paths, or manual registration). Destructive operations are hidden by default via
+//!   `ToolPolicy::ReadOnly`.
 //! - **Respect the pipeline**: Every tool invocation goes through your normal middleware,
 //!   interceptors, extractors, validation, and error handling. No secret bypass paths.
+//! - **Permission metadata**: Tools declare "read" vs "write" and whether confirmation is needed.
 //!
 //! ## Current Status
 //!
@@ -21,6 +23,7 @@
 //!
 //! - Automatic tool discovery from your `#[rustapi_rs::get(...)]` routes + `#[derive(Schema)]` via OpenAPI.
 //! - Full respect for tags (`allowed_tags`) and path prefixes for safe exposure.
+//! - Framework-native permission scoping (`ToolPolicy::ReadOnly` default, `#[mcp(skip)]`, `#[mcp(write, require="confirm")]`).
 //! - Sidecar HTTP server speaking minimal MCP JSON-RPC (initialize, tools/list, tools/call).
 //! - Real `tools/call` execution: calls are proxied to your main RustAPI HTTP server → every layer, interceptor, extractor, validator, and error handler runs exactly as for normal traffic.
 //! - `run_rustapi_and_mcp` (and with shutdown) helpers to run your API + MCP endpoint side-by-side (auto-configures proxying).
@@ -65,7 +68,7 @@ pub mod server;
 pub mod types;
 
 // Re-export the most important items at the crate root for convenience.
-pub use config::{InvocationMode, McpConfig};
+pub use config::{InvocationMode, McpConfig, ToolPolicy};
 pub use error::{McpError, Result};
 pub use runner::{
     run_concurrently, run_rustapi_and_mcp, run_rustapi_and_mcp_with_shutdown, BoxError,
@@ -78,7 +81,7 @@ pub use rustapi_openapi::OpenApiSpec;
 
 /// Prelude for common MCP types.
 pub mod prelude {
-    pub use crate::config::{InvocationMode, McpConfig};
+    pub use crate::config::{InvocationMode, McpConfig, ToolPolicy};
     pub use crate::error::{McpError, Result};
     pub use crate::runner::{
         run_concurrently, run_rustapi_and_mcp, run_rustapi_and_mcp_with_shutdown,

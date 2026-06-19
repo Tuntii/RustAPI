@@ -2,9 +2,10 @@
 //! Native MCP server so that LLMs / agents (Claude, Cursor, etc.) can discover
 //! and call your endpoints as tools.
 //!
+//! Uses `InvocationMode::InProcess` for zero-overhead tool calls (still
+//! goes through full validation + middleware).
+//!
 //! Only routes that carry the "agent" tag are exposed via MCP.
-//! All tool invocations are proxied through the real HTTP pipeline
-//! (middleware, validation, extractors, error handling, etc.).
 //!
 //! Run with:
 //!   cargo run -p rustapi-rs --example mcp_tools --features protocol-mcp
@@ -28,7 +29,9 @@
 //!     -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"get_agent_weather_city","arguments":{"city":"Istanbul"}}}'
 
 use rustapi_rs::prelude::*;
-use rustapi_rs::protocol::mcp::{run_rustapi_and_mcp_with_shutdown, McpConfig, McpServer};
+use rustapi_rs::protocol::mcp::{
+    run_rustapi_and_mcp_with_shutdown, InvocationMode, McpConfig, McpServer,
+};
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Schema)]
@@ -87,7 +90,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
             .name("rustapi-mcp-demo")
             .version("0.1.0")
             .description("Demo RustAPI instance exposing selected endpoints to AI agents via MCP")
-            .allowed_tags(["agent"]),
+            .allowed_tags(["agent"])
+            .invocation_mode(InvocationMode::InProcess),
     );
 
     let http_addr = "0.0.0.0:8080";

@@ -651,6 +651,55 @@ fn generate_route_handler(method: &str, attr: TokenStream, item: TokenStream) ->
                     let val = lit.value();
                     chained_calls = quote! { #chained_calls .description(#val) };
                 }
+            } else if ident_str == "mcp" {
+                // Rich #[mcp(...)] support.
+                // We build a rustapi_openapi::McpOperation struct and call .mcp(meta)
+                if let Ok(mcp_args) = attr.parse_args_with(
+                    syn::punctuated::Punctuated::<Meta, syn::Token![,]>::parse_terminated,
+                ) {
+                    let mut skip = quote! { None };
+                    let mut readonly = quote! { None };
+                    let mut write = quote! { None };
+                    let mut require = quote! { None };
+
+                    for meta in mcp_args {
+                        match &meta {
+                            Meta::Path(path) => {
+                                if let Some(ident) = path.get_ident() {
+                                    let s = ident.to_string().to_lowercase();
+                                    if s == "skip" {
+                                        skip = quote! { Some(true) };
+                                    } else if s == "readonly" {
+                                        readonly = quote! { Some(true) };
+                                    } else if s == "write" {
+                                        write = quote! { Some(true) };
+                                    }
+                                }
+                            }
+                            Meta::NameValue(nv) => {
+                                let key = nv.path.get_ident().map(|i| i.to_string().to_lowercase());
+                                if key.as_deref() == Some("require") {
+                                    if let Expr::Lit(lit) = &nv.value {
+                                        if let Lit::Str(s) = &lit.lit {
+                                            let val = s.value();
+                                            require = quote! { Some(#val.to_string()) };
+                                        }
+                                    }
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
+
+                    chained_calls = quote! {
+                        #chained_calls .mcp( #rustapi_path::__private::openapi::McpOperation {
+                            skip: #skip,
+                            readonly: #readonly,
+                            write: #write,
+                            require: #require,
+                        })
+                    };
+                }
             } else if ident_str == "param" {
                 // Parse #[param(name, schema = "type")] or #[param(name = "type")]
                 if let Ok(param_args) = attr.parse_args_with(
@@ -960,6 +1009,32 @@ pub fn description(attr: TokenStream, item: TokenStream) -> TokenStream {
     };
 
     TokenStream::from(expanded)
+}
+
+/// MCP metadata attribute for controlling how an endpoint is exposed as an MCP tool.
+///
+/// Supports:
+/// - `#[mcp(skip)]` — never expose this route as a tool
+/// - `#[mcp(readonly)]` — treat as read-only even if it's a POST etc.
+/// - `#[mcp(write)]` — mark as a write operation
+/// - `#[mcp(require = "confirm")]` — agent should ask for confirmation
+///
+/// # Example
+///
+/// ```rust,ignore
+/// #[rustapi::get("/admin/secrets")]
+/// #[rustapi::mcp(skip)]
+/// async fn admin_secrets() -> &'static str { "secret" }
+///
+/// #[rustapi::post("/orders")]
+/// #[rustapi::mcp(write, require = "confirm")]
+/// async fn create_order(...) { ... }
+/// ```
+#[proc_macro_attribute]
+pub fn mcp(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    // This is a passthrough. The actual semantics are handled by the
+    // route macros (get/post/...) which inspect #[mcp(...)] attrs on the fn.
+    item
 }
 
 /// Path parameter schema macro for OpenAPI documentation

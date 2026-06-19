@@ -38,6 +38,15 @@ pub struct McpTool {
     /// Tags associated with this tool (used for filtering via `McpConfig`).
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub tags: Vec<String>,
+
+    /// Framework-level permission classification ("read" | "write").
+    /// This is the key part of native scoping — agents can see the blast radius.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub permission: Option<String>,
+
+    /// Whether this tool should trigger a confirmation prompt on the agent side.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub requires_confirmation: Option<bool>,
 }
 
 /// Request from an MCP client to call a tool.
