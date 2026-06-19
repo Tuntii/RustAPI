@@ -292,8 +292,20 @@ Detailed architecture, recipes, and guides are in the [Cookbook](docs/cookbook/s
 RustAPI is built in the open by one developer, sustained by the community.
 If RustAPI saves you time or powers your project, consider [sponsoring the work](https://github.com/sponsors/Tuntii).
 
-### 🏆 Hall of Fame (first 10 sponsors)
+### 🏆 Hall of Fame (Lifetime Sponsors)
 <!-- Permanent spot — thank you for betting early -->
+
+**Lifetime Sponsors** — Personal material & moral support ❤️
+
+<div align="center">
+  <a href="https://github.com/emirtom"><img src="https://github.com/emirtom.png?size=100" width="80" height="80" alt="emirtom"/></a>
+  <a href="https://github.com/erencanbas"><img src="https://github.com/erencanbas.png?size=100" width="80" height="80" alt="erencanbas"/></a>
+  <a href="https://github.com/arda-num"><img src="https://github.com/arda-num.png?size=100" width="80" height="80" alt="arda-num"/></a>
+</div>
+
+<p align="center">
+  <strong>emirtom</strong> &nbsp;•&nbsp; <strong>erencanbas</strong> &nbsp;•&nbsp; <strong>arda-num</strong>
+</p>
 
 ### Patrons ($500+/mo)
 <!-- Logo + link here -->
