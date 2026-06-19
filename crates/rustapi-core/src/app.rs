@@ -10,6 +10,7 @@ use crate::response::IntoResponse;
 use crate::router::{MethodRouter, Router};
 use crate::server::Server;
 use crate::{Request, Response};
+use http::Extensions;
 use std::collections::BTreeMap;
 #[cfg(feature = "dashboard")]
 use std::collections::BTreeSet;
@@ -29,6 +30,12 @@ pub struct RequestDispatcher {
 }
 
 impl RequestDispatcher {
+    /// Returns the shared state Extensions from the underlying router.
+    /// Useful for in-process request construction to preserve State<T> etc.
+    pub fn state_ref(&self) -> Arc<Extensions> {
+        self.router.state_ref()
+    }
+
     /// Dispatch a request through the full stack (interceptors → middleware layers
     /// → route handler → response interceptors).
     ///

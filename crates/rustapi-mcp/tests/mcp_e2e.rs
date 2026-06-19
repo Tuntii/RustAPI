@@ -302,7 +302,11 @@ async fn test_mcp_tool_call_get_with_path_param_and_post_body() {
 }
 
 /// Real benchmark: proxy (with live HTTP server) vs in-process for 1000 sequential tool calls.
+///
+/// This test is ignored by default because wall-clock timing assertions can be flaky
+/// under CI load. Run explicitly with `cargo test -- --ignored`.
 #[tokio::test]
+#[ignore]
 async fn bench_proxy_vs_inprocess() {
     use tokio::sync::oneshot;
     let n = 1000usize;

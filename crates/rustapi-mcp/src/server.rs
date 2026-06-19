@@ -1,6 +1,6 @@
 //! The main `McpServer` type and lifecycle.
 
-use crate::config::McpConfig;
+use crate::config::{InvocationMode, McpConfig};
 use crate::discovery;
 use crate::error::{McpError, Result};
 use crate::invocation::RequestInvoker;
@@ -68,8 +68,8 @@ impl McpServer {
     /// Create an MCP server pre-attached to a `RustApi` instance.
     ///
     /// This is the most ergonomic way when you already have a built `RustApi`.
-    /// When `invocation_mode` is `InProcess` or `Auto`, this also captures
-    /// a direct dispatcher for zero-overhead tool calls.
+    /// If `invocation_mode` is `InProcess` or `Auto`, a direct in-process
+    /// dispatcher is captured for zero-overhead tool calls (see `RequestInvoker`).
     pub fn from_rustapi(app: &RustApi, config: McpConfig) -> Self {
         let mut server = Self::new(config);
 
@@ -77,10 +77,13 @@ impl McpServer {
         server.openapi = Some(spec.clone());
         server.rebuild_tool_map(&spec);
 
-        // Capture in-process dispatcher when the mode calls for it.
-        // We always capture it here; `call_tool` decides at runtime based on mode.
-        let dispatcher = app.request_dispatcher();
-        server.invoker = Some(RequestInvoker::new(dispatcher, server.config.clone()));
+        // Only capture in-process dispatcher when the configured mode can actually use it.
+        // This avoids unnecessary work and state cloning when the user explicitly wants Proxy.
+        let mode = server.config.invocation_mode;
+        if mode == InvocationMode::InProcess || mode == InvocationMode::Auto {
+            let dispatcher = app.request_dispatcher();
+            server.invoker = Some(RequestInvoker::new(dispatcher, server.config.clone()));
+        }
 
         server
     }
@@ -234,7 +237,10 @@ impl McpServer {
 
         if use_inprocess {
             if let Some(invoker) = &self.invoker {
-                let core_req = self.build_core_request(info, &req.arguments, &path).await?;
+                let state = invoker.state_ref();
+                let core_req = self
+                    .build_core_request(info, &req.arguments, &path, state)
+                    .await?;
                 let core_resp = invoker.invoke(core_req).await;
                 return self.core_response_to_tool_response(core_resp).await;
             }
@@ -293,9 +299,10 @@ impl McpServer {
         info: &ToolExecutionInfo,
         arguments: &std::collections::HashMap<String, serde_json::Value>,
         substituted_path: &str,
+        state: Arc<http::Extensions>,
     ) -> Result<CoreRequest> {
         use bytes::Bytes;
-        use http::{Extensions, Method, Request as HttpRequest, Uri, Version};
+        use http::{Method, Request as HttpRequest, Uri, Version};
         use rustapi_core::{BodyVariant, PathParams};
 
         let method = Method::from_bytes(info.method.as_bytes()).unwrap_or(Method::GET);
@@ -327,7 +334,6 @@ impl McpServer {
         parts.method = method;
         parts.uri = substituted_path.parse().unwrap_or(parts.uri);
 
-        let state = Arc::new(Extensions::new());
         let path_params = PathParams::new();
 
         let core_req =

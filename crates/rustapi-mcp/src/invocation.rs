@@ -49,4 +49,10 @@ impl RequestInvoker {
             InvocationMode::InProcess | InvocationMode::Auto => true,
         }
     }
+
+    /// Expose the router's shared state so callers can construct proper
+    /// `core::Request`s that have access to `State<T>` and other attached state.
+    pub fn state_ref(&self) -> Arc<http::Extensions> {
+        self.dispatcher.state_ref()
+    }
 }

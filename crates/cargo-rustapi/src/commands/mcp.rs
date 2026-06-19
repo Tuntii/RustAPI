@@ -107,10 +107,17 @@ pub async fn mcp_generate(args: McpGenerateArgs) -> Result<()> {
         let mut mcp = McpServer::from_spec(config, &openapi);
         mcp = mcp.with_http_base(target.clone());
 
-        let addr = format!("0.0.0.0:{}", args.port);
+        let addr = format!("127.0.0.1:{}", args.port); // safer default for local tool
 
         println!("    ✓ Spec loaded");
         println!("    → Proxying tool calls to: {}", target);
+
+        if args.stdio {
+            println!("🧠 MCP stdio transport active. Waiting for JSON-RPC on stdin...");
+            run_stdio(mcp).await?;
+            return Ok(());
+        }
+
         println!("    → MCP server listening on: http://{}", addr);
         println!();
         println!("Useful test commands:");
@@ -126,12 +133,6 @@ pub async fn mcp_generate(args: McpGenerateArgs) -> Result<()> {
         );
         println!("       -d '{{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/list\"}}'");
         println!();
-        if args.stdio {
-            println!("🧠 MCP stdio transport active. Waiting for JSON-RPC on stdin...");
-            run_stdio(mcp).await?;
-            return Ok(());
-        }
-
         println!("Press Ctrl+C to stop.");
 
         let shutdown = async {
@@ -205,7 +206,7 @@ async fn run_stdio(mcp: rustapi_mcp::McpServer) -> Result<()> {
                         .collect();
                     serde_json::json!({ "tools": tool_defs })
                 }
-                Err(e) => serde_json::json!({ "error": e.to_string() }),
+                Err(e) => serde_json::json!({ "code": -32603, "message": e.to_string() }),
             },
             "tools/call" => {
                 let params = json.get("params").cloned().unwrap_or(serde_json::json!({}));
