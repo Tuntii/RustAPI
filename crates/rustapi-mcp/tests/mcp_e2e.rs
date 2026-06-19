@@ -314,7 +314,12 @@ async fn bench_proxy_vs_inprocess() {
 
     // --- Discover tool name (same for both) ---
     let app_disc = RustApi::auto();
-    let mcp_disc = McpServer::from_rustapi(&app_disc, McpConfig::new().allowed_tags(["agent"]).tool_policy(rustapi_mcp::ToolPolicy::All));
+    let mcp_disc = McpServer::from_rustapi(
+        &app_disc,
+        McpConfig::new()
+            .allowed_tags(["agent"])
+            .tool_policy(rustapi_mcp::ToolPolicy::All),
+    );
     let tools = mcp_disc.list_tools().await.unwrap();
     let tool_name = tools
         .iter()

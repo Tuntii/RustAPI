@@ -67,7 +67,6 @@ pub enum ToolPolicy {
     /// Strongly recommended default when giving tools to AI agents.
     #[default]
     ReadOnly,
-
     // Future: fully custom allow-list + confirmation requirements.
     // Custom { ... },
 }
