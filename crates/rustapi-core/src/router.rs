@@ -372,6 +372,7 @@ where
 }
 
 /// Main router
+#[derive(Clone)]
 pub struct Router {
     inner: MatchitRouter<MethodRouter>,
     state: Arc<Extensions>,

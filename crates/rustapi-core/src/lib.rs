@@ -121,7 +121,7 @@ pub mod __private {
 }
 
 // Public API
-pub use app::{ProductionDefaultsConfig, RustApi, RustApiConfig};
+pub use app::{ProductionDefaultsConfig, RequestDispatcher, RustApi, RustApiConfig};
 #[cfg(feature = "dashboard")]
 pub use dashboard::{DashboardConfig, DashboardMetrics, DashboardSnapshot};
 pub use error::{get_environment, ApiError, Environment, FieldError, Result};

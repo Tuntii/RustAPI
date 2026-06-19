@@ -24,6 +24,7 @@ cargo install cargo-rustapi
 | `cargo rustapi new <name> --preset <preset>` | Start from opinionated `prod-api`, `ai-api`, or `realtime-api` feature bundles |
 | `cargo rustapi generate resource <name>` | Scaffold a new API resource (Model + Handlers + Tests) |
 | `cargo rustapi client --spec <path> --language <lang>` | Generate a client library (Rust, TS, Python) from OpenAPI spec |
+| `cargo rustapi mcp generate --spec <file|url> --target <backend>` | Turn ANY OpenAPI spec into a live MCP server for AI agents (FastAPI, Go, etc.) |
 | `cargo rustapi deploy <platform>` | Generate deployment configs for Docker, Fly.io, Railway, or Shuttle |
 | `cargo rustapi migrate <action>` | Database migration commands (create, run, revert, status, reset) |
 | `cargo rustapi replay <subcommand>` | Work with time-travel replay entries from a running RustAPI service |

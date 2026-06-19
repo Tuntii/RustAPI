@@ -309,7 +309,7 @@ async fn handle_request(
 
 /// Direct routing without middleware chain - maximum performance path
 #[inline]
-async fn route_request_direct(
+pub(crate) async fn route_request_direct(
     router: &Router,
     mut request: Request,
     path: &str,
@@ -339,7 +339,7 @@ async fn route_request_direct(
 
 /// Route request through the router (used by middleware chain)
 #[inline]
-async fn route_request(
+pub(crate) async fn route_request(
     router: &Router,
     mut request: Request,
     path: &str,

@@ -3,15 +3,62 @@
 use crate::error::Result;
 use crate::events::LifecycleHooks;
 use crate::interceptor::{InterceptorChain, RequestInterceptor, ResponseInterceptor};
-use crate::middleware::{BodyLimitLayer, LayerStack, MiddlewareLayer, DEFAULT_BODY_LIMIT};
+use crate::middleware::{
+    BodyLimitLayer, BoxedNext, LayerStack, MiddlewareLayer, DEFAULT_BODY_LIMIT,
+};
 use crate::response::IntoResponse;
 use crate::router::{MethodRouter, Router};
 use crate::server::Server;
+use crate::{Request, Response};
 use std::collections::BTreeMap;
 #[cfg(feature = "dashboard")]
 use std::collections::BTreeSet;
 use std::future::Future;
+use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+
+/// A dispatcher that can drive requests through the RustAPI pipeline
+/// (interceptors + layers + router) without any network or serialization overhead.
+///
+/// Obtained via [`RustApi::request_dispatcher`].
+#[derive(Clone)]
+pub struct RequestDispatcher {
+    router: Arc<Router>,
+    layers: LayerStack,
+    interceptors: InterceptorChain,
+}
+
+impl RequestDispatcher {
+    /// Dispatch a request through the full stack (interceptors → middleware layers
+    /// → route handler → response interceptors).
+    ///
+    /// This replicates the logic used by the normal HTTP server.
+    pub async fn dispatch(&self, request: Request) -> Response {
+        let req = self.interceptors.intercept_request(request);
+
+        let path = req.path().to_owned();
+        let method = req.method().clone();
+
+        let response = if self.layers.is_empty() {
+            crate::server::route_request_direct(&self.router, req, &path, &method).await
+        } else {
+            let router = self.router.clone();
+            let p = path.clone();
+            let m = method.clone();
+
+            let routing_handler: BoxedNext = Arc::new(move |r: Request| {
+                let router = router.clone();
+                let pp = p.clone();
+                let mm = m.clone();
+                Box::pin(async move { crate::server::route_request(&router, r, &pp, &mm).await })
+            });
+
+            self.layers.execute(req, routing_handler).await
+        };
+
+        self.interceptors.intercept_response(response)
+    }
+}
 
 /// Main application builder for RustAPI
 ///
@@ -380,7 +427,8 @@ impl RustApi {
         // Store state in the router's shared Extensions so `State<T>` extractor can retrieve it.
         let state = _state;
         let mut app = self;
-        app.router = app.router.state(state);
+        let r = std::mem::take(&mut app.router);
+        app.router = r.state(state);
         app
     }
 
@@ -1548,6 +1596,11 @@ impl RustApi {
         self.router
     }
 
+    /// Get a reference to the inner router (for advanced usage, e.g. in-process MCP dispatch).
+    pub fn router(&self) -> &Router {
+        &self.router
+    }
+
     /// Get the layer stack (for testing)
     pub fn layers(&self) -> &LayerStack {
         &self.layers
@@ -1556,6 +1609,19 @@ impl RustApi {
     /// Get the interceptor chain (for testing)
     pub fn interceptors(&self) -> &InterceptorChain {
         &self.interceptors
+    }
+
+    /// Returns a dispatcher that can execute requests directly through this
+    /// app's router + layers + interceptors, with zero network overhead.
+    ///
+    /// This is intended for in-process protocol integrations (e.g. MCP tool calls
+    /// when running side-by-side with the main HTTP server).
+    pub fn request_dispatcher(&self) -> RequestDispatcher {
+        RequestDispatcher {
+            router: Arc::new(self.router.clone()),
+            layers: self.layers().clone(),
+            interceptors: self.interceptors().clone(),
+        }
     }
 
     /// Enable HTTP/3 support with TLS certificates
@@ -1591,9 +1657,9 @@ impl RustApi {
 
         let server = crate::http3::Http3Server::new(
             &config,
-            Arc::new(self.router),
-            Arc::new(self.layers),
-            Arc::new(self.interceptors),
+            Arc::new(self.router.clone()),
+            Arc::new(self.layers.clone()),
+            Arc::new(self.interceptors.clone()),
         )
         .await?;
 
@@ -1633,9 +1699,9 @@ impl RustApi {
 
         let server = crate::http3::Http3Server::new_with_self_signed(
             addr,
-            Arc::new(self.router),
-            Arc::new(self.layers),
-            Arc::new(self.interceptors),
+            Arc::new(self.router.clone()),
+            Arc::new(self.layers.clone()),
+            Arc::new(self.interceptors.clone()),
         )
         .await?;
 

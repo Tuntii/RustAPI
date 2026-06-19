@@ -8,7 +8,9 @@
 use std::time::Duration;
 
 use rustapi_rs::prelude::*;
-use rustapi_rs::protocol::mcp::{run_rustapi_and_mcp_with_shutdown, McpConfig, McpServer};
+use rustapi_rs::protocol::mcp::{
+    run_rustapi_and_mcp_with_shutdown, InvocationMode, McpConfig, McpServer,
+};
 use serde::{Deserialize, Serialize};
 use tokio::sync::oneshot;
 
@@ -297,6 +299,114 @@ async fn test_mcp_tool_call_get_with_path_param_and_post_body() {
     // Shutdown
     let _ = shutdown_tx.send(());
     let _ = tokio::time::timeout(Duration::from_secs(3), server_handle).await;
+}
+
+/// Real benchmark: proxy (with live HTTP server) vs in-process for 1000 sequential tool calls.
+#[tokio::test]
+async fn bench_proxy_vs_inprocess() {
+    use tokio::sync::oneshot;
+    let n = 1000usize;
+
+    // --- Discover tool name (same for both) ---
+    let app_disc = RustApi::auto();
+    let mcp_disc = McpServer::from_rustapi(&app_disc, McpConfig::new().allowed_tags(["agent"]));
+    let tools = mcp_disc.list_tools().await.unwrap();
+    let tool_name = tools
+        .iter()
+        .find(|t| t.name.contains("weather") || t.name.contains("get_weather"))
+        .map(|t| t.name.clone())
+        .expect("expected a weather tool in the test module");
+
+    let call_req = rustapi_rs::protocol::mcp::ToolCallRequest {
+        name: tool_name,
+        arguments: [("city".to_string(), serde_json::json!("Berlin"))].into(),
+    };
+
+    // === In-process (dispatcher, zero network) ===
+    let app_in = RustApi::auto();
+    let mcp_in = McpServer::from_rustapi(
+        &app_in,
+        McpConfig::new()
+            .allowed_tags(["agent"])
+            .invocation_mode(InvocationMode::InProcess),
+    );
+
+    // warm up
+    let _ = mcp_in.call_tool(call_req.clone()).await;
+
+    let start = std::time::Instant::now();
+    for _ in 0..n {
+        let _ = mcp_in.call_tool(call_req.clone()).await.unwrap();
+    }
+    let inproc_dur = start.elapsed();
+
+    // === Proxy with live HTTP server ===
+    let app_p = RustApi::auto();
+    let http_listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let http_addr = http_listener.local_addr().unwrap();
+    drop(http_listener);
+    let http_addr_str = format!("127.0.0.1:{}", http_addr.port());
+
+    let mcp_p = McpServer::from_rustapi(
+        &app_p,
+        McpConfig::new()
+            .allowed_tags(["agent"])
+            .invocation_mode(InvocationMode::Proxy),
+    );
+
+    let (shutdown_tx, shutdown_rx) = oneshot::channel();
+    let http_addr_for_spawn = http_addr_str.clone();
+    let server_handle = tokio::spawn(async move {
+        app_p
+            .run_with_shutdown(&http_addr_for_spawn, async move {
+                let _ = shutdown_rx.await;
+            })
+            .await
+            .unwrap();
+    });
+
+    // Give server time to start
+    tokio::time::sleep(Duration::from_millis(400)).await;
+
+    // Set base manually (or runner would do it)
+    let mcp_p = mcp_p.with_http_base(format!("http://{}", http_addr_str));
+
+    // warm up proxy path
+    let _ = mcp_p.call_tool(call_req.clone()).await;
+
+    let start = std::time::Instant::now();
+    for _ in 0..n {
+        let _ = mcp_p.call_tool(call_req.clone()).await.unwrap();
+    }
+    let proxy_dur = start.elapsed();
+
+    // shutdown
+    let _ = shutdown_tx.send(());
+    let _ = tokio::time::timeout(Duration::from_secs(3), server_handle).await;
+
+    println!(
+        "\n=== Live Server Benchmark ({} sequential tool calls) ===",
+        n
+    );
+    println!(
+        "In-process (direct): {:>8.3?}  avg: {:>6.1?} per call",
+        inproc_dur,
+        inproc_dur / n as u32
+    );
+    println!(
+        "Proxy (live HTTP)  : {:>8.3?}  avg: {:>6.1?} per call",
+        proxy_dur,
+        proxy_dur / n as u32
+    );
+
+    let speedup = proxy_dur.as_secs_f64() / inproc_dur.as_secs_f64();
+    println!("Speedup: {:.1}x (in-process is faster)", speedup);
+
+    // Sanity
+    assert!(
+        inproc_dur < proxy_dur,
+        "in-process should be faster than proxy with live server"
+    );
 }
 
 #[tokio::test]
