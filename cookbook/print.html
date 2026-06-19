@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-e44b3527.js";
+            window.path_to_searchindex_js = "searchindex-26bbabb4.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-380ad91a.js"></script>
@@ -5497,6 +5497,10 @@ rustapi mcp generate \
 rustapi mcp generate \
   --api http://localhost:8080 \
   --port 9090
+
+# Best for RustAPI projects: no flags needed!
+# Auto-generates the OpenAPI spec from your code (no running server or openapi.json required)
+rustapi mcp generate --stdio
 </code></pre>
 <h2 id="flags"><a class="header" href="#flags">Flags</a></h2>
 <div class="table-wrapper">
