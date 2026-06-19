@@ -172,7 +172,8 @@ async fn test_mcp_tool_call_get_with_path_param_and_post_body() {
         McpConfig::new()
             .name("e2e-mcp")
             .version("0.0.0")
-            .allowed_tags(["agent"]),
+            .allowed_tags(["agent"])
+            .tool_policy(rustapi_mcp::ToolPolicy::All), // needs the POST compute tool
     );
 
     let http_listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
