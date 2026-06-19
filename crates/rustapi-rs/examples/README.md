@@ -98,7 +98,7 @@ Then open:
 
 ### `mcp_tools`
 
-Demonstrates running your normal HTTP API together with a Native MCP server. Selected routes (those tagged `"agent"`) are automatically exposed as discoverable tools for LLMs and agent clients (Claude, Cursor, etc.). Tool calls are proxied through the full RustAPI request pipeline.
+Demonstrates running your normal HTTP API together with a Native MCP server using **in-process invocation** (zero network overhead). Selected routes (those tagged `"agent"`) are automatically exposed as discoverable tools for LLMs and agent clients (Claude, Cursor, etc.). Tool calls go through the full RustAPI request pipeline directly (via `InvocationMode::InProcess`).
 
 Run it with:
 
@@ -112,6 +112,8 @@ The example starts two listeners:
 - MCP endpoint on `http://127.0.0.1:9090` (point your MCP client here)
 
 You can also drive it manually with `curl` (see the comments at the top of the example file for ready-to-paste JSON-RPC commands).
+
+See also the dedicated cookbook recipes for MCP in-process, the `cargo rustapi mcp generate` CLI (for any OpenAPI), and stdio transport.
 
 ## Notes
 
