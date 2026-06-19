@@ -65,7 +65,11 @@ enum Commands {
     /// Generate API client from OpenAPI spec
     Client(ClientArgs),
 
-    /// MCP tools — turn any OpenAPI spec into an MCP server for agents
+    /// MCP tools — turn any OpenAPI spec into an MCP server for agents.
+    ///
+    /// If no --spec/--url/--api is given, it will automatically generate
+    /// the OpenAPI spec from your current RustAPI project (no need for
+    /// a running server or pre-existing openapi.json).
     #[cfg(feature = "mcp")]
     #[command(subcommand)]
     Mcp(McpCommands),
@@ -112,5 +116,9 @@ enum McpCommands {
     /// Works with FastAPI, Express, Go, Spring, or any other API that
     /// publishes an OpenAPI 3.x document. All tool calls are forwarded
     /// (proxied) to the real backend.
+    ///
+    /// Inside a RustAPI project you can simply run:
+    ///   cargo rustapi mcp generate
+    /// without any flags — the spec will be auto-generated from your code.
     Generate(McpGenerateArgs),
 }

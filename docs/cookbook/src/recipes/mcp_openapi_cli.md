@@ -32,6 +32,10 @@ rustapi mcp generate \
 rustapi mcp generate \
   --api http://localhost:8080 \
   --port 9090
+
+# Best for RustAPI projects: no flags needed!
+# Auto-generates the OpenAPI spec from your code (no running server or openapi.json required)
+rustapi mcp generate --stdio
 ```
 
 ## Flags

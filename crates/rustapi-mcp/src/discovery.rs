@@ -4,7 +4,7 @@
 //! HTTP operations into MCP `McpTool` definitions, applying exposure
 //! filters from `McpConfig`.
 
-use crate::config::McpConfig;
+use crate::config::{McpConfig, ToolPolicy};
 use crate::types::McpTool;
 use rustapi_openapi::{Components, OpenApiSpec, Operation, Parameter, RequestBody, SchemaRef};
 use std::collections::BTreeMap;
@@ -73,6 +73,29 @@ fn path_matches_prefixes(path: &str, prefixes: &[String]) -> bool {
     prefixes.iter().any(|p| path.starts_with(p))
 }
 
+/// Classify an HTTP method as read or write for permission scoping.
+fn is_read_method(method: &str) -> bool {
+    matches!(method.to_uppercase().as_str(), "GET" | "HEAD" | "OPTIONS")
+}
+
+/// Returns whether this operation should be exposed given the current policy.
+fn operation_allowed_by_policy(method: &str, _op: &Operation, policy: &ToolPolicy) -> bool {
+    match policy {
+        ToolPolicy::All => true,
+        ToolPolicy::ReadOnly => is_read_method(method),
+        // Custom can be added later
+    }
+}
+
+/// Support for route-level skip via special tags (hot-fix until full #[mcp(skip)] proc-macro).
+/// Any tag exactly "mcp-skip" or containing ":skip" will drop the operation.
+fn is_skipped_by_tag(op: &Operation) -> bool {
+    op.tags.iter().any(|t| {
+        let t = t.to_lowercase();
+        t == "mcp-skip" || t.contains(":skip") || t == "mcp:skip"
+    })
+}
+
 fn operation_to_tool(
     method: &str,
     path: &str,
@@ -80,7 +103,24 @@ fn operation_to_tool(
     components: Option<&Components>,
     config: &McpConfig,
 ) -> Option<McpTool> {
-    // Tag filtering (if allowed_tags configured, operation must have at least one matching tag)
+    // Rich x-mcp struct takes precedence
+    if let Some(mcp_meta) = &op.x_mcp {
+        if mcp_meta.skip == Some(true) {
+            return None;
+        }
+    }
+
+    // Legacy tag skip
+    if is_skipped_by_tag(op) {
+        return None;
+    }
+
+    // Policy gating
+    if !operation_allowed_by_policy(method, op, &config.tool_policy) {
+        return None;
+    }
+
+    // Tag filtering
     if !config.allowed_tags.is_empty() {
         let has_match = op.tags.iter().any(|t| config.allowed_tags.contains(t));
         if !has_match {
@@ -93,12 +133,54 @@ fn operation_to_tool(
 
     let input_schema = build_input_schema(op, components);
 
+    // Derive permission + confirmation from x-mcp (rich) or tags / method
+    let (permission, requires_confirmation) = if let Some(mcp_meta) = &op.x_mcp {
+        let p = if mcp_meta.readonly == Some(true) {
+            "read".to_string()
+        } else if mcp_meta.write == Some(true) || !is_read_method(method) {
+            "write".to_string()
+        } else {
+            if is_read_method(method) {
+                "read"
+            } else {
+                "write"
+            }
+            .to_string()
+        };
+        let needs_confirm =
+            mcp_meta.require.is_some() || (p == "write" && mcp_meta.readonly != Some(true));
+        (p, needs_confirm)
+    } else {
+        let has_write = op.tags.iter().any(|t| t.eq_ignore_ascii_case("mcp-write"));
+        let has_ro = op
+            .tags
+            .iter()
+            .any(|t| t.eq_ignore_ascii_case("mcp-readonly"));
+        let req = op
+            .tags
+            .iter()
+            .any(|t| t.to_lowercase().starts_with("mcp-require"));
+
+        let p = if has_ro {
+            "read"
+        } else if has_write || !is_read_method(method) {
+            "write"
+        } else {
+            "read"
+        }
+        .to_string();
+        let c = req || (!has_ro && !is_read_method(method));
+        (p, c)
+    };
+
     Some(McpTool {
         name,
         description,
         input_schema,
-        output_schema: None, // Future: extract from success responses
+        output_schema: None,
         tags: op.tags.clone(),
+        permission: Some(permission),
+        requires_confirmation: Some(requires_confirmation),
     })
 }
 
@@ -283,7 +365,7 @@ mod tests {
     #[test]
     fn extracts_tools_with_operation_id_as_name() {
         let spec = make_minimal_spec();
-        let config = McpConfig::new();
+        let config = McpConfig::new().tool_policy(ToolPolicy::All); // test covers write ops too
 
         let tools = extract_tools_from_spec(&spec, &config);
         assert!(!tools.is_empty());

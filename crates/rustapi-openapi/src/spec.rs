@@ -476,6 +476,10 @@ pub struct Operation {
     pub security: Vec<BTreeMap<String, Vec<String>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub deprecated: Option<bool>,
+
+    /// MCP tool metadata (serialized as OpenAPI extension `x-mcp`).
+    #[serde(default, skip_serializing_if = "Option::is_none", rename = "x-mcp")]
+    pub x_mcp: Option<McpOperation>,
 }
 
 impl Operation {
@@ -495,6 +499,35 @@ impl Operation {
         self.description = Some(d.into());
         self
     }
+
+    /// Attach MCP-specific metadata to this operation (serialized as `x-mcp` extension).
+    pub fn mcp(mut self, meta: McpOperation) -> Self {
+        self.x_mcp = Some(meta);
+        self
+    }
+}
+
+/// MCP-specific metadata for an operation.
+/// Serialized under the `x-mcp` extension in OpenAPI so that MCP tools can
+/// carry permission and confirmation hints.
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct McpOperation {
+    /// Skip exposing this operation as an MCP tool entirely.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub skip: Option<bool>,
+
+    /// Force this operation to be treated as read-only (even if the HTTP method is POST etc.).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub readonly: Option<bool>,
+
+    /// Explicitly mark as a write operation.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub write: Option<bool>,
+
+    /// Agent should ask for confirmation before calling. The value can be "confirm"
+    /// or a human message.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub require: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -46,6 +46,29 @@ pub struct McpConfig {
     /// Proxy (default) always goes over HTTP (correct and works for external targets).
     /// InProcess / Auto are for when an in-process RustApi instance is available.
     pub invocation_mode: InvocationMode,
+
+    /// Permission policy for which operations are exposed as MCP tools.
+    ///
+    /// Framework-native guardrail. By default we are conservative for agent use:
+    /// ReadOnly (only safe methods like GET are exposed unless you opt into writes).
+    ///
+    /// This addresses the blast radius concern when agents can call destructive endpoints.
+    pub tool_policy: ToolPolicy,
+}
+
+/// Controls which operations (by HTTP semantics) are turned into MCP tools.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ToolPolicy {
+    /// Expose everything (subject to `allowed_tags` / prefixes).
+    /// Use with care — agents can trigger writes/deletes.
+    All,
+
+    /// Only expose read-only operations (GET, HEAD, OPTIONS).
+    /// Strongly recommended default when giving tools to AI agents.
+    #[default]
+    ReadOnly,
+    // Future: fully custom allow-list + confirmation requirements.
+    // Custom { ... },
 }
 
 /// Controls whether tool invocation goes through the normal HTTP path or
@@ -74,6 +97,7 @@ impl Default for McpConfig {
             expose_detailed_errors: false,
             max_tools: 256,
             invocation_mode: InvocationMode::Proxy,
+            tool_policy: ToolPolicy::ReadOnly, // Safe default for agent-facing use
         }
     }
 }
@@ -147,6 +171,18 @@ impl McpConfig {
     /// Choose invocation strategy for tool calls.
     pub fn invocation_mode(mut self, mode: InvocationMode) -> Self {
         self.invocation_mode = mode;
+        self
+    }
+
+    /// Set the permission policy for exposing tools.
+    ///
+    /// `ReadOnly` is the safe default when agents will call your tools.
+    /// Only GET/HEAD/OPTIONS operations are turned into tools.
+    ///
+    /// Use `All` if you explicitly want agents to perform writes (and you have
+    /// strong `allowed_tags` + confirmation flows).
+    pub fn tool_policy(mut self, policy: ToolPolicy) -> Self {
+        self.tool_policy = policy;
         self
     }
 }

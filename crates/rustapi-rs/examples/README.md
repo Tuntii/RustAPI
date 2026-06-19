@@ -115,6 +115,8 @@ You can also drive it manually with `curl` (see the comments at the top of the e
 
 See also the dedicated cookbook recipes for MCP in-process, the `cargo rustapi mcp generate` CLI (for any OpenAPI), and stdio transport.
 
+For a more complete, standalone MCP example (with full project structure, ready-to-use Cargo project), see the [rustapi-rs-examples](https://github.com/Tuntii/rustapi-rs-examples) repository (05-mcp-server example).
+
 ## Notes
 
 - Keep this file aligned with the actual `.rs` files in this directory.

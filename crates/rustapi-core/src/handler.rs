@@ -435,6 +435,13 @@ impl Route {
         self
     }
 
+    /// Attach MCP metadata to this route (becomes `x-mcp` in OpenAPI).
+    /// This enables rich scoping like `skip`, `readonly`, `write`, `require = "confirm"`.
+    pub fn mcp(mut self, meta: rustapi_openapi::McpOperation) -> Self {
+        self.operation = self.operation.mcp(meta);
+        self
+    }
+
     /// Get the route path
     pub fn path(&self) -> &str {
         self.path

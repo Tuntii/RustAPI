@@ -81,8 +81,8 @@ pub use schemas::{
     ValidationErrorSchema,
 };
 pub use spec::{
-    ApiInfo, Components, MediaType, OpenApiSpec, Operation, OperationModifier, Parameter, PathItem,
-    RequestBody, ResponseModifier, ResponseSpec, SchemaRef,
+    ApiInfo, Components, McpOperation, MediaType, OpenApiSpec, Operation, OperationModifier,
+    Parameter, PathItem, RequestBody, ResponseModifier, ResponseSpec, SchemaRef,
 };
 
 // Re-export Schema derive macro

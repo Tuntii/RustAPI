@@ -152,7 +152,7 @@ Current benchmark methodology and canonical published performance claims live in
 
 ```toml
 [dependencies]
-api = { package = "rustapi-rs", version = "0.1.478" }
+api = { package = "rustapi-rs", version = "0.1.507" }
 ```
 
 ```rust
@@ -221,7 +221,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
 
 ```toml
 [dependencies]
-api = { package = "rustapi-rs", version = "0.1.478" }
+api = { package = "rustapi-rs", version = "0.1.507" }
 ```
 
 ```rust
@@ -283,7 +283,9 @@ Detailed architecture, recipes, and guides are in the [Cookbook](docs/cookbook/s
 - [gRPC Integration Guide](docs/cookbook/src/crates/rustapi_grpc.md)
 - [Recommended Production Baseline](docs/PRODUCTION_BASELINE.md)
 - [Production Checklist](docs/PRODUCTION_CHECKLIST.md)
-- [Examples](crates/rustapi-rs/examples/)
+- [Internal Examples](crates/rustapi-rs/examples/)
+
+**Full standalone examples** (including a complete MCP tool example with in-process invocation) live in the separate **[rustapi-rs-examples](https://github.com/Tuntii/rustapi-rs-examples)** repository.
 
 ---
 

@@ -24,6 +24,10 @@ pub struct McpGenerateArgs {
 
     /// Base URL of a running service. Will try to fetch <base>/openapi.json
     /// and use the base as the proxy target.
+    ///
+    /// If the server is not running (or doesn't serve /openapi.json yet),
+    /// prefer running `cargo rustapi mcp generate` with no flags inside your
+    /// RustAPI project — it will auto-generate the spec directly from source.
     #[arg(long, value_name = "URL", conflicts_with_all = ["spec", "url"])]
     pub api: Option<String>,
 
@@ -70,9 +74,16 @@ pub async fn mcp_generate(args: McpGenerateArgs) -> Result<()> {
     #[cfg(feature = "mcp")]
     {
         println!("🧠  RustAPI MCP generator");
-        println!("    Loading OpenAPI spec...");
 
         let spec_input = resolve_spec_source(&args)?;
+        let spec_input = if spec_input == "__AUTO_GENERATE__" {
+            println!("    No --spec/--url/--api given. Auto-generating OpenAPI spec from current project...");
+            auto_generate_and_get_spec_path().await?
+        } else {
+            println!("    Loading OpenAPI spec...");
+            spec_input
+        };
+
         let openapi: OpenApiSpec = load_openapi_spec(&spec_input)
             .await
             .with_context(|| format!("Failed to load OpenAPI spec from {}", spec_input))?;
@@ -276,7 +287,11 @@ fn resolve_spec_source(args: &McpGenerateArgs) -> Result<String> {
         let base = a.trim_end_matches('/');
         return Ok(format!("{}/openapi.json", base));
     }
-    anyhow::bail!("One of --spec <file>, --url <url>, or --api <base-url> is required")
+    // No source given → auto-generate from current RustAPI project
+    // This allows `cargo rustapi mcp generate` to work without a running server
+    // or pre-existing openapi.json file.
+    // We return a special marker; the caller will handle auto generation.
+    Ok("__AUTO_GENERATE__".to_string())
 }
 
 fn resolve_target(args: &McpGenerateArgs) -> Result<String> {
@@ -286,7 +301,9 @@ fn resolve_target(args: &McpGenerateArgs) -> Result<String> {
     if let Some(a) = &args.api {
         return Ok(a.clone());
     }
-    anyhow::bail!("--target <backend-base-url> is required (or use --api which doubles as target)")
+    // Auto mode default: assume the user's API runs on the common dev port
+    println!("    No --target provided. Defaulting target to http://localhost:8080 (you can override with --target)");
+    Ok("http://localhost:8080".to_string())
 }
 
 async fn load_openapi_spec(source: &str) -> Result<OpenApiSpec> {
@@ -294,7 +311,15 @@ async fn load_openapi_spec(source: &str) -> Result<OpenApiSpec> {
         // remote-spec is pulled in by the mcp feature
         reqwest::get(source)
             .await
-            .context("Failed to fetch spec over HTTP")?
+            .with_context(|| format!(
+                "Failed to fetch OpenAPI spec from {}\n\
+                 \n\
+                 Tip: If this is your own RustAPI project, try running without --api:\n\
+                 \n  cargo rustapi mcp generate --stdio\n\
+                 \n\
+                 This will auto-generate the spec directly from your code (no running server needed).",
+                source
+            ))?
             .text()
             .await
             .context("Failed to read response body")?
@@ -331,6 +356,70 @@ fn sanitize_name(s: &str) -> String {
         .collect::<String>()
         .trim_matches('-')
         .to_lowercase()
+}
+
+/// When user runs `cargo rustapi mcp generate` without --spec/--url/--api,
+/// we auto-extract the OpenAPI by running the project with a special env var
+/// that makes RustApi print the spec and exit (before binding any port).
+async fn auto_generate_and_get_spec_path() -> Result<String> {
+    println!("    Spawning `cargo run` with RUSTAPI_DUMP_OPENAPI=1 to extract spec (no server binding)...");
+
+    let output = std::process::Command::new("cargo")
+        .arg("run")
+        .arg("--quiet")
+        .env("RUSTAPI_DUMP_OPENAPI", "1")
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::inherit())
+        .output()
+        .context(
+            "Failed to execute `cargo run` for spec dump. Are you inside a RustAPI project?",
+        )?;
+
+    if !output.status.success() {
+        anyhow::bail!(
+            "Failed to build/run the project to extract OpenAPI.\n\
+             Try running `cargo run` manually first to ensure it compiles, then retry `cargo rustapi mcp generate`."
+        );
+    }
+
+    let stdout =
+        String::from_utf8(output.stdout).context("Captured OpenAPI output was not valid UTF-8")?;
+
+    // The dump prints the JSON (possibly after some startup prints from the app).
+    // Find the last occurrence of a top-level OpenAPI object for robustness.
+    let json_str = if let Some(idx) = stdout.rfind(r#""openapi": "3."#) {
+        // Go back to the opening { of that object
+        let start = stdout[..idx].rfind('{').unwrap_or(0);
+        let candidate = &stdout[start..];
+        // cut at the last }
+        if let Some(end) = candidate.rfind('}') {
+            candidate[..=end].trim().to_string()
+        } else {
+            candidate.trim().to_string()
+        }
+    } else if let Some(idx) = stdout.find('{') {
+        let candidate = &stdout[idx..];
+        candidate.trim().to_string()
+    } else {
+        stdout.trim().to_string()
+    };
+
+    if json_str.is_empty() || !json_str.starts_with('{') {
+        anyhow::bail!(
+            "Could not extract a valid OpenAPI JSON from the project dump.\n\
+             Make sure your main uses RustApi::auto() or similar."
+        );
+    }
+
+    // Write to a temp file so load_openapi_spec can handle it uniformly
+    let temp_path =
+        std::env::temp_dir().join(format!("rustapi-auto-spec-{}.json", std::process::id()));
+    tokio::fs::write(&temp_path, &json_str)
+        .await
+        .context("Failed to write temp OpenAPI spec")?;
+
+    println!("    ✓ Auto-generated spec written to temporary file");
+    Ok(temp_path.to_string_lossy().to_string())
 }
 
 #[cfg(test)]
