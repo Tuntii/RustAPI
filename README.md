@@ -286,6 +286,31 @@ Detailed architecture, recipes, and guides are in the [Cookbook](docs/cookbook/s
 
 ---
 
+## 💝 Sponsors
+
+RustAPI is built in the open by one developer, sustained by the community.
+If RustAPI saves you time or powers your project, consider [sponsoring the work](https://github.com/sponsors/Tuntii).
+
+### 🏆 Hall of Fame (first 10 sponsors)
+<!-- Permanent spot — thank you for betting early -->
+
+### Patrons ($500+/mo)
+<!-- Logo + link here -->
+
+### Enterprise ($100+/mo)
+<!-- Logo + link here -->
+
+### Sponsors ($25+/mo)
+<!-- Name + link here -->
+
+### Supporters ($5+/mo)
+<!-- Name here -->
+
+> 💡 **Why sponsor?** RustAPI is independent. No VC. No corporate roadmap.
+> Your sponsorship directly funds feature development, docs, and keeping the lights on.
+
+---
+
 <div align="center">
   <sub>Built by Tunti35.</sub>
 </div>
