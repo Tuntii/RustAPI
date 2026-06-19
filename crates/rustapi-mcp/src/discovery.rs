@@ -140,16 +140,35 @@ fn operation_to_tool(
         } else if mcp_meta.write == Some(true) || !is_read_method(method) {
             "write".to_string()
         } else {
-            if is_read_method(method) { "read" } else { "write" }.to_string()
+            if is_read_method(method) {
+                "read"
+            } else {
+                "write"
+            }
+            .to_string()
         };
-        let needs_confirm = mcp_meta.require.is_some() || (p == "write" && mcp_meta.readonly != Some(true));
+        let needs_confirm =
+            mcp_meta.require.is_some() || (p == "write" && mcp_meta.readonly != Some(true));
         (p, needs_confirm)
     } else {
         let has_write = op.tags.iter().any(|t| t.eq_ignore_ascii_case("mcp-write"));
-        let has_ro = op.tags.iter().any(|t| t.eq_ignore_ascii_case("mcp-readonly"));
-        let req = op.tags.iter().any(|t| t.to_lowercase().starts_with("mcp-require"));
+        let has_ro = op
+            .tags
+            .iter()
+            .any(|t| t.eq_ignore_ascii_case("mcp-readonly"));
+        let req = op
+            .tags
+            .iter()
+            .any(|t| t.to_lowercase().starts_with("mcp-require"));
 
-        let p = if has_ro { "read" } else if has_write || !is_read_method(method) { "write" } else { "read" }.to_string();
+        let p = if has_ro {
+            "read"
+        } else if has_write || !is_read_method(method) {
+            "write"
+        } else {
+            "read"
+        }
+        .to_string();
         let c = req || (!has_ro && !is_read_method(method));
         (p, c)
     };
@@ -346,7 +365,7 @@ mod tests {
     #[test]
     fn extracts_tools_with_operation_id_as_name() {
         let spec = make_minimal_spec();
-        let config = McpConfig::new();
+        let config = McpConfig::new().tool_policy(ToolPolicy::All); // test covers write ops too
 
         let tools = extract_tools_from_spec(&spec, &config);
         assert!(!tools.is_empty());
