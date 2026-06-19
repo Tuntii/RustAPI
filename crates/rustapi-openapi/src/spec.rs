@@ -7,46 +7,52 @@ use crate::schema::JsonSchema2020;
 pub use crate::schema::SchemaRef;
 
 /// OpenAPI 3.1.0 specification
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct OpenApiSpec {
     /// OpenAPI version (always "3.1.0")
+    #[serde(default = "default_openapi_version")]
     pub openapi: String,
 
     /// API information
+    #[serde(default)]
     pub info: ApiInfo,
 
     /// JSON Schema dialect (optional, defaults to JSON Schema 2020-12)
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub json_schema_dialect: Option<String>,
 
     /// Server list
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub servers: Vec<Server>,
 
     /// API paths
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub paths: BTreeMap<String, PathItem>,
 
     /// Webhooks
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub webhooks: BTreeMap<String, PathItem>,
 
     /// Components
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub components: Option<Components>,
 
     /// Security requirements
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub security: Vec<BTreeMap<String, Vec<String>>>,
 
     /// Tags
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub tags: Vec<Tag>,
 
     /// External documentation
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub external_docs: Option<ExternalDocs>,
+}
+
+fn default_openapi_version() -> String {
+    "3.1.0".to_string()
 }
 
 impl OpenApiSpec {
@@ -421,36 +427,36 @@ pub struct ServerVariable {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct PathItem {
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub summary: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub description: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub get: Option<Operation>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub put: Option<Operation>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub post: Option<Operation>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub delete: Option<Operation>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub options: Option<Operation>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub head: Option<Operation>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub patch: Option<Operation>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub trace: Option<Operation>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub servers: Vec<Server>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub parameters: Vec<Parameter>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Operation {
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub tags: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub summary: Option<String>,
@@ -460,12 +466,13 @@ pub struct Operation {
     pub external_docs: Option<ExternalDocs>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub operation_id: Option<String>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub parameters: Vec<Parameter>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub request_body: Option<RequestBody>,
+    #[serde(default)]
     pub responses: BTreeMap<String, ResponseSpec>,
-    #[serde(skip_serializing_if = "Vec::is_empty")]
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub security: Vec<BTreeMap<String, Vec<String>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub deprecated: Option<bool>,
@@ -515,18 +522,19 @@ pub struct RequestBody {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct ResponseSpec {
+    #[serde(default)]
     pub description: String,
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub content: BTreeMap<String, MediaType>,
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub headers: BTreeMap<String, Header>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct MediaType {
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub schema: Option<SchemaRef>,
-    #[serde(skip_serializing_if = "Option::is_none")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub example: Option<serde_json::Value>,
 }
 
@@ -541,23 +549,23 @@ pub struct Header {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Components {
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub schemas: BTreeMap<String, JsonSchema2020>,
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub responses: BTreeMap<String, ResponseSpec>,
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub parameters: BTreeMap<String, Parameter>,
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub examples: BTreeMap<String, serde_json::Value>,
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub request_bodies: BTreeMap<String, RequestBody>,
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub headers: BTreeMap<String, Header>,
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub security_schemes: BTreeMap<String, SecurityScheme>,
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub links: BTreeMap<String, serde_json::Value>,
-    #[serde(skip_serializing_if = "BTreeMap::is_empty")]
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub callbacks: BTreeMap<String, BTreeMap<String, PathItem>>,
 }
 

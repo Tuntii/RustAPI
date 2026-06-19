@@ -6,6 +6,9 @@ use crate::commands::{
     self, AddArgs, BenchArgs, ClientArgs, DeployArgs, DoctorArgs, GenerateArgs, MigrateArgs,
     NewArgs, ObservabilityArgs, RunArgs, WatchArgs,
 };
+
+#[cfg(feature = "mcp")]
+use crate::commands::McpGenerateArgs;
 use clap::{Parser, Subcommand};
 
 /// The official CLI tool for the RustAPI framework. Scaffold new projects, run development servers, and manage database migrations.
@@ -62,6 +65,11 @@ enum Commands {
     /// Generate API client from OpenAPI spec
     Client(ClientArgs),
 
+    /// MCP tools — turn any OpenAPI spec into an MCP server for agents
+    #[cfg(feature = "mcp")]
+    #[command(subcommand)]
+    Mcp(McpCommands),
+
     /// Deploy to various platforms
     #[command(subcommand)]
     Deploy(DeployArgs),
@@ -87,9 +95,22 @@ impl Cli {
             Commands::Migrate(args) => commands::migrate(args).await,
             Commands::Docs { port } => commands::open_docs(port).await,
             Commands::Client(args) => commands::client(args).await,
+            #[cfg(feature = "mcp")]
+            Commands::Mcp(McpCommands::Generate(args)) => commands::mcp_generate(args).await,
             Commands::Deploy(args) => commands::deploy(args).await,
             #[cfg(feature = "replay")]
             Commands::Replay(args) => commands::replay(args).await,
         }
     }
+}
+
+#[cfg(feature = "mcp")]
+#[derive(clap::Subcommand, Debug)]
+enum McpCommands {
+    /// Generate a running MCP server from an OpenAPI specification.
+    ///
+    /// Works with FastAPI, Express, Go, Spring, or any other API that
+    /// publishes an OpenAPI 3.x document. All tool calls are forwarded
+    /// (proxied) to the real backend.
+    Generate(McpGenerateArgs),
 }

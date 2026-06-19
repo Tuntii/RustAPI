@@ -254,7 +254,7 @@ Meta features: `core` (default), `protocol-all`, `extras-all`, `full`.
 
 - **Crate consolidation (13 → 9):** `rustapi-testing`, `rustapi-jobs`, `rustapi-view`, and `rustapi-toon` merged into `rustapi-core` and `rustapi-extras` as feature-gated modules.
 - **Embedded Isometric System Dashboard:** Live `/dashboard` with bento-grid layout, execution-flow visualization, and time-travel replay browser.
-- **Native MCP progress:** Cookbook recipe, `mcp_tools` runnable example, and end-to-end tests for tool discovery + real proxied invocation.
+- **Native MCP (full featured):** In-process invocation (~28µs per call), `cargo rustapi mcp generate` for any OpenAPI spec, stdio transport, and improved cookbook coverage.
 - Dual-stack runtime: simultaneous HTTP/1.1 (TCP) and HTTP/3 (QUIC/UDP)
 - WebSocket permessage-deflate compression
 - `rustapi-grpc` crate: optional Tonic/Prost-based gRPC alongside HTTP (`run_rustapi_and_grpc`)
@@ -266,11 +266,12 @@ Meta features: `core` (default), `protocol-all`, `extras-all`, `full`.
   - Live architectural view of request routing across the **Ultra Fast**, **Fast**, and **Full** execution paths.
   - Interactive endpoint visualization for topology inspection, route grouping, and runtime status awareness.
   - Time-travel replay UI for browsing recorded HTTP traffic, selecting a historical request, and inspecting replay state directly from the dashboard.
-- [~] Native MCP (Model Context Protocol) Orchestration
-  - Embedded MCP server that exposes RustAPI endpoints as discoverable tools for LLMs and external AI agents.
-  - Automatic capability discovery and direct tool-style invocation for compatible clients such as Claude and other multi-agent runtimes.
-  - Framework-level orchestration layer for agent-to-endpoint communication (core + examples + cookbook + e2e tests done: discovery + proxied invocation through full pipeline + sidecar runner + runnable `mcp_tools` example).
-  - Remaining polish: admin token enforcement in transport, optional zero-copy in-process invoker (current design uses correct localhost proxy), more client conformance tests.
+- [x] Native MCP (Model Context Protocol) Orchestration
+  - Embedded MCP server + `rustapi mcp generate` CLI turns any OpenAPI 3.x spec into agent tools.
+  - In-process invocation path: ~28 µs per call (vs ~1.3 ms for localhost proxy with live server) for 1000 sequential calls.
+  - stdio transport for desktop clients (Claude Desktop etc.).
+  - Tag/path-prefix filtering, full pipeline respect (or zero-copy in-process when co-located).
+  - Cookbook recipes for native use, CLI generator, in-process mode, and stdio.
 
 
 ## Documentation

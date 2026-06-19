@@ -30,3 +30,8 @@ pub use watch::{watch, WatchArgs};
 mod replay;
 #[cfg(feature = "replay")]
 pub use replay::{replay, ReplayArgs};
+
+#[cfg(feature = "mcp")]
+mod mcp;
+#[cfg(feature = "mcp")]
+pub use mcp::{mcp_generate, McpGenerateArgs};

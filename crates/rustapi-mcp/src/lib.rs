@@ -65,7 +65,7 @@ pub mod server;
 pub mod types;
 
 // Re-export the most important items at the crate root for convenience.
-pub use config::McpConfig;
+pub use config::{InvocationMode, McpConfig};
 pub use error::{McpError, Result};
 pub use runner::{
     run_concurrently, run_rustapi_and_mcp, run_rustapi_and_mcp_with_shutdown, BoxError,
@@ -78,7 +78,7 @@ pub use rustapi_openapi::OpenApiSpec;
 
 /// Prelude for common MCP types.
 pub mod prelude {
-    pub use crate::config::McpConfig;
+    pub use crate::config::{InvocationMode, McpConfig};
     pub use crate::error::{McpError, Result};
     pub use crate::runner::{
         run_concurrently, run_rustapi_and_mcp, run_rustapi_and_mcp_with_shutdown,
@@ -93,7 +93,4 @@ pub(crate) mod transport {
 }
 
 /// Internal helpers for executing tool calls through the normal RustAPI stack.
-pub(crate) mod invocation {
-    // Will eventually contain code that constructs a Request and drives it
-    // through Router / LayerStack / interceptors without going over the network.
-}
+pub(crate) mod invocation;

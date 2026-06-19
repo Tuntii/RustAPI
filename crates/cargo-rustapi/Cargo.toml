@@ -29,7 +29,7 @@ notify = { version = "8.0", optional = true }
 notify-debouncer-mini = { version = "0.7", optional = true }
 
 # Async
-tokio = { workspace = true, features = ["process", "fs", "macros", "rt-multi-thread", "time", "signal", "sync"] }
+tokio = { workspace = true, features = ["process", "fs", "macros", "rt-multi-thread", "time", "signal", "sync", "io-std"] }
 
 # Serialization
 serde = { workspace = true }
@@ -39,6 +39,10 @@ toml = "1.1"
 
 # HTTP client for fetching remote specs
 reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false, optional = true }
+
+# MCP support (OpenAPI → MCP server generator)
+rustapi-mcp = { workspace = true, optional = true }
+rustapi-openapi = { workspace = true, optional = true }
 
 # Utilities
 tracing = { workspace = true }
@@ -51,7 +55,8 @@ assert_cmd = "2.2"
 predicates = "3.1"
 
 [features]
-default = ["remote-spec", "replay"]
+default = ["remote-spec", "replay", "mcp"]
 native-watch = ["dep:notify", "dep:notify-debouncer-mini"]
 remote-spec = ["dep:reqwest"]
 replay = ["dep:reqwest"]
+mcp = ["dep:rustapi-mcp", "dep:rustapi-openapi", "remote-spec"]

@@ -41,6 +41,24 @@ pub struct McpConfig {
     /// Maximum number of tools to advertise in one `tools/list` response.
     /// Helps protect against very large route sets.
     pub max_tools: usize,
+
+    /// How `tools/call` should be executed.
+    /// Proxy (default) always goes over HTTP (correct and works for external targets).
+    /// InProcess / Auto are for when an in-process RustApi instance is available.
+    pub invocation_mode: InvocationMode,
+}
+
+/// Controls whether tool invocation goes through the normal HTTP path or
+/// a direct in-memory call (when available).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum InvocationMode {
+    /// Always proxy via the configured `http_base` (safest, works everywhere).
+    #[default]
+    Proxy,
+    /// Use direct in-process invocation when a RustApi runtime is attached.
+    InProcess,
+    /// Choose automatically (InProcess if runtime available, else Proxy).
+    Auto,
 }
 
 impl Default for McpConfig {
@@ -55,6 +73,7 @@ impl Default for McpConfig {
             admin_token: None,
             expose_detailed_errors: false,
             max_tools: 256,
+            invocation_mode: InvocationMode::Proxy,
         }
     }
 }
@@ -122,6 +141,12 @@ impl McpConfig {
     /// Set the maximum number of tools to list.
     pub fn max_tools(mut self, max: usize) -> Self {
         self.max_tools = max;
+        self
+    }
+
+    /// Choose invocation strategy for tool calls.
+    pub fn invocation_mode(mut self, mode: InvocationMode) -> Self {
+        self.invocation_mode = mode;
         self
     }
 }

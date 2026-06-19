@@ -1,8 +1,9 @@
 //! The main `McpServer` type and lifecycle.
 
-use crate::config::McpConfig;
+use crate::config::{InvocationMode, McpConfig};
 use crate::discovery;
 use crate::error::{McpError, Result};
+use crate::invocation::RequestInvoker;
 use crate::types::{McpCapability, McpTool};
 use bytes::Bytes;
 use http_body_util::{BodyExt, Full};
@@ -10,7 +11,7 @@ use hyper::body::Incoming;
 use hyper::server::conn::http1;
 use hyper::Response;
 use hyper_util::rt::TokioIo;
-use rustapi_core::RustApi;
+use rustapi_core::{Request as CoreRequest, RustApi};
 use rustapi_openapi::OpenApiSpec;
 use std::collections::HashMap;
 use std::convert::Infallible;
@@ -36,6 +37,10 @@ pub struct McpServer {
     /// Internal mapping from tool name (as advertised to MCP) to the original HTTP route info.
     /// Used to reconstruct the correct request when a tool is called.
     tool_map: HashMap<String, ToolExecutionInfo>,
+
+    /// Optional in-process invoker. Present when created via `from_rustapi`
+    /// and the configured `invocation_mode` allows direct dispatch.
+    invoker: Option<RequestInvoker>,
 }
 
 /// Internal info needed to turn an MCP tool/call into an actual HTTP request
@@ -56,17 +61,30 @@ impl McpServer {
             openapi: None,
             http_base: None,
             tool_map: HashMap::new(),
+            invoker: None,
         }
     }
 
     /// Create an MCP server pre-attached to a `RustApi` instance.
     ///
     /// This is the most ergonomic way when you already have a built `RustApi`.
+    /// If `invocation_mode` is `InProcess` or `Auto`, a direct in-process
+    /// dispatcher is captured for zero-overhead tool calls (see `RequestInvoker`).
     pub fn from_rustapi(app: &RustApi, config: McpConfig) -> Self {
         let mut server = Self::new(config);
+
         let spec = app.openapi_spec().clone();
         server.openapi = Some(spec.clone());
         server.rebuild_tool_map(&spec);
+
+        // Only capture in-process dispatcher when the configured mode can actually use it.
+        // This avoids unnecessary work and state cloning when the user explicitly wants Proxy.
+        let mode = server.config.invocation_mode;
+        if mode == InvocationMode::InProcess || mode == InvocationMode::Auto {
+            let dispatcher = app.request_dispatcher();
+            server.invoker = Some(RequestInvoker::new(dispatcher, server.config.clone()));
+        }
+
         server
     }
 
@@ -210,6 +228,25 @@ impl McpServer {
 
         let path = substitute_path_params(&info.path_template, &req.arguments);
 
+        // Decide execution strategy
+        let use_inprocess = if let Some(inv) = &self.invoker {
+            inv.should_use()
+        } else {
+            false
+        };
+
+        if use_inprocess {
+            if let Some(invoker) = &self.invoker {
+                let state = invoker.state_ref();
+                let core_req = self
+                    .build_core_request(info, &req.arguments, &path, state)
+                    .await?;
+                let core_resp = invoker.invoke(core_req).await;
+                return self.core_response_to_tool_response(core_resp).await;
+            }
+        }
+
+        // Fallback / default: proxy via HTTP (current behavior)
         let base = self.http_base.as_deref().unwrap_or("http://127.0.0.1:8080");
 
         let url = format!("{}{}", base.trim_end_matches('/'), path);
@@ -253,6 +290,92 @@ impl McpServer {
             content,
             is_error,
             meta: Some(serde_json::json!({ "proxied_status": status.as_u16() })),
+        })
+    }
+
+    /// Build a `core::Request` suitable for in-process dispatch.
+    async fn build_core_request(
+        &self,
+        info: &ToolExecutionInfo,
+        arguments: &std::collections::HashMap<String, serde_json::Value>,
+        substituted_path: &str,
+        state: Arc<http::Extensions>,
+    ) -> Result<CoreRequest> {
+        use bytes::Bytes;
+        use http::{Method, Request as HttpRequest, Uri, Version};
+        use rustapi_core::{BodyVariant, PathParams};
+
+        let method = Method::from_bytes(info.method.as_bytes()).unwrap_or(Method::GET);
+        let uri: Uri = substituted_path
+            .parse()
+            .unwrap_or_else(|_| "/".parse().expect("valid fallback uri"));
+
+        let mut builder = HttpRequest::builder()
+            .method(method.clone())
+            .uri(uri)
+            .version(Version::HTTP_11);
+
+        let is_body_method = matches!(info.method.as_str(), "POST" | "PUT" | "PATCH");
+
+        let body_bytes = if is_body_method && !arguments.is_empty() {
+            builder = builder.header("content-type", "application/json");
+            let json = serde_json::to_vec(arguments).unwrap_or_default();
+            Bytes::from(json)
+        } else {
+            Bytes::new()
+        };
+
+        let http_req = builder
+            .body(())
+            .map_err(|e| McpError::ToolExecution(format!("failed to build request: {}", e)))?;
+
+        let (mut parts, _) = http_req.into_parts();
+
+        parts.method = method;
+        parts.uri = substituted_path.parse().unwrap_or(parts.uri);
+
+        let path_params = PathParams::new();
+
+        let core_req =
+            CoreRequest::new(parts, BodyVariant::Buffered(body_bytes), state, path_params);
+
+        Ok(core_req)
+    }
+
+    /// Convert a core Response back into a ToolCallResponse.
+    async fn core_response_to_tool_response(
+        &self,
+        resp: rustapi_core::Response,
+    ) -> Result<crate::types::ToolCallResponse> {
+        use http_body_util::BodyExt;
+
+        let status = resp.status();
+        let is_error = !status.is_success();
+
+        // Collect body
+        let body_bytes = resp
+            .into_body()
+            .collect()
+            .await
+            .map(|collected| collected.to_bytes())
+            .unwrap_or_default();
+
+        let content = if body_bytes.is_empty() {
+            serde_json::Value::Null
+        } else if let Ok(text) = std::str::from_utf8(&body_bytes) {
+            if text.trim().is_empty() {
+                serde_json::Value::Null
+            } else {
+                serde_json::from_str(text).unwrap_or(serde_json::Value::String(text.to_string()))
+            }
+        } else {
+            serde_json::Value::String(String::from_utf8_lossy(&body_bytes).to_string())
+        };
+
+        Ok(crate::types::ToolCallResponse {
+            content,
+            is_error,
+            meta: Some(serde_json::json!({ "status": status.as_u16(), "in_process": true })),
         })
     }
 }

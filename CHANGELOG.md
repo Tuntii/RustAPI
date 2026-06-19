@@ -31,6 +31,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.504] - 2026-06-19
+
+### Added
+
+- **MCP In-Process Invocation**: `InvocationMode::InProcess` / `Auto` on `McpConfig`. When a `McpServer` is created via `from_rustapi`, tool calls can execute directly through the `Router` + `LayerStack` + interceptors with no network hop. `RustApi::request_dispatcher()` and internal `RequestInvoker` / `RequestDispatcher`.
+  - Typical result: ~28 µs per call (in-process) vs ~1.3 ms (proxy via live localhost HTTP) for 1000 sequential calls — ~45-50× speedup.
+- **`cargo rustapi mcp generate`**: Turn any OpenAPI 3.x spec (FastAPI, Express, Go, etc.) into a running MCP server. Supports `--spec`, `--url`, `--api`, `--target`, tag/path filtering, and `--stdio`.
+- **MCP stdio transport**: `--stdio` flag for desktop AI clients (Claude Desktop, etc.).
+- New cookbook recipes: In-Process Invocation, OpenAPI→MCP CLI, and stdio transport. Updated main MCP recipe and README.
+
+### Changed
+
+- OpenAPI deserialization in `rustapi-openapi` is now significantly more tolerant of real-world/partial specs (added `#[serde(default)]` on maps and optional fields) so the CLI works reliably with external APIs.
+- `Router` now derives `Clone` (aids in-process sharing patterns).
+- `McpConfig` gained `invocation_mode(...)`.
+
+### Documentation
+
+- Major updates to MCP coverage in README, cookbook, and plan documents (`in_process_mcp_invocation.md`, `openapi_to_mcp_cli.md`).
+
 ## [0.1.410] - 2026-03-09
 
 ### Added
