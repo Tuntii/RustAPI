@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-8f09c680.js";
+            window.path_to_searchindex_js = "searchindex-e44b3527.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-18ba3ccd.js"></script>
+        <script src="toc-380ad91a.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -2142,6 +2142,9 @@ async fn get_user(Path(_id): Path&lt;String&gt;) -&gt; Result&lt;&amp;'static st
 <li><a href="#server-side-rendering-ssr">Server-Side Rendering (SSR)</a></li>
 <li><a href="#ai-integration">AI Integration (TOON)</a></li>
 <li><a href="#mcp-integration-agent-tools">MCP Integration (Agent Tools)</a></li>
+<li><a href="#mcp-in-process-invocation">MCP In-Process Invocation</a></li>
+<li><a href="#openapi-to-mcp-cli">OpenAPI to MCP CLI</a></li>
+<li><a href="#mcp-stdio-transport">MCP stdio Transport</a></li>
 <li><a href="#production-tuning">Production Tuning</a></li>
 <li><a href="#response-compression">Response Compression</a></li>
 <li><a href="#resilience-patterns">Resilience Patterns</a></li>
@@ -5413,6 +5416,183 @@ let prompt = format!(
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="mcp-integration-agent-tools"><a class="header" href="#mcp-integration-agent-tools">MCP Integration (Agent Tools)</a></h1>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="mcp-in-process-invocation"><a class="header" href="#mcp-in-process-invocation">MCP In-Process Invocation</a></h1>
+<p>By default, <code>tools/call</code> from an MCP server proxies over HTTP to your main RustAPI server (even on localhost). This guarantees that every middleware, interceptor, extractor, and validator runs exactly as for normal traffic.</p>
+<p>For high-frequency agent use (many tool calls per prompt), the network/serde overhead of the proxy can add up. RustAPI supports an optional <strong>in-process</strong> invocation path that constructs a <code>Request</code> and drives it directly through the <code>Router</code> + <code>LayerStack</code> with zero TCP or serialization.</p>
+<h2 id="when-to-use-in-process"><a class="header" href="#when-to-use-in-process">When to Use In-Process</a></h2>
+<ul>
+<li>You are using <code>run_rustapi_and_mcp</code> (or equivalent) so the MCP sidecar and main HTTP server are in the <strong>same process</strong>.</li>
+<li>You make many sequential or batched tool calls from agents.</li>
+<li>You want the absolute lowest latency while keeping the full pipeline.</li>
+</ul>
+<p><strong>Do not</strong> use in-process if your MCP server talks to a <em>remote</em> RustAPI instance (use the proxy).</p>
+<h2 id="how-to-enable"><a class="header" href="#how-to-enable">How to Enable</a></h2>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::protocol::mcp::{McpConfig, McpServer, InvocationMode};
+
+let mcp = McpServer::from_rustapi(
+    &amp;app,
+    McpConfig::new()
+        .allowed_tags(["agent"])
+        .invocation_mode(InvocationMode::InProcess),  // or Auto
+);
+<span class="boring">}</span></code></pre>
+<p>Modes:</p>
+<ul>
+<li><code>Proxy</code> (default): always use HTTP proxy.</li>
+<li><code>InProcess</code>: use direct dispatch (requires <code>from_rustapi</code>).</li>
+<li><code>Auto</code>: prefer in-process when a <code>RustApi</code> was attached, fall back to proxy.</li>
+</ul>
+<p>When you use <code>run_rustapi_and_mcp*</code>, the runner automatically wires the HTTP base for the proxy path. In-process mode simply ignores it.</p>
+<h2 id="performance"><a class="header" href="#performance">Performance</a></h2>
+<p>See the benchmark in <code>crates/rustapi-mcp/tests/mcp_e2e.rs</code>.</p>
+<p>Typical numbers on a dev machine (1000 sequential tool calls):</p>
+<ul>
+<li>In-process: ~28 µs per call</li>
+<li>Proxy (live localhost HTTP): ~1.3 ms per call</li>
+<li>Speedup: ~45-50x</li>
+</ul>
+<p>The in-process path still executes the full middleware chain, extractors, validation, and error handling.</p>
+<h2 id="implementation-notes"><a class="header" href="#implementation-notes">Implementation Notes</a></h2>
+<p>The <code>RequestDispatcher</code> (obtained via <code>app.request_dispatcher()</code>) clones the necessary <code>Arc&lt;Router&gt;</code>, <code>LayerStack</code>, and <code>InterceptorChain</code>. Your <code>McpServer</code> stores a <code>RequestInvoker</code> when created via <code>from_rustapi</code>.</p>
+<p>Tool calls still go through:</p>
+<ul>
+<li>Request interceptors</li>
+<li>Middleware layers (in order)</li>
+<li>Router match + handler (with extractors, Schema validation, etc.)</li>
+<li>Response interceptors</li>
+</ul>
+<p>No shortcuts are taken.</p>
+<h2 id="cookbook-cross-references"><a class="header" href="#cookbook-cross-references">Cookbook Cross-References</a></h2>
+<ul>
+<li>Main MCP page: <a href="#mcp-integration-agent-tools">MCP Integration (Agent Tools)</a></li>
+<li>CLI generator: <a href="#openapi-to-mcp-cli">OpenAPI to MCP CLI</a></li>
+<li>stdio: <a href="#mcp-stdio-transport">MCP stdio Transport</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="openapi-to-mcp-cli"><a class="header" href="#openapi-to-mcp-cli">OpenAPI to MCP CLI</a></h1>
+<p>The <code>cargo-rustapi</code> CLI includes <code>rustapi mcp generate</code>. It takes <strong>any</strong> OpenAPI 3.x spec (from FastAPI, Express, Go, Spring, etc.) and instantly spins up an MCP server. Tool calls are proxied to the real backend.</p>
+<p>This is a major growth feature: non-Rust teams can get first-class agent tools with zero Rust code.</p>
+<h2 id="installation-1"><a class="header" href="#installation-1">Installation</a></h2>
+<pre><code class="language-bash">cargo install cargo-rustapi
+# or from source
+cargo install --path crates/cargo-rustapi
+</code></pre>
+<h2 id="basic-usage-2"><a class="header" href="#basic-usage-2">Basic Usage</a></h2>
+<pre><code class="language-bash"># From a local spec file
+rustapi mcp generate \
+  --spec ./openapi.json \
+  --target http://localhost:8000 \
+  --port 9090 \
+  --tags public,agent
+
+# From a URL
+rustapi mcp generate \
+  --url https://api.example.com/openapi.json \
+  --target https://api.example.com \
+  --port 9090
+
+# Point at a running service (auto-fetches /openapi.json)
+rustapi mcp generate \
+  --api http://localhost:8080 \
+  --port 9090
+</code></pre>
+<h2 id="flags"><a class="header" href="#flags">Flags</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Flag</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>--spec &lt;FILE&gt;</code></td><td>Local JSON or YAML OpenAPI file</td></tr>
+<tr><td><code>--url &lt;URL&gt;</code></td><td>Fetch spec from HTTP URL</td></tr>
+<tr><td><code>--api &lt;BASE&gt;</code></td><td>Use <code>&lt;BASE&gt;/openapi.json</code> as spec source + default target</td></tr>
+<tr><td><code>--target &lt;URL&gt;</code></td><td>Backend that tool calls proxy to (required unless <code>--api</code>)</td></tr>
+<tr><td><code>--port &lt;N&gt;</code></td><td>MCP listen port (default 9090)</td></tr>
+<tr><td><code>--name &lt;NAME&gt;</code></td><td>Server name advertised to clients</td></tr>
+<tr><td><code>--tags &lt;TAGS&gt;</code></td><td>Comma-separated tags to expose</td></tr>
+<tr><td><code>--allow-path-prefix</code></td><td>Only include paths starting with prefix</td></tr>
+<tr><td><code>--stdio</code></td><td>Use stdio transport instead of HTTP</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="example-walkthrough-with-a-python-fastapi"><a class="header" href="#example-walkthrough-with-a-python-fastapi">Example Walkthrough with a Python FastAPI</a></h2>
+<ol>
+<li>
+<p>Start your FastAPI app on port 8000 (it serves OpenAPI at <code>/openapi.json</code>).</p>
+</li>
+<li>
+<p>In another terminal:</p>
+</li>
+</ol>
+<pre><code class="language-bash">rustapi mcp generate --api http://localhost:8000 --port 9090 --tags public
+</code></pre>
+<ol start="3">
+<li>
+<p>Test with curl or connect Claude Desktop / Cursor to <code>http://localhost:9090</code>.</p>
+</li>
+<li>
+<p>Agents see your FastAPI endpoints as tools. Calls go through the real backend (auth, validation, DB, etc.).</p>
+</li>
+</ol>
+<h2 id="how-it-works-4"><a class="header" href="#how-it-works-4">How It Works</a></h2>
+<ul>
+<li>Uses <code>McpServer::from_spec(config, &amp;parsed_openapi)</code>.</li>
+<li>Reuses the same discovery and proxy logic as native RustAPI MCP.</li>
+<li>No RustAPI server required on the target side.</li>
+</ul>
+<h2 id="security-note"><a class="header" href="#security-note">Security Note</a></h2>
+<p>The generated MCP server is only as secure as the filters you apply (<code>--tags</code>, <code>--allow-path-prefix</code>). Never expose internal/admin routes to agents unless you intend to.</p>
+<h2 id="related"><a class="header" href="#related">Related</a></h2>
+<ul>
+<li>Native MCP: <a href="#mcp-integration-agent-tools">MCP Integration</a></li>
+<li>In-process: <a href="#mcp-in-process-invocation">MCP In-Process Invocation</a></li>
+<li>stdio: <a href="#mcp-stdio-transport">MCP stdio Transport</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="mcp-stdio-transport"><a class="header" href="#mcp-stdio-transport">MCP stdio Transport</a></h1>
+<p>In addition to the HTTP JSON-RPC transport, <code>rustapi mcp generate</code> supports <code>--stdio</code>.</p>
+<p>stdio is the transport used by many local AI clients (Claude Desktop, some Cursor setups, custom agents) that spawn the MCP server as a child process and communicate over stdin/stdout.</p>
+<h2 id="usage-3"><a class="header" href="#usage-3">Usage</a></h2>
+<pre><code class="language-bash">rustapi mcp generate \
+  --spec ./openapi.json \
+  --target http://localhost:8000 \
+  --stdio
+</code></pre>
+<p>When <code>--stdio</code> is passed, the command does <strong>not</strong> bind a TCP port. Instead it enters a loop:</p>
+<ul>
+<li>Reads JSON-RPC lines from stdin</li>
+<li>Dispatches <code>initialize</code>, <code>tools/list</code>, <code>tools/call</code></li>
+<li>Writes JSON-RPC responses to stdout</li>
+</ul>
+<h2 id="why-stdio"><a class="header" href="#why-stdio">Why stdio?</a></h2>
+<ul>
+<li>No network port to manage or firewall.</li>
+<li>Simple process model for desktop apps.</li>
+<li>Works well with local-only tools.</li>
+</ul>
+<h2 id="current-limitations-mvp"><a class="header" href="#current-limitations-mvp">Current Limitations (MVP)</a></h2>
+<ul>
+<li>Only basic JSON-RPC over line-delimited messages (no SSE framing yet).</li>
+<li>No built-in auth/token for stdio (rely on OS process isolation + tool-level filters).</li>
+<li>Logging goes to stderr.</li>
+</ul>
+<h2 id="connecting-clients"><a class="header" href="#connecting-clients">Connecting Clients</a></h2>
+<p>Most clients that support “local MCP server” or “command” transport can use:</p>
+<pre><code class="language-json">{
+  "command": "rustapi",
+  "args": ["mcp", "generate", "--spec", "/path/to/openapi.json", "--target", "http://127.0.0.1:8000", "--stdio"]
+}
+</code></pre>
+<p>See your client’s documentation for exact config format.</p>
+<h2 id="related-pages"><a class="header" href="#related-pages">Related Pages</a></h2>
+<ul>
+<li>Main MCP: <a href="#mcp-integration-agent-tools">MCP Integration</a></li>
+<li>In-process: <a href="#mcp-in-process-invocation">MCP In-Process Invocation</a></li>
+<li>CLI generator: <a href="#openapi-to-mcp-cli">OpenAPI to MCP CLI</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="production-tuning"><a class="header" href="#production-tuning">Production Tuning</a></h1>
 <p><strong>Problem</strong>: Your API needs to handle extreme load (10k+ requests per second).</p>
 <h2 id="solution-6"><a class="header" href="#solution-6">Solution</a></h2>
@@ -5444,7 +5624,7 @@ async fn main() {
 <pre><code class="language-toml">[dependencies]
 rustapi-rs = { version = "0.1.335", features = ["compression", "compression-brotli"] }
 </code></pre>
-<h2 id="basic-usage-2"><a class="header" href="#basic-usage-2">Basic Usage</a></h2>
+<h2 id="basic-usage-3"><a class="header" href="#basic-usage-3">Basic Usage</a></h2>
 <p>The simplest way to enable compression is to add the layer to your application:</p>
 <pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
 use rustapi_core::middleware::CompressionLayer;
@@ -5518,13 +5698,13 @@ rustapi-rs = { version = "0.1.335", features = ["full"] }
 </code></pre>
 <h2 id="circuit-breaker-1"><a class="header" href="#circuit-breaker-1">Circuit Breaker</a></h2>
 <p>The Circuit Breaker pattern prevents your application from repeatedly trying to execute an operation that’s likely to fail. It gives the failing service time to recover.</p>
-<h3 id="how-it-works-4"><a class="header" href="#how-it-works-4">How it works</a></h3>
+<h3 id="how-it-works-5"><a class="header" href="#how-it-works-5">How it works</a></h3>
 <ol>
 <li><strong>Closed</strong>: Requests flow normally.</li>
 <li><strong>Open</strong>: After <code>failure_threshold</code> is reached, requests fail immediately with <code>503 Service Unavailable</code>.</li>
 <li><strong>Half-Open</strong>: After <code>timeout</code> passes, a limited number of test requests are allowed. If they succeed, the circuit closes.</li>
 </ol>
-<h3 id="usage-3"><a class="header" href="#usage-3">Usage</a></h3>
+<h3 id="usage-4"><a class="header" href="#usage-4">Usage</a></h3>
 <pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
 use rustapi_extras::circuit_breaker::CircuitBreakerLayer;
 use std::time::Duration;
@@ -5631,7 +5811,7 @@ rustapi-rs = { version = "0.1.335", features = [
   "extras-insight"
 ] }
 </code></pre>
-<h2 id="basic-usage-3"><a class="header" href="#basic-usage-3">Basic Usage</a></h2>
+<h2 id="basic-usage-4"><a class="header" href="#basic-usage-4">Basic Usage</a></h2>
 <pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
 use rustapi_rs::extras::{
     insight::{InsightConfig, InsightLayer},
@@ -5790,7 +5970,7 @@ rustapi-rs = { version = "0.1.335", features = ["core-dashboard"] }
 <pre><code class="language-toml">[dependencies]
 rustapi-rs = { version = "0.1.335", features = ["core-dashboard", "extras-replay"] }
 </code></pre>
-<h2 id="usage-4"><a class="header" href="#usage-4">Usage</a></h2>
+<h2 id="usage-5"><a class="header" href="#usage-5">Usage</a></h2>
 <pre><code class="language-rust ignore">use rustapi_rs::prelude::*;
 
 #[rustapi_rs::get("/api/users")]
@@ -6194,7 +6374,7 @@ rustapi-extras = { version = "0.1.335", features = ["audit"] }
 <li><strong>AuditStore</strong>: Interface for persisting events (e.g., <code>InMemoryAuditStore</code>, <code>FileAuditStore</code>).</li>
 <li><strong>ComplianceInfo</strong>: Additional metadata for regulatory requirements.</li>
 </ul>
-<h2 id="basic-usage-4"><a class="header" href="#basic-usage-4">Basic Usage</a></h2>
+<h2 id="basic-usage-5"><a class="header" href="#basic-usage-5">Basic Usage</a></h2>
 <p>Log a simple event when a user is created.</p>
 <pre class="playground"><code class="language-rust">use rustapi_extras::audit::{AuditEvent, AuditAction, InMemoryAuditStore, AuditStore};
 
@@ -6559,7 +6739,7 @@ impl ReplayStore for MyCustomStore {
 <li><strong>Railway</strong>: Generate <code>railway.toml</code> and project setup.</li>
 <li><strong>Shuttle.rs</strong>: Generate <code>Shuttle.toml</code> and setup instructions.</li>
 </ul>
-<h2 id="usage-5"><a class="header" href="#usage-5">Usage</a></h2>
+<h2 id="usage-6"><a class="header" href="#usage-6">Usage</a></h2>
 <h3 id="docker"><a class="header" href="#docker">Docker</a></h3>
 <p>Generate a <code>Dockerfile</code> optimized for RustAPI applications:</p>
 <pre><code class="language-bash">cargo rustapi deploy docker
@@ -6743,7 +6923,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&g
         .run_dual_stack("127.0.0.1:8080")
         .await
 }</code></pre>
-<h2 id="how-it-works-5"><a class="header" href="#how-it-works-5">How It Works</a></h2>
+<h2 id="how-it-works-6"><a class="header" href="#how-it-works-6">How It Works</a></h2>
 <p>HTTP/3 in RustAPI is built on top of <code>quinn</code> and <code>h3</code>. When enabled:</p>
 <ol>
 <li><strong>UDP Binding</strong>: The server binds to a UDP socket (in addition to TCP if dual-stack).</li>
@@ -6857,7 +7037,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&g
 
     Ok(())
 }</code></pre>
-<h2 id="how-it-works-6"><a class="header" href="#how-it-works-6">How It Works</a></h2>
+<h2 id="how-it-works-7"><a class="header" href="#how-it-works-7">How It Works</a></h2>
 <ol>
 <li><strong>Shared Runtime</strong>: Both servers run on the same Tokio runtime, sharing thread pool resources efficiently.</li>
 <li><strong>Graceful Shutdown</strong>: When <code>Ctrl+C</code> is pressed, <code>run_rustapi_and_grpc_with_shutdown</code> signals both the HTTP server and the gRPC server to stop accepting new connections and finish pending requests.</li>
