@@ -31,14 +31,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.507] - 2026-06-19
-
-### Added
-- Full MCP growth features: In-process invocation, `cargo rustapi mcp generate` CLI, stdio transport.
-- Cookbook recipes for in-process, OpenAPI-to-MCP CLI, and stdio.
-- Public API exposure for `RequestDispatcher`.
-- Various polishes and bug fixes from PR reviews (state handling, stdio UX, error formatting, benchmark gating).
-
 ## [0.1.504] - 2026-06-19
 
 ### Added
