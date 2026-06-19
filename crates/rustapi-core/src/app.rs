@@ -31,7 +31,7 @@ pub struct RequestDispatcher {
 
 impl RequestDispatcher {
     /// Returns the shared state Extensions from the underlying router.
-    /// Useful for in-process request construction to preserve State<T> etc.
+    /// Useful for in-process request construction to preserve `State<T>` etc.
     pub fn state_ref(&self) -> Arc<Extensions> {
         self.router.state_ref()
     }

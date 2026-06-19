@@ -42,11 +42,11 @@ pub mod core {
         Handler, HandlerService, HeaderValue, Headers, HealthCheck, HealthCheckBuilder,
         HealthCheckResult, HealthEndpointConfig, HealthStatus, Html, IntoResponse, Json, KeepAlive,
         MethodRouter, Multipart, MultipartConfig, MultipartField, NoContent, Paginate, Paginated,
-        Path, ProductionDefaultsConfig, Query, Redirect, Request, RequestId, RequestIdLayer,
-        Response, ResponseBody, Result, Route, RouteHandler, RouteMatch, Router, RustApi,
-        RustApiConfig, Sse, SseEvent, State, StaticFile, StaticFileConfig, StatusCode, StreamBody,
-        StreamingMultipart, StreamingMultipartField, TracingLayer, Typed, TypedPath, UploadedFile,
-        ValidatedJson, WithStatus,
+        Path, ProductionDefaultsConfig, Query, Redirect, Request, RequestDispatcher, RequestId,
+        RequestIdLayer, Response, ResponseBody, Result, Route, RouteHandler, RouteMatch, Router,
+        RustApi, RustApiConfig, Sse, SseEvent, State, StaticFile, StaticFileConfig, StatusCode,
+        StreamBody, StreamingMultipart, StreamingMultipartField, TracingLayer, Typed, TypedPath,
+        UploadedFile, ValidatedJson, WithStatus,
     };
 
     pub use rustapi_core::get_environment;
@@ -367,11 +367,11 @@ pub mod prelude {
         CursorPaginate, CursorPaginated, Extension, HeaderValue, Headers, HealthCheck,
         HealthCheckBuilder, HealthCheckResult, HealthEndpointConfig, HealthStatus, Html,
         IntoResponse, Json, KeepAlive, Multipart, MultipartConfig, MultipartField, NoContent,
-        Paginate, Paginated, Path, ProductionDefaultsConfig, Query, Redirect, Request, RequestId,
-        RequestIdLayer, Response, Result, Route, Router, RustApi, RustApiConfig, Sse, SseEvent,
-        State, StaticFile, StaticFileConfig, StatusCode, StreamBody, StreamingMultipart,
-        StreamingMultipartField, TracingLayer, Typed, TypedPath, UploadedFile, ValidatedJson,
-        WithStatus,
+        Paginate, Paginated, Path, ProductionDefaultsConfig, Query, Redirect, Request,
+        RequestDispatcher, RequestId, RequestIdLayer, Response, Result, Route, Router, RustApi,
+        RustApiConfig, Sse, SseEvent, State, StaticFile, StaticFileConfig, StatusCode, StreamBody,
+        StreamingMultipart, StreamingMultipartField, TracingLayer, Typed, TypedPath, UploadedFile,
+        ValidatedJson, WithStatus,
     };
 
     #[cfg(any(feature = "core-compression", feature = "compression"))]
