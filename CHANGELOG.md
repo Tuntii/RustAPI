@@ -29,7 +29,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added a cookbook recipe and SVG preview for the embedded dashboard and replay browser workflow, including the inspection-first state rewind model and disabled-feature performance budget.
 
-## [Unreleased]
+## [0.1.507] - 2026-06-19
+
+### Added
+
+- **MCP In-Process Invocation**: `InvocationMode::InProcess` / `Auto` on `McpConfig`. Direct tool execution through `Router` + `LayerStack` without network overhead. `RustApi::request_dispatcher()` and `RequestInvoker`.
+  - ~28 µs per call vs ~1.3 ms proxy (live server) — ~45-50× speedup for 1000 sequential calls.
+- **`cargo rustapi mcp generate` CLI**: Convert any OpenAPI 3.x spec (FastAPI, Express, Go, etc.) into a running MCP server. Supports `--spec`, `--url`, `--api`, `--target`, filters, and `--stdio`.
+- **MCP stdio Transport**: `--stdio` flag for local AI clients like Claude Desktop.
+- **Lifetime Sponsors**: Added emirtom, erencanbas, arda-num as permanent LIFE-TIME sponsors with GitHub profile embeds in README Hall of Fame.
+- New cookbook recipes: In-Process Invocation, OpenAPI→MCP CLI, stdio transport.
+- Polish from PR reviews: state handling for in-process, stdio UX fixes, proper JSON-RPC errors, benchmark as ignored test.
+
+### Changed
+
+- OpenAPI deserialization made more tolerant for external specs (`#[serde(default)]` on maps/optionals).
+- `Router` now `Clone` for sharing.
+- `McpConfig` now has `invocation_mode(...)`.
+- Public API updates: `RequestDispatcher` exposed in facade.
+
+### Documentation
+
+- Major MCP updates in README, cookbook, and memory docs.
+- Sponsors section enhanced with lifetime embeds.
+- Release notes aligned for v0.1.507.
 
 ## [0.1.504] - 2026-06-19
 
