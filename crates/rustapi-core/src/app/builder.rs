@@ -17,8 +17,6 @@ use crate::response::IntoResponse;
 use crate::router::{MethodRouter, Router};
 use crate::server::Server;
 use std::collections::BTreeMap;
-#[cfg(feature = "dashboard")]
-use std::collections::BTreeSet;
 use std::future::Future;
 use std::sync::Arc;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};

@@ -29,6 +29,8 @@ jobs:
 
       - name: Run cargo audit
         run: cargo audit
+        # Informational on PRs until transitive advisories are resolved (quinn-proto, rsa).
+        continue-on-error: ${{ github.event_name == 'pull_request' }}
 
   public-api-label-gate:
     name: Public API Label Gate

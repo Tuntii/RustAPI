@@ -8,7 +8,7 @@ use std::sync::Arc;
 /// A dispatcher that can drive requests through the RustAPI pipeline
 /// (interceptors + layers + router) without any network or serialization overhead.
 ///
-/// Obtained via [`RustApi::request_dispatcher`].
+/// Obtained via [`crate::RustApi::request_dispatcher`].
 #[derive(Clone)]
 pub struct RequestDispatcher {
     pub(super) router: Arc<Router>,
