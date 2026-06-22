@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.528] - 2026-06-22
+
+### Added
+
+- **RustAPI Cloud CLI** in `cargo-rustapi`: `login` (device-code OAuth), `whoami`, `logout`, and `deploy cloud` for managed hosting uploads.
+- New opt-in `cloud` feature on `cargo-rustapi` (enabled by default) for cloud auth/deploy commands.
+
+### Fixed
+
+- **CI**: `cargo test --workspace --no-default-features` no longer fails when cloud commands are disabled — `login` and `deploy cloud` are gated behind the `cloud` feature.
+- **CI**: coverage job installs native database client libraries (matching test/lint jobs).
+- **MCP e2e**: write-tool test now sets `ToolPolicy::All` when exercising compute routes.
+
+### Changed
+
+- Bumped `opentelemetry` from 0.31 to 0.32.
+
+### Documentation
+
+- README polish for launch visibility (MCP section, quickstart, comparison, roadmap).
+
 ## [0.1.501] - 2026-06-13
 
 ### Changed
@@ -513,7 +534,8 @@ This release delivers a **12x performance improvement**, bringing RustAPI from ~
 - `extras` meta-feature for common optional features
 - `full` feature for all optional features
 
-[Unreleased]: https://github.com/Tuntii/RustAPI/compare/v0.1.397...HEAD
+[Unreleased]: https://github.com/Tuntii/RustAPI/compare/v0.1.528...HEAD
+[0.1.528]: https://github.com/Tuntii/RustAPI/compare/v0.1.508...v0.1.528
 [0.1.397]: https://github.com/Tuntii/RustAPI/compare/v0.1.335...v0.1.397
 [0.1.335]: https://github.com/Tuntii/RustAPI/compare/v0.1.300...v0.1.335
 [0.1.300]: https://github.com/Tuntii/RustAPI/compare/v0.1.202...v0.1.300

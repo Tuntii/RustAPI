@@ -1,3 +1,31 @@
+# RustAPI v0.1.528 Release Notes
+
+**Release Date**: June 22, 2026
+**Full Changelog**: https://github.com/Tuntii/RustAPI/compare/v0.1.508...v0.1.528
+
+---
+
+## Highlights
+
+v0.1.528 ships **RustAPI Cloud CLI** support and fixes the CI regression introduced by the new cloud commands.
+
+| Feature | Crate | Impact |
+|---------|-------|--------|
+| `cargo rustapi login` | `cargo-rustapi` | Device-code OAuth login to RustAPI Cloud |
+| `cargo rustapi whoami` / `logout` | `cargo-rustapi` | Session status and local credential cleanup |
+| `cargo rustapi deploy cloud` | `cargo-rustapi` | Build, package, and upload release binaries to RustAPI Cloud |
+| `cloud` feature | `cargo-rustapi` | Opt-in gate for cloud HTTP commands; keeps `--no-default-features` builds working |
+| CI coverage fix | `.github/workflows` | Native DB libs installed for tarpaulin/mysql feature builds |
+
+**Cloud login in one line:**
+
+```bash
+cargo rustapi login
+cargo rustapi deploy cloud
+```
+
+---
+
 # RustAPI v0.1.501 Release Notes
 
 **Release Date**: June 13, 2026
