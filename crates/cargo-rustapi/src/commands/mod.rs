@@ -7,6 +7,7 @@ mod deploy;
 mod docs;
 mod doctor;
 mod generate;
+#[cfg(feature = "cloud")]
 mod login;
 mod logout;
 mod migrate;
@@ -23,6 +24,7 @@ pub use deploy::{deploy, DeployArgs};
 pub use docs::open_docs;
 pub use doctor::{doctor, DoctorArgs};
 pub use generate::{generate, GenerateArgs};
+#[cfg(feature = "cloud")]
 pub use login::{login, LoginArgs};
 pub use logout::{logout, LogoutArgs};
 pub use migrate::{migrate, MigrateArgs};

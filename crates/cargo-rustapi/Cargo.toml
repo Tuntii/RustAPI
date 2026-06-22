@@ -57,8 +57,9 @@ assert_cmd = "2.2"
 predicates = "3.1"
 
 [features]
-default = ["remote-spec", "replay", "mcp"]
+default = ["remote-spec", "replay", "mcp", "cloud"]
 native-watch = ["dep:notify", "dep:notify-debouncer-mini"]
 remote-spec = ["dep:reqwest"]
 replay = ["dep:reqwest"]
+cloud = ["dep:reqwest"]
 mcp = ["dep:rustapi-mcp", "dep:rustapi-openapi", "remote-spec"]

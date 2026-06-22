@@ -16,6 +16,7 @@ use crate::config::load_config;
 #[derive(Subcommand, Debug)]
 pub enum DeployArgs {
     /// Deploy to RustAPI Cloud (managed hosting)
+    #[cfg(feature = "cloud")]
     Cloud(CloudArgs),
 
     /// Generate a Dockerfile for the project
@@ -31,6 +32,7 @@ pub enum DeployArgs {
     Shuttle(ShuttleArgs),
 }
 
+#[cfg(feature = "cloud")]
 #[derive(Args, Debug)]
 pub struct CloudArgs {
     /// Project name (defaults to Cargo.toml package name)
@@ -101,6 +103,7 @@ pub struct ShuttleArgs {
 /// Execute deployment command
 pub async fn deploy(args: DeployArgs) -> Result<()> {
     match args {
+        #[cfg(feature = "cloud")]
         DeployArgs::Cloud(cloud_args) => deploy_cloud(cloud_args).await,
         DeployArgs::Docker(docker_args) => generate_dockerfile(docker_args).await,
         DeployArgs::Fly(fly_args) => deploy_fly(fly_args).await,
@@ -323,6 +326,7 @@ fn get_package_name() -> Result<String> {
 
 // --- Cloud Deploy ---
 
+#[cfg(feature = "cloud")]
 #[derive(Deserialize)]
 struct DeployResponse {
     deploy_id: String,
@@ -331,6 +335,7 @@ struct DeployResponse {
     url: Option<String>,
 }
 
+#[cfg(feature = "cloud")]
 async fn deploy_cloud(args: CloudArgs) -> Result<()> {
     let config = load_config()?;
 
