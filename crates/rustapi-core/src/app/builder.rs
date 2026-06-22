@@ -47,7 +47,7 @@ impl RustApi {
     /// The primary way to build a RustAPI application.
     ///
     /// Collects all routes decorated with `#[rustapi_rs::get]`, `#[rustapi_rs::post]`, etc.
-    /// at link time via `linkme` and registers them automatically ├óÔé¼ÔÇØ no manual `.route()`
+    /// at link time via `linkme` and registers them automatically — no manual `.route()`
     /// or `.mount_route()` calls needed. This is baked into the core and requires no
     /// feature flags.
     ///
@@ -288,7 +288,7 @@ impl RustApi {
     /// ```rust,ignore
     /// RustApi::new()
     ///     .on_start(|| async {
-    ///         println!("─ş┼©┼íÔé¼ Server starting...");
+    ///         println!("Server starting...");
     ///         // e.g. run DB migrations, warm caches
     ///     })
     ///     .run("127.0.0.1:8080")
@@ -315,7 +315,7 @@ impl RustApi {
     /// ```rust,ignore
     /// RustApi::new()
     ///     .on_shutdown(|| async {
-    ///         println!("─ş┼©ÔÇİÔÇ╣ Server shutting down...");
+    ///         println!("Server shutting down...");
     ///         // e.g. flush logs, close DB connections
     ///     })
     ///     .run_with_shutdown("127.0.0.1:8080", ctrl_c())

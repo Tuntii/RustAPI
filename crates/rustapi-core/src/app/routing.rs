@@ -173,7 +173,7 @@ impl RustApi {
         // For now we assume one handler per path or we simply allow overwriting for this MVP step
         // (matchit router doesn't allow easy merging/updating existing entries without rebuilding)
         //
-        // TOOD: Enhance Router to support method merging
+        // TODO: Enhance Router to support method merging
 
         let path = if !path.starts_with('/') {
             format!("/{}", path)

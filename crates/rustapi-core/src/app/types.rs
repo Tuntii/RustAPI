@@ -1,4 +1,4 @@
-﻿use crate::events::LifecycleHooks;
+use crate::events::LifecycleHooks;
 use crate::interceptor::InterceptorChain;
 use crate::middleware::LayerStack;
 use crate::router::Router;
