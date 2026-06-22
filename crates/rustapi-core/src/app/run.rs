@@ -8,17 +8,32 @@ use crate::middleware::BodyLimitLayer;
 use crate::response::IntoResponse;
 use crate::server::Server;
 impl RustApi {
+    async fn prepare_for_serve(&mut self, addr: &str) {
+        self.maybe_dump_openapi();
+        self.print_hot_reload_banner(addr);
+        self.apply_health_endpoints();
+        self.apply_status_page();
+        #[cfg(feature = "dashboard")]
+        self.apply_dashboard();
+        if let Some(limit) = self.body_limit {
+            self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
+        }
+        for hook in std::mem::take(&mut self.lifecycle_hooks.on_start) {
+            hook().await;
+        }
+    }
+
     pub(super) fn print_hot_reload_banner(&self, addr: &str) {
         if !self.hot_reload {
             return;
         }
 
-        // Set the env var so the CLI watcher can detect it
-        std::env::set_var("RUSTAPI_HOT_RELOAD", "1");
-
         let is_under_watcher = std::env::var("RUSTAPI_HOT_RELOAD")
             .map(|v| v == "1")
             .unwrap_or(false);
+
+        // Set the env var so the CLI watcher can detect it
+        std::env::set_var("RUSTAPI_HOT_RELOAD", "1");
 
         tracing::info!("Hot-reload mode enabled");
 
@@ -204,31 +219,7 @@ impl RustApi {
         self
     }
     pub async fn run(mut self, addr: &str) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        self.maybe_dump_openapi();
-
-        // Hot-reload mode banner
-        self.print_hot_reload_banner(addr);
-
-        // Apply health endpoints if configured
-        self.apply_health_endpoints();
-
-        // Apply status page if configured
-        self.apply_status_page();
-
-        // Apply embedded dashboard if configured
-        #[cfg(feature = "dashboard")]
-        self.apply_dashboard();
-
-        // Apply body limit layer if configured (should be first in the chain)
-        if let Some(limit) = self.body_limit {
-            // Prepend body limit layer so it's the first to process requests
-            self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
-        }
-
-        // Run on_start lifecycle hooks before accepting connections
-        for hook in self.lifecycle_hooks.on_start {
-            hook().await;
-        }
+        self.prepare_for_serve(addr).await;
 
         let server = Server::new(self.router, self.layers, self.interceptors);
         server.run(addr).await
@@ -243,29 +234,7 @@ impl RustApi {
     where
         F: std::future::Future<Output = ()> + Send + 'static,
     {
-        self.maybe_dump_openapi();
-
-        // Hot-reload mode banner
-        self.print_hot_reload_banner(addr.as_ref());
-
-        // Apply health endpoints if configured
-        self.apply_health_endpoints();
-
-        // Apply status page if configured
-        self.apply_status_page();
-
-        // Apply embedded dashboard if configured
-        #[cfg(feature = "dashboard")]
-        self.apply_dashboard();
-
-        if let Some(limit) = self.body_limit {
-            self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
-        }
-
-        // Run on_start lifecycle hooks before accepting connections
-        for hook in self.lifecycle_hooks.on_start {
-            hook().await;
-        }
+        self.prepare_for_serve(addr.as_ref()).await;
 
         // Wrap the shutdown signal to run on_shutdown hooks after signal fires
         let shutdown_hooks = self.lifecycle_hooks.on_shutdown;
@@ -303,16 +272,8 @@ impl RustApi {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         use std::sync::Arc;
 
-        // Apply health endpoints if configured
-        self.apply_health_endpoints();
-
-        // Apply status page if configured
-        self.apply_status_page();
-
-        // Apply body limit layer if configured
-        if let Some(limit) = self.body_limit {
-            self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
-        }
+        let addr = config.socket_addr();
+        self.prepare_for_serve(&addr).await;
 
         let server = crate::http3::Http3Server::new(
             &config,
@@ -345,16 +306,7 @@ impl RustApi {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         use std::sync::Arc;
 
-        // Apply health endpoints if configured
-        self.apply_health_endpoints();
-
-        // Apply status page if configured
-        self.apply_status_page();
-
-        // Apply body limit layer if configured
-        if let Some(limit) = self.body_limit {
-            self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
-        }
+        self.prepare_for_serve(addr).await;
 
         let server = crate::http3::Http3Server::new_with_self_signed(
             addr,
@@ -418,16 +370,7 @@ impl RustApi {
         config.port = http_socket.port();
         let http_addr = http_socket.to_string();
 
-        // Apply health endpoints if configured
-        self.apply_health_endpoints();
-
-        // Apply status page if configured
-        self.apply_status_page();
-
-        // Apply body limit layer if configured
-        if let Some(limit) = self.body_limit {
-            self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
-        }
+        self.prepare_for_serve(&http_addr).await;
 
         let router = Arc::new(self.router);
         let layers = Arc::new(self.layers);

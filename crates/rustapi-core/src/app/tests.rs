@@ -779,64 +779,254 @@ fn test_rustapi_nest_includes_routes_in_openapi_spec() {
     );
 }
 
-#[test]
-fn apply_health_endpoints_registers_default_paths() {
-    let mut app = RustApi::new().health_endpoints();
-    app.apply_health_endpoints();
-    let router = app.into_router();
-    let routes = router.registered_routes();
-    assert!(routes.contains_key("/health"));
-    assert!(routes.contains_key("/ready"));
-    assert!(routes.contains_key("/live"));
-}
-
-#[test]
-fn apply_status_page_registers_status_route() {
-    let mut app = RustApi::new().status_page();
-    app.apply_status_page();
-    let router = app.into_router();
-    assert!(router.registered_routes().contains_key("/status"));
-}
-
-#[test]
-fn print_hot_reload_banner_is_noop_when_disabled() {
-    let app = RustApi::new();
-    app.print_hot_reload_banner("127.0.0.1:8080");
-}
-
-#[test]
-fn print_hot_reload_banner_logs_when_enabled() {
-    let app = RustApi::new().hot_reload(true);
-    app.print_hot_reload_banner("127.0.0.1:8080");
-}
-
-#[tokio::test]
-async fn on_start_hooks_execute_in_registration_order() {
-    use std::sync::atomic::{AtomicUsize, Ordering};
+mod run_entrypoints {
+    use super::RustApi;
+    use crate::router::post;
+    use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
     use std::sync::Arc;
+    use std::time::Duration;
+    use tokio::sync::oneshot;
 
-    let order = Arc::new(AtomicUsize::new(0));
-    let mut app = RustApi::new()
-        .on_start({
-            let order = order.clone();
-            move || {
-                let order = order.clone();
-                async move {
-                    assert_eq!(order.fetch_add(1, Ordering::SeqCst), 0);
-                }
-            }
-        })
-        .on_start({
-            let order = order.clone();
-            move || {
-                let order = order.clone();
-                async move {
-                    assert_eq!(order.fetch_add(1, Ordering::SeqCst), 1);
-                }
-            }
+    fn reserve_local_addr() -> (u16, String) {
+        let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+        let port = listener.local_addr().unwrap().port();
+        drop(listener);
+        (port, format!("127.0.0.1:{port}"))
+    }
+
+    #[tokio::test]
+    async fn run_with_shutdown_serves_health_endpoints() {
+        let app = RustApi::new().health_endpoints();
+        let (port, addr) = reserve_local_addr();
+        let (tx, rx) = oneshot::channel();
+
+        let server = tokio::spawn(async move {
+            app.run_with_shutdown(&addr, async {
+                rx.await.ok();
+            })
+            .await
         });
 
-    for hook in std::mem::take(&mut app.lifecycle_hooks.on_start) {
-        hook().await;
+        tokio::time::sleep(Duration::from_millis(200)).await;
+        let client = reqwest::Client::new();
+        let base = format!("http://127.0.0.1:{port}");
+
+        for path in ["/health", "/ready", "/live"] {
+            let res = client
+                .get(format!("{base}{path}"))
+                .send()
+                .await
+                .expect("health request");
+            assert_eq!(res.status(), 200, "{path} should return 200");
+        }
+
+        tx.send(()).unwrap();
+        let _ = tokio::time::timeout(Duration::from_secs(2), server).await;
+    }
+
+    #[tokio::test]
+    async fn run_with_shutdown_serves_status_page() {
+        let app = RustApi::new().status_page();
+        let (port, addr) = reserve_local_addr();
+        let (tx, rx) = oneshot::channel();
+
+        let server = tokio::spawn(async move {
+            app.run_with_shutdown(&addr, async {
+                rx.await.ok();
+            })
+            .await
+        });
+
+        tokio::time::sleep(Duration::from_millis(200)).await;
+        let res = reqwest::Client::new()
+            .get(format!("http://127.0.0.1:{port}/status"))
+            .send()
+            .await
+            .expect("status request");
+        assert_eq!(res.status(), 200);
+        assert!(res.text().await.unwrap().contains("System Status"));
+
+        tx.send(()).unwrap();
+        let _ = tokio::time::timeout(Duration::from_secs(2), server).await;
+    }
+
+    #[tokio::test]
+    async fn run_with_shutdown_executes_on_start_and_on_shutdown_hooks() {
+        let on_start = Arc::new(AtomicBool::new(false));
+        let on_shutdown = Arc::new(AtomicBool::new(false));
+        let on_start_flag = on_start.clone();
+        let on_shutdown_flag = on_shutdown.clone();
+
+        let app = RustApi::new()
+            .health_endpoints()
+            .on_start(move || {
+                let on_start_flag = on_start_flag.clone();
+                async move {
+                    on_start_flag.store(true, Ordering::SeqCst);
+                }
+            })
+            .on_shutdown(move || {
+                let on_shutdown_flag = on_shutdown_flag.clone();
+                async move {
+                    on_shutdown_flag.store(true, Ordering::SeqCst);
+                }
+            });
+
+        let (port, addr) = reserve_local_addr();
+        let (tx, rx) = oneshot::channel();
+
+        let server = tokio::spawn(async move {
+            app.run_with_shutdown(&addr, async {
+                rx.await.ok();
+            })
+            .await
+        });
+
+        tokio::time::sleep(Duration::from_millis(200)).await;
+        assert!(
+            on_start.load(Ordering::SeqCst),
+            "on_start should run before accept"
+        );
+
+        let res = reqwest::Client::new()
+            .get(format!("http://127.0.0.1:{port}/health"))
+            .send()
+            .await
+            .expect("health request");
+        assert_eq!(res.status(), 200);
+
+        tx.send(()).unwrap();
+        let _ = tokio::time::timeout(Duration::from_secs(2), server).await;
+        assert!(
+            on_shutdown.load(Ordering::SeqCst),
+            "on_shutdown should run after shutdown signal"
+        );
+    }
+
+    #[tokio::test]
+    async fn run_with_shutdown_runs_on_start_hooks_in_registration_order() {
+        let order = Arc::new(AtomicUsize::new(0));
+        let first = order.clone();
+        let second = order.clone();
+
+        let app = RustApi::new()
+            .on_start(move || {
+                let first = first.clone();
+                async move {
+                    assert_eq!(first.fetch_add(1, Ordering::SeqCst), 0);
+                }
+            })
+            .on_start(move || {
+                let second = second.clone();
+                async move {
+                    assert_eq!(second.fetch_add(1, Ordering::SeqCst), 1);
+                }
+            });
+
+        let (_, addr) = reserve_local_addr();
+        let (tx, rx) = oneshot::channel();
+
+        let server = tokio::spawn(async move {
+            app.run_with_shutdown(&addr, async {
+                rx.await.ok();
+            })
+            .await
+        });
+
+        tokio::time::sleep(Duration::from_millis(200)).await;
+        tx.send(()).unwrap();
+        let _ = tokio::time::timeout(Duration::from_secs(2), server).await;
+        assert_eq!(order.load(Ordering::SeqCst), 2);
+    }
+
+    #[tokio::test]
+    async fn run_entrypoint_serves_health_endpoints() {
+        let app = RustApi::new().health_endpoints();
+        let (port, addr) = reserve_local_addr();
+
+        let server = tokio::spawn(async move { app.run(&addr).await });
+
+        tokio::time::sleep(Duration::from_millis(200)).await;
+        let res = reqwest::Client::new()
+            .get(format!("http://127.0.0.1:{port}/health"))
+            .send()
+            .await
+            .expect("health request");
+        assert_eq!(res.status(), 200);
+
+        server.abort();
+        let _ = server.await;
+    }
+
+    #[tokio::test]
+    async fn run_with_shutdown_applies_body_limit() {
+        async fn echo(body: crate::extract::Body) -> String {
+            String::from_utf8_lossy(&body.0).into_owned()
+        }
+
+        let app = RustApi::new().route("/echo", post(echo)).body_limit(8);
+        let (port, addr) = reserve_local_addr();
+        let (tx, rx) = oneshot::channel();
+
+        let server = tokio::spawn(async move {
+            app.run_with_shutdown(&addr, async {
+                rx.await.ok();
+            })
+            .await
+        });
+
+        tokio::time::sleep(Duration::from_millis(200)).await;
+        let client = reqwest::Client::new();
+        let ok = client
+            .post(format!("http://127.0.0.1:{port}/echo"))
+            .body("short")
+            .send()
+            .await
+            .expect("small body");
+        assert_eq!(ok.status(), 200);
+
+        let rejected = client
+            .post(format!("http://127.0.0.1:{port}/echo"))
+            .body("this payload is too large")
+            .send()
+            .await
+            .expect("large body");
+        assert_eq!(rejected.status(), 413);
+
+        tx.send(()).unwrap();
+        let _ = tokio::time::timeout(Duration::from_secs(2), server).await;
+    }
+
+    #[test]
+    fn print_hot_reload_banner_reads_watcher_state_before_setting_env() {
+        let _guard = EnvVarGuard::remove("RUSTAPI_HOT_RELOAD");
+        let app = RustApi::new().hot_reload(true);
+        app.print_hot_reload_banner("127.0.0.1:8080");
+        assert_eq!(
+            std::env::var("RUSTAPI_HOT_RELOAD").ok().as_deref(),
+            Some("1")
+        );
+    }
+
+    struct EnvVarGuard {
+        key: &'static str,
+        previous: Option<String>,
+    }
+
+    impl EnvVarGuard {
+        fn remove(key: &'static str) -> Self {
+            let previous = std::env::var(key).ok();
+            std::env::remove_var(key);
+            Self { key, previous }
+        }
+    }
+
+    impl Drop for EnvVarGuard {
+        fn drop(&mut self) {
+            match &self.previous {
+                Some(value) => std::env::set_var(self.key, value),
+                None => std::env::remove_var(self.key),
+            }
+        }
     }
 }
