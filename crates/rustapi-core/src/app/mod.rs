@@ -1,10 +1,12 @@
-﻿//! RustApi application builder
-
 mod builder;
 mod config;
 mod dispatcher;
+mod health;
 mod helpers;
+mod openapi;
 mod production;
+mod routing;
+mod run;
 mod types;
 
 #[cfg(test)]
