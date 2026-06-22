@@ -1,11 +1,12 @@
+#[cfg(feature = "dashboard")]
+use super::helpers::{
+    infer_route_feature_gates, is_dashboard_replay_eligible, openapi_tags_for_route,
+};
 use super::types::RustApi;
 use crate::error::Result;
 use crate::middleware::BodyLimitLayer;
 use crate::response::IntoResponse;
 use crate::server::Server;
-#[cfg(feature = "dashboard")]
-use std::sync::Arc;
-
 impl RustApi {
     pub(super) fn print_hot_reload_banner(&self, addr: &str) {
         if !self.hot_reload {
@@ -19,12 +20,10 @@ impl RustApi {
             .map(|v| v == "1")
             .unwrap_or(false);
 
-        tracing::info!("─ş┼©ÔÇØÔÇŞ Hot-reload mode enabled");
+        tracing::info!("Hot-reload mode enabled");
 
         if is_under_watcher {
-            tracing::info!(
-                "   File watcher active ├óÔé¼ÔÇØ changes will trigger rebuild + restart"
-            );
+            tracing::info!("   File watcher active - changes will trigger rebuild + restart");
         } else {
             tracing::info!("   Tip: Run with `cargo rustapi run --watch` for automatic hot-reload");
         }
@@ -74,7 +73,6 @@ impl RustApi {
         use crate::response::Body;
         use crate::router::MethodRouter;
         use std::collections::HashMap;
-        use std::sync::Arc;
 
         let mut config = match self.dashboard_config.take() {
             Some(c) => c,
@@ -114,14 +112,14 @@ impl RustApi {
             .collect();
         inventory.sort_by(|a, b| a.path.cmp(&b.path));
 
-        let metrics = Arc::new(DashboardMetrics::new_with_replay_admin_path(
+        let metrics = std::sync::Arc::new(DashboardMetrics::new_with_replay_admin_path(
             inventory,
             config.replay_api_path.clone(),
         ));
 
         // Insert metrics into router state using the public .state() API
         let router = std::mem::take(&mut self.router);
-        self.router = router.state(Arc::clone(&metrics));
+        self.router = router.state(std::sync::Arc::clone(&metrics));
 
         // Register dashboard routes
         let prefix = config.path.trim_end_matches('/').to_owned();
@@ -137,10 +135,10 @@ impl RustApi {
 
         // Route 1: GET /__rustapi/dashboard  (the SPA page)
         {
-            let metrics_c = Arc::clone(&metrics);
+            let metrics_c = std::sync::Arc::clone(&metrics);
             let config_c = config.clone();
-            let handler: BoxedHandler = Arc::new(move |req| {
-                let metrics = Arc::clone(&metrics_c);
+            let handler: BoxedHandler = std::sync::Arc::new(move |req| {
+                let metrics = std::sync::Arc::clone(&metrics_c);
                 let cfg = config_c.clone();
                 Box::pin(async move {
                     let headers = req.headers().clone();
@@ -159,11 +157,11 @@ impl RustApi {
 
         // Route 2: GET /__rustapi/dashboard/*path  (API sub-paths)
         {
-            let metrics_c = Arc::clone(&metrics);
+            let metrics_c = std::sync::Arc::clone(&metrics);
             let config_c = config.clone();
             let wildcard_path = format!("{}/*path", prefix);
-            let handler: BoxedHandler = Arc::new(move |req| {
-                let metrics = Arc::clone(&metrics_c);
+            let handler: BoxedHandler = std::sync::Arc::new(move |req| {
+                let metrics = std::sync::Arc::clone(&metrics_c);
                 let cfg = config_c.clone();
                 Box::pin(async move {
                     let headers = req.headers().clone();
@@ -283,5 +281,174 @@ impl RustApi {
         server
             .run_with_shutdown(addr.as_ref(), wrapped_signal)
             .await
+    }
+
+    /// Enable HTTP/3 support with TLS certificates
+    ///
+    /// HTTP/3 requires TLS certificates. For development, you can use
+    /// self-signed certificates with `run_http3_dev`.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// RustApi::new()
+    ///     .route("/", get(hello))
+    ///     .run_http3("0.0.0.0:443", "cert.pem", "key.pem")
+    ///     .await
+    /// ```
+    #[cfg(feature = "http3")]
+    pub async fn run_http3(
+        mut self,
+        config: crate::http3::Http3Config,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        use std::sync::Arc;
+
+        // Apply health endpoints if configured
+        self.apply_health_endpoints();
+
+        // Apply status page if configured
+        self.apply_status_page();
+
+        // Apply body limit layer if configured
+        if let Some(limit) = self.body_limit {
+            self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
+        }
+
+        let server = crate::http3::Http3Server::new(
+            &config,
+            Arc::new(self.router.clone()),
+            Arc::new(self.layers.clone()),
+            Arc::new(self.interceptors.clone()),
+        )
+        .await?;
+
+        server.run().await
+    }
+
+    /// Run HTTP/3 server with self-signed certificate (development only)
+    ///
+    /// This is useful for local development and testing.
+    /// **Do not use in production!**
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// RustApi::new()
+    ///     .route("/", get(hello))
+    ///     .run_http3_dev("0.0.0.0:8443")
+    ///     .await
+    /// ```
+    #[cfg(feature = "http3-dev")]
+    pub async fn run_http3_dev(
+        mut self,
+        addr: &str,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        use std::sync::Arc;
+
+        // Apply health endpoints if configured
+        self.apply_health_endpoints();
+
+        // Apply status page if configured
+        self.apply_status_page();
+
+        // Apply body limit layer if configured
+        if let Some(limit) = self.body_limit {
+            self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
+        }
+
+        let server = crate::http3::Http3Server::new_with_self_signed(
+            addr,
+            Arc::new(self.router.clone()),
+            Arc::new(self.layers.clone()),
+            Arc::new(self.interceptors.clone()),
+        )
+        .await?;
+
+        server.run().await
+    }
+
+    /// Configure HTTP/3 support for `run_http3` and `run_dual_stack`.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// RustApi::new()
+    ///     .with_http3("cert.pem", "key.pem")
+    ///     .run_dual_stack("127.0.0.1:8080")
+    ///     .await
+    /// ```
+    #[cfg(feature = "http3")]
+    pub fn with_http3(mut self, cert_path: impl Into<String>, key_path: impl Into<String>) -> Self {
+        self.http3_config = Some(crate::http3::Http3Config::new(cert_path, key_path));
+        self
+    }
+
+    /// Run both HTTP/1.1 (TCP) and HTTP/3 (QUIC/UDP) simultaneously.
+    ///
+    /// The HTTP/3 listener is bound to the same host and port as `http_addr`
+    /// so clients can upgrade to either protocol on one endpoint.
+    ///
+    /// # Example
+    ///
+    /// ```rust,ignore
+    /// RustApi::new()
+    ///     .route("/", get(hello))
+    ///     .with_http3("cert.pem", "key.pem")
+    ///     .run_dual_stack("0.0.0.0:8080")
+    ///     .await
+    /// ```
+    #[cfg(feature = "http3")]
+    pub async fn run_dual_stack(
+        mut self,
+        http_addr: &str,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+        use std::sync::Arc;
+
+        let mut config = self
+            .http3_config
+            .take()
+            .ok_or("HTTP/3 config not set. Use .with_http3(...)")?;
+
+        let http_socket: std::net::SocketAddr = http_addr.parse()?;
+        config.bind_addr = if http_socket.ip().is_ipv6() {
+            format!("[{}]", http_socket.ip())
+        } else {
+            http_socket.ip().to_string()
+        };
+        config.port = http_socket.port();
+        let http_addr = http_socket.to_string();
+
+        // Apply health endpoints if configured
+        self.apply_health_endpoints();
+
+        // Apply status page if configured
+        self.apply_status_page();
+
+        // Apply body limit layer if configured
+        if let Some(limit) = self.body_limit {
+            self.layers.prepend(Box::new(BodyLimitLayer::new(limit)));
+        }
+
+        let router = Arc::new(self.router);
+        let layers = Arc::new(self.layers);
+        let interceptors = Arc::new(self.interceptors);
+
+        let http1_server =
+            Server::from_shared(router.clone(), layers.clone(), interceptors.clone());
+        let http3_server =
+            crate::http3::Http3Server::new(&config, router, layers, interceptors).await?;
+
+        tracing::info!(
+            http1_addr = %http_addr,
+            http3_addr = %config.socket_addr(),
+            "Starting dual-stack HTTP/1.1 + HTTP/3 servers"
+        );
+
+        tokio::try_join!(
+            http1_server.run_with_shutdown(&http_addr, std::future::pending::<()>()),
+            http3_server.run_with_shutdown(std::future::pending::<()>()),
+        )?;
+
+        Ok(())
     }
 }
