@@ -1,0 +1,7 @@
+# Track known transitive advisories until upstream fixes land.
+# See: https://github.com/Tuntii/RustAPI/issues/200
+[advisories]
+ignore = [
+    "RUSTSEC-2026-0185", # quinn-proto – HTTP/3 optional dep; upgrade tracked in #200
+    "RUSTSEC-2023-0071", # rsa – transitive, no fixed upgrade available
+]
