@@ -1,1586 +1,766 @@
-//! Router implementation using radix tree (matchit)
-//!
-//! This module provides HTTP routing functionality for RustAPI. Routes are
-//! registered using path patterns and HTTP method handlers.
-//!
-//! # Path Patterns
-//!
-//! Routes support dynamic path parameters using `{param}` syntax:
-//!
-//! - `/users` - Static path
-//! - `/users/{id}` - Single parameter
-//! - `/users/{user_id}/posts/{post_id}` - Multiple parameters
-//!
-//! # Example
-//!
-//! ```rust,ignore
-//! use rustapi_core::{Router, get, post, put, delete};
-//!
-//! async fn list_users() -> &'static str { "List users" }
-//! async fn get_user() -> &'static str { "Get user" }
-//! async fn create_user() -> &'static str { "Create user" }
-//! async fn update_user() -> &'static str { "Update user" }
-//! async fn delete_user() -> &'static str { "Delete user" }
-//!
-//! let router = Router::new()
-//!     .route("/users", get(list_users).post(create_user))
-//!     .route("/users/{id}", get(get_user).put(update_user).delete(delete_user));
-//! ```
-//!
-//! # Method Chaining
-//!
-//! Multiple HTTP methods can be registered for the same path using method chaining:
-//!
-//! ```rust,ignore
-//! .route("/users", get(list).post(create))
-//! .route("/users/{id}", get(show).put(update).delete(destroy))
-//! ```
-//!
-//! # Route Conflict Detection
-//!
-//! The router detects conflicting routes at registration time and provides
-//! helpful error messages with resolution guidance.
+use super::{
+    convert_path_params, get, normalize_path_for_comparison, normalize_prefix, post, put,
+    MethodRouter, RouteMatch, Router,
+};
+use http::Method;
 
-use crate::handler::{into_boxed_handler, BoxedHandler, Handler};
-use crate::path_params::PathParams;
-use crate::typed_path::TypedPath;
-use http::{Extensions, Method};
-use matchit::Router as MatchitRouter;
-use rustapi_openapi::Operation;
-use std::collections::HashMap;
-use std::sync::Arc;
-
-/// Information about a registered route for conflict detection
-#[derive(Debug, Clone)]
-pub struct RouteInfo {
-    /// The original path pattern (e.g., "/users/{id}")
-    pub path: String,
-    /// The HTTP methods registered for this path
-    pub methods: Vec<Method>,
+#[test]
+fn test_convert_path_params() {
+    assert_eq!(convert_path_params("/users/{id}"), "/users/:id");
+    assert_eq!(
+        convert_path_params("/users/{user_id}/posts/{post_id}"),
+        "/users/:user_id/posts/:post_id"
+    );
+    assert_eq!(convert_path_params("/static/path"), "/static/path");
 }
 
-/// Error returned when a route conflict is detected
-#[derive(Debug, Clone)]
-pub struct RouteConflictError {
-    /// The path that was being registered
-    pub new_path: String,
-    /// The HTTP method that conflicts
-    pub method: Option<Method>,
-    /// The existing path that conflicts
-    pub existing_path: String,
-    /// Detailed error message from the underlying router
-    pub details: String,
+#[test]
+fn test_normalize_path_for_comparison() {
+    assert_eq!(normalize_path_for_comparison("/users/:id"), "/users/:_");
+    assert_eq!(
+        normalize_path_for_comparison("/users/:user_id"),
+        "/users/:_"
+    );
+    assert_eq!(
+        normalize_path_for_comparison("/users/:id/posts/:post_id"),
+        "/users/:_/posts/:_"
+    );
+    assert_eq!(
+        normalize_path_for_comparison("/static/path"),
+        "/static/path"
+    );
 }
 
-impl std::fmt::Display for RouteConflictError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(
-            f,
-            "\n╭─────────────────────────────────────────────────────────────╮"
-        )?;
-        writeln!(
-            f,
-            "│                    ROUTE CONFLICT DETECTED                   │"
-        )?;
-        writeln!(
-            f,
-            "╰─────────────────────────────────────────────────────────────╯"
-        )?;
-        writeln!(f)?;
-        writeln!(f, "  Conflicting routes:")?;
-        writeln!(f, "    → Existing: {}", self.existing_path)?;
-        writeln!(f, "    → New:      {}", self.new_path)?;
-        writeln!(f)?;
-        if let Some(ref method) = self.method {
-            writeln!(f, "  HTTP Method: {}", method)?;
-            writeln!(f)?;
+#[test]
+fn test_normalize_prefix() {
+    // Basic cases
+    assert_eq!(normalize_prefix("api"), "/api");
+    assert_eq!(normalize_prefix("/api"), "/api");
+    assert_eq!(normalize_prefix("/api/"), "/api");
+    assert_eq!(normalize_prefix("api/"), "/api");
+
+    // Multiple segments
+    assert_eq!(normalize_prefix("api/v1"), "/api/v1");
+    assert_eq!(normalize_prefix("/api/v1"), "/api/v1");
+    assert_eq!(normalize_prefix("/api/v1/"), "/api/v1");
+
+    // Edge cases: empty and root
+    assert_eq!(normalize_prefix(""), "/");
+    assert_eq!(normalize_prefix("/"), "/");
+
+    // Multiple slashes
+    assert_eq!(normalize_prefix("//api"), "/api");
+    assert_eq!(normalize_prefix("api//v1"), "/api/v1");
+    assert_eq!(normalize_prefix("//api//v1//"), "/api/v1");
+    assert_eq!(normalize_prefix("///"), "/");
+}
+
+#[test]
+#[should_panic(expected = "ROUTE CONFLICT DETECTED")]
+fn test_route_conflict_detection() {
+    async fn handler1() -> &'static str {
+        "handler1"
+    }
+    async fn handler2() -> &'static str {
+        "handler2"
+    }
+
+    let _router = Router::new()
+        .route("/users/{id}", get(handler1))
+        .route("/users/{user_id}", get(handler2)); // This should panic
+}
+
+#[test]
+fn test_no_conflict_different_paths() {
+    async fn handler1() -> &'static str {
+        "handler1"
+    }
+    async fn handler2() -> &'static str {
+        "handler2"
+    }
+
+    let router = Router::new()
+        .route("/users/{id}", get(handler1))
+        .route("/users/{id}/profile", get(handler2));
+
+    assert_eq!(router.registered_routes().len(), 2);
+}
+
+#[test]
+fn test_route_info_tracking() {
+    async fn handler() -> &'static str {
+        "handler"
+    }
+
+    let router = Router::new().route("/users/{id}", get(handler));
+
+    let routes = router.registered_routes();
+    assert_eq!(routes.len(), 1);
+
+    let info = routes.get("/users/:id").unwrap();
+    assert_eq!(info.path, "/users/{id}");
+    assert_eq!(info.methods.len(), 1);
+    assert_eq!(info.methods[0], Method::GET);
+}
+
+#[test]
+fn test_basic_router_nesting() {
+    async fn list_users() -> &'static str {
+        "list users"
+    }
+    async fn get_user() -> &'static str {
+        "get user"
+    }
+
+    let users_router = Router::new()
+        .route("/", get(list_users))
+        .route("/{id}", get(get_user));
+
+    let app = Router::new().nest("/api/users", users_router);
+
+    let routes = app.registered_routes();
+    assert_eq!(routes.len(), 2);
+
+    // Check that routes are registered with prefix
+    assert!(routes.contains_key("/api/users"));
+    assert!(routes.contains_key("/api/users/:id"));
+
+    // Check display paths
+    let list_info = routes.get("/api/users").unwrap();
+    assert_eq!(list_info.path, "/api/users");
+
+    let get_info = routes.get("/api/users/:id").unwrap();
+    assert_eq!(get_info.path, "/api/users/{id}");
+}
+
+#[test]
+fn test_nested_route_matching() {
+    async fn handler() -> &'static str {
+        "handler"
+    }
+
+    let users_router = Router::new().route("/{id}", get(handler));
+
+    let app = Router::new().nest("/api/users", users_router);
+
+    // Test that the route can be matched
+    match app.match_route("/api/users/123", &Method::GET) {
+        RouteMatch::Found { params, .. } => {
+            assert_eq!(params.get("id"), Some(&"123".to_string()));
         }
-        writeln!(f, "  Details: {}", self.details)?;
-        writeln!(f)?;
-        writeln!(f, "  How to resolve:")?;
-        writeln!(f, "    1. Use different path patterns for each route")?;
-        writeln!(
-            f,
-            "    2. If paths must be similar, ensure parameter names differ"
-        )?;
-        writeln!(
-            f,
-            "    3. Consider using different HTTP methods if appropriate"
-        )?;
-        writeln!(f)?;
-        writeln!(f, "  Example:")?;
-        writeln!(f, "    Instead of:")?;
-        writeln!(f, "      .route(\"/users/{{id}}\", get(handler1))")?;
-        writeln!(f, "      .route(\"/users/{{user_id}}\", get(handler2))")?;
-        writeln!(f)?;
-        writeln!(f, "    Use:")?;
-        writeln!(f, "      .route(\"/users/{{id}}\", get(handler1))")?;
-        writeln!(f, "      .route(\"/users/{{id}}/profile\", get(handler2))")?;
-        Ok(())
+        _ => panic!("Route should be found"),
     }
 }
 
-impl std::error::Error for RouteConflictError {}
+#[test]
+fn test_nested_route_matching_multiple_params() {
+    async fn handler() -> &'static str {
+        "handler"
+    }
 
-/// HTTP method router for a single path
-pub struct MethodRouter {
-    handlers: HashMap<Method, BoxedHandler>,
-    pub(crate) operations: HashMap<Method, Operation>,
-    pub(crate) component_registrars: Vec<fn(&mut rustapi_openapi::OpenApiSpec)>,
+    let posts_router = Router::new().route("/{user_id}/posts/{post_id}", get(handler));
+
+    let app = Router::new().nest("/api", posts_router);
+
+    // Test that multiple parameters are correctly extracted
+    match app.match_route("/api/42/posts/100", &Method::GET) {
+        RouteMatch::Found { params, .. } => {
+            assert_eq!(params.get("user_id"), Some(&"42".to_string()));
+            assert_eq!(params.get("post_id"), Some(&"100".to_string()));
+        }
+        _ => panic!("Route should be found"),
+    }
 }
 
-impl Clone for MethodRouter {
-    fn clone(&self) -> Self {
-        Self {
-            handlers: self.handlers.clone(),
-            operations: self.operations.clone(),
-            component_registrars: self.component_registrars.clone(),
+#[test]
+fn test_nested_route_matching_static_path() {
+    async fn handler() -> &'static str {
+        "handler"
+    }
+
+    let health_router = Router::new().route("/health", get(handler));
+
+    let app = Router::new().nest("/api/v1", health_router);
+
+    // Test that static paths are correctly matched
+    match app.match_route("/api/v1/health", &Method::GET) {
+        RouteMatch::Found { params, .. } => {
+            assert!(params.is_empty(), "Static path should have no params");
         }
+        _ => panic!("Route should be found"),
     }
 }
 
-impl MethodRouter {
-    /// Create a new empty method router
-    pub fn new() -> Self {
-        Self {
-            handlers: HashMap::new(),
-            operations: HashMap::new(),
-            component_registrars: Vec::new(),
+#[test]
+fn test_nested_route_not_found() {
+    async fn handler() -> &'static str {
+        "handler"
+    }
+
+    let users_router = Router::new().route("/users", get(handler));
+
+    let app = Router::new().nest("/api", users_router);
+
+    // Test that non-existent paths return NotFound
+    match app.match_route("/api/posts", &Method::GET) {
+        RouteMatch::NotFound => {
+            // Expected
         }
+        _ => panic!("Route should not be found"),
     }
 
-    /// Add a handler for a specific method
-    fn on(
-        mut self,
-        method: Method,
-        handler: BoxedHandler,
-        operation: Operation,
-        component_registrar: fn(&mut rustapi_openapi::OpenApiSpec),
-    ) -> Self {
-        self.handlers.insert(method.clone(), handler);
-        self.operations.insert(method, operation);
-        self.component_registrars.push(component_registrar);
-        self
-    }
-
-    /// Get handler for a method
-    pub(crate) fn get_handler(&self, method: &Method) -> Option<&BoxedHandler> {
-        self.handlers.get(method)
-    }
-
-    /// Get allowed methods for 405 response
-    pub(crate) fn allowed_methods(&self) -> Vec<Method> {
-        self.handlers.keys().cloned().collect()
-    }
-
-    /// Create from pre-boxed handlers (internal use)
-    pub(crate) fn from_boxed(handlers: HashMap<Method, BoxedHandler>) -> Self {
-        Self {
-            handlers,
-            operations: HashMap::new(), // Operations lost when using raw boxed handlers for now
-            component_registrars: Vec::new(),
+    // Test that wrong prefix returns NotFound
+    match app.match_route("/v2/users", &Method::GET) {
+        RouteMatch::NotFound => {
+            // Expected
         }
+        _ => panic!("Route with wrong prefix should not be found"),
+    }
+}
+
+#[test]
+fn test_nested_route_method_not_allowed() {
+    async fn handler() -> &'static str {
+        "handler"
     }
 
-    /// Insert a pre-boxed handler and its OpenAPI operation (internal use).
-    ///
-    /// Panics if the same method is inserted twice for the same path.
-    pub(crate) fn insert_boxed_with_operation(
-        &mut self,
-        method: Method,
-        handler: BoxedHandler,
-        operation: Operation,
-        component_registrar: fn(&mut rustapi_openapi::OpenApiSpec),
-    ) {
-        if self.handlers.contains_key(&method) {
-            panic!(
-                "Duplicate handler for method {} on the same path",
-                method.as_str()
+    let users_router = Router::new().route("/users", get(handler));
+
+    let app = Router::new().nest("/api", users_router);
+
+    // Test that wrong method returns MethodNotAllowed
+    match app.match_route("/api/users", &Method::POST) {
+        RouteMatch::MethodNotAllowed { allowed } => {
+            assert!(allowed.contains(&Method::GET));
+            assert!(!allowed.contains(&Method::POST));
+        }
+        _ => panic!("Should return MethodNotAllowed"),
+    }
+}
+
+#[test]
+fn test_nested_route_multiple_methods() {
+    async fn get_handler() -> &'static str {
+        "get"
+    }
+    async fn post_handler() -> &'static str {
+        "post"
+    }
+
+    // Create a method router with both GET and POST
+    let get_router = get(get_handler);
+    let post_router = post(post_handler);
+    let mut combined = MethodRouter::new();
+    for (method, handler) in get_router.handlers {
+        combined.handlers.insert(method, handler);
+    }
+    for (method, handler) in post_router.handlers {
+        combined.handlers.insert(method, handler);
+    }
+
+    let users_router = Router::new().route("/users", combined);
+    let app = Router::new().nest("/api", users_router);
+
+    // Both GET and POST should work
+    match app.match_route("/api/users", &Method::GET) {
+        RouteMatch::Found { .. } => {}
+        _ => panic!("GET should be found"),
+    }
+
+    match app.match_route("/api/users", &Method::POST) {
+        RouteMatch::Found { .. } => {}
+        _ => panic!("POST should be found"),
+    }
+
+    // DELETE should return MethodNotAllowed with GET and POST in allowed
+    match app.match_route("/api/users", &Method::DELETE) {
+        RouteMatch::MethodNotAllowed { allowed } => {
+            assert!(allowed.contains(&Method::GET));
+            assert!(allowed.contains(&Method::POST));
+        }
+        _ => panic!("DELETE should return MethodNotAllowed"),
+    }
+}
+
+#[test]
+fn test_nested_router_prefix_normalization() {
+    async fn handler() -> &'static str {
+        "handler"
+    }
+
+    // Test various prefix formats
+    let router1 = Router::new().route("/test", get(handler));
+    let app1 = Router::new().nest("api", router1);
+    assert!(app1.registered_routes().contains_key("/api/test"));
+
+    let router2 = Router::new().route("/test", get(handler));
+    let app2 = Router::new().nest("/api/", router2);
+    assert!(app2.registered_routes().contains_key("/api/test"));
+
+    let router3 = Router::new().route("/test", get(handler));
+    let app3 = Router::new().nest("//api//", router3);
+    assert!(app3.registered_routes().contains_key("/api/test"));
+}
+
+#[test]
+fn test_state_tracking() {
+    #[derive(Clone)]
+    struct MyState(#[allow(dead_code)] String);
+
+    let router = Router::new().state(MyState("test".to_string()));
+
+    assert!(router.has_state::<MyState>());
+    assert!(!router.has_state::<String>());
+}
+
+#[test]
+fn test_state_merge_nested_only() {
+    #[derive(Clone, PartialEq, Debug)]
+    struct NestedState(String);
+
+    async fn handler() -> &'static str {
+        "handler"
+    }
+
+    // Create a router with state to use as source for merging
+    let state_source = Router::new().state(NestedState("nested".to_string()));
+
+    let nested = Router::new().route("/test", get(handler));
+
+    let parent = Router::new()
+        .nest("/api", nested)
+        .merge_state::<NestedState>(&state_source);
+
+    // Parent should now have the nested state
+    assert!(parent.has_state::<NestedState>());
+
+    // Verify the state value
+    let state = parent.state.get::<NestedState>().unwrap();
+    assert_eq!(state.0, "nested");
+}
+
+#[test]
+fn test_state_merge_parent_wins() {
+    #[derive(Clone, PartialEq, Debug)]
+    struct SharedState(String);
+
+    async fn handler() -> &'static str {
+        "handler"
+    }
+
+    // Create a router with state to use as source for merging
+    let state_source = Router::new().state(SharedState("nested".to_string()));
+
+    let nested = Router::new().route("/test", get(handler));
+
+    let parent = Router::new()
+        .state(SharedState("parent".to_string()))
+        .nest("/api", nested)
+        .merge_state::<SharedState>(&state_source);
+
+    // Parent should still have its own state (parent wins)
+    assert!(parent.has_state::<SharedState>());
+
+    // Verify the state value is from parent
+    let state = parent.state.get::<SharedState>().unwrap();
+    assert_eq!(state.0, "parent");
+}
+
+#[test]
+fn test_state_type_ids_merged_on_nest() {
+    #[derive(Clone)]
+    struct NestedState(#[allow(dead_code)] String);
+
+    async fn handler() -> &'static str {
+        "handler"
+    }
+
+    let nested = Router::new()
+        .route("/test", get(handler))
+        .state(NestedState("nested".to_string()));
+
+    let parent = Router::new().nest("/api", nested);
+
+    // Parent should track the nested state type ID
+    assert!(parent
+        .state_type_ids()
+        .contains(&std::any::TypeId::of::<NestedState>()));
+}
+
+#[test]
+#[should_panic(expected = "ROUTE CONFLICT DETECTED")]
+fn test_nested_route_conflict_with_existing_route() {
+    async fn handler1() -> &'static str {
+        "handler1"
+    }
+    async fn handler2() -> &'static str {
+        "handler2"
+    }
+
+    // Create a parent router with an existing route
+    let parent = Router::new().route("/api/users/{id}", get(handler1));
+
+    // Create a nested router with a conflicting route
+    let nested = Router::new().route("/{user_id}", get(handler2));
+
+    // This should panic because /api/users/{id} conflicts with /api/users/{user_id}
+    let _app = parent.nest("/api/users", nested);
+}
+
+#[test]
+#[should_panic(expected = "ROUTE CONFLICT DETECTED")]
+fn test_nested_route_conflict_same_path_different_param_names() {
+    async fn handler1() -> &'static str {
+        "handler1"
+    }
+    async fn handler2() -> &'static str {
+        "handler2"
+    }
+
+    // Create two nested routers with same path structure but different param names
+    let nested1 = Router::new().route("/{id}", get(handler1));
+    let nested2 = Router::new().route("/{user_id}", get(handler2));
+
+    // Nest both under the same prefix - should conflict
+    let _app = Router::new()
+        .nest("/api/users", nested1)
+        .nest("/api/users", nested2);
+}
+
+#[test]
+fn test_nested_route_conflict_error_contains_both_paths() {
+    use std::panic::{catch_unwind, AssertUnwindSafe};
+
+    async fn handler1() -> &'static str {
+        "handler1"
+    }
+    async fn handler2() -> &'static str {
+        "handler2"
+    }
+
+    let result = catch_unwind(AssertUnwindSafe(|| {
+        let parent = Router::new().route("/api/users/{id}", get(handler1));
+        let nested = Router::new().route("/{user_id}", get(handler2));
+        let _app = parent.nest("/api/users", nested);
+    }));
+
+    assert!(result.is_err(), "Should have panicked due to conflict");
+
+    if let Err(panic_info) = result {
+        if let Some(msg) = panic_info.downcast_ref::<String>() {
+            assert!(
+                msg.contains("ROUTE CONFLICT DETECTED"),
+                "Error should contain 'ROUTE CONFLICT DETECTED'"
+            );
+            assert!(
+                msg.contains("Existing:") && msg.contains("New:"),
+                "Error should contain both 'Existing:' and 'New:' labels"
+            );
+            assert!(
+                msg.contains("How to resolve:"),
+                "Error should contain resolution guidance"
             );
         }
-
-        self.handlers.insert(method.clone(), handler);
-        self.operations.insert(method, operation);
-        self.component_registrars.push(component_registrar);
-    }
-
-    /// Add a GET handler
-    pub fn get<H, T>(self, handler: H) -> Self
-    where
-        H: Handler<T>,
-        T: 'static,
-    {
-        let mut op = Operation::new();
-        H::update_operation(&mut op);
-        self.on(
-            Method::GET,
-            into_boxed_handler(handler),
-            op,
-            <H as Handler<T>>::register_components,
-        )
-    }
-
-    /// Add a POST handler
-    pub fn post<H, T>(self, handler: H) -> Self
-    where
-        H: Handler<T>,
-        T: 'static,
-    {
-        let mut op = Operation::new();
-        H::update_operation(&mut op);
-        self.on(
-            Method::POST,
-            into_boxed_handler(handler),
-            op,
-            <H as Handler<T>>::register_components,
-        )
-    }
-
-    /// Add a PUT handler
-    pub fn put<H, T>(self, handler: H) -> Self
-    where
-        H: Handler<T>,
-        T: 'static,
-    {
-        let mut op = Operation::new();
-        H::update_operation(&mut op);
-        self.on(
-            Method::PUT,
-            into_boxed_handler(handler),
-            op,
-            <H as Handler<T>>::register_components,
-        )
-    }
-
-    /// Add a PATCH handler
-    pub fn patch<H, T>(self, handler: H) -> Self
-    where
-        H: Handler<T>,
-        T: 'static,
-    {
-        let mut op = Operation::new();
-        H::update_operation(&mut op);
-        self.on(
-            Method::PATCH,
-            into_boxed_handler(handler),
-            op,
-            <H as Handler<T>>::register_components,
-        )
-    }
-
-    /// Add a DELETE handler
-    pub fn delete<H, T>(self, handler: H) -> Self
-    where
-        H: Handler<T>,
-        T: 'static,
-    {
-        let mut op = Operation::new();
-        H::update_operation(&mut op);
-        self.on(
-            Method::DELETE,
-            into_boxed_handler(handler),
-            op,
-            <H as Handler<T>>::register_components,
-        )
     }
 }
 
-impl Default for MethodRouter {
-    fn default() -> Self {
-        Self::new()
+#[test]
+fn test_nested_routes_no_conflict_different_prefixes() {
+    async fn handler1() -> &'static str {
+        "handler1"
+    }
+    async fn handler2() -> &'static str {
+        "handler2"
+    }
+
+    // Create two nested routers with same internal paths but different prefixes
+    let nested1 = Router::new().route("/{id}", get(handler1));
+    let nested2 = Router::new().route("/{id}", get(handler2));
+
+    // Nest under different prefixes - should NOT conflict
+    let app = Router::new()
+        .nest("/api/users", nested1)
+        .nest("/api/posts", nested2);
+
+    assert_eq!(app.registered_routes().len(), 2);
+    assert!(app.registered_routes().contains_key("/api/users/:id"));
+    assert!(app.registered_routes().contains_key("/api/posts/:id"));
+}
+
+// **Feature: router-nesting, Property 4: Multiple Router Composition**
+// Tests for nesting multiple routers under different prefixes
+// **Validates: Requirements 1.5**
+
+#[test]
+fn test_multiple_router_composition_all_routes_registered() {
+    async fn users_list() -> &'static str {
+        "users list"
+    }
+    async fn users_get() -> &'static str {
+        "users get"
+    }
+    async fn posts_list() -> &'static str {
+        "posts list"
+    }
+    async fn posts_get() -> &'static str {
+        "posts get"
+    }
+    async fn comments_list() -> &'static str {
+        "comments list"
+    }
+
+    // Create multiple sub-routers with different routes
+    let users_router = Router::new()
+        .route("/", get(users_list))
+        .route("/{id}", get(users_get));
+
+    let posts_router = Router::new()
+        .route("/", get(posts_list))
+        .route("/{id}", get(posts_get));
+
+    let comments_router = Router::new().route("/", get(comments_list));
+
+    // Nest all routers under different prefixes
+    let app = Router::new()
+        .nest("/api/users", users_router)
+        .nest("/api/posts", posts_router)
+        .nest("/api/comments", comments_router);
+
+    // Verify all routes are registered (2 + 2 + 1 = 5 routes)
+    let routes = app.registered_routes();
+    assert_eq!(routes.len(), 5, "Should have 5 routes registered");
+
+    // Verify users routes
+    assert!(
+        routes.contains_key("/api/users"),
+        "Should have /api/users route"
+    );
+    assert!(
+        routes.contains_key("/api/users/:id"),
+        "Should have /api/users/:id route"
+    );
+
+    // Verify posts routes
+    assert!(
+        routes.contains_key("/api/posts"),
+        "Should have /api/posts route"
+    );
+    assert!(
+        routes.contains_key("/api/posts/:id"),
+        "Should have /api/posts/:id route"
+    );
+
+    // Verify comments routes
+    assert!(
+        routes.contains_key("/api/comments"),
+        "Should have /api/comments route"
+    );
+}
+
+#[test]
+fn test_multiple_router_composition_no_interference() {
+    async fn users_handler() -> &'static str {
+        "users"
+    }
+    async fn posts_handler() -> &'static str {
+        "posts"
+    }
+    async fn admin_handler() -> &'static str {
+        "admin"
+    }
+
+    // Create routers with same internal structure but different prefixes
+    let users_router = Router::new()
+        .route("/list", get(users_handler))
+        .route("/{id}", get(users_handler));
+
+    let posts_router = Router::new()
+        .route("/list", get(posts_handler))
+        .route("/{id}", get(posts_handler));
+
+    let admin_router = Router::new()
+        .route("/list", get(admin_handler))
+        .route("/{id}", get(admin_handler));
+
+    // Nest all routers
+    let app = Router::new()
+        .nest("/api/v1/users", users_router)
+        .nest("/api/v1/posts", posts_router)
+        .nest("/admin", admin_router);
+
+    // Verify all routes are registered (2 + 2 + 2 = 6 routes)
+    let routes = app.registered_routes();
+    assert_eq!(routes.len(), 6, "Should have 6 routes registered");
+
+    // Verify each prefix group has its routes
+    assert!(routes.contains_key("/api/v1/users/list"));
+    assert!(routes.contains_key("/api/v1/users/:id"));
+    assert!(routes.contains_key("/api/v1/posts/list"));
+    assert!(routes.contains_key("/api/v1/posts/:id"));
+    assert!(routes.contains_key("/admin/list"));
+    assert!(routes.contains_key("/admin/:id"));
+
+    // Verify routes are matchable and don't interfere with each other
+    match app.match_route("/api/v1/users/list", &Method::GET) {
+        RouteMatch::Found { params, .. } => {
+            assert!(params.is_empty(), "Static path should have no params");
+        }
+        _ => panic!("Should find /api/v1/users/list"),
+    }
+
+    match app.match_route("/api/v1/posts/123", &Method::GET) {
+        RouteMatch::Found { params, .. } => {
+            assert_eq!(params.get("id"), Some(&"123".to_string()));
+        }
+        _ => panic!("Should find /api/v1/posts/123"),
+    }
+
+    match app.match_route("/admin/456", &Method::GET) {
+        RouteMatch::Found { params, .. } => {
+            assert_eq!(params.get("id"), Some(&"456".to_string()));
+        }
+        _ => panic!("Should find /admin/456"),
     }
 }
 
-/// Create a GET route handler
-pub fn get<H, T>(handler: H) -> MethodRouter
-where
-    H: Handler<T>,
-    T: 'static,
-{
-    let mut op = Operation::new();
-    H::update_operation(&mut op);
-    MethodRouter::new().on(
-        Method::GET,
-        into_boxed_handler(handler),
-        op,
-        <H as Handler<T>>::register_components,
-    )
-}
-
-/// Create a POST route handler
-pub fn post<H, T>(handler: H) -> MethodRouter
-where
-    H: Handler<T>,
-    T: 'static,
-{
-    let mut op = Operation::new();
-    H::update_operation(&mut op);
-    MethodRouter::new().on(
-        Method::POST,
-        into_boxed_handler(handler),
-        op,
-        <H as Handler<T>>::register_components,
-    )
-}
-
-/// Create a PUT route handler
-pub fn put<H, T>(handler: H) -> MethodRouter
-where
-    H: Handler<T>,
-    T: 'static,
-{
-    let mut op = Operation::new();
-    H::update_operation(&mut op);
-    MethodRouter::new().on(
-        Method::PUT,
-        into_boxed_handler(handler),
-        op,
-        <H as Handler<T>>::register_components,
-    )
-}
-
-/// Create a PATCH route handler
-pub fn patch<H, T>(handler: H) -> MethodRouter
-where
-    H: Handler<T>,
-    T: 'static,
-{
-    let mut op = Operation::new();
-    H::update_operation(&mut op);
-    MethodRouter::new().on(
-        Method::PATCH,
-        into_boxed_handler(handler),
-        op,
-        <H as Handler<T>>::register_components,
-    )
-}
-
-/// Create a DELETE route handler
-pub fn delete<H, T>(handler: H) -> MethodRouter
-where
-    H: Handler<T>,
-    T: 'static,
-{
-    let mut op = Operation::new();
-    H::update_operation(&mut op);
-    MethodRouter::new().on(
-        Method::DELETE,
-        into_boxed_handler(handler),
-        op,
-        <H as Handler<T>>::register_components,
-    )
-}
-
-/// Main router
-#[derive(Clone)]
-pub struct Router {
-    inner: MatchitRouter<MethodRouter>,
-    state: Arc<Extensions>,
-    /// Track registered routes for conflict detection
-    registered_routes: HashMap<String, RouteInfo>,
-    /// Store MethodRouters for nesting support (keyed by matchit path)
-    method_routers: HashMap<String, MethodRouter>,
-    /// Track state type IDs for merging (type name -> whether it's set)
-    /// This is a workaround since Extensions doesn't support iteration
-    state_type_ids: Vec<std::any::TypeId>,
-}
-
-impl Router {
-    /// Create a new router
-    pub fn new() -> Self {
-        Self {
-            inner: MatchitRouter::new(),
-            state: Arc::new(Extensions::new()),
-            registered_routes: HashMap::new(),
-            method_routers: HashMap::new(),
-            state_type_ids: Vec::new(),
-        }
+#[test]
+fn test_multiple_router_composition_with_multiple_methods() {
+    async fn get_handler() -> &'static str {
+        "get"
+    }
+    async fn post_handler() -> &'static str {
+        "post"
+    }
+    async fn put_handler() -> &'static str {
+        "put"
     }
 
-    /// Add a typed route using a TypedPath
-    pub fn typed<P: TypedPath>(self, method_router: MethodRouter) -> Self {
-        self.route(P::PATH, method_router)
+    // Create routers with multiple HTTP methods
+    // Combine GET and POST for users root
+    let get_router = get(get_handler);
+    let post_router = post(post_handler);
+    let mut users_root_combined = MethodRouter::new();
+    for (method, handler) in get_router.handlers {
+        users_root_combined.handlers.insert(method, handler);
+    }
+    for (method, handler) in post_router.handlers {
+        users_root_combined.handlers.insert(method, handler);
     }
 
-    /// Add a route
-    pub fn route(mut self, path: &str, method_router: MethodRouter) -> Self {
-        // Convert {param} style to :param for matchit
-        let matchit_path = convert_path_params(path);
-
-        // Get the methods being registered
-        let methods: Vec<Method> = method_router.handlers.keys().cloned().collect();
-
-        // Store a clone of the MethodRouter for nesting support
-        self.method_routers
-            .insert(matchit_path.clone(), method_router.clone());
-
-        match self.inner.insert(matchit_path.clone(), method_router) {
-            Ok(_) => {
-                // Track the registered route
-                self.registered_routes.insert(
-                    matchit_path.clone(),
-                    RouteInfo {
-                        path: path.to_string(),
-                        methods,
-                    },
-                );
-            }
-            Err(e) => {
-                // Remove the method_router we just added since registration failed
-                self.method_routers.remove(&matchit_path);
-
-                // Find the existing conflicting route
-                let existing_path = self
-                    .find_conflicting_route(&matchit_path)
-                    .map(|info| info.path.clone())
-                    .unwrap_or_else(|| "<unknown>".to_string());
-
-                let conflict_error = RouteConflictError {
-                    new_path: path.to_string(),
-                    method: methods.first().cloned(),
-                    existing_path,
-                    details: e.to_string(),
-                };
-
-                panic!("{}", conflict_error);
-            }
-        }
-        self
+    // Combine GET and PUT for users/{id}
+    let get_router2 = get(get_handler);
+    let put_router = put(put_handler);
+    let mut users_id_combined = MethodRouter::new();
+    for (method, handler) in get_router2.handlers {
+        users_id_combined.handlers.insert(method, handler);
+    }
+    for (method, handler) in put_router.handlers {
+        users_id_combined.handlers.insert(method, handler);
     }
 
-    /// Find a conflicting route by checking registered routes
-    fn find_conflicting_route(&self, matchit_path: &str) -> Option<&RouteInfo> {
-        // Try to find an exact match first
-        if let Some(info) = self.registered_routes.get(matchit_path) {
-            return Some(info);
-        }
+    let users_router = Router::new()
+        .route("/", users_root_combined)
+        .route("/{id}", users_id_combined);
 
-        // Try to find a route that would conflict (same structure but different param names)
-        let normalized_new = normalize_path_for_comparison(matchit_path);
-
-        for (registered_path, info) in &self.registered_routes {
-            let normalized_existing = normalize_path_for_comparison(registered_path);
-            if normalized_new == normalized_existing {
-                return Some(info);
-            }
-        }
-
-        None
+    // Combine GET and POST for posts root
+    let get_router3 = get(get_handler);
+    let post_router2 = post(post_handler);
+    let mut posts_root_combined = MethodRouter::new();
+    for (method, handler) in get_router3.handlers {
+        posts_root_combined.handlers.insert(method, handler);
+    }
+    for (method, handler) in post_router2.handlers {
+        posts_root_combined.handlers.insert(method, handler);
     }
 
-    /// Add application state
-    pub fn state<S: Clone + Send + Sync + 'static>(mut self, state: S) -> Self {
-        let type_id = std::any::TypeId::of::<S>();
-        let extensions = Arc::make_mut(&mut self.state);
-        extensions.insert(state);
-        if !self.state_type_ids.contains(&type_id) {
-            self.state_type_ids.push(type_id);
-        }
-        self
+    let posts_router = Router::new().route("/", posts_root_combined);
+
+    // Nest routers
+    let app = Router::new()
+        .nest("/users", users_router)
+        .nest("/posts", posts_router);
+
+    // Verify routes are registered
+    let routes = app.registered_routes();
+    assert_eq!(routes.len(), 3, "Should have 3 routes registered");
+
+    // Verify methods are preserved for users routes
+    let users_root = routes.get("/users").unwrap();
+    assert!(users_root.methods.contains(&Method::GET));
+    assert!(users_root.methods.contains(&Method::POST));
+
+    let users_id = routes.get("/users/:id").unwrap();
+    assert!(users_id.methods.contains(&Method::GET));
+    assert!(users_id.methods.contains(&Method::PUT));
+
+    // Verify methods are preserved for posts routes
+    let posts_root = routes.get("/posts").unwrap();
+    assert!(posts_root.methods.contains(&Method::GET));
+    assert!(posts_root.methods.contains(&Method::POST));
+
+    // Verify route matching works for all methods
+    match app.match_route("/users", &Method::GET) {
+        RouteMatch::Found { .. } => {}
+        _ => panic!("GET /users should be found"),
     }
-
-    /// Check if state of a given type exists
-    pub fn has_state<S: 'static>(&self) -> bool {
-        self.state_type_ids.contains(&std::any::TypeId::of::<S>())
+    match app.match_route("/users", &Method::POST) {
+        RouteMatch::Found { .. } => {}
+        _ => panic!("POST /users should be found"),
     }
-
-    /// Get state type IDs (for testing and debugging)
-    pub fn state_type_ids(&self) -> &[std::any::TypeId] {
-        &self.state_type_ids
-    }
-
-    /// Nest another router under a prefix
-    ///
-    /// All routes from the nested router will be registered with the prefix
-    /// prepended to their paths. State from the nested router is merged into
-    /// the parent router (parent state takes precedence for type conflicts).
-    ///
-    /// # State Merging
-    ///
-    /// When nesting routers with state:
-    /// - If the parent router has state of type T, it is preserved (parent wins)
-    /// - If only the nested router has state of type T, it is added to the parent
-    /// - State type tracking is merged to enable proper conflict detection
-    ///
-    /// Note: Due to limitations of `http::Extensions`, automatic state merging
-    /// requires using the `merge_state` method for specific types.
-    ///
-    /// # Example
-    ///
-    /// ```rust,ignore
-    /// use rustapi_core::{Router, get};
-    ///
-    /// async fn list_users() -> &'static str { "List users" }
-    /// async fn get_user() -> &'static str { "Get user" }
-    ///
-    /// let users_router = Router::new()
-    ///     .route("/", get(list_users))
-    ///     .route("/{id}", get(get_user));
-    ///
-    /// let app = Router::new()
-    ///     .nest("/api/users", users_router);
-    ///
-    /// // Routes are now:
-    /// // GET /api/users/
-    /// // GET /api/users/{id}
-    /// ```
-    ///
-    /// # Nesting with State
-    ///
-    /// The `nest` method automatically tracks state types from the nested router to prevent
-    /// conflicts, but it does NOT automatically merge the state values instance by instance.
-    /// You should distinctively add state to the parent, or use `merge_state` if you want
-    /// to pull a specific state object from the child.
-    ///
-    /// ```rust,ignore
-    /// use rustapi_core::Router;
-    /// use std::sync::Arc;
-    ///
-    /// #[derive(Clone)]
-    /// struct Database { /* ... */ }
-    ///
-    /// let db = Database { /* ... */ };
-    ///
-    /// // Option 1: Add state to the parent (Recommended)
-    /// let api = Router::new()
-    ///     .nest("/v1", Router::new()
-    ///         .route("/users", get(list_users))) // Needs Database
-    ///     .state(db);
-    ///
-    /// // Option 2: Define specific state in sub-router and merge explicitly
-    /// let sub_router = Router::new()
-    ///     .state(Database { /* ... */ })
-    ///     .route("/items", get(list_items));
-    ///
-    /// let app = Router::new()
-    ///     .merge_state::<Database>(&sub_router) // Pulls Database from sub_router
-    ///     .nest("/api", sub_router);
-    /// ```
-    pub fn nest(mut self, prefix: &str, router: Router) -> Self {
-        // 1. Normalize the prefix
-        let normalized_prefix = normalize_prefix(prefix);
-
-        // 2. Merge state type IDs from nested router
-        // Parent state takes precedence - we only track types, actual values
-        // are handled by merge_state calls or by the user adding state to parent
-        for type_id in &router.state_type_ids {
-            if !self.state_type_ids.contains(type_id) {
-                self.state_type_ids.push(*type_id);
-            }
-        }
-
-        // 3. Collect routes from the nested router before consuming it
-        // We need to iterate over registered_routes and get the corresponding MethodRouters
-        let nested_routes: Vec<(String, RouteInfo, MethodRouter)> = router
-            .registered_routes
-            .into_iter()
-            .filter_map(|(matchit_path, route_info)| {
-                router
-                    .method_routers
-                    .get(&matchit_path)
-                    .map(|mr| (matchit_path, route_info, mr.clone()))
-            })
-            .collect();
-
-        // 4. Register each nested route with the prefix
-        for (matchit_path, route_info, method_router) in nested_routes {
-            // Build the prefixed path
-            // The matchit_path already has the :param format
-            // The route_info.path has the {param} format
-            let prefixed_matchit_path = if matchit_path == "/" {
-                normalized_prefix.clone()
-            } else {
-                format!("{}{}", normalized_prefix, matchit_path)
-            };
-
-            let prefixed_display_path = if route_info.path == "/" {
-                normalized_prefix.clone()
-            } else {
-                format!("{}{}", normalized_prefix, route_info.path)
-            };
-
-            // Store the MethodRouter for future nesting
-            self.method_routers
-                .insert(prefixed_matchit_path.clone(), method_router.clone());
-
-            // Try to insert into the matchit router
-            match self
-                .inner
-                .insert(prefixed_matchit_path.clone(), method_router)
-            {
-                Ok(_) => {
-                    // Track the registered route
-                    self.registered_routes.insert(
-                        prefixed_matchit_path,
-                        RouteInfo {
-                            path: prefixed_display_path,
-                            methods: route_info.methods,
-                        },
-                    );
-                }
-                Err(e) => {
-                    // Remove the method_router we just added since registration failed
-                    self.method_routers.remove(&prefixed_matchit_path);
-
-                    // Find the existing conflicting route
-                    let existing_path = self
-                        .find_conflicting_route(&prefixed_matchit_path)
-                        .map(|info| info.path.clone())
-                        .unwrap_or_else(|| "<unknown>".to_string());
-
-                    let conflict_error = RouteConflictError {
-                        new_path: prefixed_display_path,
-                        method: route_info.methods.first().cloned(),
-                        existing_path,
-                        details: e.to_string(),
-                    };
-
-                    panic!("{}", conflict_error);
-                }
-            }
-        }
-
-        self
-    }
-
-    /// Merge state from another router into this one
-    ///
-    /// This method allows explicit state merging when nesting routers.
-    /// Parent state takes precedence - if the parent already has state of type S,
-    /// the nested state is ignored.
-    ///
-    /// # Example
-    ///
-    /// ```rust,ignore
-    /// #[derive(Clone)]
-    /// struct DbPool(String);
-    ///
-    /// let nested = Router::new().state(DbPool("nested".to_string()));
-    /// let parent = Router::new()
-    ///     .merge_state::<DbPool>(&nested); // Adds DbPool from nested
-    /// ```
-    pub fn merge_state<S: Clone + Send + Sync + 'static>(mut self, other: &Router) -> Self {
-        let type_id = std::any::TypeId::of::<S>();
-
-        // Parent wins - only merge if parent doesn't have this state type
-        if !self.state_type_ids.contains(&type_id) {
-            // Try to get the state from the other router
-            if let Some(state) = other.state.get::<S>() {
-                let extensions = Arc::make_mut(&mut self.state);
-                extensions.insert(state.clone());
-                self.state_type_ids.push(type_id);
-            }
-        }
-
-        self
-    }
-
-    /// Match a request and return the handler + params
-    pub fn match_route(&self, path: &str, method: &Method) -> RouteMatch<'_> {
-        match self.inner.at(path) {
-            Ok(matched) => {
-                let method_router = matched.value;
-
-                if let Some(handler) = method_router.get_handler(method) {
-                    // Use stack-optimized PathParams (avoids heap allocation for ≤4 params)
-                    let params: PathParams = matched
-                        .params
-                        .iter()
-                        .map(|(k, v)| (k.to_string(), v.to_string()))
-                        .collect();
-
-                    RouteMatch::Found { handler, params }
-                } else {
-                    RouteMatch::MethodNotAllowed {
-                        allowed: method_router.allowed_methods(),
-                    }
-                }
-            }
-            Err(_) => RouteMatch::NotFound,
-        }
-    }
-
-    /// Get shared state
-    pub fn state_ref(&self) -> Arc<Extensions> {
-        self.state.clone()
-    }
-
-    /// Get registered routes (for testing and debugging)
-    pub fn registered_routes(&self) -> &HashMap<String, RouteInfo> {
-        &self.registered_routes
-    }
-
-    /// Get method routers (for OpenAPI integration during nesting)
-    pub fn method_routers(&self) -> &HashMap<String, MethodRouter> {
-        &self.method_routers
+    match app.match_route("/users/123", &Method::PUT) {
+        RouteMatch::Found { .. } => {}
+        _ => panic!("PUT /users/123 should be found"),
     }
 }
 
-impl Default for Router {
-    fn default() -> Self {
-        Self::new()
+#[test]
+fn test_multiple_router_composition_deep_nesting() {
+    async fn handler() -> &'static str {
+        "handler"
+    }
+
+    // Create nested routers at different depth levels
+    let deep_router = Router::new().route("/action", get(handler));
+
+    let mid_router = Router::new().route("/info", get(handler));
+
+    let shallow_router = Router::new().route("/status", get(handler));
+
+    // Nest at different depths
+    let app = Router::new()
+        .nest("/api/v1/resources/items", deep_router)
+        .nest("/api/v1/resources", mid_router)
+        .nest("/api", shallow_router);
+
+    // Verify all routes are registered
+    let routes = app.registered_routes();
+    assert_eq!(routes.len(), 3, "Should have 3 routes registered");
+
+    assert!(routes.contains_key("/api/v1/resources/items/action"));
+    assert!(routes.contains_key("/api/v1/resources/info"));
+    assert!(routes.contains_key("/api/status"));
+
+    // Verify all routes are matchable
+    match app.match_route("/api/v1/resources/items/action", &Method::GET) {
+        RouteMatch::Found { .. } => {}
+        _ => panic!("Should find deep route"),
+    }
+    match app.match_route("/api/v1/resources/info", &Method::GET) {
+        RouteMatch::Found { .. } => {}
+        _ => panic!("Should find mid route"),
+    }
+    match app.match_route("/api/status", &Method::GET) {
+        RouteMatch::Found { .. } => {}
+        _ => panic!("Should find shallow route"),
     }
 }
 
-/// Result of route matching
-pub enum RouteMatch<'a> {
-    Found {
-        handler: &'a BoxedHandler,
-        params: PathParams,
-    },
-    NotFound,
-    MethodNotAllowed {
-        allowed: Vec<Method>,
-    },
-}
-
-/// Convert {param} style to :param for matchit
-fn convert_path_params(path: &str) -> String {
-    let mut result = String::with_capacity(path.len());
-
-    for ch in path.chars() {
-        match ch {
-            '{' => {
-                result.push(':');
-            }
-            '}' => {
-                // Skip closing brace
-            }
-            _ => {
-                result.push(ch);
-            }
-        }
-    }
-
-    result
-}
-
-/// Normalize a path for conflict comparison by replacing parameter names with a placeholder
-fn normalize_path_for_comparison(path: &str) -> String {
-    let mut result = String::with_capacity(path.len());
-    let mut in_param = false;
-
-    for ch in path.chars() {
-        match ch {
-            ':' => {
-                in_param = true;
-                result.push_str(":_");
-            }
-            '/' => {
-                in_param = false;
-                result.push('/');
-            }
-            _ if in_param => {
-                // Skip parameter name characters
-            }
-            _ => {
-                result.push(ch);
-            }
-        }
-    }
-
-    result
-}
-
-/// Normalize a prefix for router nesting.
-///
-/// Ensures the prefix:
-/// - Starts with exactly one leading slash
-/// - Has no trailing slash (unless it's just "/")
-/// - Has no double slashes
-///
-/// # Examples
-///
-/// ```ignore
-/// assert_eq!(normalize_prefix("api"), "/api");
-/// assert_eq!(normalize_prefix("/api"), "/api");
-/// assert_eq!(normalize_prefix("/api/"), "/api");
-/// assert_eq!(normalize_prefix("//api//"), "/api");
-/// assert_eq!(normalize_prefix(""), "/");
-/// ```
-pub(crate) fn normalize_prefix(prefix: &str) -> String {
-    // Handle empty string
-    if prefix.is_empty() {
-        return "/".to_string();
-    }
-
-    // Split by slashes and filter out empty segments (handles multiple slashes)
-    let segments: Vec<&str> = prefix.split('/').filter(|s| !s.is_empty()).collect();
-
-    // If no segments after filtering, return root
-    if segments.is_empty() {
-        return "/".to_string();
-    }
-
-    // Build the normalized prefix with leading slash
-    let mut result = String::with_capacity(prefix.len() + 1);
-    for segment in segments {
-        result.push('/');
-        result.push_str(segment);
-    }
-
-    result
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_convert_path_params() {
-        assert_eq!(convert_path_params("/users/{id}"), "/users/:id");
-        assert_eq!(
-            convert_path_params("/users/{user_id}/posts/{post_id}"),
-            "/users/:user_id/posts/:post_id"
-        );
-        assert_eq!(convert_path_params("/static/path"), "/static/path");
-    }
-
-    #[test]
-    fn test_normalize_path_for_comparison() {
-        assert_eq!(normalize_path_for_comparison("/users/:id"), "/users/:_");
-        assert_eq!(
-            normalize_path_for_comparison("/users/:user_id"),
-            "/users/:_"
-        );
-        assert_eq!(
-            normalize_path_for_comparison("/users/:id/posts/:post_id"),
-            "/users/:_/posts/:_"
-        );
-        assert_eq!(
-            normalize_path_for_comparison("/static/path"),
-            "/static/path"
-        );
-    }
-
-    #[test]
-    fn test_normalize_prefix() {
-        // Basic cases
-        assert_eq!(normalize_prefix("api"), "/api");
-        assert_eq!(normalize_prefix("/api"), "/api");
-        assert_eq!(normalize_prefix("/api/"), "/api");
-        assert_eq!(normalize_prefix("api/"), "/api");
-
-        // Multiple segments
-        assert_eq!(normalize_prefix("api/v1"), "/api/v1");
-        assert_eq!(normalize_prefix("/api/v1"), "/api/v1");
-        assert_eq!(normalize_prefix("/api/v1/"), "/api/v1");
-
-        // Edge cases: empty and root
-        assert_eq!(normalize_prefix(""), "/");
-        assert_eq!(normalize_prefix("/"), "/");
-
-        // Multiple slashes
-        assert_eq!(normalize_prefix("//api"), "/api");
-        assert_eq!(normalize_prefix("api//v1"), "/api/v1");
-        assert_eq!(normalize_prefix("//api//v1//"), "/api/v1");
-        assert_eq!(normalize_prefix("///"), "/");
-    }
-
-    #[test]
-    #[should_panic(expected = "ROUTE CONFLICT DETECTED")]
-    fn test_route_conflict_detection() {
-        async fn handler1() -> &'static str {
-            "handler1"
-        }
-        async fn handler2() -> &'static str {
-            "handler2"
-        }
-
-        let _router = Router::new()
-            .route("/users/{id}", get(handler1))
-            .route("/users/{user_id}", get(handler2)); // This should panic
-    }
-
-    #[test]
-    fn test_no_conflict_different_paths() {
-        async fn handler1() -> &'static str {
-            "handler1"
-        }
-        async fn handler2() -> &'static str {
-            "handler2"
-        }
-
-        let router = Router::new()
-            .route("/users/{id}", get(handler1))
-            .route("/users/{id}/profile", get(handler2));
-
-        assert_eq!(router.registered_routes().len(), 2);
-    }
-
-    #[test]
-    fn test_route_info_tracking() {
-        async fn handler() -> &'static str {
-            "handler"
-        }
-
-        let router = Router::new().route("/users/{id}", get(handler));
-
-        let routes = router.registered_routes();
-        assert_eq!(routes.len(), 1);
-
-        let info = routes.get("/users/:id").unwrap();
-        assert_eq!(info.path, "/users/{id}");
-        assert_eq!(info.methods.len(), 1);
-        assert_eq!(info.methods[0], Method::GET);
-    }
-
-    #[test]
-    fn test_basic_router_nesting() {
-        async fn list_users() -> &'static str {
-            "list users"
-        }
-        async fn get_user() -> &'static str {
-            "get user"
-        }
-
-        let users_router = Router::new()
-            .route("/", get(list_users))
-            .route("/{id}", get(get_user));
-
-        let app = Router::new().nest("/api/users", users_router);
-
-        let routes = app.registered_routes();
-        assert_eq!(routes.len(), 2);
-
-        // Check that routes are registered with prefix
-        assert!(routes.contains_key("/api/users"));
-        assert!(routes.contains_key("/api/users/:id"));
-
-        // Check display paths
-        let list_info = routes.get("/api/users").unwrap();
-        assert_eq!(list_info.path, "/api/users");
-
-        let get_info = routes.get("/api/users/:id").unwrap();
-        assert_eq!(get_info.path, "/api/users/{id}");
-    }
-
-    #[test]
-    fn test_nested_route_matching() {
-        async fn handler() -> &'static str {
-            "handler"
-        }
-
-        let users_router = Router::new().route("/{id}", get(handler));
-
-        let app = Router::new().nest("/api/users", users_router);
-
-        // Test that the route can be matched
-        match app.match_route("/api/users/123", &Method::GET) {
-            RouteMatch::Found { params, .. } => {
-                assert_eq!(params.get("id"), Some(&"123".to_string()));
-            }
-            _ => panic!("Route should be found"),
-        }
-    }
-
-    #[test]
-    fn test_nested_route_matching_multiple_params() {
-        async fn handler() -> &'static str {
-            "handler"
-        }
-
-        let posts_router = Router::new().route("/{user_id}/posts/{post_id}", get(handler));
-
-        let app = Router::new().nest("/api", posts_router);
-
-        // Test that multiple parameters are correctly extracted
-        match app.match_route("/api/42/posts/100", &Method::GET) {
-            RouteMatch::Found { params, .. } => {
-                assert_eq!(params.get("user_id"), Some(&"42".to_string()));
-                assert_eq!(params.get("post_id"), Some(&"100".to_string()));
-            }
-            _ => panic!("Route should be found"),
-        }
-    }
-
-    #[test]
-    fn test_nested_route_matching_static_path() {
-        async fn handler() -> &'static str {
-            "handler"
-        }
-
-        let health_router = Router::new().route("/health", get(handler));
-
-        let app = Router::new().nest("/api/v1", health_router);
-
-        // Test that static paths are correctly matched
-        match app.match_route("/api/v1/health", &Method::GET) {
-            RouteMatch::Found { params, .. } => {
-                assert!(params.is_empty(), "Static path should have no params");
-            }
-            _ => panic!("Route should be found"),
-        }
-    }
-
-    #[test]
-    fn test_nested_route_not_found() {
-        async fn handler() -> &'static str {
-            "handler"
-        }
-
-        let users_router = Router::new().route("/users", get(handler));
-
-        let app = Router::new().nest("/api", users_router);
-
-        // Test that non-existent paths return NotFound
-        match app.match_route("/api/posts", &Method::GET) {
-            RouteMatch::NotFound => {
-                // Expected
-            }
-            _ => panic!("Route should not be found"),
-        }
-
-        // Test that wrong prefix returns NotFound
-        match app.match_route("/v2/users", &Method::GET) {
-            RouteMatch::NotFound => {
-                // Expected
-            }
-            _ => panic!("Route with wrong prefix should not be found"),
-        }
-    }
-
-    #[test]
-    fn test_nested_route_method_not_allowed() {
-        async fn handler() -> &'static str {
-            "handler"
-        }
-
-        let users_router = Router::new().route("/users", get(handler));
-
-        let app = Router::new().nest("/api", users_router);
-
-        // Test that wrong method returns MethodNotAllowed
-        match app.match_route("/api/users", &Method::POST) {
-            RouteMatch::MethodNotAllowed { allowed } => {
-                assert!(allowed.contains(&Method::GET));
-                assert!(!allowed.contains(&Method::POST));
-            }
-            _ => panic!("Should return MethodNotAllowed"),
-        }
-    }
-
-    #[test]
-    fn test_nested_route_multiple_methods() {
-        async fn get_handler() -> &'static str {
-            "get"
-        }
-        async fn post_handler() -> &'static str {
-            "post"
-        }
-
-        // Create a method router with both GET and POST
-        let get_router = get(get_handler);
-        let post_router = post(post_handler);
-        let mut combined = MethodRouter::new();
-        for (method, handler) in get_router.handlers {
-            combined.handlers.insert(method, handler);
-        }
-        for (method, handler) in post_router.handlers {
-            combined.handlers.insert(method, handler);
-        }
-
-        let users_router = Router::new().route("/users", combined);
-        let app = Router::new().nest("/api", users_router);
-
-        // Both GET and POST should work
-        match app.match_route("/api/users", &Method::GET) {
-            RouteMatch::Found { .. } => {}
-            _ => panic!("GET should be found"),
-        }
-
-        match app.match_route("/api/users", &Method::POST) {
-            RouteMatch::Found { .. } => {}
-            _ => panic!("POST should be found"),
-        }
-
-        // DELETE should return MethodNotAllowed with GET and POST in allowed
-        match app.match_route("/api/users", &Method::DELETE) {
-            RouteMatch::MethodNotAllowed { allowed } => {
-                assert!(allowed.contains(&Method::GET));
-                assert!(allowed.contains(&Method::POST));
-            }
-            _ => panic!("DELETE should return MethodNotAllowed"),
-        }
-    }
-
-    #[test]
-    fn test_nested_router_prefix_normalization() {
-        async fn handler() -> &'static str {
-            "handler"
-        }
-
-        // Test various prefix formats
-        let router1 = Router::new().route("/test", get(handler));
-        let app1 = Router::new().nest("api", router1);
-        assert!(app1.registered_routes().contains_key("/api/test"));
-
-        let router2 = Router::new().route("/test", get(handler));
-        let app2 = Router::new().nest("/api/", router2);
-        assert!(app2.registered_routes().contains_key("/api/test"));
-
-        let router3 = Router::new().route("/test", get(handler));
-        let app3 = Router::new().nest("//api//", router3);
-        assert!(app3.registered_routes().contains_key("/api/test"));
-    }
-
-    #[test]
-    fn test_state_tracking() {
-        #[derive(Clone)]
-        struct MyState(#[allow(dead_code)] String);
-
-        let router = Router::new().state(MyState("test".to_string()));
-
-        assert!(router.has_state::<MyState>());
-        assert!(!router.has_state::<String>());
-    }
-
-    #[test]
-    fn test_state_merge_nested_only() {
-        #[derive(Clone, PartialEq, Debug)]
-        struct NestedState(String);
-
-        async fn handler() -> &'static str {
-            "handler"
-        }
-
-        // Create a router with state to use as source for merging
-        let state_source = Router::new().state(NestedState("nested".to_string()));
-
-        let nested = Router::new().route("/test", get(handler));
-
-        let parent = Router::new()
-            .nest("/api", nested)
-            .merge_state::<NestedState>(&state_source);
-
-        // Parent should now have the nested state
-        assert!(parent.has_state::<NestedState>());
-
-        // Verify the state value
-        let state = parent.state.get::<NestedState>().unwrap();
-        assert_eq!(state.0, "nested");
-    }
-
-    #[test]
-    fn test_state_merge_parent_wins() {
-        #[derive(Clone, PartialEq, Debug)]
-        struct SharedState(String);
-
-        async fn handler() -> &'static str {
-            "handler"
-        }
-
-        // Create a router with state to use as source for merging
-        let state_source = Router::new().state(SharedState("nested".to_string()));
-
-        let nested = Router::new().route("/test", get(handler));
-
-        let parent = Router::new()
-            .state(SharedState("parent".to_string()))
-            .nest("/api", nested)
-            .merge_state::<SharedState>(&state_source);
-
-        // Parent should still have its own state (parent wins)
-        assert!(parent.has_state::<SharedState>());
-
-        // Verify the state value is from parent
-        let state = parent.state.get::<SharedState>().unwrap();
-        assert_eq!(state.0, "parent");
-    }
-
-    #[test]
-    fn test_state_type_ids_merged_on_nest() {
-        #[derive(Clone)]
-        struct NestedState(#[allow(dead_code)] String);
-
-        async fn handler() -> &'static str {
-            "handler"
-        }
-
-        let nested = Router::new()
-            .route("/test", get(handler))
-            .state(NestedState("nested".to_string()));
-
-        let parent = Router::new().nest("/api", nested);
-
-        // Parent should track the nested state type ID
-        assert!(parent
-            .state_type_ids()
-            .contains(&std::any::TypeId::of::<NestedState>()));
-    }
-
-    #[test]
-    #[should_panic(expected = "ROUTE CONFLICT DETECTED")]
-    fn test_nested_route_conflict_with_existing_route() {
-        async fn handler1() -> &'static str {
-            "handler1"
-        }
-        async fn handler2() -> &'static str {
-            "handler2"
-        }
-
-        // Create a parent router with an existing route
-        let parent = Router::new().route("/api/users/{id}", get(handler1));
-
-        // Create a nested router with a conflicting route
-        let nested = Router::new().route("/{user_id}", get(handler2));
-
-        // This should panic because /api/users/{id} conflicts with /api/users/{user_id}
-        let _app = parent.nest("/api/users", nested);
-    }
-
-    #[test]
-    #[should_panic(expected = "ROUTE CONFLICT DETECTED")]
-    fn test_nested_route_conflict_same_path_different_param_names() {
-        async fn handler1() -> &'static str {
-            "handler1"
-        }
-        async fn handler2() -> &'static str {
-            "handler2"
-        }
-
-        // Create two nested routers with same path structure but different param names
-        let nested1 = Router::new().route("/{id}", get(handler1));
-        let nested2 = Router::new().route("/{user_id}", get(handler2));
-
-        // Nest both under the same prefix - should conflict
-        let _app = Router::new()
-            .nest("/api/users", nested1)
-            .nest("/api/users", nested2);
-    }
-
-    #[test]
-    fn test_nested_route_conflict_error_contains_both_paths() {
-        use std::panic::{catch_unwind, AssertUnwindSafe};
-
-        async fn handler1() -> &'static str {
-            "handler1"
-        }
-        async fn handler2() -> &'static str {
-            "handler2"
-        }
-
-        let result = catch_unwind(AssertUnwindSafe(|| {
-            let parent = Router::new().route("/api/users/{id}", get(handler1));
-            let nested = Router::new().route("/{user_id}", get(handler2));
-            let _app = parent.nest("/api/users", nested);
-        }));
-
-        assert!(result.is_err(), "Should have panicked due to conflict");
-
-        if let Err(panic_info) = result {
-            if let Some(msg) = panic_info.downcast_ref::<String>() {
-                assert!(
-                    msg.contains("ROUTE CONFLICT DETECTED"),
-                    "Error should contain 'ROUTE CONFLICT DETECTED'"
-                );
-                assert!(
-                    msg.contains("Existing:") && msg.contains("New:"),
-                    "Error should contain both 'Existing:' and 'New:' labels"
-                );
-                assert!(
-                    msg.contains("How to resolve:"),
-                    "Error should contain resolution guidance"
-                );
-            }
-        }
-    }
-
-    #[test]
-    fn test_nested_routes_no_conflict_different_prefixes() {
-        async fn handler1() -> &'static str {
-            "handler1"
-        }
-        async fn handler2() -> &'static str {
-            "handler2"
-        }
-
-        // Create two nested routers with same internal paths but different prefixes
-        let nested1 = Router::new().route("/{id}", get(handler1));
-        let nested2 = Router::new().route("/{id}", get(handler2));
-
-        // Nest under different prefixes - should NOT conflict
-        let app = Router::new()
-            .nest("/api/users", nested1)
-            .nest("/api/posts", nested2);
-
-        assert_eq!(app.registered_routes().len(), 2);
-        assert!(app.registered_routes().contains_key("/api/users/:id"));
-        assert!(app.registered_routes().contains_key("/api/posts/:id"));
-    }
-
-    // **Feature: router-nesting, Property 4: Multiple Router Composition**
-    // Tests for nesting multiple routers under different prefixes
-    // **Validates: Requirements 1.5**
-
-    #[test]
-    fn test_multiple_router_composition_all_routes_registered() {
-        async fn users_list() -> &'static str {
-            "users list"
-        }
-        async fn users_get() -> &'static str {
-            "users get"
-        }
-        async fn posts_list() -> &'static str {
-            "posts list"
-        }
-        async fn posts_get() -> &'static str {
-            "posts get"
-        }
-        async fn comments_list() -> &'static str {
-            "comments list"
-        }
-
-        // Create multiple sub-routers with different routes
-        let users_router = Router::new()
-            .route("/", get(users_list))
-            .route("/{id}", get(users_get));
-
-        let posts_router = Router::new()
-            .route("/", get(posts_list))
-            .route("/{id}", get(posts_get));
-
-        let comments_router = Router::new().route("/", get(comments_list));
-
-        // Nest all routers under different prefixes
-        let app = Router::new()
-            .nest("/api/users", users_router)
-            .nest("/api/posts", posts_router)
-            .nest("/api/comments", comments_router);
-
-        // Verify all routes are registered (2 + 2 + 1 = 5 routes)
-        let routes = app.registered_routes();
-        assert_eq!(routes.len(), 5, "Should have 5 routes registered");
-
-        // Verify users routes
-        assert!(
-            routes.contains_key("/api/users"),
-            "Should have /api/users route"
-        );
-        assert!(
-            routes.contains_key("/api/users/:id"),
-            "Should have /api/users/:id route"
-        );
-
-        // Verify posts routes
-        assert!(
-            routes.contains_key("/api/posts"),
-            "Should have /api/posts route"
-        );
-        assert!(
-            routes.contains_key("/api/posts/:id"),
-            "Should have /api/posts/:id route"
-        );
-
-        // Verify comments routes
-        assert!(
-            routes.contains_key("/api/comments"),
-            "Should have /api/comments route"
-        );
-    }
-
-    #[test]
-    fn test_multiple_router_composition_no_interference() {
-        async fn users_handler() -> &'static str {
-            "users"
-        }
-        async fn posts_handler() -> &'static str {
-            "posts"
-        }
-        async fn admin_handler() -> &'static str {
-            "admin"
-        }
-
-        // Create routers with same internal structure but different prefixes
-        let users_router = Router::new()
-            .route("/list", get(users_handler))
-            .route("/{id}", get(users_handler));
-
-        let posts_router = Router::new()
-            .route("/list", get(posts_handler))
-            .route("/{id}", get(posts_handler));
-
-        let admin_router = Router::new()
-            .route("/list", get(admin_handler))
-            .route("/{id}", get(admin_handler));
-
-        // Nest all routers
-        let app = Router::new()
-            .nest("/api/v1/users", users_router)
-            .nest("/api/v1/posts", posts_router)
-            .nest("/admin", admin_router);
-
-        // Verify all routes are registered (2 + 2 + 2 = 6 routes)
-        let routes = app.registered_routes();
-        assert_eq!(routes.len(), 6, "Should have 6 routes registered");
-
-        // Verify each prefix group has its routes
-        assert!(routes.contains_key("/api/v1/users/list"));
-        assert!(routes.contains_key("/api/v1/users/:id"));
-        assert!(routes.contains_key("/api/v1/posts/list"));
-        assert!(routes.contains_key("/api/v1/posts/:id"));
-        assert!(routes.contains_key("/admin/list"));
-        assert!(routes.contains_key("/admin/:id"));
-
-        // Verify routes are matchable and don't interfere with each other
-        match app.match_route("/api/v1/users/list", &Method::GET) {
-            RouteMatch::Found { params, .. } => {
-                assert!(params.is_empty(), "Static path should have no params");
-            }
-            _ => panic!("Should find /api/v1/users/list"),
-        }
-
-        match app.match_route("/api/v1/posts/123", &Method::GET) {
-            RouteMatch::Found { params, .. } => {
-                assert_eq!(params.get("id"), Some(&"123".to_string()));
-            }
-            _ => panic!("Should find /api/v1/posts/123"),
-        }
-
-        match app.match_route("/admin/456", &Method::GET) {
-            RouteMatch::Found { params, .. } => {
-                assert_eq!(params.get("id"), Some(&"456".to_string()));
-            }
-            _ => panic!("Should find /admin/456"),
-        }
-    }
-
-    #[test]
-    fn test_multiple_router_composition_with_multiple_methods() {
-        async fn get_handler() -> &'static str {
-            "get"
-        }
-        async fn post_handler() -> &'static str {
-            "post"
-        }
-        async fn put_handler() -> &'static str {
-            "put"
-        }
-
-        // Create routers with multiple HTTP methods
-        // Combine GET and POST for users root
-        let get_router = get(get_handler);
-        let post_router = post(post_handler);
-        let mut users_root_combined = MethodRouter::new();
-        for (method, handler) in get_router.handlers {
-            users_root_combined.handlers.insert(method, handler);
-        }
-        for (method, handler) in post_router.handlers {
-            users_root_combined.handlers.insert(method, handler);
-        }
-
-        // Combine GET and PUT for users/{id}
-        let get_router2 = get(get_handler);
-        let put_router = put(put_handler);
-        let mut users_id_combined = MethodRouter::new();
-        for (method, handler) in get_router2.handlers {
-            users_id_combined.handlers.insert(method, handler);
-        }
-        for (method, handler) in put_router.handlers {
-            users_id_combined.handlers.insert(method, handler);
-        }
-
-        let users_router = Router::new()
-            .route("/", users_root_combined)
-            .route("/{id}", users_id_combined);
-
-        // Combine GET and POST for posts root
-        let get_router3 = get(get_handler);
-        let post_router2 = post(post_handler);
-        let mut posts_root_combined = MethodRouter::new();
-        for (method, handler) in get_router3.handlers {
-            posts_root_combined.handlers.insert(method, handler);
-        }
-        for (method, handler) in post_router2.handlers {
-            posts_root_combined.handlers.insert(method, handler);
-        }
-
-        let posts_router = Router::new().route("/", posts_root_combined);
-
-        // Nest routers
-        let app = Router::new()
-            .nest("/users", users_router)
-            .nest("/posts", posts_router);
-
-        // Verify routes are registered
-        let routes = app.registered_routes();
-        assert_eq!(routes.len(), 3, "Should have 3 routes registered");
-
-        // Verify methods are preserved for users routes
-        let users_root = routes.get("/users").unwrap();
-        assert!(users_root.methods.contains(&Method::GET));
-        assert!(users_root.methods.contains(&Method::POST));
-
-        let users_id = routes.get("/users/:id").unwrap();
-        assert!(users_id.methods.contains(&Method::GET));
-        assert!(users_id.methods.contains(&Method::PUT));
-
-        // Verify methods are preserved for posts routes
-        let posts_root = routes.get("/posts").unwrap();
-        assert!(posts_root.methods.contains(&Method::GET));
-        assert!(posts_root.methods.contains(&Method::POST));
-
-        // Verify route matching works for all methods
-        match app.match_route("/users", &Method::GET) {
-            RouteMatch::Found { .. } => {}
-            _ => panic!("GET /users should be found"),
-        }
-        match app.match_route("/users", &Method::POST) {
-            RouteMatch::Found { .. } => {}
-            _ => panic!("POST /users should be found"),
-        }
-        match app.match_route("/users/123", &Method::PUT) {
-            RouteMatch::Found { .. } => {}
-            _ => panic!("PUT /users/123 should be found"),
-        }
-    }
-
-    #[test]
-    fn test_multiple_router_composition_deep_nesting() {
-        async fn handler() -> &'static str {
-            "handler"
-        }
-
-        // Create nested routers at different depth levels
-        let deep_router = Router::new().route("/action", get(handler));
-
-        let mid_router = Router::new().route("/info", get(handler));
-
-        let shallow_router = Router::new().route("/status", get(handler));
-
-        // Nest at different depths
-        let app = Router::new()
-            .nest("/api/v1/resources/items", deep_router)
-            .nest("/api/v1/resources", mid_router)
-            .nest("/api", shallow_router);
-
-        // Verify all routes are registered
-        let routes = app.registered_routes();
-        assert_eq!(routes.len(), 3, "Should have 3 routes registered");
-
-        assert!(routes.contains_key("/api/v1/resources/items/action"));
-        assert!(routes.contains_key("/api/v1/resources/info"));
-        assert!(routes.contains_key("/api/status"));
-
-        // Verify all routes are matchable
-        match app.match_route("/api/v1/resources/items/action", &Method::GET) {
-            RouteMatch::Found { .. } => {}
-            _ => panic!("Should find deep route"),
-        }
-        match app.match_route("/api/v1/resources/info", &Method::GET) {
-            RouteMatch::Found { .. } => {}
-            _ => panic!("Should find mid route"),
-        }
-        match app.match_route("/api/status", &Method::GET) {
-            RouteMatch::Found { .. } => {}
-            _ => panic!("Should find shallow route"),
-        }
-    }
-}
-
-#[cfg(test)]
 mod property_tests {
-    use super::*;
+    use crate::router::{
+        convert_path_params, delete, get, normalize_path_for_comparison, normalize_prefix, patch,
+        post, put, MethodRouter, RouteMatch, Router,
+    };
+    use http::Method;
     use proptest::prelude::*;
     use std::panic::{catch_unwind, AssertUnwindSafe};
 

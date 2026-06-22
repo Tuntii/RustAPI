@@ -1,5 +1,10 @@
 /target
 /memories
+
+# Environment files (never commit secrets)
+.env
+.env.*
+!.env.example
 /scripts
 # /benches
 /.kiro

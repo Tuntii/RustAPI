@@ -8,6 +8,9 @@
   [![Crates.io](https://img.shields.io/crates/v/rustapi-rs.svg)](https://crates.io/crates/rustapi-rs)
   [![Docs](https://img.shields.io/badge/docs-cookbook-brightgreen)](docs/cookbook/src/SUMMARY.md)
   [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](LICENSE)
+  [![MSRV](https://img.shields.io/badge/MSRV-1.85-orange)](Cargo.toml)
+  [![Security Audit](https://github.com/Tuntii/RustAPI/actions/workflows/audit.yml/badge.svg)](https://github.com/Tuntii/RustAPI/actions/workflows/audit.yml)
+  [![Coverage](https://img.shields.io/badge/coverage-tarpaulin-blue)](https://github.com/Tuntii/RustAPI/actions/workflows/ci.yml)
   [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Tuntii/RustAPI)
 </div>
 
