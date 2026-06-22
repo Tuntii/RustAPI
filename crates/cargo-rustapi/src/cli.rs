@@ -4,7 +4,7 @@
 use crate::commands::ReplayArgs;
 use crate::commands::{
     self, AddArgs, BenchArgs, ClientArgs, DeployArgs, DoctorArgs, GenerateArgs, LoginArgs,
-    MigrateArgs, NewArgs, ObservabilityArgs, RunArgs, WatchArgs,
+    LogoutArgs, MigrateArgs, NewArgs, ObservabilityArgs, RunArgs, WatchArgs, WhoamiArgs,
 };
 
 #[cfg(feature = "mcp")]
@@ -77,6 +77,12 @@ enum Commands {
     /// Login to RustAPI Cloud
     Login(LoginArgs),
 
+    /// Show current login status
+    Whoami(WhoamiArgs),
+
+    /// Logout from RustAPI Cloud
+    Logout(LogoutArgs),
+
     /// Deploy to various platforms
     #[command(subcommand)]
     Deploy(DeployArgs),
@@ -105,6 +111,8 @@ impl Cli {
             #[cfg(feature = "mcp")]
             Commands::Mcp(McpCommands::Generate(args)) => commands::mcp_generate(args).await,
             Commands::Login(args) => commands::login(args).await,
+            Commands::Whoami(args) => commands::whoami(args).await,
+            Commands::Logout(args) => commands::logout(args).await,
             Commands::Deploy(args) => commands::deploy(args).await,
             #[cfg(feature = "replay")]
             Commands::Replay(args) => commands::replay(args).await,

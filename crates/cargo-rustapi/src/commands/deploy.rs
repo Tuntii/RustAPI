@@ -4,12 +4,20 @@
 
 use anyhow::{Context, Result};
 use clap::{Args, Subcommand};
+use indicatif::{ProgressBar, ProgressStyle};
+use serde::Deserialize;
 use std::fs;
 use std::path::PathBuf;
+use std::time::Duration;
+
+use crate::config::load_config;
 
 /// Arguments for deployment commands
 #[derive(Subcommand, Debug)]
 pub enum DeployArgs {
+    /// Deploy to RustAPI Cloud (managed hosting)
+    Cloud(CloudArgs),
+
     /// Generate a Dockerfile for the project
     Docker(DockerArgs),
 
@@ -21,6 +29,17 @@ pub enum DeployArgs {
 
     /// Deploy to Shuttle.rs
     Shuttle(ShuttleArgs),
+}
+
+#[derive(Args, Debug)]
+pub struct CloudArgs {
+    /// Project name (defaults to Cargo.toml package name)
+    #[arg(short, long)]
+    pub name: Option<String>,
+
+    /// Do not wait for deployment to complete
+    #[arg(long)]
+    pub no_wait: bool,
 }
 
 #[derive(Args, Debug)]
@@ -82,6 +101,7 @@ pub struct ShuttleArgs {
 /// Execute deployment command
 pub async fn deploy(args: DeployArgs) -> Result<()> {
     match args {
+        DeployArgs::Cloud(cloud_args) => deploy_cloud(cloud_args).await,
         DeployArgs::Docker(docker_args) => generate_dockerfile(docker_args).await,
         DeployArgs::Fly(fly_args) => deploy_fly(fly_args).await,
         DeployArgs::Railway(railway_args) => deploy_railway(railway_args).await,
@@ -299,4 +319,155 @@ fn get_package_name() -> Result<String> {
     }
 
     anyhow::bail!("Could not find package name in Cargo.toml")
+}
+
+// --- Cloud Deploy ---
+
+#[derive(Deserialize)]
+struct DeployResponse {
+    deploy_id: String,
+    status: String,
+    #[serde(default)]
+    url: Option<String>,
+}
+
+async fn deploy_cloud(args: CloudArgs) -> Result<()> {
+    let config = load_config()?;
+
+    let token = config
+        .token
+        .as_ref()
+        .ok_or_else(|| anyhow::anyhow!("Not logged in. Run `rustapi login` first."))?;
+
+    let cloud_url = config
+        .cloud_url
+        .as_deref()
+        .unwrap_or("https://api.rustapi.cloud")
+        .trim_end_matches('/');
+
+    let project_name = args
+        .name
+        .unwrap_or_else(|| get_package_name().unwrap_or_else(|_| "rustapi-app".to_string()));
+
+    // Verify project uses RustAPI
+    let cargo_toml =
+        fs::read_to_string("Cargo.toml").context("Not in a Rust project (no Cargo.toml found)")?;
+
+    if !cargo_toml.contains("rustapi") {
+        println!("  ⚠️  This project doesn't appear to use RustAPI.");
+        println!("  Continuing anyway...");
+    }
+
+    // Build
+    println!("  🔨 Building {} (release)...", project_name);
+
+    let build = std::process::Command::new("cargo")
+        .args(["build", "--release"])
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .context("Failed to start cargo build")?;
+
+    let output = build
+        .wait_with_output()
+        .context("Failed to wait for cargo build")?;
+
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        return Err(anyhow::anyhow!("Build failed:\n{}", stderr));
+    }
+
+    println!("  ✅ Build complete");
+
+    // Find binary
+    let binary_path = PathBuf::from("target/release")
+        .join(&project_name)
+        .with_extension(std::env::consts::EXE_SUFFIX);
+
+    if !binary_path.exists() {
+        return Err(anyhow::anyhow!(
+            "Binary not found at {}. Make sure the package name matches the binary name.",
+            binary_path.display()
+        ));
+    }
+
+    // Package binary
+    println!("  📦 Packaging...");
+    let binary_data = fs::read(&binary_path).context("Failed to read binary")?;
+
+    // Upload
+    println!("  ☁️  Uploading to RustAPI Cloud...");
+
+    let client = reqwest::Client::new();
+    let form = reqwest::multipart::Form::new()
+        .text("project_name", project_name.clone())
+        .part(
+            "binary",
+            reqwest::multipart::Part::bytes(binary_data).file_name(format!("{}.bin", project_name)),
+        );
+
+    let deploy_resp: DeployResponse = client
+        .post(format!("{}/deploy", cloud_url))
+        .header("Authorization", format!("Bearer {}", token))
+        .multipart(form)
+        .send()
+        .await
+        .context("Failed to connect to RustAPI Cloud")?
+        .json()
+        .await
+        .context("Invalid response from deploy endpoint")?;
+
+    let deploy_id = deploy_resp.deploy_id;
+
+    if args.no_wait {
+        println!("  ✅ Deploy queued: {}", deploy_id);
+        println!("  Check status: rustapi deploy status {}", deploy_id);
+        return Ok(());
+    }
+
+    // Poll for status
+    let spinner = ProgressBar::new_spinner();
+    spinner.set_style(ProgressStyle::with_template("  {spinner} Deploying...").unwrap());
+    spinner.enable_steady_tick(Duration::from_millis(100));
+
+    for _ in 0..120 {
+        tokio::time::sleep(Duration::from_secs(3)).await;
+
+        let status_resp: DeployResponse = match client
+            .get(format!("{}/deploy/{}/status", cloud_url, deploy_id))
+            .header("Authorization", format!("Bearer {}", token))
+            .send()
+            .await
+        {
+            Ok(resp) => match resp.json().await {
+                Ok(body) => body,
+                Err(_) => continue,
+            },
+            Err(_) => continue,
+        };
+
+        match status_resp.status.as_str() {
+            "running" | "live" => {
+                spinner.finish_and_clear();
+                println!(
+                    "  🚀 Deployed: {}",
+                    status_resp.url.as_deref().unwrap_or("(url pending)")
+                );
+                return Ok(());
+            }
+            "failed" => {
+                spinner.finish_with_message("Deploy failed");
+                return Err(anyhow::anyhow!(
+                    "Deployment failed. Check logs in the dashboard."
+                ));
+            }
+            _ => continue,
+        }
+    }
+
+    spinner.finish_with_message("Deploy timed out");
+    println!("  Deploy ID: {} (still processing)", deploy_id);
+    println!("  Check: rustapi deploy status {}", deploy_id);
+
+    Ok(())
 }

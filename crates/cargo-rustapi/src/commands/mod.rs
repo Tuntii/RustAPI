@@ -8,11 +8,13 @@ mod docs;
 mod doctor;
 mod generate;
 mod login;
+mod logout;
 mod migrate;
 mod new;
 mod observability;
 mod run;
 mod watch;
+mod whoami;
 
 pub use add::{add, AddArgs};
 pub use bench::{bench, BenchArgs};
@@ -22,11 +24,13 @@ pub use docs::open_docs;
 pub use doctor::{doctor, DoctorArgs};
 pub use generate::{generate, GenerateArgs};
 pub use login::{login, LoginArgs};
+pub use logout::{logout, LogoutArgs};
 pub use migrate::{migrate, MigrateArgs};
 pub use new::{new_project, NewArgs};
 pub use observability::{observability, ObservabilityArgs};
 pub use run::{run_dev, RunArgs};
 pub use watch::{watch, WatchArgs};
+pub use whoami::{whoami, WhoamiArgs};
 
 #[cfg(feature = "replay")]
 mod replay;

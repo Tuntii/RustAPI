@@ -4,6 +4,7 @@
 
 mod cli;
 mod commands;
+mod config;
 mod templates;
 
 use clap::Parser;

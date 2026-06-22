@@ -3,20 +3,19 @@ use clap::Args;
 use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
 use std::time::Duration;
+
+use crate::config::{save_config, CloudConfig, UserInfo};
 
 const DEFAULT_CLOUD_URL: &str = "https://api.rustapi.cloud";
 const POLL_INTERVAL_SECS: u64 = 3;
-const POLL_TIMEOUT_SECS: u64 = 900; // 15 minutes
+const POLL_TIMEOUT_SECS: u64 = 900;
 
 #[derive(Args, Debug, Clone)]
 pub struct LoginArgs {
-    /// RustAPI Cloud API URL
     #[arg(long, default_value = DEFAULT_CLOUD_URL)]
     pub cloud_url: String,
 
-    /// Do not open browser automatically
     #[arg(long)]
     pub no_browser: bool,
 }
@@ -57,27 +56,10 @@ enum TokenResponse {
     },
 }
 
-#[derive(Serialize, Deserialize)]
-struct ConfigFile {
-    token: Option<String>,
-    refresh_token: Option<String>,
-    user: Option<UserInfo>,
-    last_login: Option<String>,
-    cloud_url: Option<String>,
-}
-
-#[derive(Serialize, Deserialize)]
-struct UserInfo {
-    login: String,
-    tier: String,
-    avatar_url: Option<String>,
-}
-
 pub async fn login(args: LoginArgs) -> anyhow::Result<()> {
     let client = Client::new();
     let cloud_url = args.cloud_url.trim_end_matches('/');
 
-    // Step 1: Request device code
     let device_resp: DeviceResponse = client
         .post(format!("{}/auth/device", cloud_url))
         .send()
@@ -87,7 +69,6 @@ pub async fn login(args: LoginArgs) -> anyhow::Result<()> {
         .await
         .context("Invalid response from /auth/device")?;
 
-    // Step 2: Show activation instructions
     println!();
     println!("  \x1b[1mRustAPI Cloud Login\x1b[0m");
     println!("  ─────────────────────");
@@ -102,12 +83,10 @@ pub async fn login(args: LoginArgs) -> anyhow::Result<()> {
     );
     println!();
 
-    // Step 3: Open browser
     if !args.no_browser {
         let _ = open::that(&device_resp.verification_uri_complete);
     }
 
-    // Step 4: Poll for token
     let spinner = ProgressBar::new_spinner();
     spinner.set_style(
         ProgressStyle::with_template("  {spinner} Waiting for authorization...").unwrap(),
@@ -154,26 +133,10 @@ pub async fn login(args: LoginArgs) -> anyhow::Result<()> {
             } => {
                 spinner.finish_and_clear();
 
-                // Step 5: Get user info
-                let user_info: UserInfo = match client
-                    .post(format!("{}/auth/whoami", cloud_url))
-                    .json(&serde_json::json!({ "grant_type": "", "device_code": access_token }))
-                    .send()
-                    .await
-                {
-                    Ok(resp) => match resp.json::<serde_json::Value>().await {
-                        Ok(v) if v.get("sub").is_some() => UserInfo {
-                            login: v["login"].as_str().unwrap_or("unknown").into(),
-                            tier: v["tier"].as_str().unwrap_or("hobby").into(),
-                            avatar_url: v["avatar_url"].as_str().map(String::from),
-                        },
-                        _ => continue,
-                    },
-                    Err(_) => continue,
-                };
+                // Get user info
+                let user_info = fetch_user_info(&client, cloud_url, &access_token).await?;
 
-                // Step 6: Save config
-                let config = ConfigFile {
+                let config = CloudConfig {
                     token: Some(access_token),
                     refresh_token: Some(refresh_token),
                     user: Some(user_info),
@@ -206,20 +169,26 @@ pub async fn login(args: LoginArgs) -> anyhow::Result<()> {
     }
 }
 
-fn config_path() -> PathBuf {
-    let home = std::env::var("USERPROFILE")
-        .or_else(|_| std::env::var("HOME"))
-        .unwrap_or_else(|_| ".".into());
+async fn fetch_user_info(
+    client: &Client,
+    cloud_url: &str,
+    token: &str,
+) -> anyhow::Result<UserInfo> {
+    let resp = client
+        .post(format!("{}/auth/whoami", cloud_url))
+        .json(&serde_json::json!({
+            "grant_type": "",
+            "device_code": token,
+        }))
+        .send()
+        .await
+        .context("Failed to fetch user info")?;
 
-    PathBuf::from(home).join(".rustapi").join("config.json")
-}
+    let v: serde_json::Value = resp.json().await.context("Invalid whoami response")?;
 
-fn save_config(config: &ConfigFile) -> anyhow::Result<()> {
-    let path = config_path();
-    if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent).context("Failed to create ~/.rustapi directory")?;
-    }
-    let json = serde_json::to_string_pretty(config).context("Failed to serialize config")?;
-    std::fs::write(&path, json).context("Failed to write config file")?;
-    Ok(())
+    Ok(UserInfo {
+        login: v["login"].as_str().unwrap_or("unknown").into(),
+        tier: v["tier"].as_str().unwrap_or("hobby").into(),
+        avatar_url: v["avatar_url"].as_str().map(String::from),
+    })
 }

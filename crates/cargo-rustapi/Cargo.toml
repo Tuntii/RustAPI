@@ -38,7 +38,7 @@ serde_yaml = "0.9"
 toml = "1.1"
 
 # HTTP client for fetching remote specs
-reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false, optional = true }
+reqwest = { version = "0.12", features = ["json", "multipart", "rustls-tls"], default-features = false, optional = true }
 
 # MCP support (OpenAPI → MCP server generator)
 rustapi-mcp = { workspace = true, optional = true }
