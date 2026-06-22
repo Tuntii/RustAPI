@@ -1,4 +1,4 @@
-﻿/// Configuration for RustAPI's built-in production baseline preset.
+/// Configuration for RustAPI's built-in production baseline preset.
 ///
 /// This preset bundles together the most common foundation pieces for a
 /// production HTTP service:

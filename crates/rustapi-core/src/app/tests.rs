@@ -778,3 +778,65 @@ fn test_rustapi_nest_includes_routes_in_openapi_spec() {
         "Should have 'item_id' path parameter"
     );
 }
+
+#[test]
+fn apply_health_endpoints_registers_default_paths() {
+    let mut app = RustApi::new().health_endpoints();
+    app.apply_health_endpoints();
+    let router = app.into_router();
+    let routes = router.registered_routes();
+    assert!(routes.contains_key("/health"));
+    assert!(routes.contains_key("/ready"));
+    assert!(routes.contains_key("/live"));
+}
+
+#[test]
+fn apply_status_page_registers_status_route() {
+    let mut app = RustApi::new().status_page();
+    app.apply_status_page();
+    let router = app.into_router();
+    assert!(router.registered_routes().contains_key("/status"));
+}
+
+#[test]
+fn print_hot_reload_banner_is_noop_when_disabled() {
+    let app = RustApi::new();
+    app.print_hot_reload_banner("127.0.0.1:8080");
+}
+
+#[test]
+fn print_hot_reload_banner_logs_when_enabled() {
+    let app = RustApi::new().hot_reload(true);
+    app.print_hot_reload_banner("127.0.0.1:8080");
+}
+
+#[tokio::test]
+async fn on_start_hooks_execute_in_registration_order() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::sync::Arc;
+
+    let order = Arc::new(AtomicUsize::new(0));
+    let mut app = RustApi::new()
+        .on_start({
+            let order = order.clone();
+            move || {
+                let order = order.clone();
+                async move {
+                    assert_eq!(order.fetch_add(1, Ordering::SeqCst), 0);
+                }
+            }
+        })
+        .on_start({
+            let order = order.clone();
+            move || {
+                let order = order.clone();
+                async move {
+                    assert_eq!(order.fetch_add(1, Ordering::SeqCst), 1);
+                }
+            }
+        });
+
+    for hook in std::mem::take(&mut app.lifecycle_hooks.on_start) {
+        hook().await;
+    }
+}
