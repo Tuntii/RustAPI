@@ -48,6 +48,8 @@ rustapi-openapi = { workspace = true, optional = true }
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
 anyhow = "1.0"
+open = { workspace = true }
+chrono = { workspace = true }
 
 [dev-dependencies]
 tempfile = "3.26"

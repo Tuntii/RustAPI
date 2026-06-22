@@ -3,8 +3,8 @@
 #[cfg(feature = "replay")]
 use crate::commands::ReplayArgs;
 use crate::commands::{
-    self, AddArgs, BenchArgs, ClientArgs, DeployArgs, DoctorArgs, GenerateArgs, MigrateArgs,
-    NewArgs, ObservabilityArgs, RunArgs, WatchArgs,
+    self, AddArgs, BenchArgs, ClientArgs, DeployArgs, DoctorArgs, GenerateArgs, LoginArgs,
+    MigrateArgs, NewArgs, ObservabilityArgs, RunArgs, WatchArgs,
 };
 
 #[cfg(feature = "mcp")]
@@ -74,6 +74,9 @@ enum Commands {
     #[command(subcommand)]
     Mcp(McpCommands),
 
+    /// Login to RustAPI Cloud
+    Login(LoginArgs),
+
     /// Deploy to various platforms
     #[command(subcommand)]
     Deploy(DeployArgs),
@@ -101,6 +104,7 @@ impl Cli {
             Commands::Client(args) => commands::client(args).await,
             #[cfg(feature = "mcp")]
             Commands::Mcp(McpCommands::Generate(args)) => commands::mcp_generate(args).await,
+            Commands::Login(args) => commands::login(args).await,
             Commands::Deploy(args) => commands::deploy(args).await,
             #[cfg(feature = "replay")]
             Commands::Replay(args) => commands::replay(args).await,
