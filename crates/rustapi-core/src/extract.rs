@@ -1428,4 +1428,5 @@ impl FromRequestParts for CursorPaginate {
 }
 
 #[cfg(test)]
+#[path = "extract_tests.rs"]
 mod tests;
