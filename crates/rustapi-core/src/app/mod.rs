@@ -7,6 +7,7 @@ mod openapi;
 mod production;
 mod routing;
 mod run;
+mod serve_pipeline;
 mod types;
 
 #[cfg(test)]

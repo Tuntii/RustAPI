@@ -779,45 +779,479 @@ fn test_rustapi_nest_includes_routes_in_openapi_spec() {
     );
 }
 
-struct HotReloadEnvGuard {
-    previous: Option<String>,
+use crate::health::{HealthCheckBuilder, HealthEndpointConfig, HealthStatus};
+use crate::ProductionDefaultsConfig;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
+use std::time::Duration;
+use tokio::sync::oneshot;
+
+fn bind_ephemeral_port() -> (u16, String) {
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let port = listener.local_addr().unwrap().port();
+    drop(listener);
+    (port, format!("127.0.0.1:{port}"))
 }
 
-impl HotReloadEnvGuard {
-    fn set(value: Option<&str>) -> Self {
-        let previous = std::env::var("RUSTAPI_HOT_RELOAD").ok();
-        match value {
-            Some(v) => std::env::set_var("RUSTAPI_HOT_RELOAD", v),
-            None => std::env::remove_var("RUSTAPI_HOT_RELOAD"),
-        }
-        Self { previous }
+#[tokio::test]
+async fn run_with_shutdown_exposes_default_health_endpoints() {
+    let app = RustApi::new().health_endpoints();
+    let (port, addr) = bind_ephemeral_port();
+    let (tx, rx) = oneshot::channel();
+
+    let server = tokio::spawn(async move {
+        app.run_with_shutdown(&addr, async {
+            rx.await.ok();
+        })
+        .await
+    });
+
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    let client = reqwest::Client::new();
+    let base_url = format!("http://127.0.0.1:{port}");
+
+    for path in ["/health", "/ready", "/live"] {
+        let res = client
+            .get(format!("{base_url}{path}"))
+            .send()
+            .await
+            .expect("health endpoint request failed");
+        assert_eq!(res.status(), 200, "{path} should return 200");
+        let body: serde_json::Value = res.json().await.unwrap();
+        assert!(body.get("status").is_some(), "{path} should include status");
+        assert!(
+            body.get("timestamp").is_some(),
+            "{path} should include timestamp"
+        );
     }
+
+    tx.send(()).unwrap();
+    let _ = tokio::time::timeout(Duration::from_secs(2), server).await;
 }
 
-impl Drop for HotReloadEnvGuard {
-    fn drop(&mut self) {
-        match &self.previous {
-            Some(value) => std::env::set_var("RUSTAPI_HOT_RELOAD", value),
-            None => std::env::remove_var("RUSTAPI_HOT_RELOAD"),
+#[tokio::test]
+async fn run_with_shutdown_returns_503_for_unhealthy_readiness() {
+    let health = HealthCheckBuilder::new(false)
+        .add_check("database", || async {
+            HealthStatus::unhealthy("database offline")
+        })
+        .build();
+    let app = RustApi::new().with_health_check(health);
+    let (port, addr) = bind_ephemeral_port();
+    let (tx, rx) = oneshot::channel();
+
+    let server = tokio::spawn(async move {
+        app.run_with_shutdown(&addr, async {
+            rx.await.ok();
+        })
+        .await
+    });
+
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    let res = reqwest::Client::new()
+        .get(format!("http://127.0.0.1:{port}/ready"))
+        .send()
+        .await
+        .expect("readiness endpoint request failed");
+    assert_eq!(res.status(), 503);
+    assert!(res.text().await.unwrap().contains("database offline"));
+
+    tx.send(()).unwrap();
+    let _ = tokio::time::timeout(Duration::from_secs(2), server).await;
+}
+
+#[tokio::test]
+async fn run_with_shutdown_honors_custom_health_paths() {
+    let config = HealthEndpointConfig::new()
+        .health_path("/healthz")
+        .readiness_path("/readyz")
+        .liveness_path("/livez");
+    let app = RustApi::new().health_endpoints_with_config(config);
+    let (port, addr) = bind_ephemeral_port();
+    let (tx, rx) = oneshot::channel();
+
+    let server = tokio::spawn(async move {
+        app.run_with_shutdown(&addr, async {
+            rx.await.ok();
+        })
+        .await
+    });
+
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    let client = reqwest::Client::new();
+    let base_url = format!("http://127.0.0.1:{port}");
+
+    for path in ["/healthz", "/readyz", "/livez"] {
+        let res = client
+            .get(format!("{base_url}{path}"))
+            .send()
+            .await
+            .expect("custom health path request failed");
+        assert_eq!(res.status(), 200, "{path} should return 200");
+    }
+
+    tx.send(()).unwrap();
+    let _ = tokio::time::timeout(Duration::from_secs(2), server).await;
+}
+
+#[tokio::test]
+async fn run_with_shutdown_serves_status_page_and_tracks_requests() {
+    async fn task_handler() -> &'static str {
+        "ok"
+    }
+
+    let app = RustApi::new()
+        .status_page()
+        .route("/task", get(task_handler));
+    let (port, addr) = bind_ephemeral_port();
+    let (tx, rx) = oneshot::channel();
+
+    let server = tokio::spawn(async move {
+        app.run_with_shutdown(&addr, async {
+            rx.await.ok();
+        })
+        .await
+    });
+
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    let client = reqwest::Client::new();
+    let base_url = format!("http://127.0.0.1:{port}");
+
+    let res = client
+        .get(format!("{base_url}/status"))
+        .send()
+        .await
+        .expect("status page request failed");
+    assert_eq!(res.status(), 200);
+    let body = res.text().await.unwrap();
+    assert!(body.contains("System Status"));
+    assert!(body.contains("Total Requests"));
+
+    for _ in 0..2 {
+        let res = client
+            .get(format!("{base_url}/task"))
+            .send()
+            .await
+            .expect("task request failed");
+        assert_eq!(res.status(), 200);
+    }
+
+    let res = client
+        .get(format!("{base_url}/status"))
+        .send()
+        .await
+        .expect("updated status page request failed");
+    let body = res.text().await.unwrap();
+    assert!(body.contains("Total Requests"));
+
+    tx.send(()).unwrap();
+    let _ = tokio::time::timeout(Duration::from_secs(2), server).await;
+}
+
+#[tokio::test]
+async fn run_with_shutdown_runs_lifecycle_hooks() {
+    let on_start = Arc::new(AtomicBool::new(false));
+    let on_shutdown = Arc::new(AtomicBool::new(false));
+    let on_start_flag = on_start.clone();
+    let on_shutdown_flag = on_shutdown.clone();
+
+    let app = RustApi::new()
+        .health_endpoints()
+        .on_start(move || {
+            let on_start_flag = on_start_flag.clone();
+            async move {
+                on_start_flag.store(true, Ordering::SeqCst);
+            }
+        })
+        .on_shutdown(move || {
+            let on_shutdown_flag = on_shutdown_flag.clone();
+            async move {
+                on_shutdown_flag.store(true, Ordering::SeqCst);
+            }
+        });
+
+    let (port, addr) = bind_ephemeral_port();
+    let (tx, rx) = oneshot::channel();
+
+    let server = tokio::spawn(async move {
+        app.run_with_shutdown(&addr, async {
+            rx.await.ok();
+        })
+        .await
+    });
+
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    assert!(
+        on_start.load(Ordering::SeqCst),
+        "on_start should run via prepare_for_serve before accept loop"
+    );
+
+    let res = reqwest::Client::new()
+        .get(format!("http://127.0.0.1:{port}/health"))
+        .send()
+        .await
+        .expect("health probe failed");
+    assert_eq!(res.status(), 200);
+
+    tx.send(()).unwrap();
+    let _ = tokio::time::timeout(Duration::from_secs(2), server).await;
+    assert!(
+        on_shutdown.load(Ordering::SeqCst),
+        "on_shutdown should run after shutdown signal"
+    );
+}
+
+#[tokio::test]
+async fn run_with_shutdown_applies_production_defaults() {
+    async fn hello() -> &'static str {
+        "ok"
+    }
+
+    let app = RustApi::new()
+        .production_defaults("users-api")
+        .route("/hello", get(hello));
+    assert_eq!(app.layers().len(), 2);
+
+    let (port, addr) = bind_ephemeral_port();
+    let (tx, rx) = oneshot::channel();
+
+    let server = tokio::spawn(async move {
+        app.run_with_shutdown(&addr, async {
+            rx.await.ok();
+        })
+        .await
+    });
+
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    let client = reqwest::Client::new();
+    let base_url = format!("http://127.0.0.1:{port}");
+
+    let res = client
+        .get(format!("{base_url}/hello"))
+        .send()
+        .await
+        .expect("hello request failed");
+    assert_eq!(res.status(), 200);
+    assert!(res.headers().get("x-request-id").is_some());
+
+    let res = client
+        .get(format!("{base_url}/health"))
+        .send()
+        .await
+        .expect("health request failed");
+    assert_eq!(res.status(), 200);
+    let body: serde_json::Value = res.json().await.unwrap();
+    assert!(body.get("version").is_none());
+    assert!(body.get("checks").is_some());
+
+    tx.send(()).unwrap();
+    let _ = tokio::time::timeout(Duration::from_secs(2), server).await;
+}
+
+#[tokio::test]
+async fn run_with_shutdown_applies_custom_production_defaults() {
+    let config = ProductionDefaultsConfig::new("billing-api")
+        .version("1.2.3")
+        .health_endpoint_config(
+            HealthEndpointConfig::new()
+                .health_path("/healthz")
+                .readiness_path("/readyz")
+                .liveness_path("/livez"),
+        );
+
+    let app = RustApi::new().production_defaults_with_config(config);
+    let (port, addr) = bind_ephemeral_port();
+    let (tx, rx) = oneshot::channel();
+
+    let server = tokio::spawn(async move {
+        app.run_with_shutdown(&addr, async {
+            rx.await.ok();
+        })
+        .await
+    });
+
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    let client = reqwest::Client::new();
+    let base_url = format!("http://127.0.0.1:{port}");
+
+    for path in ["/healthz", "/readyz", "/livez"] {
+        let res = client
+            .get(format!("{base_url}{path}"))
+            .send()
+            .await
+            .expect("probe request failed");
+        assert_eq!(res.status(), 200);
+    }
+
+    let res = client
+        .get(format!("{base_url}/healthz"))
+        .send()
+        .await
+        .expect("healthz request failed");
+    let body: serde_json::Value = res.json().await.unwrap();
+    assert_eq!(
+        body.get("version"),
+        Some(&serde_json::Value::String("1.2.3".to_string()))
+    );
+
+    tx.send(()).unwrap();
+    let _ = tokio::time::timeout(Duration::from_secs(2), server).await;
+}
+
+#[tokio::test]
+async fn run_with_shutdown_serves_registered_routes() {
+    async fn ping() -> &'static str {
+        "pong"
+    }
+
+    let app = RustApi::new().route("/ping", get(ping));
+    let (port, addr) = bind_ephemeral_port();
+    let (tx, rx) = oneshot::channel();
+
+    let server = tokio::spawn(async move {
+        app.run_with_shutdown(&addr, async {
+            rx.await.ok();
+        })
+        .await
+    });
+
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    let res = reqwest::Client::new()
+        .get(format!("http://127.0.0.1:{port}/ping"))
+        .send()
+        .await
+        .expect("ping request failed");
+    assert_eq!(res.status(), 200);
+    assert_eq!(res.text().await.unwrap(), "pong");
+
+    tx.send(()).unwrap();
+    let _ = tokio::time::timeout(Duration::from_secs(2), server).await;
+}
+
+#[tokio::test]
+async fn run_with_shutdown_enables_hot_reload_pipeline() {
+    struct HotReloadEnvGuard(Option<String>);
+
+    impl HotReloadEnvGuard {
+        fn clear() -> Self {
+            let previous = std::env::var("RUSTAPI_HOT_RELOAD").ok();
+            std::env::remove_var("RUSTAPI_HOT_RELOAD");
+            Self(previous)
         }
     }
+
+    impl Drop for HotReloadEnvGuard {
+        fn drop(&mut self) {
+            match &self.0 {
+                Some(value) => std::env::set_var("RUSTAPI_HOT_RELOAD", value),
+                None => std::env::remove_var("RUSTAPI_HOT_RELOAD"),
+            }
+        }
+    }
+
+    let _guard = HotReloadEnvGuard::clear();
+    async fn ok_handler() -> &'static str {
+        "ok"
+    }
+    let app = RustApi::new()
+        .hot_reload(true)
+        .route("/ping", get(ok_handler));
+    let (port, addr) = bind_ephemeral_port();
+    let (tx, rx) = oneshot::channel();
+
+    let server = tokio::spawn(async move {
+        app.run_with_shutdown(&addr, async {
+            rx.await.ok();
+        })
+        .await
+    });
+
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    assert_eq!(
+        std::env::var("RUSTAPI_HOT_RELOAD").ok().as_deref(),
+        Some("1"),
+        "prepare_for_serve should set hot-reload env via run entrypoint"
+    );
+
+    let res = reqwest::Client::new()
+        .get(format!("http://127.0.0.1:{port}/ping"))
+        .send()
+        .await
+        .expect("ping request failed");
+    assert_eq!(res.status(), 200);
+
+    tx.send(()).unwrap();
+    let _ = tokio::time::timeout(Duration::from_secs(2), server).await;
+}
+
+#[tokio::test]
+async fn run_with_shutdown_composes_health_and_status_endpoints() {
+    let app = RustApi::new().health_endpoints().status_page();
+    let (port, addr) = bind_ephemeral_port();
+    let (tx, rx) = oneshot::channel();
+
+    let server = tokio::spawn(async move {
+        app.run_with_shutdown(&addr, async {
+            rx.await.ok();
+        })
+        .await
+    });
+
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    let client = reqwest::Client::new();
+    let base_url = format!("http://127.0.0.1:{port}");
+
+    for path in ["/health", "/status"] {
+        let res = client
+            .get(format!("{base_url}{path}"))
+            .send()
+            .await
+            .unwrap_or_else(|_| panic!("request to {path} failed"));
+        assert_eq!(res.status(), 200, "{path} should be reachable");
+    }
+
+    tx.send(()).unwrap();
+    let _ = tokio::time::timeout(Duration::from_secs(2), server).await;
+}
+
+#[tokio::test]
+async fn run_with_shutdown_serves_nested_routes() {
+    async fn nested() -> &'static str {
+        "nested-ok"
+    }
+
+    let app = RustApi::new().nest("/api", Router::new().route("/items", get(nested)));
+    let (port, addr) = bind_ephemeral_port();
+    let (tx, rx) = oneshot::channel();
+
+    let server = tokio::spawn(async move {
+        app.run_with_shutdown(&addr, async {
+            rx.await.ok();
+        })
+        .await
+    });
+
+    tokio::time::sleep(Duration::from_millis(200)).await;
+    let res = reqwest::Client::new()
+        .get(format!("http://127.0.0.1:{port}/api/items"))
+        .send()
+        .await
+        .expect("nested route request failed");
+    assert_eq!(res.status(), 200);
+    assert_eq!(res.text().await.unwrap(), "nested-ok");
+
+    tx.send(()).unwrap();
+    let _ = tokio::time::timeout(Duration::from_secs(2), server).await;
 }
 
 #[test]
-fn print_hot_reload_banner_selects_branch_from_preexisting_env() {
-    let _guard = HotReloadEnvGuard::set(None);
-    let app = RustApi::new().hot_reload(true);
-    assert_eq!(
-        app.print_hot_reload_banner("127.0.0.1:8080"),
-        Some(false),
-        "tip branch when watcher env unset"
+fn production_defaults_can_disable_optional_layers() {
+    let app = RustApi::new().production_defaults_with_config(
+        ProductionDefaultsConfig::new("minimal-api")
+            .request_id(false)
+            .tracing(false)
+            .health_endpoints(false),
     );
 
-    let _guard = HotReloadEnvGuard::set(Some("1"));
-    let app = RustApi::new().hot_reload(true);
-    assert_eq!(
-        app.print_hot_reload_banner("127.0.0.1:8081"),
-        Some(true),
-        "watcher branch when env already active"
-    );
+    assert_eq!(app.layers().len(), 0);
 }
