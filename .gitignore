@@ -26,3 +26,4 @@ docs/PRODUCTION_CHECKLIST.md
 *.md
 tasks.md
 /mcps
+/agent-tools

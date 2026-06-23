@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.537] - 2026-06-23
+
+### Changed
+
+- **Maintainability (#201):** Split `app/builder.rs` into internal `routing`, `openapi`, `health`, and `run` modules. Every `rustapi-core/src/**/*.rs` file is now under the 50KB limit.
+- **Run lifecycle:** All `run*` entrypoints (`run`, `run_http3`, `run_http3_dev`, `run_dual_stack`, and `*_with_shutdown` variants) consistently execute `on_shutdown` hooks after the server exits.
+- **Test layout:** Oversized router and extract test bodies moved to `tests/support/*_lib.rs` and included from `src/` for `--lib` coverage without growing production source files.
+
+### Fixed
+
+- Plain `run_http3` / `run_http3_dev` / `run_dual_stack` no longer drop pending `on_shutdown` hooks via `pending()` delegation.
+
+### Documentation
+
+- Issue #201 closed; PR #200 production-readiness checklist item for builder split marked complete.
+
 ## [0.1.528] - 2026-06-22
 
 ### Added
@@ -534,7 +550,8 @@ This release delivers a **12x performance improvement**, bringing RustAPI from ~
 - `extras` meta-feature for common optional features
 - `full` feature for all optional features
 
-[Unreleased]: https://github.com/Tuntii/RustAPI/compare/v0.1.528...HEAD
+[Unreleased]: https://github.com/Tuntii/RustAPI/compare/v0.1.537...HEAD
+[0.1.537]: https://github.com/Tuntii/RustAPI/compare/v0.1.528...v0.1.537
 [0.1.528]: https://github.com/Tuntii/RustAPI/compare/v0.1.508...v0.1.528
 [0.1.397]: https://github.com/Tuntii/RustAPI/compare/v0.1.335...v0.1.397
 [0.1.335]: https://github.com/Tuntii/RustAPI/compare/v0.1.300...v0.1.335
