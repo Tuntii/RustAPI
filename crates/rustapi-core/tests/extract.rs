@@ -1,5 +1,10 @@
-use super::*;
-use crate::path_params::PathParams;
+#[cfg(feature = "cookies")]
+use rustapi_core::Cookies;
+use rustapi_core::{
+    AsyncValidatedJson, BodyVariant, ClientIp, Extension, FromRequest, FromRequestParts,
+    HeaderValue, Headers, PathParams, Request,
+};
+
 use bytes::Bytes;
 use http::{Extensions, Method};
 use proptest::prelude::*;
@@ -24,7 +29,7 @@ fn create_test_request_with_headers(
 
     Request::new(
         parts,
-        crate::request::BodyVariant::Buffered(Bytes::new()),
+        BodyVariant::Buffered(Bytes::new()),
         Arc::new(Extensions::new()),
         PathParams::new(),
     )
@@ -45,7 +50,7 @@ fn create_test_request_with_extensions<T: Clone + Send + Sync + 'static>(
 
     Request::new(
         parts,
-        crate::request::BodyVariant::Buffered(Bytes::new()),
+        BodyVariant::Buffered(Bytes::new()),
         Arc::new(Extensions::new()),
         PathParams::new(),
     )
@@ -221,7 +226,7 @@ proptest! {
 
             let request = Request::new(
                 parts,
-                crate::request::BodyVariant::Buffered(Bytes::new()),
+                BodyVariant::Buffered(Bytes::new()),
                 Arc::new(Extensions::new()),
                 PathParams::new(),
             );
@@ -283,7 +288,7 @@ proptest! {
 
             let request = Request::new(
                 parts,
-                crate::request::BodyVariant::Buffered(Bytes::new()),
+                BodyVariant::Buffered(Bytes::new()),
                 Arc::new(Extensions::new()),
                 PathParams::new(),
             );
@@ -383,7 +388,7 @@ fn test_client_ip_ignores_forwarded_when_not_trusted() {
 
     let request = Request::new(
         parts,
-        crate::request::BodyVariant::Buffered(Bytes::new()),
+        BodyVariant::Buffered(Bytes::new()),
         Arc::new(Extensions::new()),
         PathParams::new(),
     );
@@ -623,7 +628,7 @@ async fn test_async_validated_json_with_state_context() {
     // Construct Request with BodyVariant::Buffered
     let mut request = Request::new(
         parts,
-        crate::request::BodyVariant::Buffered(Bytes::from(body_bytes.clone())),
+        BodyVariant::Buffered(Bytes::from(body_bytes.clone())),
         Arc::new(Extensions::new()),
         PathParams::new(),
     );
@@ -659,7 +664,7 @@ async fn test_async_validated_json_with_state_context() {
 
     let mut request = Request::new(
         parts,
-        crate::request::BodyVariant::Buffered(Bytes::from(body_bytes.clone())),
+        BodyVariant::Buffered(Bytes::from(body_bytes.clone())),
         Arc::new(extensions),
         PathParams::new(),
     );
@@ -696,7 +701,7 @@ async fn test_async_validated_json_with_state_context() {
 
     let mut request = Request::new(
         parts,
-        crate::request::BodyVariant::Buffered(Bytes::from(body_taken)),
+        BodyVariant::Buffered(Bytes::from(body_taken)),
         Arc::new(extensions),
         PathParams::new(),
     );

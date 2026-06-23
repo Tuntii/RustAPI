@@ -8,11 +8,16 @@ mod core;
 mod match_;
 mod method_router;
 
-#[cfg(test)]
-mod tests;
-
 pub use core::Router;
 pub use match_::RouteMatch;
 #[cfg(test)]
 pub(crate) use match_::{convert_path_params, normalize_path_for_comparison, normalize_prefix};
 pub use method_router::{delete, get, patch, post, put, MethodRouter};
+
+#[cfg(test)]
+mod tests {
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/support/router_lib.rs"
+    ));
+}

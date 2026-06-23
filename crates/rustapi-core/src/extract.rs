@@ -1428,5 +1428,9 @@ impl FromRequestParts for CursorPaginate {
 }
 
 #[cfg(test)]
-#[path = "extract_tests.rs"]
-mod tests;
+mod tests {
+    include!(concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/tests/support/extract_lib.rs"
+    ));
+}
