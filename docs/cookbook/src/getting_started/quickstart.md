@@ -1,4 +1,4 @@
-# Quickstart
+﻿# Quickstart
 
 > [!TIP]
 > From zero to a production-ready API in 60 seconds.
@@ -38,7 +38,7 @@ async fn hello() -> Json<String> {
 
 #[rustapi_rs::main]
 async fn main() -> Result<()> {
-    // Auto-discovery magic ✨
+    // Auto-discovery magic âœ¨
     RustApi::auto()
         .run("127.0.0.1:8080")
         .await
@@ -56,8 +56,8 @@ cargo run
 You should see output similar to:
 
 ```
-INFO rustapi: 🚀 Server running at http://127.0.0.1:8080
-INFO rustapi: 📚 API docs at http://127.0.0.1:8080/docs
+INFO rustapi: ğŸš€ Server running at http://127.0.0.1:8080
+INFO rustapi: ğŸ“š API docs at http://127.0.0.1:8080/docs
 ```
 
 ## Test It Out
@@ -69,9 +69,9 @@ You'll see the **Swagger UI** automatically generated from your code. Try out th
 ## What Just Happened?
 
 You just launched a high-performance, async Rust web server with:
-- ✅ Automatic OpenAPI documentation
-- ✅ Type-safe request validation
-- ✅ Distributed tracing
-- ✅ Global error handling
+- âœ… Automatic OpenAPI documentation
+- âœ… Type-safe request validation
+- âœ… Distributed tracing
+- âœ… Global error handling
 
 Welcome to RustAPI.

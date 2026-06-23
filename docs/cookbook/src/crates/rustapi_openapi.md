@@ -1,4 +1,4 @@
-# rustapi-openapi: The Cartographer
+﻿# rustapi-openapi: The Cartographer
 
 **Lens**: "The Cartographer"
 **Philosophy**: "Documentation as Code."
@@ -48,9 +48,9 @@ RustApi::new()
 ## Path Parameter Schema Types
 
 By default, RustAPI infers the OpenAPI schema type for path parameters based on naming conventions:
-- Parameters named `id`, `user_id`, `postId`, etc. → `integer`
-- Parameters named `uuid`, `user_uuid`, etc. → `string` with `uuid` format
-- Other parameters → `string`
+- Parameters named `id`, `user_id`, `postId`, etc. â†’ `integer`
+- Parameters named `uuid`, `user_uuid`, etc. â†’ `string` with `uuid` format
+- Other parameters â†’ `string`
 
 However, sometimes auto-inference is incorrect. For example, you might have a parameter named `id` that is actually a UUID. Use the `#[rustapi_rs::param]` attribute to override the inferred type:
 

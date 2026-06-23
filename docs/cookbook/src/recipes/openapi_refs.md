@@ -1,4 +1,4 @@
-# OpenAPI Schemas & References
+﻿# OpenAPI Schemas & References
 
 RustAPI's OpenAPI generation is built around the `RustApiSchema` trait, which is automatically implemented when you derive `Schema`. This system seamlessly handles JSON Schema 2020-12 references (`$ref`) to reduce duplication and support recursive types.
 
@@ -8,7 +8,7 @@ When you use `#[derive(Schema)]` on a struct or enum, RustAPI generates an imple
 1.  Registers the type in the OpenAPI `components/schemas` section.
 2.  Returns a `$ref` pointing to that component whenever the type is used in another schema.
 
-This means you don't need to manually configure references – they just work.
+This means you don't need to manually configure references â€“ they just work.
 
 ```rust
 use rustapi_openapi::Schema;

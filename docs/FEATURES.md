@@ -1,4 +1,4 @@
-# RustAPI Features
+﻿# RustAPI Features
 
 > Complete reference for all RustAPI features and capabilities.
 
@@ -42,9 +42,9 @@ async fn create_user(Json(body): Json<CreateUser>) -> Json<User> {
 ```
 
 **Errors:**
-- 400 Bad Request — Invalid JSON syntax
-- 415 Unsupported Media Type — Missing `Content-Type: application/json`
-- 422 Unprocessable Entity — JSON doesn't match schema
+- 400 Bad Request â€” Invalid JSON syntax
+- 415 Unsupported Media Type â€” Missing `Content-Type: application/json`
+- 422 Unprocessable Entity â€” JSON doesn't match schema
 
 ### `Path<T>`
 
@@ -1159,7 +1159,7 @@ RustApi::new()
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.335", features = ["full"] }
+rustapi-rs = { version = "0.1.537", features = ["full"] }
 ```
 
 | Feature | Description |
@@ -1290,7 +1290,7 @@ let events = store.query()
 ### 1. Use `core-simd-json` (when available)
 
 ```toml
-rustapi-rs = { version = "0.1.335", features = ["core-simd-json"] }
+rustapi-rs = { version = "0.1.537", features = ["core-simd-json"] }
 ```
 
 2-4x faster JSON parsing.
@@ -1335,12 +1335,12 @@ for id in ids {
 
 ## Security Best Practices
 
-1. **Always validate input** — Use `ValidatedJson<T>`
-2. **Set body limits** — Prevent DoS via large payloads
-3. **Use HTTPS in production** — Terminate TLS at load balancer
-4. **Rotate JWT secrets** — Store in environment variables
-5. **Enable rate limiting** — Prevent brute force attacks
-6. **Mask errors in production** — Set `RUSTAPI_ENV=production`
+1. **Always validate input** â€” Use `ValidatedJson<T>`
+2. **Set body limits** â€” Prevent DoS via large payloads
+3. **Use HTTPS in production** â€” Terminate TLS at load balancer
+4. **Rotate JWT secrets** â€” Store in environment variables
+5. **Enable rate limiting** â€” Prevent brute force attacks
+6. **Mask errors in production** â€” Set `RUSTAPI_ENV=production`
 
 ---
 

@@ -1,4 +1,4 @@
-# Testing Strategy
+﻿# Testing Strategy
 
 Reliable software requires a robust testing strategy. RustAPI is designed to be testable at every level, from individual functions to full end-to-end scenarios.
 

@@ -1,4 +1,4 @@
-# RustAPI Philosophy
+﻿# RustAPI Philosophy
 
 > *"The power of Rust. Modern DX. LLM-ready."*
 
@@ -27,7 +27,7 @@ Building APIs in Rust traditionally requires:
 
 ### The Solution
 
-RustAPI provides a **facade** — a clean, stable API that wraps all the complexity:
+RustAPI provides a **facade** â€” a clean, stable API that wraps all the complexity:
 
 ```rust
 // This is all you need. No boilerplate.
@@ -50,7 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
 ## Design Principles
 
-### 1. 🎯 5-Line APIs
+### 1. ğŸ¯ 5-Line APIs
 
 **Every feature must be expressible in minimal code.**
 
@@ -65,19 +65,19 @@ We achieve this through:
 - Derive macros that eliminate boilerplate
 - A prelude that exports everything you need
 
-### 2. 🛡️ Stable API Surface
+### 2. ğŸ›¡ï¸ Stable API Surface
 
 **Your code depends only on `rustapi-rs`. Internal dependencies are hidden.**
 
 ```toml
 # Your Cargo.toml - simple and stable
 [dependencies]
-rustapi-rs = "0.1.335"
+rustapi-rs = "0.1.537"
 ```
 
 You never write:
 ```toml
-# ❌ Not this - internal details exposed
+# âŒ Not this - internal details exposed
 hyper = "1.0"
 tokio = "1.35"
 validator = "0.16"
@@ -88,7 +88,7 @@ validator = "0.16"
 - Simpler `Cargo.toml`
 - We can upgrade internals without breaking your code
 
-### 3. 🔄 Engines Can Change
+### 3. ğŸ”„ Engines Can Change
 
 **The facade pattern lets us swap implementations freely.**
 
@@ -103,21 +103,21 @@ validator = "0.16"
 **Example scenario:** When `hyper 2.0` releases with breaking changes:
 1. We update `rustapi-core` to use `hyper 2.0`
 2. We bump `rustapi-rs` to `0.2.0`
-3. **Your code stays exactly the same** — just update the version
+3. **Your code stays exactly the same** â€” just update the version
 
-### 4. 🎁 Batteries Included (But Optional)
+### 4. ğŸ Batteries Included (But Optional)
 
 **Everything you need, nothing you don't.**
 
 ```toml
 # Just the basics
-rustapi-rs = "0.1.335"
+rustapi-rs = "0.1.537"
 
 # Kitchen sink
-rustapi-rs = { version = "0.1.335", features = ["full"] }
+rustapi-rs = { version = "0.1.537", features = ["full"] }
 
 # Pick what you need
-rustapi-rs = { version = "0.1.335", features = ["extras-jwt", "extras-cors", "protocol-toon"] }
+rustapi-rs = { version = "0.1.537", features = ["extras-jwt", "extras-cors", "protocol-toon"] }
 ```
 
 | Feature | What You Get |
@@ -129,7 +129,7 @@ rustapi-rs = { version = "0.1.335", features = ["extras-jwt", "extras-cors", "pr
 | `core-openapi` | Auto-generated `/docs` endpoint |
 | `full` | All features enabled |
 
-### 5. 🤖 LLM-First Design
+### 5. ğŸ¤– LLM-First Design
 
 **Built for the AI era.**
 
@@ -137,18 +137,18 @@ Traditional JSON:
 ```json
 {"users":[{"id":1,"name":"Alice"},{"id":2,"name":"Bob"}],"total":2}
 ```
-→ **~20 tokens**
+â†’ **~20 tokens**
 
 TOON format:
 ```
 users[(id:1,name:Alice)(id:2,name:Bob)]total:2
 ```
-→ **~9 tokens** (55% savings)
+â†’ **~9 tokens** (55% savings)
 
 RustAPI provides:
-- `Toon<T>` — Direct TOON responses
-- `LlmResponse<T>` — Content negotiation with token counting headers
-- `AcceptHeader` — Automatic format detection
+- `Toon<T>` â€” Direct TOON responses
+- `LlmResponse<T>` â€” Content negotiation with token counting headers
+- `AcceptHeader` â€” Automatic format detection
 
 ```rust
 #[rustapi_rs::get("/ai/data")]
@@ -165,31 +165,31 @@ async fn ai_endpoint(accept: AcceptHeader) -> LlmResponse<Data> {
 ### No Direct Dependency Exposure
 
 ```rust
-// ❌ We don't expose hyper types
+// âŒ We don't expose hyper types
 fn handler(req: hyper::Request<...>) -> hyper::Response<...>
 
-// ✅ We provide our own abstractions
+// âœ… We provide our own abstractions
 fn handler(req: Request) -> impl IntoResponse
 ```
 
 ### No Configuration Hell
 
 ```rust
-// ❌ Not this
+// âŒ Not this
 let server = Server::builder()
     .http1_header_max_size(8192)
     .http1_only(true)
     .tcp_keepalive(Some(Duration::from_secs(60)))
     .build(...);
 
-// ✅ This
+// âœ… This
 RustApi::new().run("0.0.0.0:8080").await
 ```
 
 ### No Trait Bound Nightmares
 
 ```rust
-// ❌ Not this
+// âŒ Not this
 where
     T: Service<Request<Body>, Response = Response<ResBody>> + Clone + Send + 'static,
     T::Error: Into<BoxError>,
@@ -197,7 +197,7 @@ where
     ResBody: Body<Data = Bytes> + Send + 'static,
     ResBody::Error: Into<BoxError>,
 
-// ✅ Just this
+// âœ… Just this
 async fn handler(Json(body): Json<T>) -> Json<R>
 ```
 
@@ -207,11 +207,11 @@ async fn handler(Json(body): Json<T>) -> Json<R>
 
 | Goal | Target | Achieved |
 |------|--------|----------|
-| Hello World | ≤ 5 lines | ✅ 5 lines |
-| CRUD tutorial | ≤ 15 min | ✅ ~10 min |
-| First Swagger UI | Zero config | ✅ Auto at `/docs` |
-| Compile errors | Understandable | ✅ Clear hints |
-| LLM token savings | ≥ 50% | ✅ 50-58% |
+| Hello World | â‰¤ 5 lines | âœ… 5 lines |
+| CRUD tutorial | â‰¤ 15 min | âœ… ~10 min |
+| First Swagger UI | Zero config | âœ… Auto at `/docs` |
+| Compile errors | Understandable | âœ… Clear hints |
+| LLM token savings | â‰¥ 50% | âœ… 50-58% |
 
 ---
 
@@ -239,9 +239,9 @@ async fn handler(Json(body): Json<T>) -> Json<R>
 
 RustAPI is not just another web framework. It's a **philosophy**:
 
-1. **Simplicity first** — 5 lines to production
-2. **Stability always** — Your code never breaks
-3. **Future-ready** — Built for AI, ready for anything
+1. **Simplicity first** â€” 5 lines to production
+2. **Stability always** â€” Your code never breaks
+3. **Future-ready** â€” Built for AI, ready for anything
 
 ```rust
 use rustapi_rs::prelude::*;

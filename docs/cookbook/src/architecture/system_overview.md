@@ -1,25 +1,25 @@
-# System Architecture
+﻿# System Architecture
 
-RustAPI follows a **Facade Architecture** — a stable public API that shields you from internal complexity and breaking changes.
+RustAPI follows a **Facade Architecture** â€” a stable public API that shields you from internal complexity and breaking changes.
 
 ## System Overview
 
 ```mermaid
 graph TB
-    subgraph Client["🌐 Client Layer"]
+    subgraph Client["ğŸŒ Client Layer"]
         HTTP[HTTP Request]
         LLM[LLM/AI Agent]
         MCP[MCP Client]
     end
 
-    subgraph Public["📦 rustapi-rs (Public Facade)"]
+    subgraph Public["ğŸ“¦ rustapi-rs (Public Facade)"]
         direction TB
         Prelude[prelude::*]
         Macros["#[rustapi_rs::get/post]<br>#[rustapi_rs::main]"]
         Types[Json, Query, Path, Form]
     end
 
-    subgraph Core["⚙️ rustapi-core (Engine)"]
+    subgraph Core["âš™ï¸ rustapi-core (Engine)"]
         direction TB
         Router[Radix Router<br>matchit]
         Extract[Extractors<br>FromRequest trait]
@@ -27,7 +27,7 @@ graph TB
         Resp[Response Builder<br>IntoResponse trait]
     end
 
-    subgraph Extensions["🔌 Extension Crates"]
+    subgraph Extensions["ğŸ”Œ Extension Crates"]
         direction LR
         OpenAPI["rustapi-openapi<br>OpenAPI 3.1 + Docs"]
         Validate["rustapi-validate<br>Validation (v2 native)"]
@@ -35,7 +35,7 @@ graph TB
         WsCrate["rustapi-ws<br>WebSocket Support"]
     end
 
-    subgraph Foundation["🏗️ Foundation Layer"]
+    subgraph Foundation["ğŸ—ï¸ Foundation Layer"]
         direction LR
         Tokio[tokio<br>Async Runtime]
         Hyper[hyper 1.0<br>HTTP Protocol]
@@ -159,7 +159,7 @@ graph BT
 
 | Crate | Role |
 |-------|------|
-| `rustapi-rs` | Public facade — single `use` for everything |
+| `rustapi-rs` | Public facade â€” single `use` for everything |
 | `rustapi-core` | HTTP engine, routing, extractors, response handling |
 | `rustapi-macros` | Procedural macros: `#[rustapi_rs::get]`, `#[rustapi_rs::main]` |
 | `rustapi-openapi` | Native OpenAPI 3.1 model, schema registry, and docs endpoints |

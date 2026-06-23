@@ -1,4 +1,4 @@
-# OpenAPI to MCP CLI
+﻿# OpenAPI to MCP CLI
 
 The `cargo-rustapi` CLI includes `rustapi mcp generate`. It takes **any** OpenAPI 3.x spec (from FastAPI, Express, Go, Spring, etc.) and instantly spins up an MCP server. Tool calls are proxied to the real backend.
 

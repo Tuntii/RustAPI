@@ -1,4 +1,4 @@
-# Performance Benchmarks
+﻿# Performance Benchmarks
 
 This document is the **authoritative source** for public RustAPI performance claims.
 
@@ -63,7 +63,7 @@ The following snapshot was generated in this session from a real local run.
 
 ### Latency outputs and feature-cost matrix
 
-| Scenario | Execution path | Features | Req/s | Mean (µs) | p50 (µs) | p95 (µs) | p99 (µs) |
+| Scenario | Execution path | Features | Req/s | Mean (Âµs) | p50 (Âµs) | p95 (Âµs) | p99 (Âµs) |
 |---|---|---|---:|---:|---:|---:|---:|
 | `baseline` | ultra fast | no middleware, no interceptors | 1,317,349 | 0.64 | 0.60 | 0.90 | 1.90 |
 | `request_interceptor` | fast | 1 request interceptor | 1,174,508 | 0.73 | 0.70 | 1.00 | 2.00 |

@@ -1,4 +1,4 @@
-# Response Compression
+﻿# Response Compression
 
 RustAPI supports automatic response compression (Gzip, Deflate, Brotli) via the `CompressionLayer`. This middleware negotiates the best compression algorithm based on the client's `Accept-Encoding` header.
 
@@ -8,7 +8,7 @@ To use compression, you must enable the `compression` feature in `rustapi-core` 
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.335", features = ["compression", "compression-brotli"] }
+rustapi-rs = { version = "0.1.537", features = ["compression", "compression-brotli"] }
 ```
 
 ## Basic Usage

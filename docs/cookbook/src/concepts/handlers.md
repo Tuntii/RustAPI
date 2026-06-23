@@ -1,4 +1,4 @@
-# Handlers & Extractors
+﻿# Handlers & Extractors
 
 The **Handler** is the fundamental unit of work in RustAPI. It transforms an incoming HTTP request into an outgoing HTTP response.
 

@@ -1,4 +1,4 @@
-# cargo-rustapi: The Architect
+﻿# cargo-rustapi: The Architect
 
 **Lens**: "The Architect"
 **Philosophy**: "Scaffolding best practices from day one."

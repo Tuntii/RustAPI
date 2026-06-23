@@ -1,4 +1,4 @@
-# Audit Logging & Compliance
+﻿# Audit Logging & Compliance
 
 In many enterprise applications, maintaining a detailed audit trail is crucial for security, compliance (GDPR, SOC2), and troubleshooting. RustAPI provides a comprehensive audit logging system in `rustapi-extras`.
 
@@ -10,7 +10,7 @@ Add `rustapi-extras` with the `audit` feature to your `Cargo.toml`.
 
 ```toml
 [dependencies]
-rustapi-extras = { version = "0.1.335", features = ["audit"] }
+rustapi-extras = { version = "0.1.537", features = ["audit"] }
 ```
 
 ## Core Concepts

@@ -1,4 +1,4 @@
-# Performance Philosophy
+﻿# Performance Philosophy
 
 RustAPI is built on a simple premise: **Abstractions shouldn't cost you runtime performance.**
 
@@ -113,10 +113,10 @@ Whenever you publish new numbers, include at minimum:
 
 | Optimization | Description |
 |--------------|-------------|
-| ⚡ **SIMD-JSON** | 2-4x faster JSON parsing with `core-simd-json` feature |
-| 🔄 **Zero-copy parsing** | Direct memory access for path/query params |
-| 📦 **SmallVec PathParams** | Stack-optimized path parameters |
-| 🎯 **Compile-time dispatch** | All extractors resolved at compile time |
-| 🌊 **Streaming bodies** | Handle large uploads without memory bloat |
+| âš¡ **SIMD-JSON** | 2-4x faster JSON parsing with `core-simd-json` feature |
+| ğŸ”„ **Zero-copy parsing** | Direct memory access for path/query params |
+| ğŸ“¦ **SmallVec PathParams** | Stack-optimized path parameters |
+| ğŸ¯ **Compile-time dispatch** | All extractors resolved at compile time |
+| ğŸŒŠ **Streaming bodies** | Handle large uploads without memory bloat |
 
 Remember: RustAPI provides the *capability* for high performance, but your application logic ultimately dictates the speed. Use tools like `wrk`, `k6`, or `drill` to stress-test your specific endpoints.

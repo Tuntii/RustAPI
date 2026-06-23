@@ -1,4 +1,4 @@
-# Crate Deep Dives
+﻿# Crate Deep Dives
 
 > [!WARNING]
 > This section is for those who want to understand the framework's internal organs. You don't need to know this to *use* RustAPI, but it helps if you want to *master* it.

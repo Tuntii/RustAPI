@@ -1,4 +1,4 @@
-# Testing Utilities (rustapi-core `test-utils` feature)
+﻿# Testing Utilities (rustapi-core `test-utils` feature)
 
 **Lens**: "The Auditor"
 **Philosophy**: "Trust, but verify."

@@ -1,4 +1,4 @@
-# Testing Strategies
+﻿# Testing Strategies
 
 RustAPI provides robust tools for testing your application, ensuring reliability from unit tests to full integration scenarios.
 
@@ -8,7 +8,7 @@ Add `rustapi-testing` to your `Cargo.toml`. It is usually added as a dev-depende
 
 ```toml
 [dev-dependencies]
-rustapi-testing = "0.1.335"
+rustapi-testing = "0.1.537"
 tokio = { version = "1", features = ["full"] }
 ```
 

@@ -1,4 +1,4 @@
-# rustapi-validate: The Gatekeeper
+﻿# rustapi-validate: The Gatekeeper
 
 Data validation should happen at the edges of your system, before invalid data ever reaches your business logic. `rustapi-validate` provides a robust, unified validation engine supporting both synchronous and asynchronous rules.
 

@@ -1,4 +1,4 @@
-# The Testing Pyramid
+﻿# The Testing Pyramid
 
 A healthy project requires a balanced testing strategy. RustAPI relies on three layers of verification.
 

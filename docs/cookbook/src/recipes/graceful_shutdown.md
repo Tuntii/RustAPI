@@ -1,4 +1,4 @@
-# Graceful Shutdown
+﻿# Graceful Shutdown
 
 Graceful shutdown lets your API stop accepting new work, drain in-flight requests, and clean up resources before the process exits. In production, the missing piece is usually **draining**: marking the instance unready so upstream load balancers stop sending traffic before shutdown completes.
 
@@ -143,7 +143,7 @@ For most deployments:
 1. Receive `SIGTERM`.
 2. Mark the instance as draining.
 3. Let readiness fail.
-4. Wait 10–30 seconds, depending on your proxy and traffic pattern.
+4. Wait 10â€“30 seconds, depending on your proxy and traffic pattern.
 5. Allow graceful shutdown to complete.
 6. Run shutdown hooks.
 

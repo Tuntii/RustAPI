@@ -1,4 +1,4 @@
-# CSRF Protection
+﻿# CSRF Protection
 
 Cross-Site Request Forgery (CSRF) protection for your RustAPI applications using the **Double-Submit Cookie** pattern.
 
@@ -15,7 +15,7 @@ RustAPI's CSRF protection works by:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.335", features = ["csrf"] }
+rustapi-rs = { version = "0.1.537", features = ["csrf"] }
 ```
 
 ```rust
@@ -76,18 +76,18 @@ let config = CsrfConfig::new()
 
 `GET`, `HEAD`, `OPTIONS`, and `TRACE` requests are considered "safe" and don't modify state. The CSRF middleware:
 
-1. ✅ Generates a new token if none exists
-2. ✅ Sets the token cookie in the response
-3. ✅ **Does NOT validate** the header
+1. âœ… Generates a new token if none exists
+2. âœ… Sets the token cookie in the response
+3. âœ… **Does NOT validate** the header
 
 ### Unsafe Methods (Validation Required)
 
 `POST`, `PUT`, `PATCH`, and `DELETE` requests require CSRF validation:
 
-1. 🔍 Reads the token from the cookie
-2. 🔍 Reads the expected token from the header
-3. ❌ If missing or mismatched → Returns `403 Forbidden`
-4. ✅ If valid → Proceeds to handler
+1. ğŸ” Reads the token from the cookie
+2. ğŸ” Reads the expected token from the header
+3. âŒ If missing or mismatched â†’ Returns `403 Forbidden`
+4. âœ… If valid â†’ Proceeds to handler
 
 ## Frontend Integration
 
@@ -257,11 +257,11 @@ You can customize this by wrapping the layer with your own error handler.
 
 | Consideration | Status |
 |--------------|--------|
-| Token in cookie | ✅ HttpOnly=false (JS needs access) |
-| Token validation | ✅ Constant-time comparison |
-| SameSite cookie | ✅ Configurable (Strict by default) |
-| Secure cookie | ✅ HTTPS-only by default |
-| Token entropy | ✅ 32 bytes of cryptographic randomness |
+| Token in cookie | âœ… HttpOnly=false (JS needs access) |
+| Token validation | âœ… Constant-time comparison |
+| SameSite cookie | âœ… Configurable (Strict by default) |
+| Secure cookie | âœ… HTTPS-only by default |
+| Token entropy | âœ… 32 bytes of cryptographic randomness |
 
 ## See Also
 

@@ -1,4 +1,4 @@
-# rustapi-ws: The Live Wire
+﻿# rustapi-ws: The Live Wire
 
 **Lens**: "The Live Wire"
 **Philosophy**: "Real-time, persistent connections made simple."

@@ -1,4 +1,4 @@
-# rustapi-extras: The Toolbox
+﻿# rustapi-extras: The Toolbox
 
 **Lens**: "The Toolbox"
 **Philosophy**: "Batteries included, but swappable."
@@ -67,7 +67,7 @@ async fn show_form(token: CsrfToken) -> Html<String> {
 
 1. **Safe methods** (`GET`, `HEAD`) generate and set the token cookie
 2. **Unsafe methods** (`POST`, `PUT`, `DELETE`) require the token in the `X-CSRF-Token` header
-3. If header doesn't match cookie → `403 Forbidden`
+3. If header doesn't match cookie â†’ `403 Forbidden`
 
 See [CSRF Protection Recipe](../recipes/csrf_protection.md) for a complete guide.
 
@@ -93,7 +93,7 @@ The `insight` feature provides powerful real-time traffic analysis and debugging
 
 ```toml
 [dependencies]
-rustapi-extras = { version = "0.1.335", features = ["insight"] }
+rustapi-extras = { version = "0.1.537", features = ["insight"] }
 ```
 
 ### Setup

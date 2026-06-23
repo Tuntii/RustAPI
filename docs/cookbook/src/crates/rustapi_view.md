@@ -1,4 +1,4 @@
-# Template Engine (rustapi-extras `view` feature)
+﻿# Template Engine (rustapi-extras `view` feature)
 
 **Lens**: "The Artist"
 **Philosophy**: "Server-side rendering with modern tools."

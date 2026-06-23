@@ -1,4 +1,4 @@
-# RustAPI Cookbook
+﻿# RustAPI Cookbook
 
 Welcome to the **RustAPI Architecture Cookbook**. This documentation is designed to be the single source of truth for the project's philosophy, patterns, and practical implementation details.
 
@@ -12,7 +12,7 @@ This is not just API documentation. This is a collection of:
 - **Recipes**: Practical, step-by-step guides for adding features, testing, and maintaining cleanliness.
 - **Learning Paths**: Structured progressions with real-world examples.
 
-## 🚀 New: Examples Repository
+## ğŸš€ New: Examples Repository
 
 Looking for hands-on learning? Check out our **[Examples Repository](https://github.com/Tuntii/rustapi-rs-examples)** with 18 complete projects:
 
@@ -25,10 +25,14 @@ Looking for hands-on learning? Check out our **[Examples Repository](https://git
 | **Real-time** | websocket, graphql-api |
 | **Production** | microservices, serverless-lambda |
 
-👉 See [Learning & Examples](learning/README.md) for structured learning paths.
+ğŸ‘‰ See [Learning & Examples](learning/README.md) for structured learning paths.
 
 ## Visual Identity
 This cookbook is styled with the **RustAPI Premium Dark** theme, focusing on readability, contrast, and modern "glassmorphism" aesthetics.
+
+## Contributing to these docs
+
+Found a gap or typo? See [Community & Contributing](../../COMMUNITY.md) and [CONTRIBUTING.md](../../CONTRIBUTING.md). Cookbook source lives in `docs/cookbook/src/`.
 
 ## Quick Start
 - Want to add a feature? Jump to [Adding a New Feature](recipes/new_feature.md).

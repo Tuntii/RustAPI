@@ -1,6 +1,6 @@
-# Macro Attribute Reference
+﻿# Macro Attribute Reference
 
-RustAPI’s attribute macros do two jobs at once:
+RustAPIâ€™s attribute macros do two jobs at once:
 
 1. they register routes and schemas at compile time, and
 2. they enrich the generated OpenAPI operation metadata.
@@ -52,7 +52,7 @@ Groups the operation under one or more OpenAPI tags.
 
 ### Effect
 
-- Appends the tag value to the operation’s `tags` list.
+- Appends the tag value to the operationâ€™s `tags` list.
 - Useful for Swagger grouping and cookbook-style API organization.
 
 ### Example
@@ -175,7 +175,7 @@ Declares additional typed error responses for OpenAPI.
 
 ### Effect
 
-- Adds those responses directly to the operation’s OpenAPI response map.
+- Adds those responses directly to the operationâ€™s OpenAPI response map.
 - Each declared response uses the standard `ErrorSchema` under `application/json`.
 
 ### Example

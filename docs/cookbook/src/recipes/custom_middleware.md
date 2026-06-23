@@ -1,4 +1,4 @@
-# Custom Middleware
+﻿# Custom Middleware
 
 **Problem**: You need to execute code before or after every request (e.g., logging, authentication, metrics) or modify the response.
 

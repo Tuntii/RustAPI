@@ -1,4 +1,4 @@
-# rustapi-core: The Engine
+﻿# rustapi-core: The Engine
 
 `rustapi-core` is the foundational crate of the framework. It provides the essential types and traits that glue everything together, although application developers typically interact with the facade crate `rustapi`.
 

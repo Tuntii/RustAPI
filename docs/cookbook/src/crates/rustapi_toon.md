@@ -1,4 +1,4 @@
-# TOON (rustapi-extras `toon` feature)
+﻿# TOON (rustapi-extras `toon` feature)
 
 **Lens**: "The Diplomat"
 **Philosophy**: "Optimizing for Silicon Intelligence."

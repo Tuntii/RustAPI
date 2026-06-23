@@ -1,4 +1,4 @@
-# Deployment
+﻿# Deployment
 
 RustAPI includes built-in deployment tooling to help you ship applications, but production deployment is more than generating a config file. This guide covers both the CLI-assisted setup and the operational recommendations for health, readiness, liveness, and rollout safety.
 
@@ -68,9 +68,9 @@ Options:
 
 RustAPI has first-class built-in probe endpoints:
 
-- `/health` — aggregate service and dependency health
-- `/ready` — readiness for load balancers and orchestrators
-- `/live` — lightweight liveness probe
+- `/health` â€” aggregate service and dependency health
+- `/ready` â€” readiness for load balancers and orchestrators
+- `/live` â€” lightweight liveness probe
 
 You can enable them via:
 
@@ -80,9 +80,9 @@ You can enable them via:
 
 ### Recommended semantics
 
-- **Liveness** should answer: “Is the process alive?”
-- **Readiness** should answer: “Should this instance receive traffic right now?”
-- **Health** should answer: “What is the aggregate state of the service and its dependencies?”
+- **Liveness** should answer: â€œIs the process alive?â€
+- **Readiness** should answer: â€œShould this instance receive traffic right now?â€
+- **Health** should answer: â€œWhat is the aggregate state of the service and its dependencies?â€
 
 In practice:
 

@@ -1,4 +1,4 @@
-# Native OpenAPI Design for RustAPI
+﻿# Native OpenAPI Design for RustAPI
 
 ## Overview
 RustAPI uses a native OpenAPI 3.1 generator to reduce external dependencies and ensure deterministic, high-quality spec generation. This document outlines the architecture for the "Native OpenAPI" implementation.

@@ -1,4 +1,4 @@
-# Troubleshooting: Common Gotchas
+﻿# Troubleshooting: Common Gotchas
 
 This guide covers frequently encountered issues that can be confusing when working with RustAPI. If you're stuck on a cryptic error, chances are the solution is here.
 
@@ -23,7 +23,7 @@ pub struct ListParams {
 Add the `Schema` derive macro to any struct used with extractors (`Query<T>`, `Path<T>`, `Json<T>`):
 
 ```rust
-#[derive(Debug, Deserialize, Schema)]  // ✅ Schema added
+#[derive(Debug, Deserialize, Schema)]  // âœ… Schema added
 pub struct ListParams {
     pub page: Option<u32>,
 }
@@ -41,13 +41,13 @@ pub struct ListParams {
 **Wrong:**
 ```toml
 [dependencies]
-utoipa = "4.2"  # ❌ Don't add this
+utoipa = "4.2"  # âŒ Don't add this
 ```
 
 **Correct:**
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.335", features = ["full"] }
+rustapi-rs = { version = "0.1.537", features = ["full"] }
 # rustapi-openapi is re-exported through rustapi-rs
 ```
 
@@ -69,24 +69,24 @@ error[E0433]: failed to resolve: use of unresolved module `rustapi_macros`
 
 **Problem:**
 ```rust
-use rustapi_extras::SqlxErrorExt;  // ❌ Old module name
-use rustapi_core::RustApi;         // ❌ Internal crate
-use rustapi_macros::get;           // ❌ Internal crate
+use rustapi_extras::SqlxErrorExt;  // âŒ Old module name
+use rustapi_core::RustApi;         // âŒ Internal crate
+use rustapi_macros::get;           // âŒ Internal crate
 ```
 
 **Solution:**
 ```rust
-use rustapi_rs::prelude::*;        // ✅ Everything you need
-use rustapi_rs::SqlxErrorExt;      // ✅ Correct path for extras
+use rustapi_rs::prelude::*;        // âœ… Everything you need
+use rustapi_rs::SqlxErrorExt;      // âœ… Correct path for extras
 ```
 
 **For macros:**
 ```rust
-// ❌ Wrong (doesn't work)
+// âŒ Wrong (doesn't work)
 #[rustapi_macros::get("/")]
 async fn index() -> &'static str { "Hello" }
 
-// ✅ Correct
+// âœ… Correct
 #[rustapi_rs::get("/")]
 async fn index() -> &'static str { "Hello" }
 ```
@@ -102,18 +102,18 @@ async fn index() -> &'static str { "Hello" }
 
 **Wrong:**
 ```rust
-#[derive(Debug, Deserialize, IntoParams)]  // ❌ IntoParams is from utoipa
+#[derive(Debug, Deserialize, IntoParams)]  // âŒ IntoParams is from utoipa
 pub struct ListParams {
-    #[param(minimum = 1)]  // ❌ This attribute doesn't exist
+    #[param(minimum = 1)]  // âŒ This attribute doesn't exist
     pub page: Option<u32>,
 }
 ```
 
 **Correct:**
 ```rust
-#[derive(Debug, Deserialize, Schema)]  // ✅ Use Schema
+#[derive(Debug, Deserialize, Schema)]  // âœ… Use Schema
 pub struct ListParams {
-    /// Page number (1-indexed)  // ✅ Doc comments become OpenAPI descriptions
+    /// Page number (1-indexed)  // âœ… Doc comments become OpenAPI descriptions
     pub page: Option<u32>,
 }
 ```
@@ -150,7 +150,7 @@ error: the trait `RustApiSchema` is not implemented for `serde_json::Value`
 
 **Problem:**
 ```rust
-async fn handler() -> Json<serde_json::Value> {  // ❌ No schema
+async fn handler() -> Json<serde_json::Value> {  // âŒ No schema
     Json(json!({ "key": "value" }))
 }
 ```
@@ -162,7 +162,7 @@ struct MyResponse {
     key: String,
 }
 
-async fn handler() -> Json<MyResponse> {  // ✅ Type-safe
+async fn handler() -> Json<MyResponse> {  // âœ… Type-safe
     Json(MyResponse {
         key: "value".to_string(),
     })
@@ -188,7 +188,7 @@ error[E0277]: the trait bound `DateTime<Utc>: RustApiSchema` is not satisfied
 #[derive(Debug, Serialize, Schema)]
 pub struct BookmarkResponse {
     pub id: u64,
-    pub created_at: DateTime<Utc>,  // ❌ No RustApiSchema impl
+    pub created_at: DateTime<Utc>,  // âŒ No RustApiSchema impl
 }
 ```
 
@@ -197,7 +197,7 @@ pub struct BookmarkResponse {
 #[derive(Debug, Serialize, Schema)]
 pub struct BookmarkResponse {
     pub id: u64,
-    pub created_at: String,  // ✅ Use String
+    pub created_at: String,  // âœ… Use String
 }
 
 impl From<&Bookmark> for BookmarkResponse {
@@ -235,7 +235,7 @@ error[E0277]: the trait bound `T: RustApiSchema` is not satisfied
 **Problem:**
 ```rust
 #[derive(Debug, Serialize, Schema)]
-pub struct PaginatedResponse<T> {  // ❌ Missing trait bound
+pub struct PaginatedResponse<T> {  // âŒ Missing trait bound
     pub items: Vec<T>,
     pub total: usize,
 }
@@ -246,7 +246,7 @@ pub struct PaginatedResponse<T> {  // ❌ Missing trait bound
 use rustapi_openapi::schema::RustApiSchema;
 
 #[derive(Debug, Serialize, Schema)]
-pub struct PaginatedResponse<T: RustApiSchema> {  // ✅ Trait bound added
+pub struct PaginatedResponse<T: RustApiSchema> {  // âœ… Trait bound added
     pub items: Vec<T>,
     pub total: usize,
     pub page: u32,
@@ -271,7 +271,7 @@ async fn list_bookmarks() -> Json<BookmarkList> {
 **Problem:**
 ```rust
 #[rustapi_rs::get("/")]
-async fn handler() -> impl IntoResponse {  // ❌ May cause Handler trait errors
+async fn handler() -> impl IntoResponse {  // âŒ May cause Handler trait errors
     Html("<h1>Hello</h1>")
 }
 ```
@@ -279,7 +279,7 @@ async fn handler() -> impl IntoResponse {  // ❌ May cause Handler trait errors
 **Solution - Use concrete types:**
 ```rust
 #[rustapi_rs::get("/")]
-async fn handler() -> Html<String> {  // ✅ Concrete type
+async fn handler() -> Html<String> {  // âœ… Concrete type
     Html("<h1>Hello</h1>".to_string())
 }
 ```
@@ -312,7 +312,7 @@ async fn list_users(State(db): State<Database>) -> Json<Vec<User>> {
 
 // main.rs
 RustApi::auto()
-    // ❌ Forgot to add .state(...)
+    // âŒ Forgot to add .state(...)
     .run("0.0.0.0:8080")
     .await
 ```
@@ -320,7 +320,7 @@ RustApi::auto()
 **Solution:**
 ```rust
 RustApi::auto()
-    .state(database)  // ✅ Add the state!
+    .state(database)  // âœ… Add the state!
     .run("0.0.0.0:8080")
     .await
 ```
@@ -334,7 +334,7 @@ RustApi::auto()
 **Wrong:**
 ```rust
 async fn handler(
-    Json(body): Json<CreateUser>,  // ❌ Body extractor first
+    Json(body): Json<CreateUser>,  // âŒ Body extractor first
     State(db): State<Database>,
 ) -> Result<Json<User>> { ... }
 ```
@@ -342,9 +342,9 @@ async fn handler(
 **Correct:**
 ```rust
 async fn handler(
-    State(db): State<Database>,    // ✅ Non-body extractors first
+    State(db): State<Database>,    // âœ… Non-body extractors first
     Query(params): Query<Params>,
-    Json(body): Json<CreateUser>,  // ✅ Body extractor last
+    Json(body): Json<CreateUser>,  // âœ… Body extractor last
 ) -> Result<Json<User>> { ... }
 ```
 
@@ -374,4 +374,4 @@ async fn handler(
 3. **Import from `rustapi_rs`** only - never use internal crates directly
 4. **Use `RustApi::auto()`** with handler macros for automatic route discovery
 
-Follow these rules and you'll have a smooth experience with RustAPI! 🚀
+Follow these rules and you'll have a smooth experience with RustAPI! ğŸš€

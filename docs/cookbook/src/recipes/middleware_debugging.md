@@ -1,4 +1,4 @@
-# Middleware Debugging
+﻿# Middleware Debugging
 
 Middleware bugs are rarely glamorous. They usually look like:
 
@@ -6,7 +6,7 @@ Middleware bugs are rarely glamorous. They usually look like:
 - a missing `x-request-id`,
 - tracing spans without correlation,
 - an extractor failing because middleware never inserted the expected extension,
-- a response being transformed by the “wrong” layer.
+- a response being transformed by the â€œwrongâ€ layer.
 
 This guide focuses on debugging the middleware you already have in your stack.
 
@@ -77,8 +77,8 @@ If the response does not include `x-request-id`, either:
 
 That makes the pairing easy to diagnose:
 
-- `x-request-id` present + trace has request ID → good
-- no `x-request-id` + trace shows `unknown` → missing request ID layer
+- `x-request-id` present + trace has request ID â†’ good
+- no `x-request-id` + trace shows `unknown` â†’ missing request ID layer
 
 ### 3. Reduce the stack
 
@@ -132,7 +132,7 @@ Likely cause:
 
 Add `RequestIdLayer` and keep `TracingLayer` close to the edge of the stack so every request has a stable identifier early.
 
-### Response looks modified “too late”
+### Response looks modified â€œtoo lateâ€
 
 Remember response processing unwinds in reverse. The last layer added has the first chance to modify the outgoing response.
 

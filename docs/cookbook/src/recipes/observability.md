@@ -1,6 +1,6 @@
-# Observability
+﻿# Observability
 
-Production services need more than “logs exist somewhere”. A healthy RustAPI observability setup should let you answer three questions quickly:
+Production services need more than â€œlogs exist somewhereâ€. A healthy RustAPI observability setup should let you answer three questions quickly:
 
 1. **What failed?**
 2. **Which request or trace did it belong to?**
@@ -19,7 +19,7 @@ Enable the relevant features:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.335", features = [
+rustapi-rs = { version = "0.1.537", features = [
   "core",
   "extras-otel",
   "extras-structured-logging",
@@ -90,7 +90,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
 }
 ```
 
-## The recommended “golden config”
+## The recommended â€œgolden configâ€
 
 For most APIs, the following defaults work well:
 

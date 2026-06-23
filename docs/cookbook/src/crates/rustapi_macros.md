@@ -1,4 +1,4 @@
-# rustapi-macros: The Magic
+﻿# rustapi-macros: The Magic
 
 `rustapi-macros` reduces boilerplate by generating code at compile time.
 

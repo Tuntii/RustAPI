@@ -1,4 +1,4 @@
-# OIDC / OAuth2 in Production
+﻿# OIDC / OAuth2 in Production
 
 This guide turns the basic OAuth2 client into a production-ready login flow.
 
@@ -154,7 +154,7 @@ async fn oauth_callback(
 
 ### Identity verification
 
-- OpenID Connect is more than “OAuth + vibes”. Validate the `id_token` with the provider’s JWKs before trusting identity claims.
+- OpenID Connect is more than â€œOAuth + vibesâ€. Validate the `id_token` with the providerâ€™s JWKs before trusting identity claims.
 - Use the provider `userinfo` endpoint only after you decide which claims are authoritative.
 - Normalize external identities into your own application user model before starting long-lived sessions.
 

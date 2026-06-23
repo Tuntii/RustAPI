@@ -71,7 +71,7 @@ New to open source? Check out these resources:
 
 ### Prerequisites
 
-- **Rust 1.75 or later** - Install from [rustup.rs](https://rustup.rs/)
+- **Rust 1.85 or later (MSRV)** - Install from [rustup.rs](https://rustup.rs/)
 - **Git** - For version control
 - **Code editor** - VS Code with rust-analyzer recommended
 
@@ -467,11 +467,26 @@ RustAPI follows [Semantic Versioning](https://semver.org/):
 8. Publish crates: `./scripts/publish.ps1` or `./scripts/smart_publish.ps1`
 9. Create GitHub release with changelog
 
+## Documentation Contributions
+
+Documentation is part of the public product. When you change behavior, update the matching guide:
+
+| Change type | Update |
+|-------------|--------|
+| User-facing API or feature | Cookbook recipe or `docs/` guide + `CHANGELOG.md` |
+| Internal refactor only | `CHANGELOG.md` under **Changed** / **Fixed** if user-visible |
+| New example | `crates/rustapi-rs/examples/` + examples README |
+| Contributor workflow | `CONTRIBUTING.md` or [docs/COMMUNITY.md](docs/COMMUNITY.md) |
+
+Entry points for readers: [docs/README.md](docs/README.md) (hub), [docs/COMMUNITY.md](docs/COMMUNITY.md) (open source), [Cookbook SUMMARY](docs/cookbook/src/SUMMARY.md).
+
+Run `cargo doc -p rustapi-rs --all-features` locally when you touch public types.
+
 ## Getting Help
 
 ### Resources
 
-- 📖 **Documentation**: [docs/](docs/)
+- 📖 **Documentation**: [docs/](docs/) · [Community guide](docs/COMMUNITY.md)
 - 💬 **Discussions**: [GitHub Discussions](https://github.com/Tuntii/RustAPI/discussions)
 - 🐛 **Issues**: [GitHub Issues](https://github.com/Tuntii/RustAPI/issues)
 - 📧 **Contact**: Open an issue for questions

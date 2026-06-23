@@ -1,4 +1,4 @@
-# Architecture Keynotes
+﻿# Architecture Keynotes
 
 This section details the architectural pillars of RustAPI.
 

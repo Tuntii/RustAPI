@@ -1,4 +1,4 @@
-# Real-time Chat (WebSockets)
+﻿# Real-time Chat (WebSockets)
 
 WebSockets allow full-duplex communication between the client and server. RustAPI leverages the `rustapi-ws` crate (based on `tungstenite` and `tokio`) to make this easy.
 
@@ -6,7 +6,7 @@ WebSockets allow full-duplex communication between the client and server. RustAP
 
 ```toml
 [dependencies]
-rustapi-ws = "0.1.335"
+rustapi-ws = "0.1.537"
 tokio = { version = "1", features = ["sync", "macros"] }
 futures = "0.3"
 ```

@@ -1,4 +1,4 @@
-# Performance Philosophy
+﻿# Performance Philosophy
 
 RustAPI is built on the principle of **Zero-Cost Abstractions**. We do not compromise runtime performance for developer ergonomics; we strive to offer both.
 

@@ -1,4 +1,4 @@
-# Database Integration
+﻿# Database Integration
 
 RustAPI is database-agnostic, but **SQLx** is the recommended default for most RustAPI services because it is async-first, works naturally with `State`, and supports compile-time query verification.
 
@@ -8,7 +8,7 @@ This recipe shows how to integrate PostgreSQL/MySQL/SQLite using a shared pool, 
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.335", features = ["extras-sqlx"] } # Canonical facade feature for SQLx error conversion
+rustapi-rs = { version = "0.1.537", features = ["extras-sqlx"] } # Canonical facade feature for SQLx error conversion
 sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "uuid"] }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
@@ -17,7 +17,7 @@ dotenvy = "0.15"
 
 ## 1. Choosing SQLx vs Diesel vs SeaORM
 
-RustAPI does not force a single database stack. Pick the tool that matches your team’s trade-offs.
+RustAPI does not force a single database stack. Pick the tool that matches your teamâ€™s trade-offs.
 
 | Stack | Best fit | Strengths | Watch-outs |
 |---|---|---|---|
@@ -66,7 +66,7 @@ Recommended defaults:
 
 - keep one long-lived pool per database/service boundary
 - never open a fresh connection per request
-- size pool limits from the database server’s actual connection budget
+- size pool limits from the database serverâ€™s actual connection budget
 - set `acquire_timeout` so overload fails fast instead of hanging forever
 - use small but non-zero `min_connections` only when warm capacity matters
 - keep transaction scopes short and never hold them across unrelated awaits

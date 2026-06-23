@@ -1,4 +1,4 @@
-# Recipes
+﻿# Recipes
 
 Recipes are practical, focused guides to solving specific problems with RustAPI.
 

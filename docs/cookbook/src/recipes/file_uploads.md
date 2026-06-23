@@ -1,4 +1,4 @@
-# File Uploads
+﻿# File Uploads
 
 Handling file uploads is a common requirement. RustAPI provides a `Multipart` extractor to parse `multipart/form-data` requests.
 
@@ -8,7 +8,7 @@ Add `uuid` and `tokio` with `fs` features to your `Cargo.toml`.
 
 ```toml
 [dependencies]
-rustapi-rs = "0.1.335"
+rustapi-rs = "0.1.537"
 tokio = { version = "1", features = ["fs", "io-util"] }
 uuid = { version = "1", features = ["v4"] }
 ```
@@ -34,7 +34,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .body_limit(1024 * 1024 * 1024)
         .route("/upload", post(upload_handler))
         // Increase body limit to 50MB (default is usually 2MB)
-        // ⚠️ IMPORTANT: Since Multipart buffers the whole body,
+        // âš ï¸ IMPORTANT: Since Multipart buffers the whole body,
         // setting this too high can exhaust server memory.
         .layer(DefaultBodyLimit::max(50 * 1024 * 1024))
         .run("127.0.0.1:8080")
@@ -68,7 +68,7 @@ async fn upload_handler(mut multipart: Multipart) -> Result<Json<UploadResponse>
         let file_name = field.file_name().unwrap_or("unknown.bin").to_string();
         let content_type = field.content_type().unwrap_or("application/octet-stream").to_string();
 
-        // ⚠️ Security: Never trust the user-provided filename directly!
+        // âš ï¸ Security: Never trust the user-provided filename directly!
         // It could contain paths like "../../../etc/passwd".
         // Always generate a safe filename or sanitize inputs.
         let safe_filename = format!("{}-{}", uuid::Uuid::new_v4(), file_name);

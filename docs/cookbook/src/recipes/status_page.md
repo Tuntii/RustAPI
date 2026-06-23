@@ -1,4 +1,4 @@
-# Automatic Status Page
+﻿# Automatic Status Page
 
 RustAPI comes with a built-in, zero-configuration status page that gives you instant visibility into your application's health and performance.
 
@@ -103,7 +103,7 @@ The main section is a detailed table showing granular performance data for every
 |--------|-------------|
 | **Endpoint** | The path of the route (e.g., `/api/users`). |
 | **Requests** | Total number of hits this specific route has received. |
-| **Success Rate** | Visual indicator of health. <br>🟢 **Green**: ≥95% success <br>🔴 **Red**: <95% success |
+| **Success Rate** | Visual indicator of health. <br>ğŸŸ¢ **Green**: â‰¥95% success <br>ğŸ”´ **Red**: <95% success |
 | **Avg Latency** | The average time (in milliseconds) it takes to serve a request. |
 | **Last Access** | Timestamp of the most recent request to this endpoint. |
 

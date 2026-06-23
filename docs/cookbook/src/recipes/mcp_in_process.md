@@ -1,4 +1,4 @@
-# MCP In-Process Invocation
+﻿# MCP In-Process Invocation
 
 By default, `tools/call` from an MCP server proxies over HTTP to your main RustAPI server (even on localhost). This guarantees that every middleware, interceptor, extractor, and validator runs exactly as for normal traffic.
 
@@ -38,7 +38,7 @@ See the benchmark in `crates/rustapi-mcp/tests/mcp_e2e.rs`.
 
 Typical numbers on a dev machine (1000 sequential tool calls):
 
-- In-process: ~28 µs per call
+- In-process: ~28 Âµs per call
 - Proxy (live localhost HTTP): ~1.3 ms per call
 - Speedup: ~45-50x
 

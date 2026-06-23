@@ -1,85 +1,94 @@
-# RustAPI Documentation
+﻿# RustAPI Documentation
 
-Welcome to the RustAPI documentation!
+Central index for user guides, architecture notes, and open-source contribution paths.
 
-## Quick Links
+**Current release:** [`rustapi-rs` 0.1.537](https://crates.io/crates/rustapi-rs) Â· [Changelog](../CHANGELOG.md) Â· [All releases](https://github.com/Tuntii/RustAPI/releases)
+
+---
+
+## Start here
 
 | Document | Description |
 |----------|-------------|
-| [Getting Started](GETTING_STARTED.md) | Build your first API in 5 minutes |
-| [Features](FEATURES.md) | Complete feature reference |
-| [Philosophy](PHILOSOPHY.md) | Design principles and decisions |
-| [Architecture](ARCHITECTURE.md) | Internal structure deep dive |
-| [GraphQL Adapter Plan](GRAPHQL_ADAPTER_PLAN.md) | Planned GraphQL integration shape and facade design |
-| [Adaptive Execution Debug Plan](ADAPTIVE_EXECUTION_DEBUG_PLAN.md) | Proposed profiling/debug UX for making execution tiers visible in traces, logs, metrics, and headers |
-| [Performance Benchmarks](PERFORMANCE_BENCHMARKS.md) | Authoritative source for benchmark methodology and published claims |
-| [Recommended Production Baseline](PRODUCTION_BASELINE.md) | Opinionated starting point for production services |
-| [Production Checklist](PRODUCTION_CHECKLIST.md) | Rollout-ready operational checklist |
-| [Cookbook: Replay Workflow](cookbook/src/recipes/replay.md) | Official capture → inspect → replay → diff flow for time-travel debugging |
+| [Getting Started](GETTING_STARTED.md) | First API in ~5 minutes |
+| [Cookbook](cookbook/src/SUMMARY.md) | Recipes, crate deep dives, learning paths |
+| [Features](FEATURES.md) | Feature reference |
+| [Community & Contributing](COMMUNITY.md) | How to get help, contribute, and report issues |
 
-## What is RustAPI?
+## Architecture & design
 
-RustAPI is an ergonomic web framework for Rust, inspired by FastAPI's developer experience. It combines Rust's performance and safety with modern DX.
+| Document | Description |
+|----------|-------------|
+| [Philosophy](PHILOSOPHY.md) | Design principles |
+| [Architecture](ARCHITECTURE.md) | Internal structure |
+| [Performance Benchmarks](PERFORMANCE_BENCHMARKS.md) | Methodology and published claims |
+| [Public API Contract](../CONTRACT.md) | Stability and semver expectations |
 
-**Key Features:**
-- 🎯 5-line APIs — Minimal boilerplate
-- 🛡️ Type Safety — Compile-time guarantees
-- 📖 Auto Documentation — Swagger UI out of the box
-- 🤖 LLM-Ready — TOON format saves 50-58% tokens
-- 🔒 Production Ready — JWT, CORS, rate limiting included
+## Production
 
-## Philosophy
+| Document | Description |
+|----------|-------------|
+| [Production Baseline](PRODUCTION_BASELINE.md) | Recommended defaults |
+| [Production Checklist](PRODUCTION_CHECKLIST.md) | Rollout checklist |
+| [Cookbook: Deployment](cookbook/src/recipes/deployment.md) | Deploy patterns |
+| [Cookbook: Observability](cookbook/src/recipes/observability.md) | Metrics, tracing, health |
+| [Cookbook: Graceful Shutdown](cookbook/src/recipes/graceful_shutdown.md) | Clean shutdown |
+| [Cookbook: Replay](cookbook/src/recipes/replay.md) | Request capture and replay |
 
-> *"API surface is ours, engines can change."*
+## Open source
 
-RustAPI provides a stable, ergonomic public API. Internal dependencies (`hyper`, `tokio`, `validator`) are implementation details that can be upgraded without breaking your code.
-The stable contract lives in `rustapi-rs`; internal crates are not compatibility targets.
-
-Feature taxonomy:
-- `core-*` for framework core behavior.
-- `protocol-*` for optional protocol integrations.
-- `extras-*` for optional production middleware/integrations.
-
-## Getting Started
-
-```toml
-[dependencies]
-rustapi-rs = "0.1.335"
-```
-
-```rust
-use rustapi_rs::prelude::*;
-
-#[rustapi_rs::get("/hello/{name}")]
-async fn hello(Path(name): Path<String>) -> Json<Message> {
-    Json(Message { greeting: format!("Hello, {name}!") })
-}
-
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    RustApi::auto().run("0.0.0.0:8080").await
-}
-```
-
-Visit `http://localhost:8080/docs` for auto-generated Swagger UI.
+| Document | Description |
+|----------|-------------|
+| [Contributing](../CONTRIBUTING.md) | Dev setup, tests, PR process |
+| [Code of Conduct](../CODE_OF_CONDUCT.md) | Community standards |
+| [Security](../SECURITY.md) | Vulnerability reporting |
+| [Community guide](COMMUNITY.md) | Channels, doc locations, release cadence |
 
 ## Examples
 
-See [`crates/rustapi-rs/examples/README.md`](../crates/rustapi-rs/examples/README.md) for the current in-repository example index.
+- In-repo: [`crates/rustapi-rs/examples/`](../crates/rustapi-rs/examples/README.md)
+- Full projects: [rustapi-rs-examples](https://github.com/Tuntii/rustapi-rs-examples)
 
-Current examples in this repository:
-- `typed_path_poc` — Typed path registration and URI generation
-- `status_demo` — Automatic status page demo with live traffic/error generation
+## Quick start
 
-## Production Guides
+```toml
+[dependencies]
+rustapi-rs = "0.1.537"
+```
 
-- [Recommended Production Baseline](PRODUCTION_BASELINE.md)
-- [Production Checklist](PRODUCTION_CHECKLIST.md)
-- [Cookbook: Graceful Shutdown](cookbook/src/recipes/graceful_shutdown.md)
-- [Cookbook: Deployment](cookbook/src/recipes/deployment.md)
-- [Cookbook: Observability](cookbook/src/recipes/observability.md)
-- [Cookbook: Replay Workflow](cookbook/src/recipes/replay.md)
+Alias for shorter macros (recommended):
+
+```toml
+[dependencies]
+api = { package = "rustapi-rs", version = "0.1.537" }
+```
+
+```rust
+use api::prelude::*;
+
+#[derive(Serialize, Schema)]
+struct Message { text: String }
+
+#[api::get("/hello/{name}")]
+async fn hello(Path(name): Path<String>) -> Json<Message> {
+    Json(Message { text: format!("Hello, {name}!") })
+}
+
+#[api::main]
+async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    RustApi::auto().run("127.0.0.1:8080").await
+}
+```
+
+Open `http://127.0.0.1:8080/docs` for auto-generated OpenAPI / Swagger UI.
+
+## Planned work
+
+Design and planning docs (not yet shipped):
+
+- [GraphQL Adapter Plan](GRAPHQL_ADAPTER_PLAN.md)
+- [Adaptive Execution Debug Plan](ADAPTIVE_EXECUTION_DEBUG_PLAN.md)
 
 ## License
 
-MIT or Apache-2.0, at your option.
+MIT OR Apache-2.0, at your option.

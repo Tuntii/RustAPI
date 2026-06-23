@@ -1,4 +1,4 @@
-# Recipe: Maintenance & Quality
+﻿# Recipe: Maintenance & Quality
 
 Keeping the codebase clean is as important as adding features. RustAPI accumulates "dead code" easily when features are iterated on rapidly.
 

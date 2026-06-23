@@ -1,4 +1,4 @@
-# Recipe: Simulating CI
+﻿# Recipe: Simulating CI
 
 Nothing is worse than pushing code and waiting 10 minutes just to fail on a formatting check.
 

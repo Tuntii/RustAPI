@@ -1,3 +1,23 @@
+# RustAPI v0.1.537 Release Notes
+
+**Release Date**: June 23, 2026
+**Full Changelog**: https://github.com/Tuntii/RustAPI/compare/v0.1.528...v0.1.537
+
+---
+
+## Highlights
+
+v0.1.537 completes the **issue #201 maintainability pass**: `app/builder.rs` is split into focused internal modules while keeping the public `rustapi-rs` API unchanged.
+
+| Area | Change |
+|------|--------|
+| App modules | `routing`, `openapi`, `health`, `run` — all `src/**/*.rs` under 50KB |
+| Run lifecycle | `on_shutdown` hooks run consistently on every `run*` entrypoint |
+| Tests | Router/extract bodies in `tests/support/*_lib.rs` via `include!` |
+| Public API | No breaking changes; `api/public` snapshots unchanged |
+
+---
+
 # RustAPI v0.1.528 Release Notes
 
 **Release Date**: June 22, 2026

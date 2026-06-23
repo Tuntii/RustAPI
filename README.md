@@ -172,7 +172,7 @@ Current benchmark methodology and canonical published performance claims live in
 
 ```toml
 [dependencies]
-api = { package = "rustapi-rs", version = "0.1.507" }
+api = { package = "rustapi-rs", version = "0.1.537" }
 ```
 
 ```rust
@@ -203,7 +203,7 @@ run_rustapi_and_mcp_with_shutdown(app, "0.0.0.0:8080", mcp, "0.0.0.0:9090", toki
 
 Every tagged endpoint becomes an AI agent tool instantly.
 
-> **Tip:** Crate'i `api` (veya `myapi`, `server` vs.) diye alias'lamak en temiz ve FastAPI benzeri deneyimi verir. Makrolar otomatik olarak `#[api::get]`, `#[api::post]`, `#[api::main]` şeklinde çalışır.
+> **Tip:** Alias the crate as `api` (or `myapi`, `server`, etc.) for clean `#[api::get]` / `#[api::main]` macros — similar to FastAPI's import style.
 
 For production deployments, you can enable standard probe endpoints without writing handlers manually:
 
@@ -244,29 +244,6 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
 
 `production_defaults()` enables request IDs, tracing spans, and standard probe endpoints in one call.
 
-### Using a shorter macro prefix (recommended)
-
-`rustapi-rs` makrolarını `api::get`, `api::post`, `api::main` gibi kısa ve güzel isimlerle kullanmak için crate'i alias'layabilirsiniz:
-
-```toml
-[dependencies]
-api = { package = "rustapi-rs", version = "0.1.507" }
-```
-
-```rust
-use api::prelude::*;
-
-#[api::get("/users")]
-async fn list_users() -> &'static str { "ok" }
-
-#[api::main]
-async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    RustApi::auto().run("127.0.0.1:8080").await
-}
-```
-
-Bu, hem daha okunabilir hem de FastAPI benzeri bir deneyim sağlar. Makro genişletme sırasında crate ismi otomatik olarak algılanır (`proc-macro-crate` sayesinde).
-
 ## Feature Flags
 
 Features are organized into three namespaces:
@@ -281,40 +258,36 @@ Meta features: `core` (default), `protocol-all`, `extras-all`, `full`.
 
 ## Recent Changes
 
-- **Crate consolidation (13 → 9):** `rustapi-testing`, `rustapi-jobs`, `rustapi-view`, and `rustapi-toon` merged into `rustapi-core` and `rustapi-extras` as feature-gated modules.
-- **Embedded Isometric System Dashboard:** Live `/dashboard` with bento-grid layout, execution-flow visualization, and time-travel replay browser.
-- **Native MCP (full featured):** In-process invocation (~28µs per call), `cargo rustapi mcp generate` for any OpenAPI spec, stdio transport, and improved cookbook coverage.
-- Dual-stack runtime: simultaneous HTTP/1.1 (TCP) and HTTP/3 (QUIC/UDP)
-- WebSocket permessage-deflate compression
-- `rustapi-grpc` crate: optional Tonic/Prost-based gRPC alongside HTTP (`run_rustapi_and_grpc`)
+See [CHANGELOG.md](CHANGELOG.md) for full history. Highlights in **v0.1.537**:
 
-## Roadmap — v0.1.507 (shipped June 2026)
-
-- [x] Embedded Isometric System Dashboard (`/dashboard`)
-  - Built-in control plane that boots automatically with a bento-grid layout, dark mode, and glassmorphism styling.
-  - Live architectural view of request routing across the **Ultra Fast**, **Fast**, and **Full** execution paths.
-  - Interactive endpoint visualization for topology inspection, route grouping, and runtime status awareness.
-  - Time-travel replay UI for browsing recorded HTTP traffic, selecting a historical request, and inspecting replay state directly from the dashboard.
-- [x] Native MCP (Model Context Protocol) Orchestration
-  - Embedded MCP server + `rustapi mcp generate` CLI turns any OpenAPI 3.x spec into agent tools.
-  - In-process invocation path: ~28 µs per call (vs ~1.3 ms for localhost proxy with live server) for 1000 sequential calls.
-  - stdio transport for desktop clients (Claude Desktop etc.).
-  - Tag/path-prefix filtering, full pipeline respect (or zero-copy in-process when co-located).
-  - Cookbook recipes for native use, CLI generator, in-process mode, and stdio.
-
+- **Maintainability (#201):** `app/builder.rs` split into `routing`, `openapi`, `health`, and `run` modules; all `src/**/*.rs` under 50KB
+- **Run lifecycle:** consistent `on_shutdown` hooks across all `run*` entrypoints
+- **RustAPI Cloud CLI** (`cargo rustapi login`, `deploy cloud`) in v0.1.528
+- **Native MCP:** in-process tools, `cargo rustapi mcp generate`, stdio transport
+- **Embedded dashboard** with replay browser and execution-path visualization
 
 ## Documentation
 
-Detailed architecture, recipes, and guides are in the [Cookbook](docs/cookbook/src/SUMMARY.md):
+| Resource | Link |
+|----------|------|
+| Docs hub | [docs/README.md](docs/README.md) |
+| Cookbook | [docs/cookbook/src/SUMMARY.md](docs/cookbook/src/SUMMARY.md) |
+| Getting started | [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) |
+| Community & contributing | [docs/COMMUNITY.md](docs/COMMUNITY.md) |
+| Production checklist | [docs/PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md) |
+| API reference | [docs.rs/rustapi-rs](https://docs.rs/rustapi-rs) |
 
-- [System Architecture](docs/cookbook/src/architecture/system_overview.md)
-- [Performance Benchmarks](docs/cookbook/src/concepts/performance.md)
-- [gRPC Integration Guide](docs/cookbook/src/crates/rustapi_grpc.md)
-- [Recommended Production Baseline](docs/PRODUCTION_BASELINE.md)
-- [Production Checklist](docs/PRODUCTION_CHECKLIST.md)
-- [Internal Examples](crates/rustapi-rs/examples/)
+**Examples:** in-repo [`crates/rustapi-rs/examples/`](crates/rustapi-rs/examples/) and the separate **[rustapi-rs-examples](https://github.com/Tuntii/rustapi-rs-examples)** repository.
 
-**Full standalone examples** (including a complete MCP tool example with in-process invocation) live in the separate **[rustapi-rs-examples](https://github.com/Tuntii/rustapi-rs-examples)** repository.
+## Community & Contributing
+
+RustAPI is built in the open. Bug reports, docs fixes, recipes, and code contributions are welcome.
+
+- [Contributing guide](CONTRIBUTING.md) — setup, tests, PR workflow
+- [Community guide](docs/COMMUNITY.md) — channels, good-first issues, doc locations
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Security policy](SECURITY.md)
+- [GitHub Discussions](https://github.com/Tuntii/RustAPI/discussions) — questions and ideas
 
 ---
 

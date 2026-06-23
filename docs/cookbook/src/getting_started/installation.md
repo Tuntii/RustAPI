@@ -1,7 +1,7 @@
-# Installation
+﻿# Installation
 
 > [!NOTE]
-> RustAPI is designed for Rust 1.75 or later.
+> RustAPI requires Rust 1.85 or later (MSRV). See the workspace `Cargo.toml` for the authoritative value.
 
 ## Prerequisites
 
@@ -30,14 +30,14 @@ cargo-rustapi --version
 If you prefer not to use the CLI, you can add RustAPI to your `Cargo.toml` manually:
 
 ```bash
-cargo add rustapi-rs@0.1.335
+cargo add rustapi-rs@0.1.537
 ```
 
 Or add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rustapi-rs = "0.1.335"
+rustapi-rs = "0.1.537"
 ```
 
 ## Editor Setup

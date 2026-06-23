@@ -1,4 +1,4 @@
-# OAuth2 Client Integration
+﻿# OAuth2 Client Integration
 
 Integrating with third-party identity providers (like Google, GitHub) is a common requirement for modern applications. RustAPI exposes the OAuth2 client through the public `rustapi-rs` facade.
 

@@ -1,4 +1,4 @@
-# Axum -> RustAPI Migration Guide
+﻿# Axum -> RustAPI Migration Guide
 
 If you already know Axum, RustAPI will feel familiar in the right places and pleasantly less repetitive in a few others.
 
@@ -232,7 +232,7 @@ RustApi::new()
 
 ### Migration note
 
-- The middleware shape is not a drop-in copy of Axum’s tower APIs.
+- The middleware shape is not a drop-in copy of Axumâ€™s tower APIs.
 - For simple request/response transformations, prefer RustAPI interceptors when they are sufficient; they are lighter than a full middleware layer.
 - For a dedicated middleware walkthrough, see [Custom Middleware](custom_middleware.md).
 
@@ -293,7 +293,7 @@ async fn get_user(Path(id): Path<i64>) -> Result<Json<User>> {
 }
 ```
 
-If you are migrating from Axum plus a third-party OpenAPI stack, consolidating those concerns in one framework usually makes the codebase easier to explain to Future You™.
+If you are migrating from Axum plus a third-party OpenAPI stack, consolidating those concerns in one framework usually makes the codebase easier to explain to Future Youâ„¢.
 
 ## 10. Testing migration: service tests -> `TestClient`
 

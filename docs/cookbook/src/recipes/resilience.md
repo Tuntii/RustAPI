@@ -1,4 +1,4 @@
-# Resilience Patterns
+﻿# Resilience Patterns
 
 Building robust applications requires handling failures gracefully. RustAPI provides a suite of middleware to help your service survive partial outages, latency spikes, and transient errors.
 
@@ -10,9 +10,9 @@ Add the resilience features to your `Cargo.toml`. For example:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.335", features = ["full"] }
+rustapi-rs = { version = "0.1.537", features = ["full"] }
 # OR cherry-pick features
-# rustapi-extras = { version = "0.1.335", features = ["circuit-breaker", "retry", "timeout"] }
+# rustapi-extras = { version = "0.1.537", features = ["circuit-breaker", "retry", "timeout"] }
 ```
 
 ## Circuit Breaker

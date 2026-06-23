@@ -1,6 +1,6 @@
-# Session-Based Authentication
+﻿# Session-Based Authentication
 
-Cookie-backed session auth is the shortest path from “I need login/logout” to a production-shaped RustAPI service.
+Cookie-backed session auth is the shortest path from â€œI need login/logoutâ€ to a production-shaped RustAPI service.
 
 This recipe shows how to:
 

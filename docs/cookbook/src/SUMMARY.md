@@ -1,6 +1,8 @@
-# Summary
+﻿# Summary
 
 [Introduction](introduction.md)
+
+- [Community & Open Source](../../COMMUNITY.md)
 
 - [Part I: Getting Started](getting_started/README.md)
     - [Installation](getting_started/installation.md)

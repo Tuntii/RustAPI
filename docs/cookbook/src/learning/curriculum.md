@@ -1,4 +1,4 @@
-# Structured Learning Path
+﻿# Structured Learning Path
 
 This curriculum is designed to take you from a RustAPI beginner to an advanced user capable of building production-grade microservices.
 
@@ -13,10 +13,10 @@ This curriculum is designed to take you from a RustAPI beginner to an advanced u
 - **Expected Output:** A running server that responds to `GET /` with "Hello World".
 - **Pitfalls:** Not enabling `tokio` features if setting up manually.
 
-#### 🛠️ Mini Project: "The Echo Server"
+#### ğŸ› ï¸ Mini Project: "The Echo Server"
 Create a new endpoint `POST /echo` that accepts any text body and returns it back to the client. This verifies your setup handles basic I/O correctly.
 
-#### 🧠 Knowledge Check
+#### ğŸ§  Knowledge Check
 1. What command scaffolds a new RustAPI project?
 2. Which feature flag is required for the async runtime?
 3. Where is the main entry point of the application typically located?
@@ -28,10 +28,10 @@ Create a new endpoint `POST /echo` that accepts any text body and returns it bac
 - **Expected Output:** Endpoints that return static JSON data.
 - **Pitfalls:** Forgetting to register routes in `main.rs` if not using auto-discovery.
 
-#### 🛠️ Mini Project: "The Calculator"
+#### ğŸ› ï¸ Mini Project: "The Calculator"
 Create an endpoint `GET /add?a=5&b=10` that returns `{"result": 15}`. This practices query parameter extraction and JSON responses.
 
-#### 🧠 Knowledge Check
+#### ğŸ§  Knowledge Check
 1. Which macro is used to define a GET handler?
 2. How do you return a JSON response from a handler?
 3. What is the return type of a typical handler function?
@@ -43,15 +43,15 @@ Create an endpoint `GET /add?a=5&b=10` that returns `{"result": 15}`. This pract
 - **Expected Output:** `GET /users/{id}` returns the ID. `POST /users` echoes the JSON body.
 - **Pitfalls:** Consuming the body twice (e.g., using `Json` and `Body` in the same handler).
 
-#### 🛠️ Mini Project: "The User Registry"
+#### ğŸ› ï¸ Mini Project: "The User Registry"
 Create a `POST /register` endpoint that accepts a JSON body `{"username": "...", "age": ...}` and returns a welcome message using the username. Use the `Json` extractor.
 
-#### 🧠 Knowledge Check
+#### ğŸ§  Knowledge Check
 1. Which extractor is used for URL parameters like `/users/:id`?
 2. Which extractor parses the request body as JSON?
 3. Can you use multiple extractors in a single handler?
 
-### 🏆 Phase 1 Capstone: "The Todo List API"
+### ğŸ† Phase 1 Capstone: "The Todo List API"
 **Objective:** Build a simple in-memory Todo List API.
 **Requirements:**
 - `GET /todos`: List all todos.
@@ -73,7 +73,7 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 - **Expected Output:** A stateful API where POST adds a user and GET retrieves it (in-memory).
 - **Pitfalls:** Using `std::sync::Mutex` instead of `tokio::sync::Mutex` in async code (though `std` is fine for simple data).
 
-#### 🧠 Knowledge Check
+#### ğŸ§  Knowledge Check
 1. How do you inject global state into the application?
 2. Which extractor retrieves the application state?
 3. Why should you use `Arc` for shared state?
@@ -85,7 +85,7 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 - **Expected Output:** Data persists across server restarts.
 - **Pitfalls:** Blocking the async runtime with synchronous DB drivers (use `sqlx` or `tokio-postgres`).
 
-#### 🧠 Knowledge Check
+#### ğŸ§  Knowledge Check
 1. Why is connection pooling important?
 2. How do you share a DB pool across handlers?
 3. What is the benefit of compile-time query checking in SQLx?
@@ -97,7 +97,7 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 - **Expected Output:** Requests with invalid email or short password return `422 Unprocessable Entity`.
 - **Pitfalls:** Forgetting to add `#[validate]` attributes to struct fields.
 
-#### 🧠 Knowledge Check
+#### ğŸ§  Knowledge Check
 1. Which trait must a struct implement to be validatable?
 2. What HTTP status code is returned on validation failure?
 3. How do you combine JSON extraction and validation?
@@ -109,7 +109,7 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 - **Expected Output:** `GET /users/999` returns `404 Not Found` with a structured JSON error body.
 - **Pitfalls:** Exposing internal database errors (like SQL strings) to the client.
 
-#### 🧠 Knowledge Check
+#### ğŸ§  Knowledge Check
 1. What is the standard error type in RustAPI?
 2. How do you mask internal errors in production?
 3. What is the purpose of the `error_id` field?
@@ -121,7 +121,7 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 - **Expected Output:** Swagger UI at `/docs` showing full schema with shared components.
 - **Pitfalls:** Recursive schemas without `Box` or `Option`.
 
-#### 🧠 Knowledge Check
+#### ğŸ§  Knowledge Check
 1. What does `#[derive(Schema)]` do?
 2. How does RustAPI handle shared schema components?
 3. What is HATEOAS and why is it useful?
@@ -133,12 +133,12 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 - **Expected Output:** `curl -F file=@image.png` uploads the file.
 - **Pitfalls:** Loading large files entirely into memory (use streaming).
 
-#### 🧠 Knowledge Check
+#### ğŸ§  Knowledge Check
 1. Which extractor is used for file uploads?
 2. Why should you use `field.chunk()` instead of `field.bytes()`?
 3. How do you increase the request body size limit?
 
-### 🏆 Phase 2 Capstone: "The Secure Blog Engine"
+### ğŸ† Phase 2 Capstone: "The Secure Blog Engine"
 **Objective:** Enhance the Todo API into a Blog Engine.
 **Requirements:**
 - Add `Post` resource with title, content, and author.
@@ -162,7 +162,7 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 - **Expected Output:** Protected routes return `401 Unauthorized` without a valid token.
 - **Pitfalls:** Hardcoding secrets. Not checking token expiration.
 
-#### 🧠 Knowledge Check
+#### ğŸ§  Knowledge Check
 1. What is the role of the `AuthUser` extractor?
 2. How does OAuth2 PKCE improve security?
 3. Where should you store the JWT secret?
@@ -177,7 +177,7 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 - **Expected Output:** Sending 11 login attempts results in `429 Too Many Requests`.
 - **Pitfalls:** Caching responses that contain user-specific data.
 
-#### 🧠 Knowledge Check
+#### ğŸ§  Knowledge Check
 1. What header indicates when the rate limit resets?
 2. Why is request deduplication important for payments?
 3. Which requests are typically safe to cache?
@@ -189,7 +189,7 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 - **Expected Output:** Multiple clients connected via WS receiving messages in real-time.
 - **Pitfalls:** Blocking the WebSocket loop with long-running synchronous tasks.
 
-#### 🧠 Knowledge Check
+#### ğŸ§  Knowledge Check
 1. How do you upgrade an HTTP request to a WebSocket connection?
 2. Can you share state between HTTP handlers and WebSocket handlers?
 3. What happens if a WebSocket handler panics?
@@ -203,7 +203,7 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 - **Expected Output:** A resilient API ready for deployment.
 - **Pitfalls:** Setting timeouts too low for slow operations.
 
-#### 🧠 Knowledge Check
+#### ğŸ§  Knowledge Check
 1. Why is timeout middleware important?
 2. What command generates a production Dockerfile?
 3. How do you enable compression for responses?
@@ -218,19 +218,19 @@ Create a `POST /register` endpoint that accepts a JSON body `{"username": "...",
 - **Expected Output:** Registration returns 200 immediately (low latency); console logs show "Sending welcome email to ..." shortly after (asynchronous). Tests pass.
 - **Pitfalls:** Forgetting to start the job worker loop (`JobWorker::new(queue).run().await`).
 
-#### 🛠️ Mini Project: "The Email Worker"
+#### ğŸ› ï¸ Mini Project: "The Email Worker"
 Create a system where users can request a "Report".
 1. `POST /reports`: Enqueues a `GenerateReportJob`. Returns `{"job_id": "..."}` immediately.
 2. The job simulates 5 seconds of work and then writes "Report Generated" to a file or log.
 3. (Bonus) Use Redis backend for persistence.
 
-#### 🧠 Knowledge Check
+#### ğŸ§  Knowledge Check
 1. Why should you offload email sending to a background job?
 2. Which backend is suitable for local development vs production?
 3. How do you enqueue a job from a handler?
 4. How can you test that a job was enqueued without actually running it?
 
-### 🏆 Phase 3 Capstone: "The Real-Time Collaboration Tool"
+### ğŸ† Phase 3 Capstone: "The Real-Time Collaboration Tool"
 **Objective:** Build a real-time collaborative note-taking app.
 **Requirements:**
 - **Auth:** Users must log in (JWT or OAuth2) to edit notes.
@@ -255,7 +255,7 @@ Create a system where users can request a "Report".
 - **Expected Output:** Logs are JSON formatted. Audit log contains a new entry for every login.
 - **Pitfalls:** High cardinality in metric labels.
 
-#### 🧠 Knowledge Check
+#### ğŸ§  Knowledge Check
 1. What is the difference between logging and auditing?
 2. Which fields are required in an `AuditEvent`?
 3. How does structured logging aid debugging?
@@ -270,7 +270,7 @@ Create a system where users can request a "Report".
 - **Expected Output:** System degrades gracefully when external service is down. Replay file captures the exact request sequence.
 - **Pitfalls:** Infinite retry loops or retrying non-idempotent operations.
 
-#### 🧠 Knowledge Check
+#### ğŸ§  Knowledge Check
 1. What state does a Circuit Breaker have when it stops traffic?
 2. Why is jitter important in retry strategies?
 3. How does Time-Travel Debugging help with "Heisenbugs"?
@@ -285,12 +285,12 @@ Create a system where users can request a "Report".
 - **Expected Output:** Browser/Client connects via HTTP/3. Responses have `content-encoding: gzip`.
 - **Pitfalls:** Compressing small responses (waste of CPU) or already compressed data (images).
 
-#### 🧠 Knowledge Check
+#### ğŸ§  Knowledge Check
 1. What transport protocol does HTTP/3 use?
 2. How does `simd-json` improve performance?
 3. Why shouldn't you compress JPEG images?
 
-### 🏆 Phase 4 Capstone: "The High-Scale Event Platform"
+### ğŸ† Phase 4 Capstone: "The High-Scale Event Platform"
 **Objective:** Architect a system capable of handling thousands of events per second.
 **Requirements:**
 - **Ingestion:** HTTP/3 endpoint receiving JSON events.
@@ -314,7 +314,7 @@ Create a system where users can request a "Report".
 - **Expected Output:** HTML page rendered with Tera templates, displaying dynamic data.
 - **Pitfalls:** Forgetting to create the `templates/` directory.
 
-#### 🧠 Knowledge Check
+#### ğŸ§  Knowledge Check
 1. Which template engine does RustAPI use?
 2. How do you pass data to a template?
 3. How does template reloading work in debug mode?
@@ -326,7 +326,7 @@ Create a system where users can request a "Report".
 - **Expected Output:** Both servers running; HTTP endpoint calls gRPC method (simulated).
 - **Pitfalls:** Port conflicts if not configured correctly.
 
-#### 🧠 Knowledge Check
+#### ğŸ§  Knowledge Check
 1. Which crate provides gRPC helpers for RustAPI?
 2. Can HTTP and gRPC share the same Tokio runtime?
 3. Why might you want to run both in the same process?
@@ -338,12 +338,12 @@ Create a system where users can request a "Report".
 - **Expected Output:** `curl` requests with different headers return different formats.
 - **Pitfalls:** Not checking the `Accept` header in client code.
 
-#### 🧠 Knowledge Check
+#### ğŸ§  Knowledge Check
 1. What is TOON and why is it useful for LLMs?
 2. How does `LlmResponse` decide which format to return?
 3. How much token usage can TOON save on average?
 
-### 🏆 Phase 5 Capstone: "The Intelligent Dashboard"
+### ğŸ† Phase 5 Capstone: "The Intelligent Dashboard"
 **Objective:** Combine SSR, gRPC, and AI features.
 **Requirements:**
 - **Backend:** Retrieve stats via gRPC from a "worker" service.

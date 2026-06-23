@@ -1,4 +1,4 @@
-# Replay workflow: time-travel debugging
+﻿# Replay workflow: time-travel debugging
 
 Record HTTP request/response pairs in a controlled environment, inspect a captured request, replay it against another target, and diff the result before promoting a fix.
 
@@ -12,7 +12,7 @@ Replay is most useful when:
 - behavior differs between staging and local
 - you need to reproduce a regression using a real traffic sample
 - you want to rerun critical requests before promoting a new version to canary
-- you are asking, “why did this request work yesterday but break today?” and want a time-machine-style answer
+- you are asking, â€œwhy did this request work yesterday but break today?â€ and want a time-machine-style answer
 
 ## Prerequisites
 
@@ -20,7 +20,7 @@ Enable the canonical replay feature in your application:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.335", features = ["extras-replay"] }
+rustapi-rs = { version = "0.1.537", features = ["extras-replay"] }
 ```
 
 On the CLI side, `cargo-rustapi` is enough; replay commands are part of the default installation:
@@ -145,7 +145,7 @@ The `diff` output looks for differences in:
 - response headers
 - JSON body fields
 
-That lets you catch subtler regressions too, such as “it still returned 200, but the payload changed.”
+That lets you catch subtler regressions too, such as â€œit still returned 200, but the payload changed.â€
 
 ## Recommended workflow
 
@@ -159,7 +159,7 @@ During an incident or regression, the recommended flow is:
 6. **Diff it**: use `diff` to confirm the behavior changed as expected.
 7. **Turn it off**: disable replay recording after the incident or keep the TTL short.
 
-In short: **capture → inspect → replay → diff → promote**.
+In short: **capture â†’ inspect â†’ replay â†’ diff â†’ promote**.
 
 ## Admin API reference
 

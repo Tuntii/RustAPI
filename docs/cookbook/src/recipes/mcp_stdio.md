@@ -1,4 +1,4 @@
-# MCP stdio Transport
+﻿# MCP stdio Transport
 
 In addition to the HTTP JSON-RPC transport, `rustapi mcp generate` supports `--stdio`.
 
