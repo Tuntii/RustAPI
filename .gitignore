@@ -24,6 +24,15 @@ docs/PRODUCTION_CHECKLIST.md
 /.github/prompts
 /.github/skills
 *.md
+!docs/COMMUNITY.md
+!docs/README.md
+!docs/GETTING_STARTED.md
+!docs/ARCHITECTURE.md
+!docs/FEATURES.md
+!docs/PHILOSOPHY.md
+!docs/PERFORMANCE_BENCHMARKS.md
+!docs/native_openapi.md
+!docs/cookbook/src/**/*.md
 tasks.md
 /mcps
 /agent-tools
