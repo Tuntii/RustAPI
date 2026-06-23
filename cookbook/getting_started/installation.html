@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-26bbabb4.js";
+            window.path_to_searchindex_js = "../searchindex-fe6ca948.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-380ad91a.js"></script>
+        <script src="../toc-09b14b8b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -184,7 +184,7 @@
                         <h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
 <blockquote class="blockquote-tag blockquote-tag-note">
 <p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>Note</p>
-<p>RustAPI is designed for Rust 1.75 or later.</p>
+<p>RustAPI requires Rust 1.85 or later (MSRV). See the workspace <code>Cargo.toml</code> for the authoritative value.</p>
 </blockquote>
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
 <p>Before we begin, ensure you have the Rust toolchain installed. If you haven’t, the best way is via <a href="https://rustup.rs">rustup.rs</a>.</p>
@@ -199,11 +199,11 @@
 </code></pre>
 <h2 id="adding-to-an-existing-project"><a class="header" href="#adding-to-an-existing-project">Adding to an Existing Project</a></h2>
 <p>If you prefer not to use the CLI, you can add RustAPI to your <code>Cargo.toml</code> manually:</p>
-<pre><code class="language-bash">cargo add rustapi-rs@0.1.335
+<pre><code class="language-bash">cargo add rustapi-rs@0.1.537
 </code></pre>
 <p>Or add this to your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = "0.1.335"
+rustapi-rs = "0.1.537"
 </code></pre>
 <h2 id="editor-setup"><a class="header" href="#editor-setup">Editor Setup</a></h2>
 <p>For the best experience, we recommend <strong>VS Code</strong> with the <strong>rust-analyzer</strong> extension. This provides:</p>

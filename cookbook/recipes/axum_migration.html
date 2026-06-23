@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-26bbabb4.js";
+            window.path_to_searchindex_js = "../searchindex-fe6ca948.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-380ad91a.js"></script>
+        <script src="../toc-09b14b8b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -394,7 +394,7 @@ async fn update_user(
     .route("/users", get(users));</code></pre>
 <h3 id="migration-note-3"><a class="header" href="#migration-note-3">Migration note</a></h3>
 <ul>
-<li>The middleware shape is not a drop-in copy of Axum’s tower APIs.</li>
+<li>The middleware shape is not a drop-in copy of Axumâ€™s tower APIs.</li>
 <li>For simple request/response transformations, prefer RustAPI interceptors when they are sufficient; they are lighter than a full middleware layer.</li>
 <li>For a dedicated middleware walkthrough, see <a href="custom_middleware.html">Custom Middleware</a>.</li>
 </ul>
@@ -451,7 +451,7 @@ async fn get_user(Path(id): Path&lt;i64&gt;) -&gt; Result&lt;Json&lt;User&gt;&gt
     }))
 }
 <span class="boring">}</span></code></pre>
-<p>If you are migrating from Axum plus a third-party OpenAPI stack, consolidating those concerns in one framework usually makes the codebase easier to explain to Future You™.</p>
+<p>If you are migrating from Axum plus a third-party OpenAPI stack, consolidating those concerns in one framework usually makes the codebase easier to explain to Future Youâ„¢.</p>
 <h2 id="10-testing-migration-service-tests---testclient"><a class="header" href="#10-testing-migration-service-tests---testclient">10. Testing migration: service tests -&gt; <code>TestClient</code></a></h2>
 <h3 id="rustapi-test-style"><a class="header" href="#rustapi-test-style">RustAPI test style</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]

@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-26bbabb4.js";
+            window.path_to_searchindex_js = "../searchindex-fe6ca948.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-380ad91a.js"></script>
+        <script src="../toc-09b14b8b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -193,12 +193,12 @@ Replay is intended for <strong>development, staging, canary, and incident-respon
 <li>behavior differs between staging and local</li>
 <li>you need to reproduce a regression using a real traffic sample</li>
 <li>you want to rerun critical requests before promoting a new version to canary</li>
-<li>you are asking, “why did this request work yesterday but break today?” and want a time-machine-style answer</li>
+<li>you are asking, â€œwhy did this request work yesterday but break today?â€ and want a time-machine-style answer</li>
 </ul>
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
 <p>Enable the canonical replay feature in your application:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["extras-replay"] }
+rustapi-rs = { version = "0.1.537", features = ["extras-replay"] }
 </code></pre>
 <p>On the CLI side, <code>cargo-rustapi</code> is enough; replay commands are part of the default installation:</p>
 <pre><code class="language-bash">cargo install cargo-rustapi
@@ -296,7 +296,7 @@ cargo rustapi replay list -s http://localhost:8080 -t local-replay-token --metho
 <li>response headers</li>
 <li>JSON body fields</li>
 </ul>
-<p>That lets you catch subtler regressions too, such as “it still returned 200, but the payload changed.”</p>
+<p>That lets you catch subtler regressions too, such as â€œit still returned 200, but the payload changed.â€</p>
 <h2 id="recommended-workflow"><a class="header" href="#recommended-workflow">Recommended workflow</a></h2>
 <p>During an incident or regression, the recommended flow is:</p>
 <ol>
@@ -308,7 +308,7 @@ cargo rustapi replay list -s http://localhost:8080 -t local-replay-token --metho
 <li><strong>Diff it</strong>: use <code>diff</code> to confirm the behavior changed as expected.</li>
 <li><strong>Turn it off</strong>: disable replay recording after the incident or keep the TTL short.</li>
 </ol>
-<p>In short: <strong>capture → inspect → replay → diff → promote</strong>.</p>
+<p>In short: <strong>capture â†’ inspect â†’ replay â†’ diff â†’ promote</strong>.</p>
 <h2 id="admin-api-reference"><a class="header" href="#admin-api-reference">Admin API reference</a></h2>
 <p>All admin endpoints require this header:</p>
 <pre><code class="language-text">Authorization: Bearer &lt;admin_token&gt;

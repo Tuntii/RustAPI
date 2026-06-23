@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-26bbabb4.js";
+            window.path_to_searchindex_js = "searchindex-fe6ca948.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-380ad91a.js"></script>
+        <script src="toc-09b14b8b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -193,7 +193,7 @@
 <li><strong>Recipes</strong>: Practical, step-by-step guides for adding features, testing, and maintaining cleanliness.</li>
 <li><strong>Learning Paths</strong>: Structured progressions with real-world examples.</li>
 </ul>
-<h2 id="-new-examples-repository"><a class="header" href="#-new-examples-repository">🚀 New: Examples Repository</a></h2>
+<h2 id="ğÿš-new-examples-repository"><a class="header" href="#ğÿš-new-examples-repository">ğŸš€ New: Examples Repository</a></h2>
 <p>Looking for hands-on learning? Check out our <strong><a href="https://github.com/Tuntii/rustapi-rs-examples">Examples Repository</a></strong> with 18 complete projects:</p>
 <div class="table-wrapper">
 <table>
@@ -210,9 +210,11 @@
 </tbody>
 </table>
 </div>
-<p>👉 See <a href="learning/README.html">Learning &amp; Examples</a> for structured learning paths.</p>
+<p>ğŸ‘‰ See <a href="learning/README.html">Learning &amp; Examples</a> for structured learning paths.</p>
 <h2 id="visual-identity"><a class="header" href="#visual-identity">Visual Identity</a></h2>
 <p>This cookbook is styled with the <strong>RustAPI Premium Dark</strong> theme, focusing on readability, contrast, and modern “glassmorphism” aesthetics.</p>
+<h2 id="contributing-to-these-docs"><a class="header" href="#contributing-to-these-docs">Contributing to these docs</a></h2>
+<p>Found a gap or typo? See <a href="#community--open-source">Community &amp; Contributing</a> and <a href="../../CONTRIBUTING.html">CONTRIBUTING.md</a>. Cookbook source lives in <code>docs/cookbook/src/</code>.</p>
 <h2 id="quick-start"><a class="header" href="#quick-start">Quick Start</a></h2>
 <ul>
 <li>Want to add a feature? Jump to <a href="recipes/new_feature.html">Adding a New Feature</a>.</li>
@@ -221,13 +223,84 @@
 <li><strong>New to RustAPI?</strong> Follow our <a href="learning/README.html">Learning Paths</a>.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="community--open-source"><a class="header" href="#community--open-source">Community &amp; Open Source</a></h1>
+<p>RustAPI is an independent open-source project. Contributions, questions, and feedback are welcome.</p>
+<h2 id="get-help"><a class="header" href="#get-help">Get help</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Channel</th><th>Best for</th></tr>
+</thead>
+<tbody>
+<tr><td><a href="https://github.com/Tuntii/RustAPI/discussions">GitHub Discussions</a></td><td>Questions, ideas, show-and-tell</td></tr>
+<tr><td><a href="https://github.com/Tuntii/RustAPI/issues">GitHub Issues</a></td><td>Bugs and feature requests</td></tr>
+<tr><td><a href="../../cookbook/src/SUMMARY.html">Cookbook</a></td><td>Guides, recipes, architecture</td></tr>
+<tr><td><a href="https://docs.rs/rustapi-rs">docs.rs</a></td><td>API reference</td></tr>
+</tbody>
+</table>
+</div>
+<p>Before opening an issue, search existing issues and discussions. For bugs, include Rust version, feature flags, and a minimal reproduction when possible.</p>
+<h2 id="contribute"><a class="header" href="#contribute">Contribute</a></h2>
+<p>We accept contributions of all sizes:</p>
+<ul>
+<li><strong>Code</strong> â€” bug fixes, features, tests, benchmarks</li>
+<li><strong>Documentation</strong> â€” README, cookbook, examples, typo fixes</li>
+<li><strong>Examples</strong> â€” in-repo samples or the <a href="https://github.com/Tuntii/rustapi-rs-examples">examples repository</a></li>
+<li><strong>Community</strong> â€” issue triage, discussion answers, release testing</li>
+</ul>
+<p>Start here:</p>
+<ol>
+<li>Read <a href="../../../CONTRIBUTING.html">CONTRIBUTING.md</a> for setup, testing, and PR workflow</li>
+<li>Read <a href="../../../CODE_OF_CONDUCT.html">CODE_OF_CONDUCT.md</a></li>
+<li>Pick an issue labeled <a href="https://github.com/Tuntii/RustAPI/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22"><code>good first issue</code></a> or <a href="https://github.com/Tuntii/RustAPI/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22"><code>help wanted</code></a> when available</li>
+<li>Fork â†’ branch â†’ PR (squash merge to <code>main</code>)</li>
+</ol>
+<h3 id="documentation-contributions"><a class="header" href="#documentation-contributions">Documentation contributions</a></h3>
+<p>Documentation lives in several places:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Location</th><th>Contents</th></tr>
+</thead>
+<tbody>
+<tr><td><code>README.md</code></td><td>Project overview and quick start</td></tr>
+<tr><td><code>docs/</code></td><td>Standalone guides (getting started, architecture, production)</td></tr>
+<tr><td><code>docs/cookbook/src/</code></td><td>mdBook cookbook source</td></tr>
+<tr><td><code>crates/*/README.md</code></td><td>Per-crate overviews</td></tr>
+<tr><td><code>CHANGELOG.md</code> / <code>RELEASES.md</code></td><td>Release history</td></tr>
+</tbody>
+</table>
+</div>
+<p>When you change public behavior, update the cookbook recipe or reference page that matches the feature. When you only fix internals, a CHANGELOG entry under <strong>Changed</strong> or <strong>Fixed</strong> is enough.</p>
+<h3 id="public-api-changes"><a class="header" href="#public-api-changes">Public API changes</a></h3>
+<p>User-facing API surface is defined by the <code>rustapi-rs</code> facade. Changes that affect public types or feature flags may require:</p>
+<ul>
+<li>Updates to <code>api/public/</code> snapshots (CI enforces labels on PRs)</li>
+<li>A <a href="../../../CHANGELOG.html">CHANGELOG.md</a> entry</li>
+<li>Migration notes in the cookbook when behavior changes</li>
+</ul>
+<p>See <a href="../../../CONTRACT.html">CONTRACT.md</a> for stability rules.</p>
+<h2 id="project-values"><a class="header" href="#project-values">Project values</a></h2>
+<ul>
+<li><strong>Stable facade</strong> â€” application code imports <code>rustapi-rs</code>, not internal crates</li>
+<li><strong>Evidence over claims</strong> â€” benchmarks and behavior changes should be test-backed</li>
+<li><strong>Small, reviewable PRs</strong> â€” easier to merge and safer for contributors</li>
+<li><strong>Respectful collaboration</strong> â€” see the Code of Conduct</li>
+</ul>
+<h2 id="releases"><a class="header" href="#releases">Releases</a></h2>
+<p>Releases are tagged <code>v0.1.&lt;commit-count&gt;</code> and published to <a href="https://crates.io/crates/rustapi-rs">crates.io</a>. See <a href="../../../CHANGELOG.html">CHANGELOG.md</a> and <a href="../../../RELEASES.html">RELEASES.md</a> for notes.</p>
+<h2 id="security"><a class="header" href="#security">Security</a></h2>
+<p>Report vulnerabilities privately per <a href="../../../SECURITY.html">SECURITY.md</a>. Do not open public issues for undisclosed security problems.</p>
+<h2 id="license"><a class="header" href="#license">License</a></h2>
+<p>MIT OR Apache-2.0, at your option. See <a href="../../../LICENSE-MIT">LICENSE-MIT</a> and <a href="../../../LICENSE-APACHE">LICENSE-APACHE</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="getting-started"><a class="header" href="#getting-started">Getting Started</a></h1>
 <p>Welcome to RustAPI. This section will guide you from installation to your first running API.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
 <blockquote class="blockquote-tag blockquote-tag-note">
 <p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path></svg>Note</p>
-<p>RustAPI is designed for Rust 1.75 or later.</p>
+<p>RustAPI requires Rust 1.85 or later (MSRV). See the workspace <code>Cargo.toml</code> for the authoritative value.</p>
 </blockquote>
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
 <p>Before we begin, ensure you have the Rust toolchain installed. If you haven’t, the best way is via <a href="https://rustup.rs">rustup.rs</a>.</p>
@@ -242,11 +315,11 @@
 </code></pre>
 <h2 id="adding-to-an-existing-project"><a class="header" href="#adding-to-an-existing-project">Adding to an Existing Project</a></h2>
 <p>If you prefer not to use the CLI, you can add RustAPI to your <code>Cargo.toml</code> manually:</p>
-<pre><code class="language-bash">cargo add rustapi-rs@0.1.335
+<pre><code class="language-bash">cargo add rustapi-rs@0.1.537
 </code></pre>
 <p>Or add this to your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = "0.1.335"
+rustapi-rs = "0.1.537"
 </code></pre>
 <h2 id="editor-setup"><a class="header" href="#editor-setup">Editor Setup</a></h2>
 <p>For the best experience, we recommend <strong>VS Code</strong> with the <strong>rust-analyzer</strong> extension. This provides:</p>
@@ -285,7 +358,7 @@ async fn hello() -&gt; Json&lt;String&gt; {
 
 #[rustapi_rs::main]
 async fn main() -&gt; Result&lt;()&gt; {
-    // Auto-discovery magic ✨
+    // Auto-discovery magic âœ¨
     RustApi::auto()
         .run("127.0.0.1:8080")
         .await
@@ -295,8 +368,8 @@ async fn main() -&gt; Result&lt;()&gt; {
 <pre><code class="language-bash">cargo run
 </code></pre>
 <p>You should see output similar to:</p>
-<pre><code>INFO rustapi: 🚀 Server running at http://127.0.0.1:8080
-INFO rustapi: 📚 API docs at http://127.0.0.1:8080/docs
+<pre><code>INFO rustapi: ğŸš€ Server running at http://127.0.0.1:8080
+INFO rustapi: ğŸ“š API docs at http://127.0.0.1:8080/docs
 </code></pre>
 <h2 id="test-it-out"><a class="header" href="#test-it-out">Test It Out</a></h2>
 <p>Open your browser to <a href="http://127.0.0.1:8080/docs">http://127.0.0.1:8080/docs</a>.</p>
@@ -304,26 +377,26 @@ INFO rustapi: 📚 API docs at http://127.0.0.1:8080/docs
 <h2 id="what-just-happened"><a class="header" href="#what-just-happened">What Just Happened?</a></h2>
 <p>You just launched a high-performance, async Rust web server with:</p>
 <ul>
-<li>✅ Automatic OpenAPI documentation</li>
-<li>✅ Type-safe request validation</li>
-<li>✅ Distributed tracing</li>
-<li>✅ Global error handling</li>
+<li>âœ… Automatic OpenAPI documentation</li>
+<li>âœ… Type-safe request validation</li>
+<li>âœ… Distributed tracing</li>
+<li>âœ… Global error handling</li>
 </ul>
 <p>Welcome to RustAPI.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="project-structure"><a class="header" href="#project-structure">Project Structure</a></h1>
 <p>RustAPI projects follow a standard, modular structure designed for scalability.</p>
 <pre><code>my-api/
-├── Cargo.toml          // Dependencies and workspace config
-├── src/
-│   ├── handlers/       // Request handlers (Controllers)
-│   │   ├── mod.rs      
-│   │   └── items.rs    // Example resource handler
-│   ├── models/         // Data structures and Schema
-│   │   ├── mod.rs      
-│   ├── error.rs        // Custom error types
-│   └── main.rs         // Application entry point &amp; Router
-└── .env.example        // Environment variables template
+â”œâ”€â”€ Cargo.toml          // Dependencies and workspace config
+â”œâ”€â”€ src/
+â”‚   â”œâ”€â”€ handlers/       // Request handlers (Controllers)
+â”‚   â”‚   â”œâ”€â”€ mod.rs      
+â”‚   â”‚   â””â”€â”€ items.rs    // Example resource handler
+â”‚   â”œâ”€â”€ models/         // Data structures and Schema
+â”‚   â”‚   â”œâ”€â”€ mod.rs      
+â”‚   â”œâ”€â”€ error.rs        // Custom error types
+â”‚   â””â”€â”€ main.rs         // Application entry point &amp; Router
+â””â”€â”€ .env.example        // Environment variables template
 </code></pre>
 <h2 id="key-files"><a class="header" href="#key-files">Key Files</a></h2>
 <h3 id="srcmainrs"><a class="header" href="#srcmainrs"><code>src/main.rs</code></a></h3>
@@ -470,23 +543,23 @@ impl IntoResponse for ApiError {
 </ol>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="system-architecture"><a class="header" href="#system-architecture">System Architecture</a></h1>
-<p>RustAPI follows a <strong>Facade Architecture</strong> — a stable public API that shields you from internal complexity and breaking changes.</p>
+<p>RustAPI follows a <strong>Facade Architecture</strong> â€” a stable public API that shields you from internal complexity and breaking changes.</p>
 <h2 id="system-overview"><a class="header" href="#system-overview">System Overview</a></h2>
 <pre><code class="language-mermaid">graph TB
-    subgraph Client["🌐 Client Layer"]
+    subgraph Client["ğŸŒ Client Layer"]
         HTTP[HTTP Request]
         LLM[LLM/AI Agent]
         MCP[MCP Client]
     end
 
-    subgraph Public["📦 rustapi-rs (Public Facade)"]
+    subgraph Public["ğŸ“¦ rustapi-rs (Public Facade)"]
         direction TB
         Prelude[prelude::*]
         Macros["#[rustapi_rs::get/post]&lt;br&gt;#[rustapi_rs::main]"]
         Types[Json, Query, Path, Form]
     end
 
-    subgraph Core["⚙️ rustapi-core (Engine)"]
+    subgraph Core["âš™ï¸ rustapi-core (Engine)"]
         direction TB
         Router[Radix Router&lt;br&gt;matchit]
         Extract[Extractors&lt;br&gt;FromRequest trait]
@@ -494,7 +567,7 @@ impl IntoResponse for ApiError {
         Resp[Response Builder&lt;br&gt;IntoResponse trait]
     end
 
-    subgraph Extensions["🔌 Extension Crates"]
+    subgraph Extensions["ğŸ”Œ Extension Crates"]
         direction LR
         OpenAPI["rustapi-openapi&lt;br&gt;OpenAPI 3.1 + Docs"]
         Validate["rustapi-validate&lt;br&gt;Validation (v2 native)"]
@@ -502,7 +575,7 @@ impl IntoResponse for ApiError {
         WsCrate["rustapi-ws&lt;br&gt;WebSocket Support"]
     end
 
-    subgraph Foundation["🏗️ Foundation Layer"]
+    subgraph Foundation["ğŸ—ï¸ Foundation Layer"]
         direction LR
         Tokio[tokio&lt;br&gt;Async Runtime]
         Hyper[hyper 1.0&lt;br&gt;HTTP Protocol]
@@ -627,7 +700,7 @@ impl IntoResponse for ApiError {
 <tr><th>Crate</th><th>Role</th></tr>
 </thead>
 <tbody>
-<tr><td><code>rustapi-rs</code></td><td>Public facade — single <code>use</code> for everything</td></tr>
+<tr><td><code>rustapi-rs</code></td><td>Public facade â€” single <code>use</code> for everything</td></tr>
 <tr><td><code>rustapi-core</code></td><td>HTTP engine, routing, extractors, response handling</td></tr>
 <tr><td><code>rustapi-macros</code></td><td>Procedural macros: <code>#[rustapi_rs::get]</code>, <code>#[rustapi_rs::main]</code></td></tr>
 <tr><td><code>rustapi-openapi</code></td><td>Native OpenAPI 3.1 model, schema registry, and docs endpoints</td></tr>
@@ -749,11 +822,11 @@ struct AppState {
 <tr><th>Optimization</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td>⚡ <strong>SIMD-JSON</strong></td><td>2-4x faster JSON parsing with <code>core-simd-json</code> feature</td></tr>
-<tr><td>🔄 <strong>Zero-copy parsing</strong></td><td>Direct memory access for path/query params</td></tr>
-<tr><td>📦 <strong>SmallVec PathParams</strong></td><td>Stack-optimized path parameters</td></tr>
-<tr><td>🎯 <strong>Compile-time dispatch</strong></td><td>All extractors resolved at compile time</td></tr>
-<tr><td>🌊 <strong>Streaming bodies</strong></td><td>Handle large uploads without memory bloat</td></tr>
+<tr><td>âš¡ <strong>SIMD-JSON</strong></td><td>2-4x faster JSON parsing with <code>core-simd-json</code> feature</td></tr>
+<tr><td>ğŸ”„ <strong>Zero-copy parsing</strong></td><td>Direct memory access for path/query params</td></tr>
+<tr><td>ğŸ“¦ <strong>SmallVec PathParams</strong></td><td>Stack-optimized path parameters</td></tr>
+<tr><td>ğŸ¯ <strong>Compile-time dispatch</strong></td><td>All extractors resolved at compile time</td></tr>
+<tr><td>ğŸŒŠ <strong>Streaming bodies</strong></td><td>Handle large uploads without memory bloat</td></tr>
 </tbody>
 </table>
 </div>
@@ -1184,9 +1257,9 @@ async fn list_metrics() -&gt; Json&lt;Vec&lt;Metric&gt;&gt; { ... }
 <h2 id="path-parameter-schema-types"><a class="header" href="#path-parameter-schema-types">Path Parameter Schema Types</a></h2>
 <p>By default, RustAPI infers the OpenAPI schema type for path parameters based on naming conventions:</p>
 <ul>
-<li>Parameters named <code>id</code>, <code>user_id</code>, <code>postId</code>, etc. → <code>integer</code></li>
-<li>Parameters named <code>uuid</code>, <code>user_uuid</code>, etc. → <code>string</code> with <code>uuid</code> format</li>
-<li>Other parameters → <code>string</code></li>
+<li>Parameters named <code>id</code>, <code>user_id</code>, <code>postId</code>, etc. â†’ <code>integer</code></li>
+<li>Parameters named <code>uuid</code>, <code>user_uuid</code>, etc. â†’ <code>string</code> with <code>uuid</code> format</li>
+<li>Other parameters â†’ <code>string</code></li>
 </ul>
 <p>However, sometimes auto-inference is incorrect. For example, you might have a parameter named <code>id</code> that is actually a UUID. Use the <code>#[rustapi_rs::param]</code> attribute to override the inferred type:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -1308,7 +1381,7 @@ async fn show_form(token: CsrfToken) -&gt; Html&lt;String&gt; {
 <ol>
 <li><strong>Safe methods</strong> (<code>GET</code>, <code>HEAD</code>) generate and set the token cookie</li>
 <li><strong>Unsafe methods</strong> (<code>POST</code>, <code>PUT</code>, <code>DELETE</code>) require the token in the <code>X-CSRF-Token</code> header</li>
-<li>If header doesn’t match cookie → <code>403 Forbidden</code></li>
+<li>If header doesn’t match cookie â†’ <code>403 Forbidden</code></li>
 </ol>
 <p>See <a href="#csrf-protection-1">CSRF Protection Recipe</a> for a complete guide.</p>
 <h2 id="audit-logging"><a class="header" href="#audit-logging">Audit Logging</a></h2>
@@ -1328,7 +1401,7 @@ async fn show_form(token: CsrfToken) -&gt; Html&lt;String&gt; {
 <h2 id="traffic-insight"><a class="header" href="#traffic-insight">Traffic Insight</a></h2>
 <p>The <code>insight</code> feature provides powerful real-time traffic analysis and debugging capabilities without external dependencies. It is designed to be low-overhead and privacy-conscious.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-extras = { version = "0.1.335", features = ["insight"] }
+rustapi-extras = { version = "0.1.537", features = ["insight"] }
 </code></pre>
 <h3 id="setup-1"><a class="header" href="#setup-1">Setup</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -1637,7 +1710,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
 <h3 id="redis-backend"><a class="header" href="#redis-backend">Redis Backend</a></h3>
 <p>Enable the <code>redis</code> feature in <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-jobs = { version = "0.1.335", features = ["redis"] }
+rustapi-jobs = { version = "0.1.537", features = ["redis"] }
 </code></pre>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -1649,7 +1722,7 @@ let queue = JobQueue::new(backend);
 <h3 id="postgres-backend"><a class="header" href="#postgres-backend">Postgres Backend</a></h3>
 <p>Enable the <code>postgres</code> feature in <code>Cargo.toml</code>. This uses <code>sqlx</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-jobs = { version = "0.1.335", features = ["postgres"] }
+rustapi-jobs = { version = "0.1.537", features = ["postgres"] }
 </code></pre>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -1809,7 +1882,7 @@ server.expect(RequestMatcher::new(Method::POST, "/charge"))
 </ul>
 <h2 id="enable-it"><a class="header" href="#enable-it">Enable It</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["grpc"] }
+rustapi-rs = { version = "0.1.537", features = ["grpc"] }
 </code></pre>
 <h2 id="basic-usage-1"><a class="header" href="#basic-usage-1">Basic Usage</a></h2>
 <pre><code class="language-rust ignore">use rustapi_rs::grpc::{run_rustapi_and_grpc, tonic};
@@ -1876,7 +1949,7 @@ run_rustapi_and_grpc_with_shutdown(
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="macro-attribute-reference"><a class="header" href="#macro-attribute-reference">Macro Attribute Reference</a></h1>
-<p>RustAPI’s attribute macros do two jobs at once:</p>
+<p>RustAPIâ€™s attribute macros do two jobs at once:</p>
 <ol>
 <li>they register routes and schemas at compile time, and</li>
 <li>they enrich the generated OpenAPI operation metadata.</li>
@@ -1925,7 +1998,7 @@ async fn get_user(Path(_id): Path&lt;String&gt;) -&gt; Result&lt;Json&lt;User&gt
 <span class="boring">}</span></code></pre>
 <h3 id="effect"><a class="header" href="#effect">Effect</a></h3>
 <ul>
-<li>Appends the tag value to the operation’s <code>tags</code> list.</li>
+<li>Appends the tag value to the operationâ€™s <code>tags</code> list.</li>
 <li>Useful for Swagger grouping and cookbook-style API organization.</li>
 </ul>
 <h3 id="example"><a class="header" href="#example">Example</a></h3>
@@ -2029,7 +2102,7 @@ async fn get_order(Path(_order_id): Path&lt;String&gt;) -&gt; &amp;'static str {
 <span class="boring">}</span></code></pre>
 <h3 id="effect-4"><a class="header" href="#effect-4">Effect</a></h3>
 <ul>
-<li>Adds those responses directly to the operation’s OpenAPI response map.</li>
+<li>Adds those responses directly to the operationâ€™s OpenAPI response map.</li>
 <li>Each declared response uses the standard <code>ErrorSchema</code> under <code>application/json</code>.</li>
 </ul>
 <h3 id="example-4"><a class="header" href="#example-4">Example</a></h3>
@@ -2328,7 +2401,7 @@ async fn get_user(Path(id): Path&lt;i64&gt;) -&gt; Json&lt;Resource&lt;User&gt;&
 <li>Registers the type in the OpenAPI <code>components/schemas</code> section.</li>
 <li>Returns a <code>$ref</code> pointing to that component whenever the type is used in another schema.</li>
 </ol>
-<p>This means you don’t need to manually configure references – they just work.</p>
+<p>This means you don’t need to manually configure references â€“ they just work.</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>use rustapi_openapi::Schema;
@@ -2429,7 +2502,7 @@ impl RustApiSchema for MyCustomType {
 <h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
 <p>Enable the <code>extras-jwt</code> feature in your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["extras-jwt"] }
+rustapi-rs = { version = "0.1.537", features = ["extras-jwt"] }
 serde = { version = "1", features = ["derive"] }
 </code></pre>
 <h2 id="1-define-claims"><a class="header" href="#1-define-claims">1. Define Claims</a></h2>
@@ -2531,7 +2604,7 @@ async fn admin_only(AuthUser(claims): AuthUser&lt;Claims&gt;) -&gt; Result&lt;St
 <p>This separation allows you to have some public routes (where <code>JwtLayer</code> might just pass through) and some protected routes (where <code>AuthUser</code> enforces presence). Note that <code>JwtLayer</code> by default does <em>not</em> reject requests without tokens; it just doesn’t attach claims. The <em>extractor</em> does the rejection.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="session-based-authentication"><a class="header" href="#session-based-authentication">Session-Based Authentication</a></h1>
-<p>Cookie-backed session auth is the shortest path from “I need login/logout” to a production-shaped RustAPI service.</p>
+<p>Cookie-backed session auth is the shortest path from â€œI need login/logoutâ€ to a production-shaped RustAPI service.</p>
 <p>This recipe shows how to:</p>
 <ul>
 <li>load a session from a cookie before your handler runs,</li>
@@ -2947,7 +3020,7 @@ async fn oauth_callback(
 </ul>
 <h3 id="identity-verification"><a class="header" href="#identity-verification">Identity verification</a></h3>
 <ul>
-<li>OpenID Connect is more than “OAuth + vibes”. Validate the <code>id_token</code> with the provider’s JWKs before trusting identity claims.</li>
+<li>OpenID Connect is more than â€œOAuth + vibesâ€. Validate the <code>id_token</code> with the providerâ€™s JWKs before trusting identity claims.</li>
 <li>Use the provider <code>userinfo</code> endpoint only after you decide which claims are authoritative.</li>
 <li>Normalize external identities into your own application user model before starting long-lived sessions.</li>
 </ul>
@@ -2980,7 +3053,7 @@ let session_config = SessionConfig::new()
 </ol>
 <h2 id="quick-start-1"><a class="header" href="#quick-start-1">Quick Start</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["csrf"] }
+rustapi-rs = { version = "0.1.537", features = ["csrf"] }
 </code></pre>
 <pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
 use rustapi_extras::csrf::{CsrfConfig, CsrfLayer, CsrfToken};
@@ -3034,17 +3107,17 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&g
 <h3 id="safe-methods-no-validation"><a class="header" href="#safe-methods-no-validation">Safe Methods (No Validation)</a></h3>
 <p><code>GET</code>, <code>HEAD</code>, <code>OPTIONS</code>, and <code>TRACE</code> requests are considered “safe” and don’t modify state. The CSRF middleware:</p>
 <ol>
-<li>✅ Generates a new token if none exists</li>
-<li>✅ Sets the token cookie in the response</li>
-<li>✅ <strong>Does NOT validate</strong> the header</li>
+<li>âœ… Generates a new token if none exists</li>
+<li>âœ… Sets the token cookie in the response</li>
+<li>âœ… <strong>Does NOT validate</strong> the header</li>
 </ol>
 <h3 id="unsafe-methods-validation-required"><a class="header" href="#unsafe-methods-validation-required">Unsafe Methods (Validation Required)</a></h3>
 <p><code>POST</code>, <code>PUT</code>, <code>PATCH</code>, and <code>DELETE</code> requests require CSRF validation:</p>
 <ol>
-<li>🔍 Reads the token from the cookie</li>
-<li>🔍 Reads the expected token from the header</li>
-<li>❌ If missing or mismatched → Returns <code>403 Forbidden</code></li>
-<li>✅ If valid → Proceeds to handler</li>
+<li>ğŸ” Reads the token from the cookie</li>
+<li>ğŸ” Reads the expected token from the header</li>
+<li>âŒ If missing or mismatched â†’ Returns <code>403 Forbidden</code></li>
+<li>âœ… If valid â†’ Proceeds to handler</li>
 </ol>
 <h2 id="frontend-integration"><a class="header" href="#frontend-integration">Frontend Integration</a></h2>
 <h3 id="html-forms"><a class="header" href="#html-forms">HTML Forms</a></h3>
@@ -3191,11 +3264,11 @@ async fn test_csrf_protection() {
 <tr><th>Consideration</th><th>Status</th></tr>
 </thead>
 <tbody>
-<tr><td>Token in cookie</td><td>✅ HttpOnly=false (JS needs access)</td></tr>
-<tr><td>Token validation</td><td>✅ Constant-time comparison</td></tr>
-<tr><td>SameSite cookie</td><td>✅ Configurable (Strict by default)</td></tr>
-<tr><td>Secure cookie</td><td>✅ HTTPS-only by default</td></tr>
-<tr><td>Token entropy</td><td>✅ 32 bytes of cryptographic randomness</td></tr>
+<tr><td>Token in cookie</td><td>âœ… HttpOnly=false (JS needs access)</td></tr>
+<tr><td>Token validation</td><td>âœ… Constant-time comparison</td></tr>
+<tr><td>SameSite cookie</td><td>âœ… Configurable (Strict by default)</td></tr>
+<tr><td>Secure cookie</td><td>âœ… HTTPS-only by default</td></tr>
+<tr><td>Token entropy</td><td>âœ… 32 bytes of cryptographic randomness</td></tr>
 </tbody>
 </table>
 </div>
@@ -3211,14 +3284,14 @@ async fn test_csrf_protection() {
 <p>This recipe shows how to integrate PostgreSQL/MySQL/SQLite using a shared pool, how to choose between <strong>SQLx</strong>, <strong>Diesel</strong>, and <strong>SeaORM</strong>, how to think about migrations, and which pooling practices are safest in production.</p>
 <h2 id="dependencies-1"><a class="header" href="#dependencies-1">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["extras-sqlx"] } # Canonical facade feature for SQLx error conversion
+rustapi-rs = { version = "0.1.537", features = ["extras-sqlx"] } # Canonical facade feature for SQLx error conversion
 sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "uuid"] }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 dotenvy = "0.15"
 </code></pre>
 <h2 id="1-choosing-sqlx-vs-diesel-vs-seaorm"><a class="header" href="#1-choosing-sqlx-vs-diesel-vs-seaorm">1. Choosing SQLx vs Diesel vs SeaORM</a></h2>
-<p>RustAPI does not force a single database stack. Pick the tool that matches your team’s trade-offs.</p>
+<p>RustAPI does not force a single database stack. Pick the tool that matches your teamâ€™s trade-offs.</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -3267,7 +3340,7 @@ dotenvy = "0.15"
 <ul>
 <li>keep one long-lived pool per database/service boundary</li>
 <li>never open a fresh connection per request</li>
-<li>size pool limits from the database server’s actual connection budget</li>
+<li>size pool limits from the database serverâ€™s actual connection budget</li>
 <li>set <code>acquire_timeout</code> so overload fails fast instead of hanging forever</li>
 <li>use small but non-zero <code>min_connections</code> only when warm capacity matters</li>
 <li>keep transaction scopes short and never hold them across unrelated awaits</li>
@@ -3470,7 +3543,7 @@ mod tests {
 <h2 id="dependencies-2"><a class="header" href="#dependencies-2">Dependencies</a></h2>
 <p>Add <code>rustapi-testing</code> to your <code>Cargo.toml</code>. It is usually added as a dev-dependency.</p>
 <pre><code class="language-toml">[dev-dependencies]
-rustapi-testing = "0.1.335"
+rustapi-testing = "0.1.537"
 tokio = { version = "1", features = ["full"] }
 </code></pre>
 <h2 id="integration-testing-with-testclient"><a class="header" href="#integration-testing-with-testclient">Integration Testing with TestClient</a></h2>
@@ -3598,7 +3671,7 @@ async fn test_protected_route() {
 <h2 id="dependencies-3"><a class="header" href="#dependencies-3">Dependencies</a></h2>
 <p>Add <code>uuid</code> and <code>tokio</code> with <code>fs</code> features to your <code>Cargo.toml</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = "0.1.335"
+rustapi-rs = "0.1.537"
 tokio = { version = "1", features = ["fs", "io-util"] }
 uuid = { version = "1", features = ["v4"] }
 </code></pre>
@@ -3620,7 +3693,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&g
         .body_limit(1024 * 1024 * 1024)
         .route("/upload", post(upload_handler))
         // Increase body limit to 50MB (default is usually 2MB)
-        // ⚠️ IMPORTANT: Since Multipart buffers the whole body,
+        // âš ï¸ IMPORTANT: Since Multipart buffers the whole body,
         // setting this too high can exhaust server memory.
         .layer(DefaultBodyLimit::max(50 * 1024 * 1024))
         .run("127.0.0.1:8080")
@@ -3654,7 +3727,7 @@ async fn upload_handler(mut multipart: Multipart) -&gt; Result&lt;Json&lt;Upload
         let file_name = field.file_name().unwrap_or("unknown.bin").to_string();
         let content_type = field.content_type().unwrap_or("application/octet-stream").to_string();
 
-        // ⚠️ Security: Never trust the user-provided filename directly!
+        // âš ï¸ Security: Never trust the user-provided filename directly!
         // It could contain paths like "../../../etc/passwd".
         // Always generate a safe filename or sanitize inputs.
         let safe_filename = format!("{}-{}", uuid::Uuid::new_v4(), file_name);
@@ -4549,7 +4622,7 @@ async fn update_user(
     .route("/users", get(users));</code></pre>
 <h3 id="migration-note-3"><a class="header" href="#migration-note-3">Migration note</a></h3>
 <ul>
-<li>The middleware shape is not a drop-in copy of Axum’s tower APIs.</li>
+<li>The middleware shape is not a drop-in copy of Axumâ€™s tower APIs.</li>
 <li>For simple request/response transformations, prefer RustAPI interceptors when they are sufficient; they are lighter than a full middleware layer.</li>
 <li>For a dedicated middleware walkthrough, see <a href="#custom-middleware">Custom Middleware</a>.</li>
 </ul>
@@ -4606,7 +4679,7 @@ async fn get_user(Path(id): Path&lt;i64&gt;) -&gt; Result&lt;Json&lt;User&gt;&gt
     }))
 }
 <span class="boring">}</span></code></pre>
-<p>If you are migrating from Axum plus a third-party OpenAPI stack, consolidating those concerns in one framework usually makes the codebase easier to explain to Future You™.</p>
+<p>If you are migrating from Axum plus a third-party OpenAPI stack, consolidating those concerns in one framework usually makes the codebase easier to explain to Future Youâ„¢.</p>
 <h2 id="10-testing-migration-service-tests---testclient"><a class="header" href="#10-testing-migration-service-tests---testclient">10. Testing migration: service tests -&gt; <code>TestClient</code></a></h2>
 <h3 id="rustapi-test-style"><a class="header" href="#rustapi-test-style">RustAPI test style</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -4711,7 +4784,7 @@ async fn test_hello() {
 </span><span class="boring">fn main() {
 </span>use rustapi_rs::prelude::*;
 <span class="boring">}</span></code></pre>
-<p>That keeps your application code aligned with RustAPI’s stable public surface instead of internal implementation crates.</p>
+<p>That keeps your application code aligned with RustAPIâ€™s stable public surface instead of internal implementation crates.</p>
 <h2 id="2-basic-handlers-migrate-directly"><a class="header" href="#2-basic-handlers-migrate-directly">2. Basic handlers migrate directly</a></h2>
 <h3 id="actix-web"><a class="header" href="#actix-web">Actix-web</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -4785,7 +4858,7 @@ async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + 
 }</code></pre>
 <h3 id="migration-note-1-1"><a class="header" href="#migration-note-1-1">Migration note</a></h3>
 <ul>
-<li><code>RustApi::auto()</code> is the primary entry point — macro-annotated handlers are registered automatically, no wiring needed.</li>
+<li><code>RustApi::auto()</code> is the primary entry point â€” macro-annotated handlers are registered automatically, no wiring needed.</li>
 <li><code>RustApi::new()</code> is available for manual route registration and maps directly to Actix’s explicit <code>.route()</code> pattern.</li>
 <li><code>RustApi::route()</code> is the closest equivalent to explicit Actix route registration.</li>
 </ul>
@@ -5020,9 +5093,9 @@ async fn test_hello() {
 <h2 id="prerequisites-4"><a class="header" href="#prerequisites-4">Prerequisites</a></h2>
 <p>Add the <code>rustapi-extras</code> crate with the necessary features to your <code>Cargo.toml</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["full"] }
+rustapi-rs = { version = "0.1.537", features = ["full"] }
 # OR cherry-pick features
-# rustapi-extras = { version = "0.1.335", features = ["rate-limit", "dedup", "cache"] }
+# rustapi-extras = { version = "0.1.537", features = ["rate-limit", "dedup", "cache"] }
 </code></pre>
 <h2 id="rate-limiting"><a class="header" href="#rate-limiting">Rate Limiting</a></h2>
 <p>Rate limiting protects your API from being overwhelmed by too many requests from a single client. It uses a “Token Bucket” or “Fixed Window” algorithm to enforce limits.</p>
@@ -5115,7 +5188,7 @@ fn main() {
 <p>WebSockets allow full-duplex communication between the client and server. RustAPI leverages the <code>rustapi-ws</code> crate (based on <code>tungstenite</code> and <code>tokio</code>) to make this easy.</p>
 <h2 id="dependencies-4"><a class="header" href="#dependencies-4">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-ws = "0.1.335"
+rustapi-ws = "0.1.537"
 tokio = { version = "1", features = ["sync", "macros"] }
 futures = "0.3"
 </code></pre>
@@ -5222,7 +5295,7 @@ ws.send("Hello from JS!");
 <h2 id="dependencies-5"><a class="header" href="#dependencies-5">Dependencies</a></h2>
 <p>Add the following to your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["view"] }
+rustapi-rs = { version = "0.1.537", features = ["view"] }
 serde = { version = "1.0", features = ["derive"] }
 </code></pre>
 <h2 id="creating-templates"><a class="header" href="#creating-templates">Creating Templates</a></h2>
@@ -5355,7 +5428,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&g
 <p>This is handled automatically by the <code>LlmResponse&lt;T&gt;</code> type.</p>
 <h2 id="dependencies-6"><a class="header" href="#dependencies-6">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["toon"] }
+rustapi-rs = { version = "0.1.537", features = ["toon"] }
 serde = { version = "1.0", features = ["derive"] }
 </code></pre>
 <h2 id="implementation"><a class="header" href="#implementation">Implementation</a></h2>
@@ -5449,7 +5522,7 @@ let mcp = McpServer::from_rustapi(
 <p>See the benchmark in <code>crates/rustapi-mcp/tests/mcp_e2e.rs</code>.</p>
 <p>Typical numbers on a dev machine (1000 sequential tool calls):</p>
 <ul>
-<li>In-process: ~28 µs per call</li>
+<li>In-process: ~28 Âµs per call</li>
 <li>Proxy (live localhost HTTP): ~1.3 ms per call</li>
 <li>Speedup: ~45-50x</li>
 </ul>
@@ -5626,7 +5699,7 @@ async fn main() {
 <h2 id="dependencies-7"><a class="header" href="#dependencies-7">Dependencies</a></h2>
 <p>To use compression, you must enable the <code>compression</code> feature in <code>rustapi-core</code> (or <code>rustapi-rs</code>). For Brotli support, enable <code>compression-brotli</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["compression", "compression-brotli"] }
+rustapi-rs = { version = "0.1.537", features = ["compression", "compression-brotli"] }
 </code></pre>
 <h2 id="basic-usage-3"><a class="header" href="#basic-usage-3">Basic Usage</a></h2>
 <p>The simplest way to enable compression is to add the layer to your application:</p>
@@ -5696,9 +5769,9 @@ async fn main() -&gt; Result&lt;()&gt; {
 <h2 id="prerequisites-5"><a class="header" href="#prerequisites-5">Prerequisites</a></h2>
 <p>Add the resilience features to your <code>Cargo.toml</code>. For example:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["full"] }
+rustapi-rs = { version = "0.1.537", features = ["full"] }
 # OR cherry-pick features
-# rustapi-extras = { version = "0.1.335", features = ["circuit-breaker", "retry", "timeout"] }
+# rustapi-extras = { version = "0.1.537", features = ["circuit-breaker", "retry", "timeout"] }
 </code></pre>
 <h2 id="circuit-breaker-1"><a class="header" href="#circuit-breaker-1">Circuit Breaker</a></h2>
 <p>The Circuit Breaker pattern prevents your application from repeatedly trying to execute an operation that’s likely to fail. It gives the failing service time to recover.</p>
@@ -5792,7 +5865,7 @@ fn main() {
 <span class="boring">}</span></code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="observability-1"><a class="header" href="#observability-1">Observability</a></h1>
-<p>Production services need more than “logs exist somewhere”. A healthy RustAPI observability setup should let you answer three questions quickly:</p>
+<p>Production services need more than â€œlogs exist somewhereâ€. A healthy RustAPI observability setup should let you answer three questions quickly:</p>
 <ol>
 <li><strong>What failed?</strong></li>
 <li><strong>Which request or trace did it belong to?</strong></li>
@@ -5808,7 +5881,7 @@ fn main() {
 <h2 id="prerequisites-6"><a class="header" href="#prerequisites-6">Prerequisites</a></h2>
 <p>Enable the relevant features:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = [
+rustapi-rs = { version = "0.1.537", features = [
   "core",
   "extras-otel",
   "extras-structured-logging",
@@ -5874,7 +5947,7 @@ async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + 
         .run("0.0.0.0:8080")
         .await
 }</code></pre>
-<h2 id="the-recommended-golden-config"><a class="header" href="#the-recommended-golden-config">The recommended “golden config”</a></h2>
+<h2 id="the-recommended-âœgolden-configâ"><a class="header" href="#the-recommended-âœgolden-configâ">The recommended â€œgolden configâ€</a></h2>
 <p>For most APIs, the following defaults work well:</p>
 <h3 id="1-request-correlation-everywhere"><a class="header" href="#1-request-correlation-everywhere">1. Request correlation everywhere</a></h3>
 <p>Use the production preset so every request already carries a request ID and tracing span. This gives you a stable correlation key before you add any external observability backend.</p>
@@ -5968,11 +6041,11 @@ Keep the dashboard disabled by default in production-like environments unless it
 <h2 id="prerequisites-7"><a class="header" href="#prerequisites-7">Prerequisites</a></h2>
 <p>Enable the canonical dashboard feature on the public facade:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["core-dashboard"] }
+rustapi-rs = { version = "0.1.537", features = ["core-dashboard"] }
 </code></pre>
 <p>If you also want the replay browser panel to load recorded traffic, enable replay too:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["core-dashboard", "extras-replay"] }
+rustapi-rs = { version = "0.1.537", features = ["core-dashboard", "extras-replay"] }
 </code></pre>
 <h2 id="usage-5"><a class="header" href="#usage-5">Usage</a></h2>
 <pre><code class="language-rust ignore">use rustapi_rs::prelude::*;
@@ -6001,10 +6074,10 @@ async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + 
 <h2 id="configuration-2"><a class="header" href="#configuration-2">Configuration</a></h2>
 <p><code>DashboardConfig</code> supports:</p>
 <ul>
-<li><code>.admin_token("...")</code> — protects <code>/api/*</code> dashboard JSON endpoints with <code>Authorization: Bearer &lt;token&gt;</code>.</li>
-<li><code>.path("/__rustapi/dashboard")</code> — changes where the dashboard is mounted.</li>
-<li><code>.title("...")</code> — labels the page for custom deployments.</li>
-<li><code>.replay_api_path("/__rustapi/replays")</code> — points the replay browser at the replay admin API path.</li>
+<li><code>.admin_token("...")</code> â€” protects <code>/api/*</code> dashboard JSON endpoints with <code>Authorization: Bearer &lt;token&gt;</code>.</li>
+<li><code>.path("/__rustapi/dashboard")</code> â€” changes where the dashboard is mounted.</li>
+<li><code>.title("...")</code> â€” labels the page for custom deployments.</li>
+<li><code>.replay_api_path("/__rustapi/replays")</code> â€” points the replay browser at the replay admin API path.</li>
 </ul>
 <p>The dashboard snapshot includes:</p>
 <ul>
@@ -6089,7 +6162,7 @@ let app = RustApi::auto()
 <li>a missing <code>x-request-id</code>,</li>
 <li>tracing spans without correlation,</li>
 <li>an extractor failing because middleware never inserted the expected extension,</li>
-<li>a response being transformed by the “wrong” layer.</li>
+<li>a response being transformed by the â€œwrongâ€ layer.</li>
 </ul>
 <p>This guide focuses on debugging the middleware you already have in your stack.</p>
 <h2 id="problem-3"><a class="header" href="#problem-3">Problem</a></h2>
@@ -6143,8 +6216,8 @@ async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + 
 <p><code>TracingLayer</code> reads the request ID from request extensions. If it runs without <code>RequestIdLayer</code>, the span records <code>request_id = "unknown"</code>.</p>
 <p>That makes the pairing easy to diagnose:</p>
 <ul>
-<li><code>x-request-id</code> present + trace has request ID → good</li>
-<li>no <code>x-request-id</code> + trace shows <code>unknown</code> → missing request ID layer</li>
+<li><code>x-request-id</code> present + trace has request ID â†’ good</li>
+<li>no <code>x-request-id</code> + trace shows <code>unknown</code> â†’ missing request ID layer</li>
 </ul>
 <h3 id="3-reduce-the-stack"><a class="header" href="#3-reduce-the-stack">3. Reduce the stack</a></h3>
 <p>If a handler is not reached, strip the app down to the smallest reproducer:</p>
@@ -6188,7 +6261,7 @@ async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + 
 </ul>
 <h3 id="logs-exist-but-are-hard-to-correlate"><a class="header" href="#logs-exist-but-are-hard-to-correlate">Logs exist but are hard to correlate</a></h3>
 <p>Add <code>RequestIdLayer</code> and keep <code>TracingLayer</code> close to the edge of the stack so every request has a stable identifier early.</p>
-<h3 id="response-looks-modified-too-late"><a class="header" href="#response-looks-modified-too-late">Response looks modified “too late”</a></h3>
+<h3 id="response-looks-modified-âœtoo-lateâ"><a class="header" href="#response-looks-modified-âœtoo-lateâ">Response looks modified â€œtoo lateâ€</a></h3>
 <p>Remember response processing unwinds in reverse. The last layer added has the first chance to modify the outgoing response.</p>
 <h2 id="built-in-tools-that-help"><a class="header" href="#built-in-tools-that-help">Built-in tools that help</a></h2>
 <h3 id="status-page"><a class="header" href="#status-page">Status page</a></h3>
@@ -6357,7 +6430,7 @@ async fn hello() -&gt; &amp;'static str {
 <li>Receive <code>SIGTERM</code>.</li>
 <li>Mark the instance as draining.</li>
 <li>Let readiness fail.</li>
-<li>Wait 10–30 seconds, depending on your proxy and traffic pattern.</li>
+<li>Wait 10â€“30 seconds, depending on your proxy and traffic pattern.</li>
 <li>Allow graceful shutdown to complete.</li>
 <li>Run shutdown hooks.</li>
 </ol>
@@ -6369,7 +6442,7 @@ async fn hello() -&gt; &amp;'static str {
 <h2 id="prerequisites-8"><a class="header" href="#prerequisites-8">Prerequisites</a></h2>
 <p>Add <code>rustapi-extras</code> with the <code>audit</code> feature to your <code>Cargo.toml</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-extras = { version = "0.1.335", features = ["audit"] }
+rustapi-extras = { version = "0.1.537", features = ["audit"] }
 </code></pre>
 <h2 id="core-concepts-1"><a class="header" href="#core-concepts-1">Core Concepts</a></h2>
 <p>The audit system is built around three main components:</p>
@@ -6464,12 +6537,12 @@ Replay is intended for <strong>development, staging, canary, and incident-respon
 <li>behavior differs between staging and local</li>
 <li>you need to reproduce a regression using a real traffic sample</li>
 <li>you want to rerun critical requests before promoting a new version to canary</li>
-<li>you are asking, “why did this request work yesterday but break today?” and want a time-machine-style answer</li>
+<li>you are asking, â€œwhy did this request work yesterday but break today?â€ and want a time-machine-style answer</li>
 </ul>
 <h2 id="prerequisites-9"><a class="header" href="#prerequisites-9">Prerequisites</a></h2>
 <p>Enable the canonical replay feature in your application:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["extras-replay"] }
+rustapi-rs = { version = "0.1.537", features = ["extras-replay"] }
 </code></pre>
 <p>On the CLI side, <code>cargo-rustapi</code> is enough; replay commands are part of the default installation:</p>
 <pre><code class="language-bash">cargo install cargo-rustapi
@@ -6567,7 +6640,7 @@ cargo rustapi replay list -s http://localhost:8080 -t local-replay-token --metho
 <li>response headers</li>
 <li>JSON body fields</li>
 </ul>
-<p>That lets you catch subtler regressions too, such as “it still returned 200, but the payload changed.”</p>
+<p>That lets you catch subtler regressions too, such as â€œit still returned 200, but the payload changed.â€</p>
 <h2 id="recommended-workflow"><a class="header" href="#recommended-workflow">Recommended workflow</a></h2>
 <p>During an incident or regression, the recommended flow is:</p>
 <ol>
@@ -6579,7 +6652,7 @@ cargo rustapi replay list -s http://localhost:8080 -t local-replay-token --metho
 <li><strong>Diff it</strong>: use <code>diff</code> to confirm the behavior changed as expected.</li>
 <li><strong>Turn it off</strong>: disable replay recording after the incident or keep the TTL short.</li>
 </ol>
-<p>In short: <strong>capture → inspect → replay → diff → promote</strong>.</p>
+<p>In short: <strong>capture â†’ inspect â†’ replay â†’ diff â†’ promote</strong>.</p>
 <h2 id="admin-api-reference"><a class="header" href="#admin-api-reference">Admin API reference</a></h2>
 <p>All admin endpoints require this header:</p>
 <pre><code class="language-text">Authorization: Bearer &lt;admin_token&gt;
@@ -6789,9 +6862,9 @@ impl ReplayStore for MyCustomStore {
 <h2 id="probe-recommendations"><a class="header" href="#probe-recommendations">Probe recommendations</a></h2>
 <p>RustAPI has first-class built-in probe endpoints:</p>
 <ul>
-<li><code>/health</code> — aggregate service and dependency health</li>
-<li><code>/ready</code> — readiness for load balancers and orchestrators</li>
-<li><code>/live</code> — lightweight liveness probe</li>
+<li><code>/health</code> â€” aggregate service and dependency health</li>
+<li><code>/ready</code> â€” readiness for load balancers and orchestrators</li>
+<li><code>/live</code> â€” lightweight liveness probe</li>
 </ul>
 <p>You can enable them via:</p>
 <ul>
@@ -6801,9 +6874,9 @@ impl ReplayStore for MyCustomStore {
 </ul>
 <h3 id="recommended-semantics"><a class="header" href="#recommended-semantics">Recommended semantics</a></h3>
 <ul>
-<li><strong>Liveness</strong> should answer: “Is the process alive?”</li>
-<li><strong>Readiness</strong> should answer: “Should this instance receive traffic right now?”</li>
-<li><strong>Health</strong> should answer: “What is the aggregate state of the service and its dependencies?”</li>
+<li><strong>Liveness</strong> should answer: â€œIs the process alive?â€</li>
+<li><strong>Readiness</strong> should answer: â€œShould this instance receive traffic right now?â€</li>
+<li><strong>Health</strong> should answer: â€œWhat is the aggregate state of the service and its dependencies?â€</li>
 </ul>
 <p>In practice:</p>
 <ul>
@@ -6881,9 +6954,9 @@ let app = RustApi::new().with_health_check(health);
 <h2 id="enabling-http3"><a class="header" href="#enabling-http3">Enabling HTTP/3</a></h2>
 <p>HTTP/3 support is optional and can be enabled via feature flags in <code>Cargo.toml</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["http3"] }
+rustapi-rs = { version = "0.1.537", features = ["http3"] }
 # For development with self-signed certificates
-rustapi-rs = { version = "0.1.335", features = ["http3", "http3-dev"] }
+rustapi-rs = { version = "0.1.537", features = ["http3", "http3-dev"] }
 </code></pre>
 <h2 id="running-an-http3-server"><a class="header" href="#running-an-http3-server">Running an HTTP/3 Server</a></h2>
 <p>Since HTTP/3 requires TLS (even for local development), RustAPI provides helpers to make this easy.</p>
@@ -6945,7 +7018,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&g
 <h2 id="dependencies-8"><a class="header" href="#dependencies-8">Dependencies</a></h2>
 <p>Add the following to your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["grpc"] }
+rustapi-rs = { version = "0.1.537", features = ["grpc"] }
 tonic = "0.10"
 prost = "0.12"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
@@ -7143,7 +7216,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&g
 <tbody>
 <tr><td><strong>Endpoint</strong></td><td>The path of the route (e.g., <code>/api/users</code>).</td></tr>
 <tr><td><strong>Requests</strong></td><td>Total number of hits this specific route has received.</td></tr>
-<tr><td><strong>Success Rate</strong></td><td>Visual indicator of health. <br>🟢 <strong>Green</strong>: ≥95% success <br>🔴 <strong>Red</strong>: &lt;95% success</td></tr>
+<tr><td><strong>Success Rate</strong></td><td>Visual indicator of health. <br>ğŸŸ¢ <strong>Green</strong>: â‰¥95% success <br>ğŸ”´ <strong>Red</strong>: &lt;95% success</td></tr>
 <tr><td><strong>Avg Latency</strong></td><td>The average time (in milliseconds) it takes to serve a request.</td></tr>
 <tr><td><strong>Last Access</strong></td><td>Timestamp of the most recent request to this endpoint.</td></tr>
 </tbody>
@@ -7193,7 +7266,7 @@ pub struct ListParams {
 Add the <code>Schema</code> derive macro to any struct used with extractors (<code>Query&lt;T&gt;</code>, <code>Path&lt;T&gt;</code>, <code>Json&lt;T&gt;</code>):</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>#[derive(Debug, Deserialize, Schema)]  // ✅ Schema added
+</span>#[derive(Debug, Deserialize, Schema)]  // âœ… Schema added
 pub struct ListParams {
     pub page: Option&lt;u32&gt;,
 }
@@ -7208,11 +7281,11 @@ pub struct ListParams {
 <h2 id="2-dont-add-external-openapi-generators-directly"><a class="header" href="#2-dont-add-external-openapi-generators-directly">2. Don’t Add External OpenAPI Generators Directly</a></h2>
 <p><strong>Wrong:</strong></p>
 <pre><code class="language-toml">[dependencies]
-utoipa = "4.2"  # ❌ Don't add this
+utoipa = "4.2"  # âŒ Don't add this
 </code></pre>
 <p><strong>Correct:</strong></p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["full"] }
+rustapi-rs = { version = "0.1.537", features = ["full"] }
 # rustapi-openapi is re-exported through rustapi-rs
 </code></pre>
 <p><strong>Why?</strong></p>
@@ -7231,24 +7304,24 @@ error[E0433]: failed to resolve: use of unresolved module `rustapi_macros`
 <p><strong>Problem:</strong></p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use rustapi_extras::SqlxErrorExt;  // ❌ Old module name
-use rustapi_core::RustApi;         // ❌ Internal crate
-use rustapi_macros::get;           // ❌ Internal crate
+</span>use rustapi_extras::SqlxErrorExt;  // âŒ Old module name
+use rustapi_core::RustApi;         // âŒ Internal crate
+use rustapi_macros::get;           // âŒ Internal crate
 <span class="boring">}</span></code></pre>
 <p><strong>Solution:</strong></p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use rustapi_rs::prelude::*;        // ✅ Everything you need
-use rustapi_rs::SqlxErrorExt;      // ✅ Correct path for extras
+</span>use rustapi_rs::prelude::*;        // âœ… Everything you need
+use rustapi_rs::SqlxErrorExt;      // âœ… Correct path for extras
 <span class="boring">}</span></code></pre>
 <p><strong>For macros:</strong></p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// ❌ Wrong (doesn't work)
+</span>// âŒ Wrong (doesn't work)
 #[rustapi_macros::get("/")]
 async fn index() -&gt; &amp;'static str { "Hello" }
 
-// ✅ Correct
+// âœ… Correct
 #[rustapi_rs::get("/")]
 async fn index() -&gt; &amp;'static str { "Hello" }
 <span class="boring">}</span></code></pre>
@@ -7263,18 +7336,18 @@ async fn index() -&gt; &amp;'static str { "Hello" }
 <p><strong>Wrong:</strong></p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>#[derive(Debug, Deserialize, IntoParams)]  // ❌ IntoParams is from utoipa
+</span>#[derive(Debug, Deserialize, IntoParams)]  // âŒ IntoParams is from utoipa
 pub struct ListParams {
-    #[param(minimum = 1)]  // ❌ This attribute doesn't exist
+    #[param(minimum = 1)]  // âŒ This attribute doesn't exist
     pub page: Option&lt;u32&gt;,
 }
 <span class="boring">}</span></code></pre>
 <p><strong>Correct:</strong></p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>#[derive(Debug, Deserialize, Schema)]  // ✅ Use Schema
+</span>#[derive(Debug, Deserialize, Schema)]  // âœ… Use Schema
 pub struct ListParams {
-    /// Page number (1-indexed)  // ✅ Doc comments become OpenAPI descriptions
+    /// Page number (1-indexed)  // âœ… Doc comments become OpenAPI descriptions
     pub page: Option&lt;u32&gt;,
 }
 <span class="boring">}</span></code></pre>
@@ -7307,7 +7380,7 @@ async fn create_task(
 <p><strong>Problem:</strong></p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>async fn handler() -&gt; Json&lt;serde_json::Value&gt; {  // ❌ No schema
+</span>async fn handler() -&gt; Json&lt;serde_json::Value&gt; {  // âŒ No schema
     Json(json!({ "key": "value" }))
 }
 <span class="boring">}</span></code></pre>
@@ -7319,7 +7392,7 @@ struct MyResponse {
     key: String,
 }
 
-async fn handler() -&gt; Json&lt;MyResponse&gt; {  // ✅ Type-safe
+async fn handler() -&gt; Json&lt;MyResponse&gt; {  // âœ… Type-safe
     Json(MyResponse {
         key: "value".to_string(),
     })
@@ -7342,7 +7415,7 @@ async fn handler() -&gt; Json&lt;MyResponse&gt; {  // ✅ Type-safe
 </span>#[derive(Debug, Serialize, Schema)]
 pub struct BookmarkResponse {
     pub id: u64,
-    pub created_at: DateTime&lt;Utc&gt;,  // ❌ No RustApiSchema impl
+    pub created_at: DateTime&lt;Utc&gt;,  // âŒ No RustApiSchema impl
 }
 <span class="boring">}</span></code></pre>
 <p><strong>Solution - Use String with RFC3339 format:</strong></p>
@@ -7351,7 +7424,7 @@ pub struct BookmarkResponse {
 </span>#[derive(Debug, Serialize, Schema)]
 pub struct BookmarkResponse {
     pub id: u64,
-    pub created_at: String,  // ✅ Use String
+    pub created_at: String,  // âœ… Use String
 }
 
 impl From&lt;&amp;Bookmark&gt; for BookmarkResponse {
@@ -7386,7 +7459,7 @@ pub struct BookmarkResponse {
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[derive(Debug, Serialize, Schema)]
-pub struct PaginatedResponse&lt;T&gt; {  // ❌ Missing trait bound
+pub struct PaginatedResponse&lt;T&gt; {  // âŒ Missing trait bound
     pub items: Vec&lt;T&gt;,
     pub total: usize,
 }
@@ -7397,7 +7470,7 @@ pub struct PaginatedResponse&lt;T&gt; {  // ❌ Missing trait bound
 </span>use rustapi_openapi::schema::RustApiSchema;
 
 #[derive(Debug, Serialize, Schema)]
-pub struct PaginatedResponse&lt;T: RustApiSchema&gt; {  // ✅ Trait bound added
+pub struct PaginatedResponse&lt;T: RustApiSchema&gt; {  // âœ… Trait bound added
     pub items: Vec&lt;T&gt;,
     pub total: usize,
     pub page: u32,
@@ -7420,7 +7493,7 @@ async fn list_bookmarks() -&gt; Json&lt;BookmarkList&gt; {
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[rustapi_rs::get("/")]
-async fn handler() -&gt; impl IntoResponse {  // ❌ May cause Handler trait errors
+async fn handler() -&gt; impl IntoResponse {  // âŒ May cause Handler trait errors
     Html("&lt;h1&gt;Hello&lt;/h1&gt;")
 }
 <span class="boring">}</span></code></pre>
@@ -7428,7 +7501,7 @@ async fn handler() -&gt; impl IntoResponse {  // ❌ May cause Handler trait err
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[rustapi_rs::get("/")]
-async fn handler() -&gt; Html&lt;String&gt; {  // ✅ Concrete type
+async fn handler() -&gt; Html&lt;String&gt; {  // âœ… Concrete type
     Html("&lt;h1&gt;Hello&lt;/h1&gt;".to_string())
 }
 <span class="boring">}</span></code></pre>
@@ -7463,7 +7536,7 @@ async fn list_users(State(db): State&lt;Database&gt;) -&gt; Json&lt;Vec&lt;User&
 
 // main.rs
 RustApi::auto()
-    // ❌ Forgot to add .state(...)
+    // âŒ Forgot to add .state(...)
     .run("0.0.0.0:8080")
     .await
 <span class="boring">}</span></code></pre>
@@ -7471,7 +7544,7 @@ RustApi::auto()
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>RustApi::auto()
-    .state(database)  // ✅ Add the state!
+    .state(database)  // âœ… Add the state!
     .run("0.0.0.0:8080")
     .await
 <span class="boring">}</span></code></pre>
@@ -7482,7 +7555,7 @@ RustApi::auto()
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>async fn handler(
-    Json(body): Json&lt;CreateUser&gt;,  // ❌ Body extractor first
+    Json(body): Json&lt;CreateUser&gt;,  // âŒ Body extractor first
     State(db): State&lt;Database&gt;,
 ) -&gt; Result&lt;Json&lt;User&gt;&gt; { ... }
 <span class="boring">}</span></code></pre>
@@ -7490,9 +7563,9 @@ RustApi::auto()
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>async fn handler(
-    State(db): State&lt;Database&gt;,    // ✅ Non-body extractors first
+    State(db): State&lt;Database&gt;,    // âœ… Non-body extractors first
     Query(params): Query&lt;Params&gt;,
-    Json(body): Json&lt;CreateUser&gt;,  // ✅ Body extractor last
+    Json(body): Json&lt;CreateUser&gt;,  // âœ… Body extractor last
 ) -&gt; Result&lt;Json&lt;User&gt;&gt; { ... }
 <span class="boring">}</span></code></pre>
 <p><strong>Why?</strong></p>
@@ -7520,16 +7593,16 @@ RustApi::auto()
 <li><strong>Import from <code>rustapi_rs</code></strong> only - never use internal crates directly</li>
 <li><strong>Use <code>RustApi::auto()</code></strong> with handler macros for automatic route discovery</li>
 </ol>
-<p>Follow these rules and you’ll have a smooth experience with RustAPI! 🚀</p>
+<p>Follow these rules and you’ll have a smooth experience with RustAPI! ğŸš€</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="learning--examples"><a class="header" href="#learning--examples">Learning &amp; Examples</a></h1>
 <p>Welcome to the RustAPI learning resources! This section provides structured learning paths and links to comprehensive real-world examples to help you master the framework.</p>
-<h2 id="-structured-curriculum"><a class="header" href="#-structured-curriculum">🎓 Structured Curriculum</a></h2>
+<h2 id="ğÿ-structured-curriculum"><a class="header" href="#ğÿ-structured-curriculum">ğŸ“ Structured Curriculum</a></h2>
 <p>New to RustAPI? Follow our step-by-step <a href="#structured-learning-path">Structured Learning Path</a> to go from beginner to production-ready.</p>
-<h2 id="-learning-resources"><a class="header" href="#-learning-resources">📚 Learning Resources</a></h2>
+<h2 id="ğÿš-learning-resources"><a class="header" href="#ğÿš-learning-resources">ğŸ“š Learning Resources</a></h2>
 <h3 id="official-examples-repository"><a class="header" href="#official-examples-repository">Official Examples Repository</a></h3>
 <p>We maintain a comprehensive examples repository with <strong>18 real-world projects</strong> demonstrating RustAPI’s full capabilities:</p>
-<p>🔗 <strong><a href="https://github.com/Tuntii/rustapi-rs-examples">rustapi-rs-examples</a></strong> - Complete examples from hello-world to production microservices</p>
+<p>ğŸ”— <strong><a href="https://github.com/Tuntii/rustapi-rs-examples">rustapi-rs-examples</a></strong> - Complete examples from hello-world to production microservices</p>
 <h3 id="cookbook-internal-path"><a class="header" href="#cookbook-internal-path">Cookbook Internal Path</a></h3>
 <p>If you prefer reading through documentation first, follow this path through the cookbook:</p>
 <ol>
@@ -7547,7 +7620,7 @@ RustApi::auto()
 <tr><th>Benefit</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td><strong>Structured Learning</strong></td><td>Progress from beginner → intermediate → advanced</td></tr>
+<tr><td><strong>Structured Learning</strong></td><td>Progress from beginner â†’ intermediate â†’ advanced</td></tr>
 <tr><td><strong>Real-world Patterns</strong></td><td>Production-ready implementations you can adapt</td></tr>
 <tr><td><strong>Feature Discovery</strong></td><td>Find examples by the features you want to learn</td></tr>
 <tr><td><strong>AI-Friendly</strong></td><td>Module-level docs help AI assistants understand your code</td></tr>
@@ -7555,9 +7628,9 @@ RustApi::auto()
 </table>
 </div>
 <hr>
-<h2 id="-learning-paths"><a class="header" href="#-learning-paths">🎯 Learning Paths</a></h2>
+<h2 id="ğÿ-learning-paths"><a class="header" href="#ğÿ-learning-paths">ğŸ¯ Learning Paths</a></h2>
 <p>Choose a learning path based on your goals:</p>
-<h3 id="-path-1-rest-api-developer"><a class="header" href="#-path-1-rest-api-developer">🚀 Path 1: REST API Developer</a></h3>
+<h3 id="ğÿš-path-1-rest-api-developer"><a class="header" href="#ğÿš-path-1-rest-api-developer">ğŸš€ Path 1: REST API Developer</a></h3>
 <p>Build production-ready REST APIs with RustAPI.</p>
 <div class="table-wrapper">
 <table>
@@ -7580,7 +7653,7 @@ RustApi::auto()
 <li><a href="#database-integration">Database Integration</a></li>
 </ul>
 <hr>
-<h3 id="-path-2-microservices-architect"><a class="header" href="#-path-2-microservices-architect">🏗️ Path 2: Microservices Architect</a></h3>
+<h3 id="ğÿï-path-2-microservices-architect"><a class="header" href="#ğÿï-path-2-microservices-architect">ğŸ—ï¸ Path 2: Microservices Architect</a></h3>
 <p>Design and build distributed systems with RustAPI.</p>
 <div class="table-wrapper">
 <table>
@@ -7609,7 +7682,7 @@ RustApi::auto()
 <li><a href="#deployment">Deployment</a></li>
 </ul>
 <hr>
-<h3 id="-path-3-real-time-applications"><a class="header" href="#-path-3-real-time-applications">⚡ Path 3: Real-time Applications</a></h3>
+<h3 id="âš-path-3-real-time-applications"><a class="header" href="#âš-path-3-real-time-applications">âš¡ Path 3: Real-time Applications</a></h3>
 <p>Build interactive, real-time features with WebSockets.</p>
 <div class="table-wrapper">
 <table>
@@ -7630,7 +7703,7 @@ RustApi::auto()
 <li><a href="#handlers--extractors">Handlers &amp; Extractors</a></li>
 </ul>
 <hr>
-<h3 id="-path-4-aillm-integration"><a class="header" href="#-path-4-aillm-integration">🤖 Path 4: AI/LLM Integration</a></h3>
+<h3 id="ğÿ-path-4-aillm-integration"><a class="header" href="#ğÿ-path-4-aillm-integration">ğŸ¤– Path 4: AI/LLM Integration</a></h3>
 <p>Build AI-friendly APIs with TOON format and MCP support.</p>
 <div class="table-wrapper">
 <table>
@@ -7650,7 +7723,7 @@ RustApi::auto()
 <li><a href="#toon-rustapi-extras-toon-feature">rustapi-toon: The Diplomat</a></li>
 </ul>
 <hr>
-<h3 id="-path-5-enterprise-platform"><a class="header" href="#-path-5-enterprise-platform">🏢 Path 5: Enterprise Platform</a></h3>
+<h3 id="ğÿ-path-5-enterprise-platform"><a class="header" href="#ğÿ-path-5-enterprise-platform">ğŸ¢ Path 5: Enterprise Platform</a></h3>
 <p>Build robust, observable, and secure systems.</p>
 <div class="table-wrapper">
 <table>
@@ -7677,7 +7750,7 @@ RustApi::auto()
 <li><a href="#resilience-patterns">Resilience Patterns</a></li>
 </ul>
 <hr>
-<h2 id="-examples-by-category"><a class="header" href="#-examples-by-category">📦 Examples by Category</a></h2>
+<h2 id="ğÿ-examples-by-category"><a class="header" href="#ğÿ-examples-by-category">ğŸ“¦ Examples by Category</a></h2>
 <h3 id="getting-started-1"><a class="header" href="#getting-started-1">Getting Started</a></h3>
 <div class="table-wrapper">
 <table>
@@ -7685,8 +7758,8 @@ RustApi::auto()
 <tr><th>Example</th><th>Description</th><th>Difficulty</th></tr>
 </thead>
 <tbody>
-<tr><td><code>hello-world</code></td><td>Minimal RustAPI server</td><td>⭐ Beginner</td></tr>
-<tr><td><code>crud-api</code></td><td>Complete CRUD operations</td><td>⭐ Beginner</td></tr>
+<tr><td><code>hello-world</code></td><td>Minimal RustAPI server</td><td>â­ Beginner</td></tr>
+<tr><td><code>crud-api</code></td><td>Complete CRUD operations</td><td>â­ Beginner</td></tr>
 </tbody>
 </table>
 </div>
@@ -7697,9 +7770,9 @@ RustApi::auto()
 <tr><th>Example</th><th>Description</th><th>Difficulty</th></tr>
 </thead>
 <tbody>
-<tr><td><code>auth-api</code></td><td>JWT authentication flow</td><td>⭐⭐ Intermediate</td></tr>
-<tr><td><code>middleware-chain</code></td><td>Middleware composition</td><td>⭐⭐ Intermediate</td></tr>
-<tr><td><code>rate-limit-demo</code></td><td>API rate limiting</td><td>⭐⭐ Intermediate</td></tr>
+<tr><td><code>auth-api</code></td><td>JWT authentication flow</td><td>â­â­ Intermediate</td></tr>
+<tr><td><code>middleware-chain</code></td><td>Middleware composition</td><td>â­â­ Intermediate</td></tr>
+<tr><td><code>rate-limit-demo</code></td><td>API rate limiting</td><td>â­â­ Intermediate</td></tr>
 </tbody>
 </table>
 </div>
@@ -7710,8 +7783,8 @@ RustApi::auto()
 <tr><th>Example</th><th>Description</th><th>Difficulty</th></tr>
 </thead>
 <tbody>
-<tr><td><code>sqlx-crud</code></td><td>SQLx with PostgreSQL/SQLite</td><td>⭐⭐ Intermediate</td></tr>
-<tr><td><code>event-sourcing</code></td><td>Event sourcing patterns</td><td>⭐⭐⭐ Advanced</td></tr>
+<tr><td><code>sqlx-crud</code></td><td>SQLx with PostgreSQL/SQLite</td><td>â­â­ Intermediate</td></tr>
+<tr><td><code>event-sourcing</code></td><td>Event sourcing patterns</td><td>â­â­â­ Advanced</td></tr>
 </tbody>
 </table>
 </div>
@@ -7722,8 +7795,8 @@ RustApi::auto()
 <tr><th>Example</th><th>Description</th><th>Difficulty</th></tr>
 </thead>
 <tbody>
-<tr><td><code>toon-api</code></td><td>TOON format responses</td><td>⭐⭐ Intermediate</td></tr>
-<tr><td><code>mcp-server</code></td><td>Model Context Protocol</td><td>⭐⭐⭐ Advanced</td></tr>
+<tr><td><code>toon-api</code></td><td>TOON format responses</td><td>â­â­ Intermediate</td></tr>
+<tr><td><code>mcp-server</code></td><td>Model Context Protocol</td><td>â­â­â­ Advanced</td></tr>
 </tbody>
 </table>
 </div>
@@ -7734,8 +7807,8 @@ RustApi::auto()
 <tr><th>Example</th><th>Description</th><th>Difficulty</th></tr>
 </thead>
 <tbody>
-<tr><td><code>websocket</code></td><td>WebSocket chat example</td><td>⭐⭐ Intermediate</td></tr>
-<tr><td><code>graphql-api</code></td><td>GraphQL with async-graphql</td><td>⭐⭐⭐ Advanced</td></tr>
+<tr><td><code>websocket</code></td><td>WebSocket chat example</td><td>â­â­ Intermediate</td></tr>
+<tr><td><code>graphql-api</code></td><td>GraphQL with async-graphql</td><td>â­â­â­ Advanced</td></tr>
 </tbody>
 </table>
 </div>
@@ -7746,14 +7819,14 @@ RustApi::auto()
 <tr><th>Example</th><th>Description</th><th>Difficulty</th></tr>
 </thead>
 <tbody>
-<tr><td><code>microservices</code></td><td>Basic service communication</td><td>⭐⭐⭐ Advanced</td></tr>
-<tr><td><code>microservices-advanced</code></td><td>Consul service discovery</td><td>⭐⭐⭐ Advanced</td></tr>
-<tr><td><code>serverless-lambda</code></td><td>AWS Lambda deployment</td><td>⭐⭐⭐ Advanced</td></tr>
+<tr><td><code>microservices</code></td><td>Basic service communication</td><td>â­â­â­ Advanced</td></tr>
+<tr><td><code>microservices-advanced</code></td><td>Consul service discovery</td><td>â­â­â­ Advanced</td></tr>
+<tr><td><code>serverless-lambda</code></td><td>AWS Lambda deployment</td><td>â­â­â­ Advanced</td></tr>
 </tbody>
 </table>
 </div>
 <hr>
-<h2 id="-feature-matrix"><a class="header" href="#-feature-matrix">🔧 Feature Matrix</a></h2>
+<h2 id="ğÿ-feature-matrix"><a class="header" href="#ğÿ-feature-matrix">ğŸ”§ Feature Matrix</a></h2>
 <p>Find examples by the RustAPI features they demonstrate:</p>
 <div class="table-wrapper">
 <table>
@@ -7779,7 +7852,7 @@ RustApi::auto()
 </table>
 </div>
 <hr>
-<h2 id="-getting-started-with-examples"><a class="header" href="#-getting-started-with-examples">🚦 Getting Started with Examples</a></h2>
+<h2 id="ğÿš-getting-started-with-examples"><a class="header" href="#ğÿš-getting-started-with-examples">ğŸš¦ Getting Started with Examples</a></h2>
 <h3 id="clone-the-repository"><a class="header" href="#clone-the-repository">Clone the Repository</a></h3>
 <pre><code class="language-bash">git clone https://github.com/Tuntii/rustapi-rs-examples.git
 cd rustapi-rs-examples
@@ -7806,7 +7879,7 @@ cargo test
 <li>Tests demonstrating the TestClient</li>
 </ul>
 <hr>
-<h2 id="-cross-reference-cookbook--examples"><a class="header" href="#-cross-reference-cookbook--examples">📖 Cross-Reference: Cookbook ↔ Examples</a></h2>
+<h2 id="ğÿ-cross-reference-cookbook-â-examples"><a class="header" href="#ğÿ-cross-reference-cookbook-â-examples">ğŸ“– Cross-Reference: Cookbook â†” Examples</a></h2>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -7828,7 +7901,7 @@ cargo test
 </table>
 </div>
 <hr>
-<h2 id="-contributing-examples"><a class="header" href="#-contributing-examples">💡 Contributing Examples</a></h2>
+<h2 id="ğÿ-contributing-examples"><a class="header" href="#ğÿ-contributing-examples">ğŸ’¡ Contributing Examples</a></h2>
 <p>Have a great example to share? We welcome contributions!</p>
 <ol>
 <li>Fork the <a href="https://github.com/Tuntii/rustapi-rs-examples">rustapi-rs-examples</a> repository</li>
@@ -7844,7 +7917,7 @@ cargo test
 <li>List the feature flags used</li>
 </ul>
 <hr>
-<h2 id="-additional-resources"><a class="header" href="#-additional-resources">🔗 Additional Resources</a></h2>
+<h2 id="ğÿ-additional-resources"><a class="header" href="#ğÿ-additional-resources">ğŸ”— Additional Resources</a></h2>
 <ul>
 <li><strong><a href="https://github.com/Tuntii/RustAPI">RustAPI GitHub</a></strong> - Framework source code</li>
 <li><strong><a href="https://docs.rs/rustapi-rs">API Reference</a></strong> - Generated documentation</li>
@@ -7853,7 +7926,7 @@ cargo test
 </ul>
 <hr>
 <blockquote>
-<p>💬 <strong>Need help?</strong> Open an issue in the examples repository or join our community discussions!</p>
+<p>ğŸ’¬ <strong>Need help?</strong> Open an issue in the examples repository or join our community discussions!</p>
 </blockquote>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="structured-learning-path"><a class="header" href="#structured-learning-path">Structured Learning Path</a></h1>
@@ -7868,9 +7941,9 @@ cargo test
 <li><strong>Expected Output:</strong> A running server that responds to <code>GET /</code> with “Hello World”.</li>
 <li><strong>Pitfalls:</strong> Not enabling <code>tokio</code> features if setting up manually.</li>
 </ul>
-<h4 id="-mini-project-the-echo-server"><a class="header" href="#-mini-project-the-echo-server">🛠️ Mini Project: “The Echo Server”</a></h4>
+<h4 id="ğÿ-ï-mini-project-the-echo-server"><a class="header" href="#ğÿ-ï-mini-project-the-echo-server">ğŸ› ï¸ Mini Project: “The Echo Server”</a></h4>
 <p>Create a new endpoint <code>POST /echo</code> that accepts any text body and returns it back to the client. This verifies your setup handles basic I/O correctly.</p>
-<h4 id="-knowledge-check"><a class="header" href="#-knowledge-check">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check"><a class="header" href="#ğÿ--knowledge-check">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>What command scaffolds a new RustAPI project?</li>
 <li>Which feature flag is required for the async runtime?</li>
@@ -7884,9 +7957,9 @@ cargo test
 <li><strong>Expected Output:</strong> Endpoints that return static JSON data.</li>
 <li><strong>Pitfalls:</strong> Forgetting to register routes in <code>main.rs</code> if not using auto-discovery.</li>
 </ul>
-<h4 id="-mini-project-the-calculator"><a class="header" href="#-mini-project-the-calculator">🛠️ Mini Project: “The Calculator”</a></h4>
+<h4 id="ğÿ-ï-mini-project-the-calculator"><a class="header" href="#ğÿ-ï-mini-project-the-calculator">ğŸ› ï¸ Mini Project: “The Calculator”</a></h4>
 <p>Create an endpoint <code>GET /add?a=5&amp;b=10</code> that returns <code>{"result": 15}</code>. This practices query parameter extraction and JSON responses.</p>
-<h4 id="-knowledge-check-1"><a class="header" href="#-knowledge-check-1">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-1"><a class="header" href="#ğÿ--knowledge-check-1">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>Which macro is used to define a GET handler?</li>
 <li>How do you return a JSON response from a handler?</li>
@@ -7900,15 +7973,15 @@ cargo test
 <li><strong>Expected Output:</strong> <code>GET /users/{id}</code> returns the ID. <code>POST /users</code> echoes the JSON body.</li>
 <li><strong>Pitfalls:</strong> Consuming the body twice (e.g., using <code>Json</code> and <code>Body</code> in the same handler).</li>
 </ul>
-<h4 id="-mini-project-the-user-registry"><a class="header" href="#-mini-project-the-user-registry">🛠️ Mini Project: “The User Registry”</a></h4>
+<h4 id="ğÿ-ï-mini-project-the-user-registry"><a class="header" href="#ğÿ-ï-mini-project-the-user-registry">ğŸ› ï¸ Mini Project: “The User Registry”</a></h4>
 <p>Create a <code>POST /register</code> endpoint that accepts a JSON body <code>{"username": "...", "age": ...}</code> and returns a welcome message using the username. Use the <code>Json</code> extractor.</p>
-<h4 id="-knowledge-check-2"><a class="header" href="#-knowledge-check-2">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-2"><a class="header" href="#ğÿ--knowledge-check-2">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>Which extractor is used for URL parameters like <code>/users/:id</code>?</li>
 <li>Which extractor parses the request body as JSON?</li>
 <li>Can you use multiple extractors in a single handler?</li>
 </ol>
-<h3 id="-phase-1-capstone-the-todo-list-api"><a class="header" href="#-phase-1-capstone-the-todo-list-api">🏆 Phase 1 Capstone: “The Todo List API”</a></h3>
+<h3 id="ğÿ-phase-1-capstone-the-todo-list-api"><a class="header" href="#ğÿ-phase-1-capstone-the-todo-list-api">ğŸ† Phase 1 Capstone: “The Todo List API”</a></h3>
 <p><strong>Objective:</strong> Build a simple in-memory Todo List API.
 <strong>Requirements:</strong></p>
 <ul>
@@ -7929,7 +8002,7 @@ cargo test
 <li><strong>Expected Output:</strong> A stateful API where POST adds a user and GET retrieves it (in-memory).</li>
 <li><strong>Pitfalls:</strong> Using <code>std::sync::Mutex</code> instead of <code>tokio::sync::Mutex</code> in async code (though <code>std</code> is fine for simple data).</li>
 </ul>
-<h4 id="-knowledge-check-3"><a class="header" href="#-knowledge-check-3">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-3"><a class="header" href="#ğÿ--knowledge-check-3">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>How do you inject global state into the application?</li>
 <li>Which extractor retrieves the application state?</li>
@@ -7943,7 +8016,7 @@ cargo test
 <li><strong>Expected Output:</strong> Data persists across server restarts.</li>
 <li><strong>Pitfalls:</strong> Blocking the async runtime with synchronous DB drivers (use <code>sqlx</code> or <code>tokio-postgres</code>).</li>
 </ul>
-<h4 id="-knowledge-check-4"><a class="header" href="#-knowledge-check-4">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-4"><a class="header" href="#ğÿ--knowledge-check-4">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>Why is connection pooling important?</li>
 <li>How do you share a DB pool across handlers?</li>
@@ -7957,7 +8030,7 @@ cargo test
 <li><strong>Expected Output:</strong> Requests with invalid email or short password return <code>422 Unprocessable Entity</code>.</li>
 <li><strong>Pitfalls:</strong> Forgetting to add <code>#[validate]</code> attributes to struct fields.</li>
 </ul>
-<h4 id="-knowledge-check-5"><a class="header" href="#-knowledge-check-5">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-5"><a class="header" href="#ğÿ--knowledge-check-5">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>Which trait must a struct implement to be validatable?</li>
 <li>What HTTP status code is returned on validation failure?</li>
@@ -7971,7 +8044,7 @@ cargo test
 <li><strong>Expected Output:</strong> <code>GET /users/999</code> returns <code>404 Not Found</code> with a structured JSON error body.</li>
 <li><strong>Pitfalls:</strong> Exposing internal database errors (like SQL strings) to the client.</li>
 </ul>
-<h4 id="-knowledge-check-6"><a class="header" href="#-knowledge-check-6">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-6"><a class="header" href="#ğÿ--knowledge-check-6">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>What is the standard error type in RustAPI?</li>
 <li>How do you mask internal errors in production?</li>
@@ -7985,7 +8058,7 @@ cargo test
 <li><strong>Expected Output:</strong> Swagger UI at <code>/docs</code> showing full schema with shared components.</li>
 <li><strong>Pitfalls:</strong> Recursive schemas without <code>Box</code> or <code>Option</code>.</li>
 </ul>
-<h4 id="-knowledge-check-7"><a class="header" href="#-knowledge-check-7">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-7"><a class="header" href="#ğÿ--knowledge-check-7">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>What does <code>#[derive(Schema)]</code> do?</li>
 <li>How does RustAPI handle shared schema components?</li>
@@ -7999,13 +8072,13 @@ cargo test
 <li><strong>Expected Output:</strong> <code>curl -F file=@image.png</code> uploads the file.</li>
 <li><strong>Pitfalls:</strong> Loading large files entirely into memory (use streaming).</li>
 </ul>
-<h4 id="-knowledge-check-8"><a class="header" href="#-knowledge-check-8">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-8"><a class="header" href="#ğÿ--knowledge-check-8">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>Which extractor is used for file uploads?</li>
 <li>Why should you use <code>field.chunk()</code> instead of <code>field.bytes()</code>?</li>
 <li>How do you increase the request body size limit?</li>
 </ol>
-<h3 id="-phase-2-capstone-the-secure-blog-engine"><a class="header" href="#-phase-2-capstone-the-secure-blog-engine">🏆 Phase 2 Capstone: “The Secure Blog Engine”</a></h3>
+<h3 id="ğÿ-phase-2-capstone-the-secure-blog-engine"><a class="header" href="#ğÿ-phase-2-capstone-the-secure-blog-engine">ğŸ† Phase 2 Capstone: “The Secure Blog Engine”</a></h3>
 <p><strong>Objective:</strong> Enhance the Todo API into a Blog Engine.
 <strong>Requirements:</strong></p>
 <ul>
@@ -8031,7 +8104,7 @@ cargo test
 <li><strong>Expected Output:</strong> Protected routes return <code>401 Unauthorized</code> without a valid token.</li>
 <li><strong>Pitfalls:</strong> Hardcoding secrets. Not checking token expiration.</li>
 </ul>
-<h4 id="-knowledge-check-9"><a class="header" href="#-knowledge-check-9">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-9"><a class="header" href="#ğÿ--knowledge-check-9">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>What is the role of the <code>AuthUser</code> extractor?</li>
 <li>How does OAuth2 PKCE improve security?</li>
@@ -8051,7 +8124,7 @@ cargo test
 <li><strong>Expected Output:</strong> Sending 11 login attempts results in <code>429 Too Many Requests</code>.</li>
 <li><strong>Pitfalls:</strong> Caching responses that contain user-specific data.</li>
 </ul>
-<h4 id="-knowledge-check-10"><a class="header" href="#-knowledge-check-10">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-10"><a class="header" href="#ğÿ--knowledge-check-10">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>What header indicates when the rate limit resets?</li>
 <li>Why is request deduplication important for payments?</li>
@@ -8065,7 +8138,7 @@ cargo test
 <li><strong>Expected Output:</strong> Multiple clients connected via WS receiving messages in real-time.</li>
 <li><strong>Pitfalls:</strong> Blocking the WebSocket loop with long-running synchronous tasks.</li>
 </ul>
-<h4 id="-knowledge-check-11"><a class="header" href="#-knowledge-check-11">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-11"><a class="header" href="#ğÿ--knowledge-check-11">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>How do you upgrade an HTTP request to a WebSocket connection?</li>
 <li>Can you share state between HTTP handlers and WebSocket handlers?</li>
@@ -8084,7 +8157,7 @@ cargo test
 <li><strong>Expected Output:</strong> A resilient API ready for deployment.</li>
 <li><strong>Pitfalls:</strong> Setting timeouts too low for slow operations.</li>
 </ul>
-<h4 id="-knowledge-check-12"><a class="header" href="#-knowledge-check-12">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-12"><a class="header" href="#ğÿ--knowledge-check-12">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>Why is timeout middleware important?</li>
 <li>What command generates a production Dockerfile?</li>
@@ -8104,21 +8177,21 @@ cargo test
 <li><strong>Expected Output:</strong> Registration returns 200 immediately (low latency); console logs show “Sending welcome email to …” shortly after (asynchronous). Tests pass.</li>
 <li><strong>Pitfalls:</strong> Forgetting to start the job worker loop (<code>JobWorker::new(queue).run().await</code>).</li>
 </ul>
-<h4 id="-mini-project-the-email-worker"><a class="header" href="#-mini-project-the-email-worker">🛠️ Mini Project: “The Email Worker”</a></h4>
+<h4 id="ğÿ-ï-mini-project-the-email-worker"><a class="header" href="#ğÿ-ï-mini-project-the-email-worker">ğŸ› ï¸ Mini Project: “The Email Worker”</a></h4>
 <p>Create a system where users can request a “Report”.</p>
 <ol>
 <li><code>POST /reports</code>: Enqueues a <code>GenerateReportJob</code>. Returns <code>{"job_id": "..."}</code> immediately.</li>
 <li>The job simulates 5 seconds of work and then writes “Report Generated” to a file or log.</li>
 <li>(Bonus) Use Redis backend for persistence.</li>
 </ol>
-<h4 id="-knowledge-check-13"><a class="header" href="#-knowledge-check-13">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-13"><a class="header" href="#ğÿ--knowledge-check-13">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>Why should you offload email sending to a background job?</li>
 <li>Which backend is suitable for local development vs production?</li>
 <li>How do you enqueue a job from a handler?</li>
 <li>How can you test that a job was enqueued without actually running it?</li>
 </ol>
-<h3 id="-phase-3-capstone-the-real-time-collaboration-tool"><a class="header" href="#-phase-3-capstone-the-real-time-collaboration-tool">🏆 Phase 3 Capstone: “The Real-Time Collaboration Tool”</a></h3>
+<h3 id="ğÿ-phase-3-capstone-the-real-time-collaboration-tool"><a class="header" href="#ğÿ-phase-3-capstone-the-real-time-collaboration-tool">ğŸ† Phase 3 Capstone: “The Real-Time Collaboration Tool”</a></h3>
 <p><strong>Objective:</strong> Build a real-time collaborative note-taking app.
 <strong>Requirements:</strong></p>
 <ul>
@@ -8145,7 +8218,7 @@ cargo test
 <li><strong>Expected Output:</strong> Logs are JSON formatted. Audit log contains a new entry for every login.</li>
 <li><strong>Pitfalls:</strong> High cardinality in metric labels.</li>
 </ul>
-<h4 id="-knowledge-check-14"><a class="header" href="#-knowledge-check-14">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-14"><a class="header" href="#ğÿ--knowledge-check-14">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>What is the difference between logging and auditing?</li>
 <li>Which fields are required in an <code>AuditEvent</code>?</li>
@@ -8165,7 +8238,7 @@ cargo test
 <li><strong>Expected Output:</strong> System degrades gracefully when external service is down. Replay file captures the exact request sequence.</li>
 <li><strong>Pitfalls:</strong> Infinite retry loops or retrying non-idempotent operations.</li>
 </ul>
-<h4 id="-knowledge-check-15"><a class="header" href="#-knowledge-check-15">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-15"><a class="header" href="#ğÿ--knowledge-check-15">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>What state does a Circuit Breaker have when it stops traffic?</li>
 <li>Why is jitter important in retry strategies?</li>
@@ -8185,13 +8258,13 @@ cargo test
 <li><strong>Expected Output:</strong> Browser/Client connects via HTTP/3. Responses have <code>content-encoding: gzip</code>.</li>
 <li><strong>Pitfalls:</strong> Compressing small responses (waste of CPU) or already compressed data (images).</li>
 </ul>
-<h4 id="-knowledge-check-16"><a class="header" href="#-knowledge-check-16">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-16"><a class="header" href="#ğÿ--knowledge-check-16">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>What transport protocol does HTTP/3 use?</li>
 <li>How does <code>simd-json</code> improve performance?</li>
 <li>Why shouldn’t you compress JPEG images?</li>
 </ol>
-<h3 id="-phase-4-capstone-the-high-scale-event-platform"><a class="header" href="#-phase-4-capstone-the-high-scale-event-platform">🏆 Phase 4 Capstone: “The High-Scale Event Platform”</a></h3>
+<h3 id="ğÿ-phase-4-capstone-the-high-scale-event-platform"><a class="header" href="#ğÿ-phase-4-capstone-the-high-scale-event-platform">ğŸ† Phase 4 Capstone: “The High-Scale Event Platform”</a></h3>
 <p><strong>Objective:</strong> Architect a system capable of handling thousands of events per second.
 <strong>Requirements:</strong></p>
 <ul>
@@ -8214,7 +8287,7 @@ cargo test
 <li><strong>Expected Output:</strong> HTML page rendered with Tera templates, displaying dynamic data.</li>
 <li><strong>Pitfalls:</strong> Forgetting to create the <code>templates/</code> directory.</li>
 </ul>
-<h4 id="-knowledge-check-17"><a class="header" href="#-knowledge-check-17">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-17"><a class="header" href="#ğÿ--knowledge-check-17">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>Which template engine does RustAPI use?</li>
 <li>How do you pass data to a template?</li>
@@ -8228,7 +8301,7 @@ cargo test
 <li><strong>Expected Output:</strong> Both servers running; HTTP endpoint calls gRPC method (simulated).</li>
 <li><strong>Pitfalls:</strong> Port conflicts if not configured correctly.</li>
 </ul>
-<h4 id="-knowledge-check-18"><a class="header" href="#-knowledge-check-18">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-18"><a class="header" href="#ğÿ--knowledge-check-18">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>Which crate provides gRPC helpers for RustAPI?</li>
 <li>Can HTTP and gRPC share the same Tokio runtime?</li>
@@ -8242,13 +8315,13 @@ cargo test
 <li><strong>Expected Output:</strong> <code>curl</code> requests with different headers return different formats.</li>
 <li><strong>Pitfalls:</strong> Not checking the <code>Accept</code> header in client code.</li>
 </ul>
-<h4 id="-knowledge-check-19"><a class="header" href="#-knowledge-check-19">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-19"><a class="header" href="#ğÿ--knowledge-check-19">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>What is TOON and why is it useful for LLMs?</li>
 <li>How does <code>LlmResponse</code> decide which format to return?</li>
 <li>How much token usage can TOON save on average?</li>
 </ol>
-<h3 id="-phase-5-capstone-the-intelligent-dashboard"><a class="header" href="#-phase-5-capstone-the-intelligent-dashboard">🏆 Phase 5 Capstone: “The Intelligent Dashboard”</a></h3>
+<h3 id="ğÿ-phase-5-capstone-the-intelligent-dashboard"><a class="header" href="#ğÿ-phase-5-capstone-the-intelligent-dashboard">ğŸ† Phase 5 Capstone: “The Intelligent Dashboard”</a></h3>
 <p><strong>Objective:</strong> Combine SSR, gRPC, and AI features.
 <strong>Requirements:</strong></p>
 <ul>

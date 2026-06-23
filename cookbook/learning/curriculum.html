@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-26bbabb4.js";
+            window.path_to_searchindex_js = "../searchindex-fe6ca948.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-380ad91a.js"></script>
+        <script src="../toc-09b14b8b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -193,9 +193,9 @@
 <li><strong>Expected Output:</strong> A running server that responds to <code>GET /</code> with “Hello World”.</li>
 <li><strong>Pitfalls:</strong> Not enabling <code>tokio</code> features if setting up manually.</li>
 </ul>
-<h4 id="-mini-project-the-echo-server"><a class="header" href="#-mini-project-the-echo-server">🛠️ Mini Project: “The Echo Server”</a></h4>
+<h4 id="ğÿ-ï-mini-project-the-echo-server"><a class="header" href="#ğÿ-ï-mini-project-the-echo-server">ğŸ› ï¸ Mini Project: “The Echo Server”</a></h4>
 <p>Create a new endpoint <code>POST /echo</code> that accepts any text body and returns it back to the client. This verifies your setup handles basic I/O correctly.</p>
-<h4 id="-knowledge-check"><a class="header" href="#-knowledge-check">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check"><a class="header" href="#ğÿ--knowledge-check">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>What command scaffolds a new RustAPI project?</li>
 <li>Which feature flag is required for the async runtime?</li>
@@ -209,9 +209,9 @@
 <li><strong>Expected Output:</strong> Endpoints that return static JSON data.</li>
 <li><strong>Pitfalls:</strong> Forgetting to register routes in <code>main.rs</code> if not using auto-discovery.</li>
 </ul>
-<h4 id="-mini-project-the-calculator"><a class="header" href="#-mini-project-the-calculator">🛠️ Mini Project: “The Calculator”</a></h4>
+<h4 id="ğÿ-ï-mini-project-the-calculator"><a class="header" href="#ğÿ-ï-mini-project-the-calculator">ğŸ› ï¸ Mini Project: “The Calculator”</a></h4>
 <p>Create an endpoint <code>GET /add?a=5&amp;b=10</code> that returns <code>{"result": 15}</code>. This practices query parameter extraction and JSON responses.</p>
-<h4 id="-knowledge-check-1"><a class="header" href="#-knowledge-check-1">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-1"><a class="header" href="#ğÿ--knowledge-check-1">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>Which macro is used to define a GET handler?</li>
 <li>How do you return a JSON response from a handler?</li>
@@ -225,15 +225,15 @@
 <li><strong>Expected Output:</strong> <code>GET /users/{id}</code> returns the ID. <code>POST /users</code> echoes the JSON body.</li>
 <li><strong>Pitfalls:</strong> Consuming the body twice (e.g., using <code>Json</code> and <code>Body</code> in the same handler).</li>
 </ul>
-<h4 id="-mini-project-the-user-registry"><a class="header" href="#-mini-project-the-user-registry">🛠️ Mini Project: “The User Registry”</a></h4>
+<h4 id="ğÿ-ï-mini-project-the-user-registry"><a class="header" href="#ğÿ-ï-mini-project-the-user-registry">ğŸ› ï¸ Mini Project: “The User Registry”</a></h4>
 <p>Create a <code>POST /register</code> endpoint that accepts a JSON body <code>{"username": "...", "age": ...}</code> and returns a welcome message using the username. Use the <code>Json</code> extractor.</p>
-<h4 id="-knowledge-check-2"><a class="header" href="#-knowledge-check-2">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-2"><a class="header" href="#ğÿ--knowledge-check-2">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>Which extractor is used for URL parameters like <code>/users/:id</code>?</li>
 <li>Which extractor parses the request body as JSON?</li>
 <li>Can you use multiple extractors in a single handler?</li>
 </ol>
-<h3 id="-phase-1-capstone-the-todo-list-api"><a class="header" href="#-phase-1-capstone-the-todo-list-api">🏆 Phase 1 Capstone: “The Todo List API”</a></h3>
+<h3 id="ğÿ-phase-1-capstone-the-todo-list-api"><a class="header" href="#ğÿ-phase-1-capstone-the-todo-list-api">ğŸ† Phase 1 Capstone: “The Todo List API”</a></h3>
 <p><strong>Objective:</strong> Build a simple in-memory Todo List API.
 <strong>Requirements:</strong></p>
 <ul>
@@ -254,7 +254,7 @@
 <li><strong>Expected Output:</strong> A stateful API where POST adds a user and GET retrieves it (in-memory).</li>
 <li><strong>Pitfalls:</strong> Using <code>std::sync::Mutex</code> instead of <code>tokio::sync::Mutex</code> in async code (though <code>std</code> is fine for simple data).</li>
 </ul>
-<h4 id="-knowledge-check-3"><a class="header" href="#-knowledge-check-3">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-3"><a class="header" href="#ğÿ--knowledge-check-3">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>How do you inject global state into the application?</li>
 <li>Which extractor retrieves the application state?</li>
@@ -268,7 +268,7 @@
 <li><strong>Expected Output:</strong> Data persists across server restarts.</li>
 <li><strong>Pitfalls:</strong> Blocking the async runtime with synchronous DB drivers (use <code>sqlx</code> or <code>tokio-postgres</code>).</li>
 </ul>
-<h4 id="-knowledge-check-4"><a class="header" href="#-knowledge-check-4">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-4"><a class="header" href="#ğÿ--knowledge-check-4">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>Why is connection pooling important?</li>
 <li>How do you share a DB pool across handlers?</li>
@@ -282,7 +282,7 @@
 <li><strong>Expected Output:</strong> Requests with invalid email or short password return <code>422 Unprocessable Entity</code>.</li>
 <li><strong>Pitfalls:</strong> Forgetting to add <code>#[validate]</code> attributes to struct fields.</li>
 </ul>
-<h4 id="-knowledge-check-5"><a class="header" href="#-knowledge-check-5">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-5"><a class="header" href="#ğÿ--knowledge-check-5">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>Which trait must a struct implement to be validatable?</li>
 <li>What HTTP status code is returned on validation failure?</li>
@@ -296,7 +296,7 @@
 <li><strong>Expected Output:</strong> <code>GET /users/999</code> returns <code>404 Not Found</code> with a structured JSON error body.</li>
 <li><strong>Pitfalls:</strong> Exposing internal database errors (like SQL strings) to the client.</li>
 </ul>
-<h4 id="-knowledge-check-6"><a class="header" href="#-knowledge-check-6">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-6"><a class="header" href="#ğÿ--knowledge-check-6">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>What is the standard error type in RustAPI?</li>
 <li>How do you mask internal errors in production?</li>
@@ -310,7 +310,7 @@
 <li><strong>Expected Output:</strong> Swagger UI at <code>/docs</code> showing full schema with shared components.</li>
 <li><strong>Pitfalls:</strong> Recursive schemas without <code>Box</code> or <code>Option</code>.</li>
 </ul>
-<h4 id="-knowledge-check-7"><a class="header" href="#-knowledge-check-7">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-7"><a class="header" href="#ğÿ--knowledge-check-7">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>What does <code>#[derive(Schema)]</code> do?</li>
 <li>How does RustAPI handle shared schema components?</li>
@@ -324,13 +324,13 @@
 <li><strong>Expected Output:</strong> <code>curl -F file=@image.png</code> uploads the file.</li>
 <li><strong>Pitfalls:</strong> Loading large files entirely into memory (use streaming).</li>
 </ul>
-<h4 id="-knowledge-check-8"><a class="header" href="#-knowledge-check-8">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-8"><a class="header" href="#ğÿ--knowledge-check-8">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>Which extractor is used for file uploads?</li>
 <li>Why should you use <code>field.chunk()</code> instead of <code>field.bytes()</code>?</li>
 <li>How do you increase the request body size limit?</li>
 </ol>
-<h3 id="-phase-2-capstone-the-secure-blog-engine"><a class="header" href="#-phase-2-capstone-the-secure-blog-engine">🏆 Phase 2 Capstone: “The Secure Blog Engine”</a></h3>
+<h3 id="ğÿ-phase-2-capstone-the-secure-blog-engine"><a class="header" href="#ğÿ-phase-2-capstone-the-secure-blog-engine">ğŸ† Phase 2 Capstone: “The Secure Blog Engine”</a></h3>
 <p><strong>Objective:</strong> Enhance the Todo API into a Blog Engine.
 <strong>Requirements:</strong></p>
 <ul>
@@ -356,7 +356,7 @@
 <li><strong>Expected Output:</strong> Protected routes return <code>401 Unauthorized</code> without a valid token.</li>
 <li><strong>Pitfalls:</strong> Hardcoding secrets. Not checking token expiration.</li>
 </ul>
-<h4 id="-knowledge-check-9"><a class="header" href="#-knowledge-check-9">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-9"><a class="header" href="#ğÿ--knowledge-check-9">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>What is the role of the <code>AuthUser</code> extractor?</li>
 <li>How does OAuth2 PKCE improve security?</li>
@@ -376,7 +376,7 @@
 <li><strong>Expected Output:</strong> Sending 11 login attempts results in <code>429 Too Many Requests</code>.</li>
 <li><strong>Pitfalls:</strong> Caching responses that contain user-specific data.</li>
 </ul>
-<h4 id="-knowledge-check-10"><a class="header" href="#-knowledge-check-10">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-10"><a class="header" href="#ğÿ--knowledge-check-10">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>What header indicates when the rate limit resets?</li>
 <li>Why is request deduplication important for payments?</li>
@@ -390,7 +390,7 @@
 <li><strong>Expected Output:</strong> Multiple clients connected via WS receiving messages in real-time.</li>
 <li><strong>Pitfalls:</strong> Blocking the WebSocket loop with long-running synchronous tasks.</li>
 </ul>
-<h4 id="-knowledge-check-11"><a class="header" href="#-knowledge-check-11">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-11"><a class="header" href="#ğÿ--knowledge-check-11">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>How do you upgrade an HTTP request to a WebSocket connection?</li>
 <li>Can you share state between HTTP handlers and WebSocket handlers?</li>
@@ -409,7 +409,7 @@
 <li><strong>Expected Output:</strong> A resilient API ready for deployment.</li>
 <li><strong>Pitfalls:</strong> Setting timeouts too low for slow operations.</li>
 </ul>
-<h4 id="-knowledge-check-12"><a class="header" href="#-knowledge-check-12">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-12"><a class="header" href="#ğÿ--knowledge-check-12">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>Why is timeout middleware important?</li>
 <li>What command generates a production Dockerfile?</li>
@@ -429,21 +429,21 @@
 <li><strong>Expected Output:</strong> Registration returns 200 immediately (low latency); console logs show “Sending welcome email to …” shortly after (asynchronous). Tests pass.</li>
 <li><strong>Pitfalls:</strong> Forgetting to start the job worker loop (<code>JobWorker::new(queue).run().await</code>).</li>
 </ul>
-<h4 id="-mini-project-the-email-worker"><a class="header" href="#-mini-project-the-email-worker">🛠️ Mini Project: “The Email Worker”</a></h4>
+<h4 id="ğÿ-ï-mini-project-the-email-worker"><a class="header" href="#ğÿ-ï-mini-project-the-email-worker">ğŸ› ï¸ Mini Project: “The Email Worker”</a></h4>
 <p>Create a system where users can request a “Report”.</p>
 <ol>
 <li><code>POST /reports</code>: Enqueues a <code>GenerateReportJob</code>. Returns <code>{"job_id": "..."}</code> immediately.</li>
 <li>The job simulates 5 seconds of work and then writes “Report Generated” to a file or log.</li>
 <li>(Bonus) Use Redis backend for persistence.</li>
 </ol>
-<h4 id="-knowledge-check-13"><a class="header" href="#-knowledge-check-13">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-13"><a class="header" href="#ğÿ--knowledge-check-13">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>Why should you offload email sending to a background job?</li>
 <li>Which backend is suitable for local development vs production?</li>
 <li>How do you enqueue a job from a handler?</li>
 <li>How can you test that a job was enqueued without actually running it?</li>
 </ol>
-<h3 id="-phase-3-capstone-the-real-time-collaboration-tool"><a class="header" href="#-phase-3-capstone-the-real-time-collaboration-tool">🏆 Phase 3 Capstone: “The Real-Time Collaboration Tool”</a></h3>
+<h3 id="ğÿ-phase-3-capstone-the-real-time-collaboration-tool"><a class="header" href="#ğÿ-phase-3-capstone-the-real-time-collaboration-tool">ğŸ† Phase 3 Capstone: “The Real-Time Collaboration Tool”</a></h3>
 <p><strong>Objective:</strong> Build a real-time collaborative note-taking app.
 <strong>Requirements:</strong></p>
 <ul>
@@ -470,7 +470,7 @@
 <li><strong>Expected Output:</strong> Logs are JSON formatted. Audit log contains a new entry for every login.</li>
 <li><strong>Pitfalls:</strong> High cardinality in metric labels.</li>
 </ul>
-<h4 id="-knowledge-check-14"><a class="header" href="#-knowledge-check-14">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-14"><a class="header" href="#ğÿ--knowledge-check-14">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>What is the difference between logging and auditing?</li>
 <li>Which fields are required in an <code>AuditEvent</code>?</li>
@@ -490,7 +490,7 @@
 <li><strong>Expected Output:</strong> System degrades gracefully when external service is down. Replay file captures the exact request sequence.</li>
 <li><strong>Pitfalls:</strong> Infinite retry loops or retrying non-idempotent operations.</li>
 </ul>
-<h4 id="-knowledge-check-15"><a class="header" href="#-knowledge-check-15">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-15"><a class="header" href="#ğÿ--knowledge-check-15">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>What state does a Circuit Breaker have when it stops traffic?</li>
 <li>Why is jitter important in retry strategies?</li>
@@ -510,13 +510,13 @@
 <li><strong>Expected Output:</strong> Browser/Client connects via HTTP/3. Responses have <code>content-encoding: gzip</code>.</li>
 <li><strong>Pitfalls:</strong> Compressing small responses (waste of CPU) or already compressed data (images).</li>
 </ul>
-<h4 id="-knowledge-check-16"><a class="header" href="#-knowledge-check-16">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-16"><a class="header" href="#ğÿ--knowledge-check-16">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>What transport protocol does HTTP/3 use?</li>
 <li>How does <code>simd-json</code> improve performance?</li>
 <li>Why shouldn’t you compress JPEG images?</li>
 </ol>
-<h3 id="-phase-4-capstone-the-high-scale-event-platform"><a class="header" href="#-phase-4-capstone-the-high-scale-event-platform">🏆 Phase 4 Capstone: “The High-Scale Event Platform”</a></h3>
+<h3 id="ğÿ-phase-4-capstone-the-high-scale-event-platform"><a class="header" href="#ğÿ-phase-4-capstone-the-high-scale-event-platform">ğŸ† Phase 4 Capstone: “The High-Scale Event Platform”</a></h3>
 <p><strong>Objective:</strong> Architect a system capable of handling thousands of events per second.
 <strong>Requirements:</strong></p>
 <ul>
@@ -539,7 +539,7 @@
 <li><strong>Expected Output:</strong> HTML page rendered with Tera templates, displaying dynamic data.</li>
 <li><strong>Pitfalls:</strong> Forgetting to create the <code>templates/</code> directory.</li>
 </ul>
-<h4 id="-knowledge-check-17"><a class="header" href="#-knowledge-check-17">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-17"><a class="header" href="#ğÿ--knowledge-check-17">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>Which template engine does RustAPI use?</li>
 <li>How do you pass data to a template?</li>
@@ -553,7 +553,7 @@
 <li><strong>Expected Output:</strong> Both servers running; HTTP endpoint calls gRPC method (simulated).</li>
 <li><strong>Pitfalls:</strong> Port conflicts if not configured correctly.</li>
 </ul>
-<h4 id="-knowledge-check-18"><a class="header" href="#-knowledge-check-18">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-18"><a class="header" href="#ğÿ--knowledge-check-18">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>Which crate provides gRPC helpers for RustAPI?</li>
 <li>Can HTTP and gRPC share the same Tokio runtime?</li>
@@ -567,13 +567,13 @@
 <li><strong>Expected Output:</strong> <code>curl</code> requests with different headers return different formats.</li>
 <li><strong>Pitfalls:</strong> Not checking the <code>Accept</code> header in client code.</li>
 </ul>
-<h4 id="-knowledge-check-19"><a class="header" href="#-knowledge-check-19">🧠 Knowledge Check</a></h4>
+<h4 id="ğÿ--knowledge-check-19"><a class="header" href="#ğÿ--knowledge-check-19">ğŸ§  Knowledge Check</a></h4>
 <ol>
 <li>What is TOON and why is it useful for LLMs?</li>
 <li>How does <code>LlmResponse</code> decide which format to return?</li>
 <li>How much token usage can TOON save on average?</li>
 </ol>
-<h3 id="-phase-5-capstone-the-intelligent-dashboard"><a class="header" href="#-phase-5-capstone-the-intelligent-dashboard">🏆 Phase 5 Capstone: “The Intelligent Dashboard”</a></h3>
+<h3 id="ğÿ-phase-5-capstone-the-intelligent-dashboard"><a class="header" href="#ğÿ-phase-5-capstone-the-intelligent-dashboard">ğŸ† Phase 5 Capstone: “The Intelligent Dashboard”</a></h3>
 <p><strong>Objective:</strong> Combine SSR, gRPC, and AI features.
 <strong>Requirements:</strong></p>
 <ul>

@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-26bbabb4.js";
+            window.path_to_searchindex_js = "../searchindex-fe6ca948.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-380ad91a.js"></script>
+        <script src="../toc-09b14b8b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -221,9 +221,9 @@ async fn list_metrics() -&gt; Json&lt;Vec&lt;Metric&gt;&gt; { ... }
 <h2 id="path-parameter-schema-types"><a class="header" href="#path-parameter-schema-types">Path Parameter Schema Types</a></h2>
 <p>By default, RustAPI infers the OpenAPI schema type for path parameters based on naming conventions:</p>
 <ul>
-<li>Parameters named <code>id</code>, <code>user_id</code>, <code>postId</code>, etc. → <code>integer</code></li>
-<li>Parameters named <code>uuid</code>, <code>user_uuid</code>, etc. → <code>string</code> with <code>uuid</code> format</li>
-<li>Other parameters → <code>string</code></li>
+<li>Parameters named <code>id</code>, <code>user_id</code>, <code>postId</code>, etc. â†’ <code>integer</code></li>
+<li>Parameters named <code>uuid</code>, <code>user_uuid</code>, etc. â†’ <code>string</code> with <code>uuid</code> format</li>
+<li>Other parameters â†’ <code>string</code></li>
 </ul>
 <p>However, sometimes auto-inference is incorrect. For example, you might have a parameter named <code>id</code> that is actually a UUID. Use the <code>#[rustapi_rs::param]</code> attribute to override the inferred type:</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]

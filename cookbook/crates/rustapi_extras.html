@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-26bbabb4.js";
+            window.path_to_searchindex_js = "../searchindex-fe6ca948.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-380ad91a.js"></script>
+        <script src="../toc-09b14b8b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -246,7 +246,7 @@ async fn show_form(token: CsrfToken) -&gt; Html&lt;String&gt; {
 <ol>
 <li><strong>Safe methods</strong> (<code>GET</code>, <code>HEAD</code>) generate and set the token cookie</li>
 <li><strong>Unsafe methods</strong> (<code>POST</code>, <code>PUT</code>, <code>DELETE</code>) require the token in the <code>X-CSRF-Token</code> header</li>
-<li>If header doesn’t match cookie → <code>403 Forbidden</code></li>
+<li>If header doesn’t match cookie â†’ <code>403 Forbidden</code></li>
 </ol>
 <p>See <a href="../recipes/csrf_protection.html">CSRF Protection Recipe</a> for a complete guide.</p>
 <h2 id="audit-logging"><a class="header" href="#audit-logging">Audit Logging</a></h2>
@@ -266,7 +266,7 @@ async fn show_form(token: CsrfToken) -&gt; Html&lt;String&gt; {
 <h2 id="traffic-insight"><a class="header" href="#traffic-insight">Traffic Insight</a></h2>
 <p>The <code>insight</code> feature provides powerful real-time traffic analysis and debugging capabilities without external dependencies. It is designed to be low-overhead and privacy-conscious.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-extras = { version = "0.1.335", features = ["insight"] }
+rustapi-extras = { version = "0.1.537", features = ["insight"] }
 </code></pre>
 <h3 id="setup"><a class="header" href="#setup">Setup</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]

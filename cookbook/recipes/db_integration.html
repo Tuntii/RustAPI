@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-26bbabb4.js";
+            window.path_to_searchindex_js = "../searchindex-fe6ca948.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-380ad91a.js"></script>
+        <script src="../toc-09b14b8b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -186,14 +186,14 @@
 <p>This recipe shows how to integrate PostgreSQL/MySQL/SQLite using a shared pool, how to choose between <strong>SQLx</strong>, <strong>Diesel</strong>, and <strong>SeaORM</strong>, how to think about migrations, and which pooling practices are safest in production.</p>
 <h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["extras-sqlx"] } # Canonical facade feature for SQLx error conversion
+rustapi-rs = { version = "0.1.537", features = ["extras-sqlx"] } # Canonical facade feature for SQLx error conversion
 sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "uuid"] }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
 dotenvy = "0.15"
 </code></pre>
 <h2 id="1-choosing-sqlx-vs-diesel-vs-seaorm"><a class="header" href="#1-choosing-sqlx-vs-diesel-vs-seaorm">1. Choosing SQLx vs Diesel vs SeaORM</a></h2>
-<p>RustAPI does not force a single database stack. Pick the tool that matches your team’s trade-offs.</p>
+<p>RustAPI does not force a single database stack. Pick the tool that matches your teamâ€™s trade-offs.</p>
 <div class="table-wrapper">
 <table>
 <thead>
@@ -242,7 +242,7 @@ dotenvy = "0.15"
 <ul>
 <li>keep one long-lived pool per database/service boundary</li>
 <li>never open a fresh connection per request</li>
-<li>size pool limits from the database server’s actual connection budget</li>
+<li>size pool limits from the database serverâ€™s actual connection budget</li>
 <li>set <code>acquire_timeout</code> so overload fails fast instead of hanging forever</li>
 <li>use small but non-zero <code>min_connections</code> only when warm capacity matters</li>
 <li>keep transaction scopes short and never hold them across unrelated awaits</li>

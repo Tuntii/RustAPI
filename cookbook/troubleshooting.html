@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-26bbabb4.js";
+            window.path_to_searchindex_js = "searchindex-fe6ca948.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-380ad91a.js"></script>
+        <script src="toc-09b14b8b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -200,7 +200,7 @@ pub struct ListParams {
 Add the <code>Schema</code> derive macro to any struct used with extractors (<code>Query&lt;T&gt;</code>, <code>Path&lt;T&gt;</code>, <code>Json&lt;T&gt;</code>):</p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>#[derive(Debug, Deserialize, Schema)]  // ✅ Schema added
+</span>#[derive(Debug, Deserialize, Schema)]  // âœ… Schema added
 pub struct ListParams {
     pub page: Option&lt;u32&gt;,
 }
@@ -215,11 +215,11 @@ pub struct ListParams {
 <h2 id="2-dont-add-external-openapi-generators-directly"><a class="header" href="#2-dont-add-external-openapi-generators-directly">2. Don’t Add External OpenAPI Generators Directly</a></h2>
 <p><strong>Wrong:</strong></p>
 <pre><code class="language-toml">[dependencies]
-utoipa = "4.2"  # ❌ Don't add this
+utoipa = "4.2"  # âŒ Don't add this
 </code></pre>
 <p><strong>Correct:</strong></p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["full"] }
+rustapi-rs = { version = "0.1.537", features = ["full"] }
 # rustapi-openapi is re-exported through rustapi-rs
 </code></pre>
 <p><strong>Why?</strong></p>
@@ -238,24 +238,24 @@ error[E0433]: failed to resolve: use of unresolved module `rustapi_macros`
 <p><strong>Problem:</strong></p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use rustapi_extras::SqlxErrorExt;  // ❌ Old module name
-use rustapi_core::RustApi;         // ❌ Internal crate
-use rustapi_macros::get;           // ❌ Internal crate
+</span>use rustapi_extras::SqlxErrorExt;  // âŒ Old module name
+use rustapi_core::RustApi;         // âŒ Internal crate
+use rustapi_macros::get;           // âŒ Internal crate
 <span class="boring">}</span></code></pre>
 <p><strong>Solution:</strong></p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>use rustapi_rs::prelude::*;        // ✅ Everything you need
-use rustapi_rs::SqlxErrorExt;      // ✅ Correct path for extras
+</span>use rustapi_rs::prelude::*;        // âœ… Everything you need
+use rustapi_rs::SqlxErrorExt;      // âœ… Correct path for extras
 <span class="boring">}</span></code></pre>
 <p><strong>For macros:</strong></p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>// ❌ Wrong (doesn't work)
+</span>// âŒ Wrong (doesn't work)
 #[rustapi_macros::get("/")]
 async fn index() -&gt; &amp;'static str { "Hello" }
 
-// ✅ Correct
+// âœ… Correct
 #[rustapi_rs::get("/")]
 async fn index() -&gt; &amp;'static str { "Hello" }
 <span class="boring">}</span></code></pre>
@@ -270,18 +270,18 @@ async fn index() -&gt; &amp;'static str { "Hello" }
 <p><strong>Wrong:</strong></p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>#[derive(Debug, Deserialize, IntoParams)]  // ❌ IntoParams is from utoipa
+</span>#[derive(Debug, Deserialize, IntoParams)]  // âŒ IntoParams is from utoipa
 pub struct ListParams {
-    #[param(minimum = 1)]  // ❌ This attribute doesn't exist
+    #[param(minimum = 1)]  // âŒ This attribute doesn't exist
     pub page: Option&lt;u32&gt;,
 }
 <span class="boring">}</span></code></pre>
 <p><strong>Correct:</strong></p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>#[derive(Debug, Deserialize, Schema)]  // ✅ Use Schema
+</span>#[derive(Debug, Deserialize, Schema)]  // âœ… Use Schema
 pub struct ListParams {
-    /// Page number (1-indexed)  // ✅ Doc comments become OpenAPI descriptions
+    /// Page number (1-indexed)  // âœ… Doc comments become OpenAPI descriptions
     pub page: Option&lt;u32&gt;,
 }
 <span class="boring">}</span></code></pre>
@@ -314,7 +314,7 @@ async fn create_task(
 <p><strong>Problem:</strong></p>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
-</span>async fn handler() -&gt; Json&lt;serde_json::Value&gt; {  // ❌ No schema
+</span>async fn handler() -&gt; Json&lt;serde_json::Value&gt; {  // âŒ No schema
     Json(json!({ "key": "value" }))
 }
 <span class="boring">}</span></code></pre>
@@ -326,7 +326,7 @@ struct MyResponse {
     key: String,
 }
 
-async fn handler() -&gt; Json&lt;MyResponse&gt; {  // ✅ Type-safe
+async fn handler() -&gt; Json&lt;MyResponse&gt; {  // âœ… Type-safe
     Json(MyResponse {
         key: "value".to_string(),
     })
@@ -349,7 +349,7 @@ async fn handler() -&gt; Json&lt;MyResponse&gt; {  // ✅ Type-safe
 </span>#[derive(Debug, Serialize, Schema)]
 pub struct BookmarkResponse {
     pub id: u64,
-    pub created_at: DateTime&lt;Utc&gt;,  // ❌ No RustApiSchema impl
+    pub created_at: DateTime&lt;Utc&gt;,  // âŒ No RustApiSchema impl
 }
 <span class="boring">}</span></code></pre>
 <p><strong>Solution - Use String with RFC3339 format:</strong></p>
@@ -358,7 +358,7 @@ pub struct BookmarkResponse {
 </span>#[derive(Debug, Serialize, Schema)]
 pub struct BookmarkResponse {
     pub id: u64,
-    pub created_at: String,  // ✅ Use String
+    pub created_at: String,  // âœ… Use String
 }
 
 impl From&lt;&amp;Bookmark&gt; for BookmarkResponse {
@@ -393,7 +393,7 @@ pub struct BookmarkResponse {
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[derive(Debug, Serialize, Schema)]
-pub struct PaginatedResponse&lt;T&gt; {  // ❌ Missing trait bound
+pub struct PaginatedResponse&lt;T&gt; {  // âŒ Missing trait bound
     pub items: Vec&lt;T&gt;,
     pub total: usize,
 }
@@ -404,7 +404,7 @@ pub struct PaginatedResponse&lt;T&gt; {  // ❌ Missing trait bound
 </span>use rustapi_openapi::schema::RustApiSchema;
 
 #[derive(Debug, Serialize, Schema)]
-pub struct PaginatedResponse&lt;T: RustApiSchema&gt; {  // ✅ Trait bound added
+pub struct PaginatedResponse&lt;T: RustApiSchema&gt; {  // âœ… Trait bound added
     pub items: Vec&lt;T&gt;,
     pub total: usize,
     pub page: u32,
@@ -427,7 +427,7 @@ async fn list_bookmarks() -&gt; Json&lt;BookmarkList&gt; {
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[rustapi_rs::get("/")]
-async fn handler() -&gt; impl IntoResponse {  // ❌ May cause Handler trait errors
+async fn handler() -&gt; impl IntoResponse {  // âŒ May cause Handler trait errors
     Html("&lt;h1&gt;Hello&lt;/h1&gt;")
 }
 <span class="boring">}</span></code></pre>
@@ -435,7 +435,7 @@ async fn handler() -&gt; impl IntoResponse {  // ❌ May cause Handler trait err
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>#[rustapi_rs::get("/")]
-async fn handler() -&gt; Html&lt;String&gt; {  // ✅ Concrete type
+async fn handler() -&gt; Html&lt;String&gt; {  // âœ… Concrete type
     Html("&lt;h1&gt;Hello&lt;/h1&gt;".to_string())
 }
 <span class="boring">}</span></code></pre>
@@ -470,7 +470,7 @@ async fn list_users(State(db): State&lt;Database&gt;) -&gt; Json&lt;Vec&lt;User&
 
 // main.rs
 RustApi::auto()
-    // ❌ Forgot to add .state(...)
+    // âŒ Forgot to add .state(...)
     .run("0.0.0.0:8080")
     .await
 <span class="boring">}</span></code></pre>
@@ -478,7 +478,7 @@ RustApi::auto()
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>RustApi::auto()
-    .state(database)  // ✅ Add the state!
+    .state(database)  // âœ… Add the state!
     .run("0.0.0.0:8080")
     .await
 <span class="boring">}</span></code></pre>
@@ -489,7 +489,7 @@ RustApi::auto()
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>async fn handler(
-    Json(body): Json&lt;CreateUser&gt;,  // ❌ Body extractor first
+    Json(body): Json&lt;CreateUser&gt;,  // âŒ Body extractor first
     State(db): State&lt;Database&gt;,
 ) -&gt; Result&lt;Json&lt;User&gt;&gt; { ... }
 <span class="boring">}</span></code></pre>
@@ -497,9 +497,9 @@ RustApi::auto()
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
 </span>async fn handler(
-    State(db): State&lt;Database&gt;,    // ✅ Non-body extractors first
+    State(db): State&lt;Database&gt;,    // âœ… Non-body extractors first
     Query(params): Query&lt;Params&gt;,
-    Json(body): Json&lt;CreateUser&gt;,  // ✅ Body extractor last
+    Json(body): Json&lt;CreateUser&gt;,  // âœ… Body extractor last
 ) -&gt; Result&lt;Json&lt;User&gt;&gt; { ... }
 <span class="boring">}</span></code></pre>
 <p><strong>Why?</strong></p>
@@ -527,7 +527,7 @@ RustApi::auto()
 <li><strong>Import from <code>rustapi_rs</code></strong> only - never use internal crates directly</li>
 <li><strong>Use <code>RustApi::auto()</code></strong> with handler macros for automatic route discovery</li>
 </ol>
-<p>Follow these rules and you’ll have a smooth experience with RustAPI! 🚀</p>
+<p>Follow these rules and you’ll have a smooth experience with RustAPI! ğŸš€</p>
 
                     </main>
 

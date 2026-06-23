@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-26bbabb4.js";
+            window.path_to_searchindex_js = "../searchindex-fe6ca948.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-380ad91a.js"></script>
+        <script src="../toc-09b14b8b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -182,7 +182,7 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="macro-attribute-reference"><a class="header" href="#macro-attribute-reference">Macro Attribute Reference</a></h1>
-<p>RustAPI’s attribute macros do two jobs at once:</p>
+<p>RustAPIâ€™s attribute macros do two jobs at once:</p>
 <ol>
 <li>they register routes and schemas at compile time, and</li>
 <li>they enrich the generated OpenAPI operation metadata.</li>
@@ -231,7 +231,7 @@ async fn get_user(Path(_id): Path&lt;String&gt;) -&gt; Result&lt;Json&lt;User&gt
 <span class="boring">}</span></code></pre>
 <h3 id="effect"><a class="header" href="#effect">Effect</a></h3>
 <ul>
-<li>Appends the tag value to the operation’s <code>tags</code> list.</li>
+<li>Appends the tag value to the operationâ€™s <code>tags</code> list.</li>
 <li>Useful for Swagger grouping and cookbook-style API organization.</li>
 </ul>
 <h3 id="example"><a class="header" href="#example">Example</a></h3>
@@ -335,7 +335,7 @@ async fn get_order(Path(_order_id): Path&lt;String&gt;) -&gt; &amp;'static str {
 <span class="boring">}</span></code></pre>
 <h3 id="effect-4"><a class="header" href="#effect-4">Effect</a></h3>
 <ul>
-<li>Adds those responses directly to the operation’s OpenAPI response map.</li>
+<li>Adds those responses directly to the operationâ€™s OpenAPI response map.</li>
 <li>Each declared response uses the standard <code>ErrorSchema</code> under <code>application/json</code>.</li>
 </ul>
 <h3 id="example-4"><a class="header" href="#example-4">Example</a></h3>

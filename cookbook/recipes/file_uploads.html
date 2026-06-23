@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-26bbabb4.js";
+            window.path_to_searchindex_js = "../searchindex-fe6ca948.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-380ad91a.js"></script>
+        <script src="../toc-09b14b8b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -186,7 +186,7 @@
 <h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
 <p>Add <code>uuid</code> and <code>tokio</code> with <code>fs</code> features to your <code>Cargo.toml</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = "0.1.335"
+rustapi-rs = "0.1.537"
 tokio = { version = "1", features = ["fs", "io-util"] }
 uuid = { version = "1", features = ["v4"] }
 </code></pre>
@@ -208,7 +208,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&g
         .body_limit(1024 * 1024 * 1024)
         .route("/upload", post(upload_handler))
         // Increase body limit to 50MB (default is usually 2MB)
-        // ⚠️ IMPORTANT: Since Multipart buffers the whole body,
+        // âš ï¸ IMPORTANT: Since Multipart buffers the whole body,
         // setting this too high can exhaust server memory.
         .layer(DefaultBodyLimit::max(50 * 1024 * 1024))
         .run("127.0.0.1:8080")
@@ -242,7 +242,7 @@ async fn upload_handler(mut multipart: Multipart) -&gt; Result&lt;Json&lt;Upload
         let file_name = field.file_name().unwrap_or("unknown.bin").to_string();
         let content_type = field.content_type().unwrap_or("application/octet-stream").to_string();
 
-        // ⚠️ Security: Never trust the user-provided filename directly!
+        // âš ï¸ Security: Never trust the user-provided filename directly!
         // It could contain paths like "../../../etc/passwd".
         // Always generate a safe filename or sanitize inputs.
         let safe_filename = format!("{}-{}", uuid::Uuid::new_v4(), file_name);

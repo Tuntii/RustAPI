@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-26bbabb4.js";
+            window.path_to_searchindex_js = "../searchindex-fe6ca948.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-380ad91a.js"></script>
+        <script src="../toc-09b14b8b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -223,7 +223,7 @@
 </span><span class="boring">fn main() {
 </span>use rustapi_rs::prelude::*;
 <span class="boring">}</span></code></pre>
-<p>That keeps your application code aligned with RustAPI’s stable public surface instead of internal implementation crates.</p>
+<p>That keeps your application code aligned with RustAPIâ€™s stable public surface instead of internal implementation crates.</p>
 <h2 id="2-basic-handlers-migrate-directly"><a class="header" href="#2-basic-handlers-migrate-directly">2. Basic handlers migrate directly</a></h2>
 <h3 id="actix-web"><a class="header" href="#actix-web">Actix-web</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -297,7 +297,7 @@ async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + 
 }</code></pre>
 <h3 id="migration-note-1"><a class="header" href="#migration-note-1">Migration note</a></h3>
 <ul>
-<li><code>RustApi::auto()</code> is the primary entry point — macro-annotated handlers are registered automatically, no wiring needed.</li>
+<li><code>RustApi::auto()</code> is the primary entry point â€” macro-annotated handlers are registered automatically, no wiring needed.</li>
 <li><code>RustApi::new()</code> is available for manual route registration and maps directly to Actix’s explicit <code>.route()</code> pattern.</li>
 <li><code>RustApi::route()</code> is the closest equivalent to explicit Actix route registration.</li>
 </ul>

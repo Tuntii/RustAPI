@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-26bbabb4.js";
+            window.path_to_searchindex_js = "../searchindex-fe6ca948.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-380ad91a.js"></script>
+        <script src="../toc-09b14b8b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -188,7 +188,7 @@
 <li>a missing <code>x-request-id</code>,</li>
 <li>tracing spans without correlation,</li>
 <li>an extractor failing because middleware never inserted the expected extension,</li>
-<li>a response being transformed by the “wrong” layer.</li>
+<li>a response being transformed by the â€œwrongâ€ layer.</li>
 </ul>
 <p>This guide focuses on debugging the middleware you already have in your stack.</p>
 <h2 id="problem"><a class="header" href="#problem">Problem</a></h2>
@@ -242,8 +242,8 @@ async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + 
 <p><code>TracingLayer</code> reads the request ID from request extensions. If it runs without <code>RequestIdLayer</code>, the span records <code>request_id = "unknown"</code>.</p>
 <p>That makes the pairing easy to diagnose:</p>
 <ul>
-<li><code>x-request-id</code> present + trace has request ID → good</li>
-<li>no <code>x-request-id</code> + trace shows <code>unknown</code> → missing request ID layer</li>
+<li><code>x-request-id</code> present + trace has request ID â†’ good</li>
+<li>no <code>x-request-id</code> + trace shows <code>unknown</code> â†’ missing request ID layer</li>
 </ul>
 <h3 id="3-reduce-the-stack"><a class="header" href="#3-reduce-the-stack">3. Reduce the stack</a></h3>
 <p>If a handler is not reached, strip the app down to the smallest reproducer:</p>
@@ -287,7 +287,7 @@ async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + 
 </ul>
 <h3 id="logs-exist-but-are-hard-to-correlate"><a class="header" href="#logs-exist-but-are-hard-to-correlate">Logs exist but are hard to correlate</a></h3>
 <p>Add <code>RequestIdLayer</code> and keep <code>TracingLayer</code> close to the edge of the stack so every request has a stable identifier early.</p>
-<h3 id="response-looks-modified-too-late"><a class="header" href="#response-looks-modified-too-late">Response looks modified “too late”</a></h3>
+<h3 id="response-looks-modified-âœtoo-lateâ"><a class="header" href="#response-looks-modified-âœtoo-lateâ">Response looks modified â€œtoo lateâ€</a></h3>
 <p>Remember response processing unwinds in reverse. The last layer added has the first chance to modify the outgoing response.</p>
 <h2 id="built-in-tools-that-help"><a class="header" href="#built-in-tools-that-help">Built-in tools that help</a></h2>
 <h3 id="status-page"><a class="header" href="#status-page">Status page</a></h3>

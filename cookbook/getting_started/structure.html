@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-26bbabb4.js";
+            window.path_to_searchindex_js = "../searchindex-fe6ca948.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-380ad91a.js"></script>
+        <script src="../toc-09b14b8b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -184,16 +184,16 @@
                         <h1 id="project-structure"><a class="header" href="#project-structure">Project Structure</a></h1>
 <p>RustAPI projects follow a standard, modular structure designed for scalability.</p>
 <pre><code>my-api/
-├── Cargo.toml          // Dependencies and workspace config
-├── src/
-│   ├── handlers/       // Request handlers (Controllers)
-│   │   ├── mod.rs      
-│   │   └── items.rs    // Example resource handler
-│   ├── models/         // Data structures and Schema
-│   │   ├── mod.rs      
-│   ├── error.rs        // Custom error types
-│   └── main.rs         // Application entry point &amp; Router
-└── .env.example        // Environment variables template
+â”œâ”€â”€ Cargo.toml          // Dependencies and workspace config
+â”œâ”€â”€ src/
+â”‚   â”œâ”€â”€ handlers/       // Request handlers (Controllers)
+â”‚   â”‚   â”œâ”€â”€ mod.rs      
+â”‚   â”‚   â””â”€â”€ items.rs    // Example resource handler
+â”‚   â”œâ”€â”€ models/         // Data structures and Schema
+â”‚   â”‚   â”œâ”€â”€ mod.rs      
+â”‚   â”œâ”€â”€ error.rs        // Custom error types
+â”‚   â””â”€â”€ main.rs         // Application entry point &amp; Router
+â””â”€â”€ .env.example        // Environment variables template
 </code></pre>
 <h2 id="key-files"><a class="header" href="#key-files">Key Files</a></h2>
 <h3 id="srcmainrs"><a class="header" href="#srcmainrs"><code>src/main.rs</code></a></h3>

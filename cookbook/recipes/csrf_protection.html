@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-26bbabb4.js";
+            window.path_to_searchindex_js = "../searchindex-fe6ca948.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-380ad91a.js"></script>
+        <script src="../toc-09b14b8b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -193,7 +193,7 @@
 </ol>
 <h2 id="quick-start"><a class="header" href="#quick-start">Quick Start</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = ["csrf"] }
+rustapi-rs = { version = "0.1.537", features = ["csrf"] }
 </code></pre>
 <pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
 use rustapi_extras::csrf::{CsrfConfig, CsrfLayer, CsrfToken};
@@ -247,17 +247,17 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&g
 <h3 id="safe-methods-no-validation"><a class="header" href="#safe-methods-no-validation">Safe Methods (No Validation)</a></h3>
 <p><code>GET</code>, <code>HEAD</code>, <code>OPTIONS</code>, and <code>TRACE</code> requests are considered “safe” and don’t modify state. The CSRF middleware:</p>
 <ol>
-<li>✅ Generates a new token if none exists</li>
-<li>✅ Sets the token cookie in the response</li>
-<li>✅ <strong>Does NOT validate</strong> the header</li>
+<li>âœ… Generates a new token if none exists</li>
+<li>âœ… Sets the token cookie in the response</li>
+<li>âœ… <strong>Does NOT validate</strong> the header</li>
 </ol>
 <h3 id="unsafe-methods-validation-required"><a class="header" href="#unsafe-methods-validation-required">Unsafe Methods (Validation Required)</a></h3>
 <p><code>POST</code>, <code>PUT</code>, <code>PATCH</code>, and <code>DELETE</code> requests require CSRF validation:</p>
 <ol>
-<li>🔍 Reads the token from the cookie</li>
-<li>🔍 Reads the expected token from the header</li>
-<li>❌ If missing or mismatched → Returns <code>403 Forbidden</code></li>
-<li>✅ If valid → Proceeds to handler</li>
+<li>ğŸ” Reads the token from the cookie</li>
+<li>ğŸ” Reads the expected token from the header</li>
+<li>âŒ If missing or mismatched â†’ Returns <code>403 Forbidden</code></li>
+<li>âœ… If valid â†’ Proceeds to handler</li>
 </ol>
 <h2 id="frontend-integration"><a class="header" href="#frontend-integration">Frontend Integration</a></h2>
 <h3 id="html-forms"><a class="header" href="#html-forms">HTML Forms</a></h3>
@@ -404,11 +404,11 @@ async fn test_csrf_protection() {
 <tr><th>Consideration</th><th>Status</th></tr>
 </thead>
 <tbody>
-<tr><td>Token in cookie</td><td>✅ HttpOnly=false (JS needs access)</td></tr>
-<tr><td>Token validation</td><td>✅ Constant-time comparison</td></tr>
-<tr><td>SameSite cookie</td><td>✅ Configurable (Strict by default)</td></tr>
-<tr><td>Secure cookie</td><td>✅ HTTPS-only by default</td></tr>
-<tr><td>Token entropy</td><td>✅ 32 bytes of cryptographic randomness</td></tr>
+<tr><td>Token in cookie</td><td>âœ… HttpOnly=false (JS needs access)</td></tr>
+<tr><td>Token validation</td><td>âœ… Constant-time comparison</td></tr>
+<tr><td>SameSite cookie</td><td>âœ… Configurable (Strict by default)</td></tr>
+<tr><td>Secure cookie</td><td>âœ… HTTPS-only by default</td></tr>
+<tr><td>Token entropy</td><td>âœ… 32 bytes of cryptographic randomness</td></tr>
 </tbody>
 </table>
 </div>

@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-26bbabb4.js";
+            window.path_to_searchindex_js = "../searchindex-fe6ca948.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-380ad91a.js"></script>
+        <script src="../toc-09b14b8b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -236,9 +236,9 @@
 <h2 id="probe-recommendations"><a class="header" href="#probe-recommendations">Probe recommendations</a></h2>
 <p>RustAPI has first-class built-in probe endpoints:</p>
 <ul>
-<li><code>/health</code> — aggregate service and dependency health</li>
-<li><code>/ready</code> — readiness for load balancers and orchestrators</li>
-<li><code>/live</code> — lightweight liveness probe</li>
+<li><code>/health</code> â€” aggregate service and dependency health</li>
+<li><code>/ready</code> â€” readiness for load balancers and orchestrators</li>
+<li><code>/live</code> â€” lightweight liveness probe</li>
 </ul>
 <p>You can enable them via:</p>
 <ul>
@@ -248,9 +248,9 @@
 </ul>
 <h3 id="recommended-semantics"><a class="header" href="#recommended-semantics">Recommended semantics</a></h3>
 <ul>
-<li><strong>Liveness</strong> should answer: “Is the process alive?”</li>
-<li><strong>Readiness</strong> should answer: “Should this instance receive traffic right now?”</li>
-<li><strong>Health</strong> should answer: “What is the aggregate state of the service and its dependencies?”</li>
+<li><strong>Liveness</strong> should answer: â€œIs the process alive?â€</li>
+<li><strong>Readiness</strong> should answer: â€œShould this instance receive traffic right now?â€</li>
+<li><strong>Health</strong> should answer: â€œWhat is the aggregate state of the service and its dependencies?â€</li>
 </ul>
 <p>In practice:</p>
 <ul>

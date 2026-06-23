@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-26bbabb4.js";
+            window.path_to_searchindex_js = "../searchindex-fe6ca948.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-380ad91a.js"></script>
+        <script src="../toc-09b14b8b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -182,7 +182,7 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="observability"><a class="header" href="#observability">Observability</a></h1>
-<p>Production services need more than “logs exist somewhere”. A healthy RustAPI observability setup should let you answer three questions quickly:</p>
+<p>Production services need more than â€œlogs exist somewhereâ€. A healthy RustAPI observability setup should let you answer three questions quickly:</p>
 <ol>
 <li><strong>What failed?</strong></li>
 <li><strong>Which request or trace did it belong to?</strong></li>
@@ -198,7 +198,7 @@
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
 <p>Enable the relevant features:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.335", features = [
+rustapi-rs = { version = "0.1.537", features = [
   "core",
   "extras-otel",
   "extras-structured-logging",
@@ -264,7 +264,7 @@ async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + 
         .run("0.0.0.0:8080")
         .await
 }</code></pre>
-<h2 id="the-recommended-golden-config"><a class="header" href="#the-recommended-golden-config">The recommended “golden config”</a></h2>
+<h2 id="the-recommended-âœgolden-configâ"><a class="header" href="#the-recommended-âœgolden-configâ">The recommended â€œgolden configâ€</a></h2>
 <p>For most APIs, the following defaults work well:</p>
 <h3 id="1-request-correlation-everywhere"><a class="header" href="#1-request-correlation-everywhere">1. Request correlation everywhere</a></h3>
 <p>Use the production preset so every request already carries a request ID and tracing span. This gives you a stable correlation key before you add any external observability backend.</p>
