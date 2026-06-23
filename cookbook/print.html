@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-fe6ca948.js";
+            window.path_to_searchindex_js = "searchindex-9033ebbb.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-09b14b8b.js"></script>
@@ -1918,6 +1918,59 @@ run_rustapi_and_grpc_with_shutdown(
 ).await?;</code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="rustapi-mcp-the-agent-bridge"><a class="header" href="#rustapi-mcp-the-agent-bridge">rustapi-mcp: The Agent Bridge</a></h1>
+<p><strong>Lens</strong>: “Your API is now a tool provider for LLMs.”<br><strong>Philosophy</strong>: “Discover once, execute through the real stack, expose nothing by accident.”</p>
+<p><code>rustapi-mcp</code> turns a normal RustAPI application into a first-class participant in the Model Context Protocol (MCP) ecosystem. Compatible clients (Claude Desktop, Cursor, custom agent runtimes, etc.) can discover a curated set of your endpoints as tools and invoke them with full respect for your existing middleware, validation, and observability.</p>
+<h2 id="what-you-get-1"><a class="header" href="#what-you-get-1">What You Get</a></h2>
+<ul>
+<li><code>McpConfig</code> builder for name, version, <code>allowed_tags</code>, <code>allowed_path_prefixes</code>, and <code>admin_token</code>.</li>
+<li><code>McpServer::new(...)</code>, <code>::from_rustapi(&amp;app, config)</code>, <code>::from_spec(...)</code>.</li>
+<li>Automatic conversion of OpenAPI operations (powered by your <code>#[derive(Schema)]</code> types) into MCP tool manifests (<code>name</code>, <code>description</code>, <code>inputSchema</code>).</li>
+<li>Real <code>tools/call</code> execution via a sidecar HTTP JSON-RPC server. Calls are proxied back to your main RustAPI listener so every layer runs exactly as for normal traffic.</li>
+<li><code>run_rustapi_and_mcp</code> + <code>run_rustapi_and_mcp_with_shutdown</code> helpers (same shape as the gRPC ones).</li>
+<li>Feature flag: <code>protocol-mcp</code> (also included in <code>protocol-all</code> and <code>full</code>).</li>
+</ul>
+<h2 id="enable-it-1"><a class="header" href="#enable-it-1">Enable It</a></h2>
+<pre><code class="language-toml">[dependencies]
+rustapi-rs = { version = "0.1.478", features = ["protocol-mcp"] }
+</code></pre>
+<h2 id="basic-usage-recommended"><a class="header" href="#basic-usage-recommended">Basic Usage (Recommended)</a></h2>
+<pre><code class="language-rust ignore">use rustapi_rs::prelude::*;
+use rustapi_rs::protocol::mcp::{McpConfig, McpServer, run_rustapi_and_mcp};
+
+let app = RustApi::auto();
+
+let mcp = McpServer::from_rustapi(
+    &amp;app,
+    McpConfig::new()
+        .name("my-api")
+        .allowed_tags(["public", "agent"]),
+);
+
+run_rustapi_and_mcp(app, "0.0.0.0:8080", mcp, "0.0.0.0:9090").await?;</code></pre>
+<p>Tool calls arriving on port 9090 are turned into real HTTP requests against port 8080 (or whichever address you configured). This guarantees that JWT layers, rate limiters, circuit breakers, request replay recording, etc. all see the invocation.</p>
+<h2 id="security-model"><a class="header" href="#security-model">Security Model</a></h2>
+<p>Nothing is auto-exposed. The two main controls live in <code>McpConfig</code>:</p>
+<ul>
+<li><code>allowed_tags(...)</code> â€” only operations carrying at least one of the listed tags become tools.</li>
+<li><code>allow_path_prefix(...)</code> â€” additional path-based allow list.</li>
+</ul>
+<p>This is the same philosophy as the rest of RustAPI: explicit and auditable.</p>
+<h2 id="current-transport"><a class="header" href="#current-transport">Current Transport</a></h2>
+<p>MCP v1 uses a minimal JSON-RPC over plain HTTP POST (the same style used by many early MCP implementations). The crate is structured so additional transports (full SSE, stdio bridge) can be added later behind the same <code>McpServer</code> surface.</p>
+<h2 id="relationship-to-other-crates"><a class="header" href="#relationship-to-other-crates">Relationship to Other Crates</a></h2>
+<ul>
+<li>Reuses <code>rustapi-openapi</code> for schema and operation metadata (no duplication).</li>
+<li>Works beautifully with <code>protocol-toon</code> / <code>LlmResponse</code> when you want token-efficient payloads for agents.</li>
+<li>Plays well with <code>extras-replay</code>, <code>extras-audit</code>, and all the resilience layers because tool calls are real traffic.</li>
+</ul>
+<h2 id="status--roadmap"><a class="header" href="#status--roadmap">Status &amp; Roadmap</a></h2>
+<p>Core functionality (discovery + real proxied invocation + runner) is complete. See the top-level README and <code>memories/native_mcp_orchestration_plan.md</code> for remaining polish items (cookbook examples, more client conformance tests, optional direct in-process invoker to avoid the localhost hop).</p>
+<h2 id="see-also"><a class="header" href="#see-also">See Also</a></h2>
+<ul>
+<li>Recipe: <a href="#mcp-integration-agent-tools">MCP Integration (Agent Tools)</a></li>
+<li>gRPC counterpart: <a href="#rustapi-grpc-the-bridge">rustapi-grpc</a></li>
+<li>AI-friendly responses: <a href="#toon-rustapi-extras-toon-feature">rustapi-toon</a></li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="cargo-rustapi-the-architect"><a class="header" href="#cargo-rustapi-the-architect">cargo-rustapi: The Architect</a></h1>
 <p><strong>Lens</strong>: “The Architect”
@@ -3035,7 +3088,7 @@ let session_config = SessionConfig::new()
     .secure(false);
 <span class="boring">}</span></code></pre>
 <p>That keeps the cookie usable over <code>http://127.0.0.1:3000</code> while preserving the same handler code.</p>
-<h2 id="see-also"><a class="header" href="#see-also">See also</a></h2>
+<h2 id="see-also-1"><a class="header" href="#see-also-1">See also</a></h2>
 <ul>
 <li><a href="#oauth2-client-integration">OAuth2 Client</a></li>
 <li><a href="#session-based-authentication">Session-Based Authentication</a></li>
@@ -3272,7 +3325,7 @@ async fn test_csrf_protection() {
 </tbody>
 </table>
 </div>
-<h2 id="see-also-1"><a class="header" href="#see-also-1">See Also</a></h2>
+<h2 id="see-also-2"><a class="header" href="#see-also-2">See Also</a></h2>
 <ul>
 <li><a href="#jwt-authentication">JWT Authentication</a> - Token-based authentication</li>
 <li><a href="#security-headers">Security Headers</a> - Additional security layers</li>
@@ -5488,6 +5541,242 @@ let prompt = format!(
 // Send `prompt` to OpenAI API...</code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="mcp-integration-agent-tools"><a class="header" href="#mcp-integration-agent-tools">MCP Integration (Agent Tools)</a></h1>
+<p>RustAPI can expose selected HTTP endpoints as <strong>discoverable tools</strong> for LLMs and AI agents (Claude, Cursor, custom multi-agent systems) using the native Model Context Protocol (MCP) support in the <code>rustapi-mcp</code> crate.</p>
+<p>This gives you:</p>
+<ul>
+<li>Zero duplication: tool definitions come from your existing routes, <code>#[derive(Schema)]</code> types, and OpenAPI metadata.</li>
+<li>Safety by default: nothing is exposed unless you explicitly allow it via tags or path prefixes.</li>
+<li>Full pipeline respect: every <code>tools/call</code> is proxied (or executed in-process) through your normal RustAPI layers, extractors, validators, middleware, and error handling.</li>
+<li>Optional zero-overhead in-process dispatch (see dedicated recipe).</li>
+<li><code>cargo rustapi mcp generate</code> turns any OpenAPI spec into an MCP server.</li>
+<li>stdio transport support for desktop AI clients.</li>
+</ul>
+<h2 id="the-problem"><a class="header" href="#the-problem">The Problem</a></h2>
+<p>You want an AI agent to call your business logic (“get the weather”, “create an order”, “run a report”) without writing a separate agent interface, duplicating validation, or opening unsafe endpoints.</p>
+<h2 id="the-solution"><a class="header" href="#the-solution">The Solution</a></h2>
+<p>Tag the routes you are happy to expose to agents, then attach an <code>McpServer</code> that speaks the MCP protocol over HTTP+SSE/JSON-RPC. Run it side-by-side with your normal HTTP API using the provided concurrent runner (modeled after gRPC integration).</p>
+<h2 id="dependencies-7"><a class="header" href="#dependencies-7">Dependencies</a></h2>
+<pre><code class="language-toml">[dependencies]
+rustapi-rs = { version = "0.1.507", features = ["protocol-mcp"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+serde = { version = "1.0", features = ["derive"] }
+</code></pre>
+<h2 id="implementation-1"><a class="header" href="#implementation-1">Implementation</a></h2>
+<pre class="playground"><code class="language-rust no_run">use rustapi_rs::prelude::*;
+use rustapi_rs::protocol::mcp::{InvocationMode, McpConfig, McpServer, run_rustapi_and_mcp_with_shutdown, ToolPolicy};
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Schema)]
+struct Weather {
+    city: String,
+    temperature: i32,
+    unit: &amp;'static str,
+}
+
+#[derive(Deserialize, Schema)]
+struct ComputeRequest {
+    a: i32,
+    b: i32,
+}
+
+#[derive(Serialize, Schema)]
+struct ComputeResponse {
+    sum: i32,
+}
+
+// Only routes with the "agent" tag will be visible to MCP clients.
+#[rustapi_rs::get("/weather/{city}")]
+#[rustapi_rs::tag("agent")]
+#[rustapi_rs::summary("Get the current weather for a city")]
+async fn get_weather(Path(city): Path&lt;String&gt;) -&gt; Json&lt;Weather&gt; {
+    Json(Weather {
+        city,
+        temperature: 22,
+        unit: "C",
+    })
+}
+
+#[rustapi_rs::post("/compute")]
+#[rustapi_rs::tag("agent")]
+#[rustapi_rs::summary("Add two numbers (demo tool)")]
+async fn compute(Json(req): Json&lt;ComputeRequest&gt;) -&gt; Json&lt;ComputeResponse&gt; {
+    Json(ComputeResponse { sum: req.a + req.b })
+}
+
+#[rustapi_rs::get("/admin/internal")]
+async fn internal_only() -&gt; &amp;'static str {
+    "you should never see this via MCP"
+}
+
+// MCP permission annotations (framework-level scoping)
+#[rustapi_rs::post("/orders")]
+#[rustapi_rs::tag("agent")]
+#[rustapi_rs::mcp(write, require = "confirm")]   // agent must confirm
+async fn create_order(Json(_body): Json&lt;serde_json::Value&gt;) -&gt; &amp;'static str {
+    "order created"
+}
+
+#[rustapi_rs::get("/admin/secrets")]
+#[rustapi_rs::tag("agent")]
+#[rustapi_rs::mcp(skip)]                         // never expose to agents
+async fn admin_secrets() -&gt; &amp;'static str {
+    "top secret"
+}
+
+#[rustapi_rs::post("/webhooks/stripe")]
+#[rustapi_rs::mcp(readonly)]                     // POST but safe (external callback)
+async fn stripe_webhook() -&gt; &amp;'static str {
+    "ok"
+}
+
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    let app = RustApi::auto();
+
+    let mcp = McpServer::from_rustapi(
+        &amp;app,
+        McpConfig::new()
+            .name("my-awesome-api")
+            .version("1.0.0")
+            .description(Some("Business capabilities exposed to agents".into()))
+            .allowed_tags(["agent"]) // &lt;-- explicit and safe
+            .invocation_mode(InvocationMode::InProcess), // zero-overhead direct calls
+    );
+
+    println!("HTTP API : http://127.0.0.1:8080");
+    println!("MCP (agents) : http://127.0.0.1:9090");
+
+    // Permission scoping example (recommended for agents):
+    // Use tool_policy + route-level #[mcp(...)] attributes
+    let mcp_safe = McpServer::from_rustapi(
+        &amp;app,
+        McpConfig::new()
+            .allowed_tags(["agent"])
+            .tool_policy(ToolPolicy::ReadOnly) // only GETs etc. by default
+            .invocation_mode(InvocationMode::InProcess),
+    );
+
+    // Run both servers. Tool calls use in-process dispatch for max speed
+    // while still going through the full middleware stack.
+    run_rustapi_and_mcp_with_shutdown(
+        app,
+        "0.0.0.0:8080",
+        mcp,
+        "0.0.0.0:9090",
+        tokio::signal::ctrl_c(),
+    )
+    .await?;
+
+    Ok(())
+}</code></pre>
+<h2 id="how-tool-discovery-works"><a class="header" href="#how-tool-discovery-works">How Tool Discovery Works</a></h2>
+<ul>
+<li><code>McpServer::from_rustapi</code> reads the OpenAPI spec that RustAPI already generates from your handlers and <code>Schema</code> types.</li>
+<li>Only operations whose tags intersect with <code>allowed_tags</code> (or that match <code>allowed_path_prefixes</code>) become MCP tools.</li>
+<li>Tool <code>name</code>, <code>description</code>, and <code>inputSchema</code> are derived automatically (operationId preferred, otherwise method+path slug).</li>
+<li>The internal <code>/admin/internal</code> route above will <strong>never</strong> appear because it has no matching tag.</li>
+</ul>
+<h2 id="calling-tools-from-an-agent"><a class="header" href="#calling-tools-from-an-agent">Calling Tools from an Agent</a></h2>
+<p>MCP clients speak a small JSON-RPC dialect. Example raw interaction (you normally don’t write this by hand):</p>
+<pre><code class="language-json">// initialize
+{ "jsonrpc": "2.0", "id": 1, "method": "initialize" }
+
+// list available tools (only the tagged ones)
+{ "jsonrpc": "2.0", "id": 2, "method": "tools/list" }
+
+// call a tool
+{
+  "jsonrpc": "2.0",
+  "id": 3,
+  "method": "tools/call",
+  "params": {
+    "name": "get_weather",
+    "arguments": { "city": "Istanbul" }
+  }
+}
+</code></pre>
+<p>The result comes back wrapped in the standard MCP <code>content</code> array with an <code>isError</code> flag.</p>
+<h2 id="security--operational-notes"><a class="header" href="#security--operational-notes">Security &amp; Operational Notes</a></h2>
+<ul>
+<li><strong>Explicit exposure is the default.</strong> An empty <code>allowed_tags</code> + no prefixes means zero tools are advertised.</li>
+<li>Every tool invocation goes through your normal <code>RustApi</code> stack (rate limiting, auth layers, body limits, validation, audit, replay recording, etc.).</li>
+<li>Use <code>admin_token</code> in <code>McpConfig</code> if you want an extra bearer-style check for the MCP port (enforcement can be added in a transport layer if your deployment requires it).</li>
+<li>Combine with TOON responses (<code>LlmResponse&lt;T&gt;</code>) if you want token-efficient data for the agent (see the <a href="#ai-integration">AI Integration (TOON)</a> recipe).</li>
+</ul>
+<h2 id="permission-scoping-important-for-agents"><a class="header" href="#permission-scoping-important-for-agents">Permission Scoping (Important for Agents)</a></h2>
+<p>RustAPI now has <strong>framework-native permission scoping</strong> for MCP. By default <code>ToolPolicy::ReadOnly</code> is used so only read operations are exposed to agents.</p>
+<h3 id="route-level-mcp-annotations"><a class="header" href="#route-level-mcp-annotations">Route-level <code>#[mcp(...)]</code> annotations</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::prelude::*;
+use rustapi_rs::protocol::mcp::ToolPolicy;
+
+// Read-only by nature (GET)
+#[rustapi_rs::get("/weather/{city}")]
+#[rustapi_rs::tag("agent")]
+async fn get_weather(...) -&gt; ... { ... }
+
+// Write operation that requires user confirmation in the agent UI
+#[rustapi_rs::post("/orders")]
+#[rustapi_rs::tag("agent")]
+#[rustapi_rs::mcp(write, require = "confirm")]
+async fn create_order(Json(body): Json&lt;CreateOrder&gt;) -&gt; ... { ... }
+
+// Never expose this to agents
+#[rustapi_rs::get("/admin/secrets")]
+#[rustapi_rs::mcp(skip)]
+async fn admin_secrets() -&gt; ... { ... }
+
+// This POST is actually safe (idempotent webhook)
+#[rustapi_rs::post("/webhooks/stripe")]
+#[rustapi_rs::mcp(readonly)]
+async fn stripe_webhook() -&gt; ... { ... }
+<span class="boring">}</span></code></pre>
+<h3 id="server-level-policy"><a class="header" href="#server-level-policy">Server-level policy</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>let mcp = McpServer::from_rustapi(
+    &amp;app,
+    McpConfig::new()
+        .allowed_tags(["agent"])
+        .tool_policy(ToolPolicy::ReadOnly),   // Safe default
+        // .tool_policy(ToolPolicy::All),
+);
+<span class="boring">}</span></code></pre>
+<h3 id="metadata-exposed-to-agents-toolslist"><a class="header" href="#metadata-exposed-to-agents-toolslist">Metadata exposed to agents (<code>tools/list</code>)</a></h3>
+<pre><code class="language-json">{
+  "name": "createOrder",
+  "description": "Create a new order",
+  "inputSchema": { ... },
+  "permission": "write",
+  "requiresConfirmation": true
+}
+</code></pre>
+<p>Agents (Claude, Cursor, etc.) can use the <code>permission</code> and <code>requiresConfirmation</code> fields to decide whether to auto-approve or ask the user.</p>
+<p>The metadata comes from the <code>x-mcp</code> OpenAPI extension that the <code>#[mcp(...)]</code> attribute populates on the operation. This keeps everything inside the normal OpenAPI document.</p>
+<h3 id="readonly-vs-all-policies"><a class="header" href="#readonly-vs-all-policies">ReadOnly vs All policies</a></h3>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>// Safe default for agents â€“ only GET/HEAD etc. become tools
+.tool_policy(ToolPolicy::ReadOnly)
+
+// Full access (writes will appear)
+.tool_policy(ToolPolicy::All)
+<span class="boring">}</span></code></pre>
+<p>A <code>#[post(...)]</code> or <code>#[delete(...)]</code> is automatically hidden when <code>ReadOnly</code> is active (unless you explicitly mark it <code>#[mcp(readonly)]</code>).</p>
+<h2 id="testing-your-mcp-surface"><a class="header" href="#testing-your-mcp-surface">Testing Your MCP Surface</a></h2>
+<p>The <code>rustapi-mcp</code> crate ships with helpers that make it easy to test the sidecar in-process during normal <code>cargo test</code>.</p>
+<p>See the integration tests in the repository (<code>crates/rustapi-mcp/tests/mcp_e2e.rs</code>) for patterns using ephemeral ports + <code>reqwest</code> against the JSON-RPC endpoint while the full <code>run_rustapi_and_mcp_with_shutdown</code> is active.</p>
+<h2 id="further-reading"><a class="header" href="#further-reading">Further Reading</a></h2>
+<ul>
+<li><a href="#mcp-in-process-invocation">MCP In-Process Invocation</a></li>
+<li><a href="#openapi-to-mcp-cli">OpenAPI to MCP CLI</a></li>
+<li><a href="#mcp-stdio-transport">MCP stdio Transport</a></li>
+<li>Full standalone <strong>MCP tool example</strong> (05-mcp-server with in-process mode): <a href="https://github.com/Tuntii/rustapi-rs-examples/tree/main/05-mcp-server">rustapi-rs-examples</a> â€” see also the quick internal demo in this repo at <code>crates/rustapi-rs/examples/mcp_tools.rs</code></li>
+<li>Native MCP plan: <code>memories/native_mcp_orchestration_plan.md</code></li>
+<li>gRPC side-by-side pattern: <a href="#grpc-integration">gRPC Integration</a></li>
+<li>TOON for LLM efficiency: <a href="#ai-integration">AI Integration (TOON)</a></li>
+</ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="mcp-in-process-invocation"><a class="header" href="#mcp-in-process-invocation">MCP In-Process Invocation</a></h1>
 <p>By default, <code>tools/call</code> from an MCP server proxies over HTTP to your main RustAPI server (even on localhost). This guarantees that every middleware, interceptor, extractor, and validator runs exactly as for normal traffic.</p>
@@ -5696,7 +5985,7 @@ async fn main() {
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="response-compression"><a class="header" href="#response-compression">Response Compression</a></h1>
 <p>RustAPI supports automatic response compression (Gzip, Deflate, Brotli) via the <code>CompressionLayer</code>. This middleware negotiates the best compression algorithm based on the client’s <code>Accept-Encoding</code> header.</p>
-<h2 id="dependencies-7"><a class="header" href="#dependencies-7">Dependencies</a></h2>
+<h2 id="dependencies-8"><a class="header" href="#dependencies-8">Dependencies</a></h2>
 <p>To use compression, you must enable the <code>compression</code> feature in <code>rustapi-core</code> (or <code>rustapi-rs</code>). For Brotli support, enable <code>compression-brotli</code>.</p>
 <pre><code class="language-toml">[dependencies]
 rustapi-rs = { version = "0.1.537", features = ["compression", "compression-brotli"] }
@@ -6148,7 +6437,7 @@ let app = RustApi::auto()
 <li>if replay is enabled, load the replay panel and inspect a captured entry</li>
 <li>disable <code>core-dashboard</code> in a normal build and confirm the dashboard route is not mounted</li>
 </ol>
-<h2 id="see-also-2"><a class="header" href="#see-also-2">See also</a></h2>
+<h2 id="see-also-3"><a class="header" href="#see-also-3">See also</a></h2>
 <ul>
 <li><a href="#replay-workflow-time-travel-debugging">Time-Travel Debugging (Replay)</a></li>
 <li><a href="#observability-1">Observability</a></li>
@@ -7015,7 +7304,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&g
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="grpc-integration"><a class="header" href="#grpc-integration">gRPC Integration</a></h1>
 <p>RustAPI allows you to seamlessly integrate gRPC services alongside your HTTP API, running both on the same Tokio runtime or even the same port (with proper multiplexing, though separate ports are simpler). We use the <code>rustapi-grpc</code> crate, which provides helpers for <a href="https://github.com/hyperium/tonic">Tonic</a>.</p>
-<h2 id="dependencies-8"><a class="header" href="#dependencies-8">Dependencies</a></h2>
+<h2 id="dependencies-9"><a class="header" href="#dependencies-9">Dependencies</a></h2>
 <p>Add the following to your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
 rustapi-rs = { version = "0.1.537", features = ["grpc"] }
@@ -7050,7 +7339,7 @@ message HelloReply {
     tonic_build::compile_protos("proto/helloworld.proto")?;
     Ok(())
 }</code></pre>
-<h2 id="implementation-1"><a class="header" href="#implementation-1">Implementation</a></h2>
+<h2 id="implementation-2"><a class="header" href="#implementation-2">Implementation</a></h2>
 <p>Here is how to run both servers concurrently with shared shutdown.</p>
 <pre class="playground"><code class="language-rust no_run">use rustapi_rs::prelude::*;
 use rustapi_rs::grpc::{run_rustapi_and_grpc_with_shutdown, tonic};

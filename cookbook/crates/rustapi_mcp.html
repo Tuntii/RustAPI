@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-fe6ca948.js";
+            window.path_to_searchindex_js = "../searchindex-9033ebbb.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-09b14b8b.js"></script>
@@ -182,6 +182,59 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="rustapi-mcp-the-agent-bridge"><a class="header" href="#rustapi-mcp-the-agent-bridge">rustapi-mcp: The Agent Bridge</a></h1>
+<p><strong>Lens</strong>: “Your API is now a tool provider for LLMs.”<br><strong>Philosophy</strong>: “Discover once, execute through the real stack, expose nothing by accident.”</p>
+<p><code>rustapi-mcp</code> turns a normal RustAPI application into a first-class participant in the Model Context Protocol (MCP) ecosystem. Compatible clients (Claude Desktop, Cursor, custom agent runtimes, etc.) can discover a curated set of your endpoints as tools and invoke them with full respect for your existing middleware, validation, and observability.</p>
+<h2 id="what-you-get"><a class="header" href="#what-you-get">What You Get</a></h2>
+<ul>
+<li><code>McpConfig</code> builder for name, version, <code>allowed_tags</code>, <code>allowed_path_prefixes</code>, and <code>admin_token</code>.</li>
+<li><code>McpServer::new(...)</code>, <code>::from_rustapi(&amp;app, config)</code>, <code>::from_spec(...)</code>.</li>
+<li>Automatic conversion of OpenAPI operations (powered by your <code>#[derive(Schema)]</code> types) into MCP tool manifests (<code>name</code>, <code>description</code>, <code>inputSchema</code>).</li>
+<li>Real <code>tools/call</code> execution via a sidecar HTTP JSON-RPC server. Calls are proxied back to your main RustAPI listener so every layer runs exactly as for normal traffic.</li>
+<li><code>run_rustapi_and_mcp</code> + <code>run_rustapi_and_mcp_with_shutdown</code> helpers (same shape as the gRPC ones).</li>
+<li>Feature flag: <code>protocol-mcp</code> (also included in <code>protocol-all</code> and <code>full</code>).</li>
+</ul>
+<h2 id="enable-it"><a class="header" href="#enable-it">Enable It</a></h2>
+<pre><code class="language-toml">[dependencies]
+rustapi-rs = { version = "0.1.478", features = ["protocol-mcp"] }
+</code></pre>
+<h2 id="basic-usage-recommended"><a class="header" href="#basic-usage-recommended">Basic Usage (Recommended)</a></h2>
+<pre><code class="language-rust ignore">use rustapi_rs::prelude::*;
+use rustapi_rs::protocol::mcp::{McpConfig, McpServer, run_rustapi_and_mcp};
+
+let app = RustApi::auto();
+
+let mcp = McpServer::from_rustapi(
+    &amp;app,
+    McpConfig::new()
+        .name("my-api")
+        .allowed_tags(["public", "agent"]),
+);
+
+run_rustapi_and_mcp(app, "0.0.0.0:8080", mcp, "0.0.0.0:9090").await?;</code></pre>
+<p>Tool calls arriving on port 9090 are turned into real HTTP requests against port 8080 (or whichever address you configured). This guarantees that JWT layers, rate limiters, circuit breakers, request replay recording, etc. all see the invocation.</p>
+<h2 id="security-model"><a class="header" href="#security-model">Security Model</a></h2>
+<p>Nothing is auto-exposed. The two main controls live in <code>McpConfig</code>:</p>
+<ul>
+<li><code>allowed_tags(...)</code> â€” only operations carrying at least one of the listed tags become tools.</li>
+<li><code>allow_path_prefix(...)</code> â€” additional path-based allow list.</li>
+</ul>
+<p>This is the same philosophy as the rest of RustAPI: explicit and auditable.</p>
+<h2 id="current-transport"><a class="header" href="#current-transport">Current Transport</a></h2>
+<p>MCP v1 uses a minimal JSON-RPC over plain HTTP POST (the same style used by many early MCP implementations). The crate is structured so additional transports (full SSE, stdio bridge) can be added later behind the same <code>McpServer</code> surface.</p>
+<h2 id="relationship-to-other-crates"><a class="header" href="#relationship-to-other-crates">Relationship to Other Crates</a></h2>
+<ul>
+<li>Reuses <code>rustapi-openapi</code> for schema and operation metadata (no duplication).</li>
+<li>Works beautifully with <code>protocol-toon</code> / <code>LlmResponse</code> when you want token-efficient payloads for agents.</li>
+<li>Plays well with <code>extras-replay</code>, <code>extras-audit</code>, and all the resilience layers because tool calls are real traffic.</li>
+</ul>
+<h2 id="status--roadmap"><a class="header" href="#status--roadmap">Status &amp; Roadmap</a></h2>
+<p>Core functionality (discovery + real proxied invocation + runner) is complete. See the top-level README and <code>memories/native_mcp_orchestration_plan.md</code> for remaining polish items (cookbook examples, more client conformance tests, optional direct in-process invoker to avoid the localhost hop).</p>
+<h2 id="see-also"><a class="header" href="#see-also">See Also</a></h2>
+<ul>
+<li>Recipe: <a href="../recipes/mcp_integration.html">MCP Integration (Agent Tools)</a></li>
+<li>gRPC counterpart: <a href="rustapi_grpc.html">rustapi-grpc</a></li>
+<li>AI-friendly responses: <a href="rustapi_toon.html">rustapi-toon</a></li>
+</ul>
 
                     </main>
 
