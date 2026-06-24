@@ -449,7 +449,9 @@ impl FromRequest for Multipart {
         let boundary = extract_boundary(content_type)
             .ok_or_else(|| ApiError::bad_request("Missing boundary in Content-Type"))?;
 
-        // Get body
+        // Buffer streaming bodies from live HTTP connections before parsing.
+        req.load_body().await?;
+
         let body = req
             .take_body()
             .ok_or_else(|| ApiError::internal("Body already consumed"))?;
@@ -562,96 +564,131 @@ fn extract_boundary(content_type: &str) -> Option<String> {
     })
 }
 
-/// Parse multipart form data
-fn parse_multipart(body: &Bytes, boundary: &str) -> Result<Vec<MultipartField>> {
-    let mut fields = Vec::new();
-    let delimiter = format!("--{}", boundary);
-    let end_delimiter = format!("--{}--", boundary);
+fn find_subsequence(haystack: &[u8], needle: &[u8], from: usize) -> Option<usize> {
+    haystack[from..]
+        .windows(needle.len())
+        .position(|window| window == needle)
+        .map(|pos| from + pos)
+}
 
-    // Convert body to string for easier parsing
-    // Note: This is a simplified parser. For production, consider using multer crate.
-    let body_str = String::from_utf8_lossy(body);
+fn trim_trailing_crlf(mut data: Vec<u8>) -> Vec<u8> {
+    while data.ends_with(b"\r\n") {
+        data.truncate(data.len().saturating_sub(2));
+    }
+    while data.ends_with(b"\n") {
+        data.truncate(data.len().saturating_sub(1));
+    }
+    data
+}
 
-    // Split by delimiter
-    let parts: Vec<&str> = body_str.split(&delimiter).collect();
+fn parse_multipart_part(part: &[u8]) -> Option<MultipartField> {
+    let (header_end, body_start) = if let Some(pos) = find_subsequence(part, b"\r\n\r\n", 0) {
+        (pos, pos + 4)
+    } else if let Some(pos) = find_subsequence(part, b"\n\n", 0) {
+        (pos, pos + 2)
+    } else {
+        return None;
+    };
 
-    for part in parts.iter().skip(1) {
-        // Skip empty parts and end delimiter
-        let part = part.trim_start_matches("\r\n").trim_start_matches('\n');
-        if part.is_empty() || part.starts_with("--") {
+    let headers_section = String::from_utf8_lossy(&part[..header_end]);
+    let body_section = trim_trailing_crlf(part[body_start..].to_vec());
+
+    let mut name = None;
+    let mut filename = None;
+    let mut content_type = None;
+
+    for header_line in headers_section.lines() {
+        let header_line = header_line.trim();
+        if header_line.is_empty() {
             continue;
         }
 
-        // Find header/body separator (blank line)
-        let header_body_split = if let Some(pos) = part.find("\r\n\r\n") {
-            pos
-        } else if let Some(pos) = part.find("\n\n") {
-            pos
-        } else {
-            continue;
-        };
+        if let Some((key, value)) = header_line.split_once(':') {
+            let key = key.trim().to_lowercase();
+            let value = value.trim();
 
-        let headers_section = &part[..header_body_split];
-        let body_section = &part[header_body_split..]
-            .trim_start_matches("\r\n\r\n")
-            .trim_start_matches("\n\n");
-
-        // Remove trailing boundary markers from body
-        let body_section = body_section
-            .trim_end_matches(&end_delimiter)
-            .trim_end_matches(&delimiter)
-            .trim_end_matches("\r\n")
-            .trim_end_matches('\n');
-
-        // Parse headers
-        let mut name = None;
-        let mut filename = None;
-        let mut content_type = None;
-
-        for header_line in headers_section.lines() {
-            let header_line = header_line.trim();
-            if header_line.is_empty() {
-                continue;
-            }
-
-            if let Some((key, value)) = header_line.split_once(':') {
-                let key = key.trim().to_lowercase();
-                let value = value.trim();
-
-                match key.as_str() {
-                    "content-disposition" => {
-                        // Parse name and filename from Content-Disposition
-                        for part in value.split(';') {
-                            let part = part.trim();
-                            if part.starts_with("name=") {
-                                name = Some(
-                                    part.trim_start_matches("name=")
-                                        .trim_matches('"')
-                                        .to_string(),
-                                );
-                            } else if part.starts_with("filename=") {
-                                filename = Some(
-                                    part.trim_start_matches("filename=")
-                                        .trim_matches('"')
-                                        .to_string(),
-                                );
-                            }
+            match key.as_str() {
+                "content-disposition" => {
+                    for segment in value.split(';') {
+                        let segment = segment.trim();
+                        if segment.starts_with("name=") {
+                            name = Some(
+                                segment
+                                    .trim_start_matches("name=")
+                                    .trim_matches('"')
+                                    .to_string(),
+                            );
+                        } else if segment.starts_with("filename=") {
+                            filename = Some(
+                                segment
+                                    .trim_start_matches("filename=")
+                                    .trim_matches('"')
+                                    .to_string(),
+                            );
                         }
                     }
-                    "content-type" => {
-                        content_type = Some(value.to_string());
-                    }
-                    _ => {}
                 }
+                "content-type" => {
+                    content_type = Some(value.to_string());
+                }
+                _ => {}
+            }
+        }
+    }
+
+    Some(MultipartField::new(
+        name,
+        filename,
+        content_type,
+        Bytes::from(body_section),
+    ))
+}
+
+/// Parse multipart form data from raw bytes (binary-safe).
+fn parse_multipart(body: &Bytes, boundary: &str) -> Result<Vec<MultipartField>> {
+    let delimiter = format!("--{}", boundary);
+    let delim = delimiter.as_bytes();
+
+    let first = find_subsequence(body, delim, 0)
+        .ok_or_else(|| ApiError::bad_request("No multipart boundary found"))?;
+
+    let mut fields = Vec::new();
+    let mut cursor = first + delim.len();
+
+    if body[cursor..].starts_with(b"--") {
+        return Ok(fields);
+    }
+
+    if body[cursor..].starts_with(b"\r\n") {
+        cursor += 2;
+    } else if body.get(cursor) == Some(&b'\n') {
+        cursor += 1;
+    }
+
+    while cursor < body.len() {
+        let next = find_subsequence(body, delim, cursor);
+        let part_end = next.unwrap_or(body.len());
+        let part = &body[cursor..part_end];
+
+        if !part.is_empty() {
+            if let Some(field) = parse_multipart_part(part) {
+                fields.push(field);
             }
         }
 
-        fields.push(MultipartField::new(
-            name,
-            filename,
-            content_type,
-            Bytes::copy_from_slice(body_section.as_bytes()),
-        ));
+        let Some(next_pos) = next else {
+            break;
+        };
+
+        cursor = next_pos + delim.len();
+        if body[cursor..].starts_with(b"--") {
+            break;
+        }
+        if body[cursor..].starts_with(b"\r\n") {
+            cursor += 2;
+        } else if body.get(cursor) == Some(&b'\n') {
+            cursor += 1;
+        }
     }
 
     Ok(fields)
@@ -864,6 +901,27 @@ mod tests {
         assert_eq!(fields[1].file_name(), Some("test.txt"));
         assert_eq!(fields[1].content_type(), Some("text/plain"));
         assert!(fields[1].is_file());
+    }
+
+    #[tokio::test]
+    async fn test_parse_multipart_preserves_binary_payload() {
+        let boundary = "test-boundary";
+        let binary = vec![0x4D, 0x5A, 0x90, 0x00, 0xFF, 0xFE, 0x00, 0x00];
+        let mut body = format!(
+            "--{boundary}\r\nContent-Disposition: form-data; name=\"project_name\"\r\n\r\napp\r\n\
+             --{boundary}\r\nContent-Disposition: form-data; name=\"binary\"; filename=\"app.bin\"\r\n\
+             Content-Type: application/octet-stream\r\n\r\n"
+        )
+        .into_bytes();
+        body.extend_from_slice(&binary);
+        body.extend_from_slice(format!("\r\n--{boundary}--\r\n").as_bytes());
+
+        let fields = parse_multipart(&Bytes::from(body), boundary).unwrap();
+        assert_eq!(fields.len(), 2);
+        assert_eq!(
+            fields[1].bytes().await.expect("binary field"),
+            binary.as_slice()
+        );
     }
 
     #[test]

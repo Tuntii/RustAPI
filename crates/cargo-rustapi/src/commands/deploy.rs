@@ -416,7 +416,7 @@ async fn deploy_cloud(args: CloudArgs) -> Result<()> {
     // Upload
     println!("  ☁️  Uploading to RustAPI Cloud...");
 
-    let client = reqwest::Client::new();
+    let client = cloud_http_client()?;
     let form = reqwest::multipart::Form::new()
         .text("project_name", project_name.clone())
         .part(
@@ -484,12 +484,20 @@ async fn deploy_cloud(args: CloudArgs) -> Result<()> {
 }
 
 #[cfg(feature = "cloud")]
+fn cloud_http_client() -> Result<reqwest::Client> {
+    reqwest::Client::builder()
+        .timeout(Duration::from_secs(10))
+        .build()
+        .context("Failed to build HTTP client")
+}
+
+#[cfg(feature = "cloud")]
 async fn fetch_deploy_status(
     cloud_url: &str,
     token: &str,
     deploy_id: &str,
 ) -> Result<DeployResponse> {
-    let client = reqwest::Client::new();
+    let client = cloud_http_client()?;
     let response = client
         .get(format!("{}/deploy/{}/status", cloud_url, deploy_id))
         .header("Authorization", format!("Bearer {}", token))
