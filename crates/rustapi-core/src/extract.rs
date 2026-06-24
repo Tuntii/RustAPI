@@ -710,6 +710,10 @@ impl FromRequestParts for Headers {
     }
 }
 
+impl OperationModifier for Headers {
+    fn update_operation(_op: &mut Operation) {}
+}
+
 impl Deref for Headers {
     type Target = http::HeaderMap;
 

@@ -19,6 +19,10 @@ pub enum DeployArgs {
     #[cfg(feature = "cloud")]
     Cloud(CloudArgs),
 
+    /// Check status of a RustAPI Cloud deployment
+    #[cfg(feature = "cloud")]
+    Status(DeployStatusArgs),
+
     /// Generate a Dockerfile for the project
     Docker(DockerArgs),
 
@@ -30,6 +34,13 @@ pub enum DeployArgs {
 
     /// Deploy to Shuttle.rs
     Shuttle(ShuttleArgs),
+}
+
+#[cfg(feature = "cloud")]
+#[derive(Args, Debug)]
+pub struct DeployStatusArgs {
+    /// Deploy ID returned by `deploy cloud`
+    pub deploy_id: String,
 }
 
 #[cfg(feature = "cloud")]
@@ -105,6 +116,8 @@ pub async fn deploy(args: DeployArgs) -> Result<()> {
     match args {
         #[cfg(feature = "cloud")]
         DeployArgs::Cloud(cloud_args) => deploy_cloud(cloud_args).await,
+        #[cfg(feature = "cloud")]
+        DeployArgs::Status(status_args) => deploy_status(status_args).await,
         DeployArgs::Docker(docker_args) => generate_dockerfile(docker_args).await,
         DeployArgs::Fly(fly_args) => deploy_fly(fly_args).await,
         DeployArgs::Railway(railway_args) => deploy_railway(railway_args).await,
@@ -426,7 +439,7 @@ async fn deploy_cloud(args: CloudArgs) -> Result<()> {
 
     if args.no_wait {
         println!("  ✅ Deploy queued: {}", deploy_id);
-        println!("  Check status: rustapi deploy status {}", deploy_id);
+        println!("  Check status: cargo rustapi deploy status {}", deploy_id);
         return Ok(());
     }
 
@@ -438,18 +451,11 @@ async fn deploy_cloud(args: CloudArgs) -> Result<()> {
     for _ in 0..120 {
         tokio::time::sleep(Duration::from_secs(3)).await;
 
-        let status_resp: DeployResponse = match client
-            .get(format!("{}/deploy/{}/status", cloud_url, deploy_id))
-            .header("Authorization", format!("Bearer {}", token))
-            .send()
-            .await
-        {
-            Ok(resp) => match resp.json().await {
+        let status_resp: DeployResponse =
+            match fetch_deploy_status(cloud_url, token, &deploy_id).await {
                 Ok(body) => body,
                 Err(_) => continue,
-            },
-            Err(_) => continue,
-        };
+            };
 
         match status_resp.status.as_str() {
             "running" | "live" => {
@@ -472,7 +478,77 @@ async fn deploy_cloud(args: CloudArgs) -> Result<()> {
 
     spinner.finish_with_message("Deploy timed out");
     println!("  Deploy ID: {} (still processing)", deploy_id);
-    println!("  Check: rustapi deploy status {}", deploy_id);
+    println!("  Check: cargo rustapi deploy status {}", deploy_id);
+
+    Ok(())
+}
+
+#[cfg(feature = "cloud")]
+async fn fetch_deploy_status(
+    cloud_url: &str,
+    token: &str,
+    deploy_id: &str,
+) -> Result<DeployResponse> {
+    let client = reqwest::Client::new();
+    let response = client
+        .get(format!("{}/deploy/{}/status", cloud_url, deploy_id))
+        .header("Authorization", format!("Bearer {}", token))
+        .send()
+        .await
+        .context("Failed to connect to RustAPI Cloud")?;
+
+    if !response.status().is_success() {
+        let status = response.status();
+        let body = response.text().await.unwrap_or_default();
+        return Err(anyhow::anyhow!(
+            "Deploy status request failed ({}): {}",
+            status,
+            body
+        ));
+    }
+
+    response
+        .json::<DeployResponse>()
+        .await
+        .context("Invalid response from deploy status endpoint")
+}
+
+#[cfg(all(feature = "cloud", test))]
+mod status_tests {
+    use super::DeployResponse;
+
+    #[test]
+    fn deploy_response_matches_cloud_api_shape() {
+        let json = r#"{"deploy_id":"d-1","status":"live","url":"http://127.0.0.1:30001"}"#;
+        let parsed: DeployResponse = serde_json::from_str(json).expect("shape");
+        assert_eq!(parsed.deploy_id, "d-1");
+        assert_eq!(parsed.status, "live");
+        assert_eq!(parsed.url.as_deref(), Some("http://127.0.0.1:30001"));
+    }
+}
+
+#[cfg(feature = "cloud")]
+async fn deploy_status(args: DeployStatusArgs) -> Result<()> {
+    let config = load_config()?;
+
+    let token = config
+        .token
+        .as_ref()
+        .ok_or_else(|| anyhow::anyhow!("Not logged in. Run `rustapi login` first."))?;
+
+    let cloud_url = config
+        .cloud_url
+        .as_deref()
+        .unwrap_or("https://api.rustapi.cloud")
+        .trim_end_matches('/');
+
+    let status = fetch_deploy_status(cloud_url, token, &args.deploy_id).await?;
+
+    println!("  Deploy ID: {}", status.deploy_id);
+    println!("  Status:    {}", status.status);
+    if let Some(url) = status.url {
+        println!("  URL:       {}", url);
+    }
 
     Ok(())
 }

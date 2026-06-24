@@ -461,6 +461,34 @@ impl FromRequest for Multipart {
     }
 }
 
+impl rustapi_openapi::OperationModifier for Multipart {
+    fn update_operation(op: &mut rustapi_openapi::Operation) {
+        use rustapi_openapi::{MediaType, RequestBody, SchemaRef};
+        use std::collections::BTreeMap;
+
+        let mut content = BTreeMap::new();
+        content.insert(
+            "multipart/form-data".to_string(),
+            MediaType {
+                schema: Some(SchemaRef::Inline(serde_json::json!({ "type": "object" }))),
+                example: None,
+            },
+        );
+
+        op.request_body = Some(RequestBody {
+            description: None,
+            required: Some(true),
+            content,
+        });
+    }
+}
+
+impl rustapi_openapi::OperationModifier for StreamingMultipart {
+    fn update_operation(op: &mut rustapi_openapi::Operation) {
+        Multipart::update_operation(op);
+    }
+}
+
 fn request_body_stream(req: &mut Request, limit: usize) -> Result<StreamingBody> {
     if let Some(stream) = req.take_stream() {
         return Ok(StreamingBody::new(stream, Some(limit)));

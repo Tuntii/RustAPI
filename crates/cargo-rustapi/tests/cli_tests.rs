@@ -466,3 +466,26 @@ mod migrate_command {
             .stdout(predicate::str::contains("Revert"));
     }
 }
+
+#[cfg(feature = "cloud")]
+mod deploy_command {
+    use super::*;
+
+    #[test]
+    fn test_deploy_status_help() {
+        cargo_rustapi()
+            .args(["deploy", "status", "--help"])
+            .assert()
+            .success()
+            .stdout(predicate::str::contains("Deploy ID"));
+    }
+
+    #[test]
+    fn test_deploy_cloud_help() {
+        cargo_rustapi()
+            .args(["deploy", "cloud", "--help"])
+            .assert()
+            .success()
+            .stdout(predicate::str::contains("RustAPI Cloud"));
+    }
+}
