@@ -56,7 +56,7 @@ rustapi-validate = { workspace = true }
 prometheus = { workspace = true, optional = true }
 
 # SQLx (optional)
-sqlx = { version = "0.8", optional = true, default-features = false }
+sqlx = { version = "0.9", optional = true, default-features = false }
 
 # OpenAPI
 rustapi-openapi = { workspace = true, default-features = false }
