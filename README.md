@@ -172,7 +172,7 @@ Current benchmark methodology and canonical published performance claims live in
 
 ```toml
 [dependencies]
-api = { package = "rustapi-rs", version = "0.1.537" }
+api = { package = "rustapi-rs", version = "0.1.550" }
 ```
 
 ```rust
@@ -256,15 +256,30 @@ Features are organized into three namespaces:
 
 Meta features: `core` (default), `protocol-all`, `extras-all`, `full`.
 
+## RustAPI Cloud
+
+Deploy to managed hosting from the CLI. The cloud **backend** lives in [RustAPI-Cloud](https://github.com/Tuntii/RustAPI-Cloud); this repo ships the framework and CLI client.
+
+```bash
+cargo install cargo-rustapi
+cargo rustapi login
+cargo rustapi deploy cloud
+cargo rustapi deploy status <deploy-id>
+```
+
+Default API: `https://api.rustapi.cloud`. Self-hosted operators can pass `--cloud-url` to point at their own backend.
+
+Full guide: [docs/cookbook/src/recipes/rustapi_cloud.md](docs/cookbook/src/recipes/rustapi_cloud.md)
+
 ## Recent Changes
 
-See [CHANGELOG.md](CHANGELOG.md) for full history. Highlights in **v0.1.537**:
+See [CHANGELOG.md](CHANGELOG.md) for full history. Highlights in **v0.1.550**:
 
-- **Maintainability (#201):** `app/builder.rs` split into `routing`, `openapi`, `health`, and `run` modules; all `src/**/*.rs` under 50KB
-- **Run lifecycle:** consistent `on_shutdown` hooks across all `run*` entrypoints
-- **RustAPI Cloud CLI** (`cargo rustapi login`, `deploy cloud`) in v0.1.528
+- **RustAPI Cloud CLI:** `deploy cloud`, `deploy status`, device-code `login`, `RUSTAPI_CONFIG_PATH` for isolated credentials
+- **Repo split:** cloud backend moved to [RustAPI-Cloud](https://github.com/Tuntii/RustAPI-Cloud); this repo is framework + CLI only
+- **OpenAPI modifiers:** `Multipart` / `Headers` `OperationModifier` for deploy and upload routes
+- **v0.1.537 maintainability:** `builder.rs` module split (#201), consistent `on_shutdown` across all `run*` entrypoints
 - **Native MCP:** in-process tools, `cargo rustapi mcp generate`, stdio transport
-- **Embedded dashboard** with replay browser and execution-path visualization
 
 ## Documentation
 
@@ -273,8 +288,10 @@ See [CHANGELOG.md](CHANGELOG.md) for full history. Highlights in **v0.1.537**:
 | Docs hub | [docs/README.md](docs/README.md) |
 | Cookbook | [docs/cookbook/src/SUMMARY.md](docs/cookbook/src/SUMMARY.md) |
 | Getting started | [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) |
-| Community & contributing | [docs/COMMUNITY.md](docs/COMMUNITY.md) |
+| RustAPI Cloud | [docs/cookbook/src/recipes/rustapi_cloud.md](docs/cookbook/src/recipes/rustapi_cloud.md) |
+| Production baseline | [docs/PRODUCTION_BASELINE.md](docs/PRODUCTION_BASELINE.md) |
 | Production checklist | [docs/PRODUCTION_CHECKLIST.md](docs/PRODUCTION_CHECKLIST.md) |
+| Community & contributing | [docs/COMMUNITY.md](docs/COMMUNITY.md) |
 | API reference | [docs.rs/rustapi-rs](https://docs.rs/rustapi-rs) |
 
 **Examples:** in-repo [`crates/rustapi-rs/examples/`](crates/rustapi-rs/examples/) and the separate **[rustapi-rs-examples](https://github.com/Tuntii/rustapi-rs-examples)** repository.

@@ -1,4 +1,4 @@
-﻿# Production Tuning
+# Production Tuning
 
 **Problem**: Your API needs to handle extreme load (10k+ requests per second).
 

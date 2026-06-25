@@ -1,4 +1,4 @@
-﻿# Middleware Debugging
+# Middleware Debugging
 
 Middleware bugs are rarely glamorous. They usually look like:
 

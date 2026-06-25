@@ -1,8 +1,8 @@
-﻿# RustAPI Documentation
+# RustAPI Documentation
 
 Central index for user guides, architecture notes, and open-source contribution paths.
 
-**Current release:** [`rustapi-rs` 0.1.537](https://crates.io/crates/rustapi-rs) Â· [Changelog](../CHANGELOG.md) Â· [All releases](https://github.com/Tuntii/RustAPI/releases)
+**Current release:** [`rustapi-rs` 0.1.550](https://crates.io/crates/rustapi-rs) · [Changelog](../CHANGELOG.md) · [All releases](https://github.com/Tuntii/RustAPI/releases)
 
 ---
 
@@ -28,12 +28,20 @@ Central index for user guides, architecture notes, and open-source contribution 
 
 | Document | Description |
 |----------|-------------|
-| [Production Baseline](PRODUCTION_BASELINE.md) | Recommended defaults |
-| [Production Checklist](PRODUCTION_CHECKLIST.md) | Rollout checklist |
-| [Cookbook: Deployment](cookbook/src/recipes/deployment.md) | Deploy patterns |
+| [Production Baseline](PRODUCTION_BASELINE.md) | Recommended defaults (`production_defaults`, probes, middleware) |
+| [Production Checklist](PRODUCTION_CHECKLIST.md) | Pre-deploy and rollout checklist |
+| [Cookbook: Deployment](cookbook/src/recipes/deployment.md) | Docker, Fly.io, Railway, Shuttle, K8s |
+| [Cookbook: RustAPI Cloud](cookbook/src/recipes/rustapi_cloud.md) | Managed hosting via CLI |
 | [Cookbook: Observability](cookbook/src/recipes/observability.md) | Metrics, tracing, health |
 | [Cookbook: Graceful Shutdown](cookbook/src/recipes/graceful_shutdown.md) | Clean shutdown |
 | [Cookbook: Replay](cookbook/src/recipes/replay.md) | Request capture and replay |
+
+## CLI & tooling
+
+| Document | Description |
+|----------|-------------|
+| [cargo-rustapi (Cookbook)](cookbook/src/crates/cargo_rustapi.md) | Full command reference |
+| [RustAPI Cloud backend](https://github.com/Tuntii/RustAPI-Cloud) | Self-hosted / managed cloud source |
 
 ## Open source
 
@@ -53,14 +61,14 @@ Central index for user guides, architecture notes, and open-source contribution 
 
 ```toml
 [dependencies]
-rustapi-rs = "0.1.537"
+rustapi-rs = "0.1.550"
 ```
 
 Alias for shorter macros (recommended):
 
 ```toml
 [dependencies]
-api = { package = "rustapi-rs", version = "0.1.537" }
+api = { package = "rustapi-rs", version = "0.1.550" }
 ```
 
 ```rust
@@ -82,12 +90,15 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
 
 Open `http://127.0.0.1:8080/docs` for auto-generated OpenAPI / Swagger UI.
 
-## Planned work
+## Deploy to RustAPI Cloud
 
-Design and planning docs (not yet shipped):
+```bash
+cargo install cargo-rustapi
+cargo rustapi login
+cargo rustapi deploy cloud
+```
 
-- [GraphQL Adapter Plan](GRAPHQL_ADAPTER_PLAN.md)
-- [Adaptive Execution Debug Plan](ADAPTIVE_EXECUTION_DEBUG_PLAN.md)
+See [RustAPI Cloud recipe](cookbook/src/recipes/rustapi_cloud.md) for auth, status polling, and self-hosted backends.
 
 ## License
 

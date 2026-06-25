@@ -48,7 +48,7 @@ RustAPI uses a **layered facade architecture** where complexity is hidden behind
 
 ## Crate Responsibilities
 
-### `rustapi-rs` â€” Public Facade
+### `rustapi-rs` — Public Facade
 
 **The only crate users import.**
 
@@ -95,7 +95,7 @@ pub mod prelude {
 }
 ```
 
-### `rustapi-core` â€” HTTP Engine
+### `rustapi-core` — HTTP Engine
 
 **The heart of the framework.**
 
@@ -109,14 +109,14 @@ pub mod prelude {
 | `Server` | `hyper 1.x` | HTTP protocol handling |
 
 **Key files:**
-- [app.rs](../crates/rustapi-core/src/app.rs) â€” `RustApi` builder
-- [router.rs](../crates/rustapi-core/src/router.rs) â€” Radix tree routing
-- [handler.rs](../crates/rustapi-core/src/handler.rs) â€” Handler trait
-- [extract.rs](../crates/rustapi-core/src/extract.rs) â€” All extractors
-- [response.rs](../crates/rustapi-core/src/response.rs) â€” Response types
-- [server.rs](../crates/rustapi-core/src/server.rs) â€” Hyper server
+- [app.rs](../crates/rustapi-core/src/app.rs) — `RustApi` builder
+- [router.rs](../crates/rustapi-core/src/router.rs) — Radix tree routing
+- [handler.rs](../crates/rustapi-core/src/handler.rs) — Handler trait
+- [extract.rs](../crates/rustapi-core/src/extract.rs) — All extractors
+- [response.rs](../crates/rustapi-core/src/response.rs) — Response types
+- [server.rs](../crates/rustapi-core/src/server.rs) — Hyper server
 
-### `rustapi-macros` â€” Procedural Macros
+### `rustapi-macros` — Procedural Macros
 
 **Compile-time code generation.**
 
@@ -138,7 +138,7 @@ async fn get_user(Path(id): Path<u64>) -> Json<User> { ... }
 RustApi::auto().run("0.0.0.0:8080").await
 ```
 
-### `rustapi-openapi` â€” API Documentation
+### `rustapi-openapi` — API Documentation
 
 **Automatic OpenAPI/Swagger generation.**
 
@@ -159,7 +159,7 @@ struct User {
 }
 ```
 
-### `rustapi-validate` â€” Request Validation
+### `rustapi-validate` — Request Validation
 
 **Type-safe request validation.**
 
@@ -188,7 +188,7 @@ async fn create(ValidatedJson(user): ValidatedJson<CreateUser>) -> Json<User> {
 }
 ```
 
-### TOON â€” LLM Optimization (in `rustapi-extras`, feature `toon`)
+### TOON — LLM Optimization (in `rustapi-extras`, feature `toon`)
 
 **Token-Oriented Object Notation for AI.**
 
@@ -202,12 +202,12 @@ Formerly the `rustapi-toon` crate; now part of `rustapi-extras` behind the `toon
 | `ToonFormat` | TOON serialization |
 
 Headers provided by `LlmResponse`:
-- `X-Token-Count-JSON` â€” Tokens if JSON
-- `X-Token-Count-TOON` â€” Tokens if TOON  
-- `X-Token-Savings` â€” Percentage saved
-- `X-Format-Used` â€” Which format was used
+- `X-Token-Count-JSON` — Tokens if JSON
+- `X-Token-Count-TOON` — Tokens if TOON  
+- `X-Token-Savings` — Percentage saved
+- `X-Format-Used` — Which format was used
 
-### `rustapi-extras` â€” Production Middleware
+### `rustapi-extras` — Production Middleware
 
 **Battle-tested middleware components.**
 
@@ -254,7 +254,7 @@ Formerly the `rustapi-testing` crate; now part of `rustapi-core` behind the `tes
 | `Matcher` | Response body/header matching |
 | `Expectation` | Fluent assertion builder |
 
-### `rustapi-ws` â€” WebSocket Support
+### `rustapi-ws` — WebSocket Support
 
 **Real-time bidirectional communication.**
 
@@ -651,11 +651,11 @@ impl<S> Layer<S> for TimingLayer {
 
 RustAPI's architecture enables:
 
-1. **Simplicity** â€” One import, minimal boilerplate
-2. **Safety** â€” Compile-time type checking, no runtime surprises
-3. **Flexibility** â€” Extend with custom extractors, responses, middleware
-4. **Performance** â€” Zero-cost abstractions where possible
-5. **Stability** â€” Internal changes don't break user code
+1. **Simplicity** — One import, minimal boilerplate
+2. **Safety** — Compile-time type checking, no runtime surprises
+3. **Flexibility** — Extend with custom extractors, responses, middleware
+4. **Performance** — Zero-cost abstractions where possible
+5. **Stability** — Internal changes don't break user code
 
 The facade pattern is the key: `rustapi-rs` provides a stable surface, while internal crates can evolve freely.
 

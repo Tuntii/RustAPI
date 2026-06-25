@@ -1,4 +1,4 @@
-﻿# Actix-web -> RustAPI Migration Guide
+# Actix-web -> RustAPI Migration Guide
 
 If you already know Actix-web, RustAPI will feel familiar in a few core areas while removing some of the ceremony around route registration and OpenAPI integration.
 
@@ -128,7 +128,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
 
 ### Migration note
 
-- `RustApi::auto()` is the primary entry point â€” macro-annotated handlers are registered automatically, no wiring needed.
+- `RustApi::auto()` is the primary entry point — macro-annotated handlers are registered automatically, no wiring needed.
 - `RustApi::new()` is available for manual route registration and maps directly to Actix's explicit `.route()` pattern.
 - `RustApi::route()` is the closest equivalent to explicit Actix route registration.
 

@@ -1,4 +1,4 @@
-﻿# Error Handling
+# Error Handling
 
 RustAPI ships with a structured `ApiError` type and a consistent wire format for error responses. The trick is not just returning errors, but returning the **right** error to the client while keeping internal details out of production responses.
 

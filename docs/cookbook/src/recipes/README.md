@@ -1,4 +1,4 @@
-﻿# Recipes
+# Recipes
 
 Recipes are practical, focused guides to solving specific problems with RustAPI.
 
@@ -43,6 +43,7 @@ Each recipe follows a simple structure:
 - [Graceful Shutdown](graceful_shutdown.md)
 - [Time-Travel Debugging (Replay)](replay.md)
 - [Deployment](deployment.md)
+- [RustAPI Cloud (Managed Hosting)](rustapi_cloud.md)
 - [HTTP/3 (QUIC)](http3_quic.md)
 - [gRPC Integration](grpc_integration.md)
 - [Automatic Status Page](status_page.md)

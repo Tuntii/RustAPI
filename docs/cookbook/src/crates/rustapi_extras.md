@@ -1,4 +1,4 @@
-﻿# rustapi-extras: The Toolbox
+# rustapi-extras: The Toolbox
 
 **Lens**: "The Toolbox"
 **Philosophy**: "Batteries included, but swappable."
@@ -93,7 +93,7 @@ The `insight` feature provides powerful real-time traffic analysis and debugging
 
 ```toml
 [dependencies]
-rustapi-extras = { version = "0.1.537", features = ["insight"] }
+rustapi-extras = { version = "0.1.550", features = ["insight"] }
 ```
 
 ### Setup

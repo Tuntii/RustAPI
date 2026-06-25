@@ -1,4 +1,4 @@
-﻿# Getting Started with RustAPI
+# Getting Started with RustAPI
 
 > Build your first API in under 5 minutes.
 
@@ -22,21 +22,21 @@ Add RustAPI to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rustapi-rs = "0.1.537"
+rustapi-rs = "0.1.550"
 ```
 
 You can also rename the crate if you prefer shorter macro paths:
 
 ```toml
 [dependencies]
-api = { package = "rustapi-rs", version = "0.1.537" }
+api = { package = "rustapi-rs", version = "0.1.550" }
 ```
 
 Or with specific features:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.537", features = ["extras-jwt", "extras-cors", "protocol-toon", "protocol-ws", "protocol-view"] }
+rustapi-rs = { version = "0.1.550", features = ["extras-jwt", "extras-cors", "protocol-toon", "protocol-ws", "protocol-view"] }
 ```
 
 ### Available Features
@@ -123,11 +123,11 @@ use rustapi_rs::prelude::*;
 ```
 
 This imports everything you need:
-- `RustApi` â€” Application builder
-- `Json`, `Path`, `Query`, `State` â€” Extractors
-- `Serialize`, `Deserialize` â€” Serde macros
-- `Schema` â€” OpenAPI schema generation
-- `get`, `post`, `put`, `patch`, `delete` â€” Route functions
+- `RustApi` — Application builder
+- `Json`, `Path`, `Query`, `State` — Extractors
+- `Serialize`, `Deserialize` — Serde macros
+- `Schema` — OpenAPI schema generation
+- `get`, `post`, `put`, `patch`, `delete` — Route functions
 
 ### 2. Schema Derivation
 
@@ -138,8 +138,8 @@ struct Message {
 }
 ```
 
-- `Serialize` â€” Enables JSON serialization
-- `Schema` â€” Generates OpenAPI documentation automatically
+- `Serialize` — Enables JSON serialization
+- `Schema` — Generates OpenAPI documentation automatically
 
 ### 3. Route Macro
 
@@ -370,7 +370,7 @@ ApiError::internal("message")         // 500
 ### CORS
 
 ```toml
-rustapi-rs = { version = "0.1.537", features = ["extras-cors"] }
+rustapi-rs = { version = "0.1.550", features = ["extras-cors"] }
 ```
 
 ```rust
@@ -391,7 +391,7 @@ RustApi::new()
 ### JWT Authentication
 
 ```toml
-rustapi-rs = { version = "0.1.537", features = ["extras-jwt"] }
+rustapi-rs = { version = "0.1.550", features = ["extras-jwt"] }
 ```
 
 ```rust
@@ -420,7 +420,7 @@ async fn protected(user: AuthUser<Claims>) -> Json<Response> {
 ### Rate Limiting
 
 ```toml
-rustapi-rs = { version = "0.1.537", features = ["extras-rate-limit"] }
+rustapi-rs = { version = "0.1.550", features = ["extras-rate-limit"] }
 ```
 
 ```rust
@@ -438,7 +438,7 @@ RustApi::new()
 ## TOON Format (LLM Optimization)
 
 ```toml
-rustapi-rs = { version = "0.1.537", features = ["protocol-toon"] }
+rustapi-rs = { version = "0.1.550", features = ["protocol-toon"] }
 ```
 
 ```rust
@@ -469,7 +469,7 @@ Response includes token counting headers:
 Real-time bidirectional communication:
 
 ```toml
-rustapi-rs = { version = "0.1.537", features = ["protocol-ws"] }
+rustapi-rs = { version = "0.1.550", features = ["protocol-ws"] }
 ```
 
 ```rust
@@ -506,7 +506,7 @@ websocat ws://localhost:8080/ws
 Server-side HTML rendering with Tera:
 
 ```toml
-rustapi-rs = { version = "0.1.537", features = ["protocol-view"] }
+rustapi-rs = { version = "0.1.550", features = ["protocol-view"] }
 ```
 
 Create a template file `templates/index.html`:
@@ -580,10 +580,25 @@ cargo rustapi doctor
 ```
 
 Available templates:
-- `minimal` â€” Basic RustAPI setup
-- `api` â€” REST API with CRUD operations
-- `web` â€” Full web app with templates and WebSocket
-- `full` â€” Everything included
+- `minimal` — Basic RustAPI setup
+- `api` — REST API with CRUD operations
+- `web` — Full web app with templates and WebSocket
+- `full` — Everything included
+
+### Deploy to RustAPI Cloud
+
+Managed hosting via CLI (backend: [RustAPI-Cloud](https://github.com/Tuntii/RustAPI-Cloud)):
+
+```bash
+cargo rustapi login
+cargo rustapi whoami
+cargo rustapi deploy cloud
+cargo rustapi deploy status <deploy-id>
+```
+
+Default cloud API: `https://api.rustapi.cloud`. See [RustAPI Cloud recipe](cookbook/src/recipes/rustapi_cloud.md) for auth, self-hosted backends, and troubleshooting.
+
+For Docker/Kubernetes/Fly.io, see [Deployment recipe](cookbook/src/recipes/deployment.md).
 
 ---
 
@@ -627,10 +642,13 @@ async fn test_create_user() {
 
 ## Next Steps
 
-- ğŸ“– [Philosophy](PHILOSOPHY.md) â€” Understand our design principles
-- ğŸ—ï¸ [Architecture](ARCHITECTURE.md) â€” Deep dive into internals
-- ğŸ“š [Features](FEATURES.md) â€” Complete feature documentation
-- ğŸ’¡ [Examples](../examples/) â€” Real-world examples
+- [Philosophy](PHILOSOPHY.md) — Understand our design principles
+- [Architecture](ARCHITECTURE.md) — Deep dive into internals
+- [Features](FEATURES.md) — Complete feature documentation
+- [Production Baseline](PRODUCTION_BASELINE.md) — Recommended production defaults
+- [RustAPI Cloud](cookbook/src/recipes/rustapi_cloud.md) — Managed hosting guide
+- [Examples](../crates/rustapi-rs/examples/) — In-repo examples
+
 
 ---
 
@@ -653,9 +671,9 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sy
 ```
 
 This enables:
-- `/health` â€” aggregate health report
-- `/ready` â€” readiness probe for orchestrators
-- `/live` â€” lightweight liveness probe
+- `/health` — aggregate health report
+- `/ready` — readiness probe for orchestrators
+- `/live` — lightweight liveness probe
 
 If you want a stronger production-ready baseline from day one, use:
 
@@ -745,7 +763,7 @@ struct AnyBody { ... }
 Check that `core-openapi` is enabled (it is included in the default `core` feature):
 
 ```toml
-rustapi-rs = { version = "0.1.537", features = ["core-openapi"] }
+rustapi-rs = { version = "0.1.550", features = ["core-openapi"] }
 ```
 
 ### CLI Commands Not Working

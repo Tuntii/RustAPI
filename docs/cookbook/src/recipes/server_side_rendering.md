@@ -1,4 +1,4 @@
-﻿# Server-Side Rendering (SSR)
+# Server-Side Rendering (SSR)
 
 While RustAPI excels at building JSON APIs, it also supports server-side rendering using the `rustapi-view` crate, which leverages the [Tera](https://keats.github.io/tera/) template engine (inspired by Jinja2).
 
@@ -8,7 +8,7 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.537", features = ["view"] }
+rustapi-rs = { version = "0.1.550", features = ["view"] }
 serde = { version = "1.0", features = ["derive"] }
 ```
 

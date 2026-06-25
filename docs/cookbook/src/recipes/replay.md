@@ -1,4 +1,4 @@
-﻿# Replay workflow: time-travel debugging
+# Replay workflow: time-travel debugging
 
 Record HTTP request/response pairs in a controlled environment, inspect a captured request, replay it against another target, and diff the result before promoting a fix.
 
@@ -20,7 +20,7 @@ Enable the canonical replay feature in your application:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.537", features = ["extras-replay"] }
+rustapi-rs = { version = "0.1.550", features = ["extras-replay"] }
 ```
 
 On the CLI side, `cargo-rustapi` is enough; replay commands are part of the default installation:

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- Comprehensive docs refresh: version sync to **0.1.550**, public [Production Baseline](docs/PRODUCTION_BASELINE.md) and [Production Checklist](docs/PRODUCTION_CHECKLIST.md), new [RustAPI Cloud cookbook recipe](docs/cookbook/src/recipes/rustapi_cloud.md), expanded `cargo-rustapi` reference, encoding fixes, and removal of personal deploy hostnames from release notes.
+
 ### Changed
 
 - **RustAPI Cloud** moved to its own repository: [github.com/Tuntii/RustAPI-Cloud](https://github.com/Tuntii/RustAPI-Cloud). This repo is now framework + CLI only.
@@ -24,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Binary-safe multipart parsing in `rustapi-core`.
 - CLI deploy status HTTP client timeout.
-- Domain spelling and production defaults for `tunayinbayramharcligi.com` deploy host.
+- Cloud CLI default URL aligned to `https://api.rustapi.cloud`.
 
 ### Changed
 

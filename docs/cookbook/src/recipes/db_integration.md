@@ -1,4 +1,4 @@
-﻿# Database Integration
+# Database Integration
 
 RustAPI is database-agnostic, but **SQLx** is the recommended default for most RustAPI services because it is async-first, works naturally with `State`, and supports compile-time query verification.
 
@@ -8,7 +8,7 @@ This recipe shows how to integrate PostgreSQL/MySQL/SQLite using a shared pool, 
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.537", features = ["extras-sqlx"] } # Canonical facade feature for SQLx error conversion
+rustapi-rs = { version = "0.1.550", features = ["extras-sqlx"] } # Canonical facade feature for SQLx error conversion
 sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "uuid"] }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }

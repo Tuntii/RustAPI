@@ -45,8 +45,8 @@ Tool calls arriving on port 9090 are turned into real HTTP requests against port
 
 Nothing is auto-exposed. The two main controls live in `McpConfig`:
 
-- `allowed_tags(...)` â€” only operations carrying at least one of the listed tags become tools.
-- `allow_path_prefix(...)` â€” additional path-based allow list.
+- `allowed_tags(...)` — only operations carrying at least one of the listed tags become tools.
+- `allow_path_prefix(...)` — additional path-based allow list.
 
 This is the same philosophy as the rest of RustAPI: explicit and auditable.
 

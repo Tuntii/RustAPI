@@ -1,4 +1,4 @@
-﻿# CSRF Protection
+# CSRF Protection
 
 Cross-Site Request Forgery (CSRF) protection for your RustAPI applications using the **Double-Submit Cookie** pattern.
 
@@ -15,7 +15,7 @@ RustAPI's CSRF protection works by:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.537", features = ["csrf"] }
+rustapi-rs = { version = "0.1.550", features = ["csrf"] }
 ```
 
 ```rust

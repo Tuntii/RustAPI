@@ -1,4 +1,4 @@
-﻿# File Uploads
+# File Uploads
 
 Handling file uploads is a common requirement. RustAPI provides a `Multipart` extractor to parse `multipart/form-data` requests.
 
@@ -8,7 +8,7 @@ Add `uuid` and `tokio` with `fs` features to your `Cargo.toml`.
 
 ```toml
 [dependencies]
-rustapi-rs = "0.1.537"
+rustapi-rs = "0.1.550"
 tokio = { version = "1", features = ["fs", "io-util"] }
 uuid = { version = "1", features = ["v4"] }
 ```

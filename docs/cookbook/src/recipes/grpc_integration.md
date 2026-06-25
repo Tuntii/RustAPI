@@ -1,4 +1,4 @@
-﻿# gRPC Integration
+# gRPC Integration
 
 RustAPI allows you to seamlessly integrate gRPC services alongside your HTTP API, running both on the same Tokio runtime or even the same port (with proper multiplexing, though separate ports are simpler). We use the `rustapi-grpc` crate, which provides helpers for [Tonic](https://github.com/hyperium/tonic).
 
@@ -8,7 +8,7 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.537", features = ["grpc"] }
+rustapi-rs = { version = "0.1.550", features = ["grpc"] }
 tonic = "0.10"
 prost = "0.12"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }

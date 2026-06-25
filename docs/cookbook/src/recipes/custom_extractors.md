@@ -1,4 +1,4 @@
-﻿# Custom Extractors
+# Custom Extractors
 
 Custom extractors let you move repetitive request parsing out of handlers and into reusable, typed building blocks.
 

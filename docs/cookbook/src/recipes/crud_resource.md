@@ -1,4 +1,4 @@
-﻿# Creating Resources
+# Creating Resources
 
 **Problem**: You need to add a new "Resource" (like Users, Products, or Posts) to your API with standard CRUD operations.
 

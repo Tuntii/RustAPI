@@ -1,4 +1,4 @@
-﻿# Pagination & HATEOAS
+# Pagination & HATEOAS
 
 Implementing pagination correctly is crucial for API performance and usability. RustAPI provides built-in support for HATEOAS (Hypermedia As The Engine Of Application State) compliant pagination, which includes navigation links in the response.
 

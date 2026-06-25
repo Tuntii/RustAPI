@@ -1,4 +1,4 @@
-﻿# MCP Integration (Agent Tools)
+# MCP Integration (Agent Tools)
 
 RustAPI can expose selected HTTP endpoints as **discoverable tools** for LLMs and AI agents (Claude, Cursor, custom multi-agent systems) using the native Model Context Protocol (MCP) support in the `rustapi-mcp` crate.
 
@@ -261,7 +261,7 @@ See the integration tests in the repository (`crates/rustapi-mcp/tests/mcp_e2e.r
 - [MCP In-Process Invocation](mcp_in_process.md)
 - [OpenAPI to MCP CLI](mcp_openapi_cli.md)
 - [MCP stdio Transport](mcp_stdio.md)
-- Full standalone **MCP tool example** (05-mcp-server with in-process mode): [rustapi-rs-examples](https://github.com/Tuntii/rustapi-rs-examples/tree/main/05-mcp-server) â€” see also the quick internal demo in this repo at `crates/rustapi-rs/examples/mcp_tools.rs`
+- Full standalone **MCP tool example** (05-mcp-server with in-process mode): [rustapi-rs-examples](https://github.com/Tuntii/rustapi-rs-examples/tree/main/05-mcp-server) — see also the quick internal demo in this repo at `crates/rustapi-rs/examples/mcp_tools.rs`
 - Native MCP plan: `memories/native_mcp_orchestration_plan.md`
 - gRPC side-by-side pattern: [gRPC Integration](grpc_integration.md)
 - TOON for LLM efficiency: [AI Integration (TOON)](ai_integration.md)

@@ -1,4 +1,4 @@
-﻿# Observability
+# Observability
 
 Production services need more than â€œlogs exist somewhereâ€. A healthy RustAPI observability setup should let you answer three questions quickly:
 
@@ -19,7 +19,7 @@ Enable the relevant features:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.537", features = [
+rustapi-rs = { version = "0.1.550", features = [
   "core",
   "extras-otel",
   "extras-structured-logging",

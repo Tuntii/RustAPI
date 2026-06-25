@@ -1,4 +1,4 @@
-﻿# Axum -> RustAPI Migration Guide
+# Axum -> RustAPI Migration Guide
 
 If you already know Axum, RustAPI will feel familiar in the right places and pleasantly less repetitive in a few others.
 

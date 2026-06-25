@@ -1,4 +1,4 @@
-﻿# Embedded dashboard
+# Embedded dashboard
 
 Use the embedded dashboard when you want a local, opt-in control plane for route topology, execution-path counters, request-stage telemetry, health endpoint discovery, and replay inspection.
 
@@ -13,14 +13,14 @@ Enable the canonical dashboard feature on the public facade:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.537", features = ["core-dashboard"] }
+rustapi-rs = { version = "0.1.550", features = ["core-dashboard"] }
 ```
 
 If you also want the replay browser panel to load recorded traffic, enable replay too:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.537", features = ["core-dashboard", "extras-replay"] }
+rustapi-rs = { version = "0.1.550", features = ["core-dashboard", "extras-replay"] }
 ```
 
 ## Usage
@@ -56,10 +56,10 @@ Open `http://127.0.0.1:8080/__rustapi/dashboard` and enter the token in the head
 
 `DashboardConfig` supports:
 
-- `.admin_token("...")` â€” protects `/api/*` dashboard JSON endpoints with `Authorization: Bearer <token>`.
-- `.path("/__rustapi/dashboard")` â€” changes where the dashboard is mounted.
-- `.title("...")` â€” labels the page for custom deployments.
-- `.replay_api_path("/__rustapi/replays")` â€” points the replay browser at the replay admin API path.
+- `.admin_token("...")` — protects `/api/*` dashboard JSON endpoints with `Authorization: Bearer <token>`.
+- `.path("/__rustapi/dashboard")` — changes where the dashboard is mounted.
+- `.title("...")` — labels the page for custom deployments.
+- `.replay_api_path("/__rustapi/replays")` — points the replay browser at the replay admin API path.
 
 The dashboard snapshot includes:
 

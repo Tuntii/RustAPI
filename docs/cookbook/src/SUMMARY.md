@@ -69,6 +69,7 @@
     - [Audit Logging](recipes/audit_logging.md)
     - [Time-Travel Debugging (Replay)](recipes/replay.md)
     - [Deployment](recipes/deployment.md)
+    - [RustAPI Cloud (Managed Hosting)](recipes/rustapi_cloud.md)
     - [HTTP/3 (QUIC)](recipes/http3_quic.md)
     - [gRPC Integration](recipes/grpc_integration.md)
     - [Automatic Status Page](recipes/status_page.md)

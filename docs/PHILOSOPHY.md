@@ -1,4 +1,4 @@
-﻿# RustAPI Philosophy
+# RustAPI Philosophy
 
 > *"The power of Rust. Modern DX. LLM-ready."*
 
@@ -27,7 +27,7 @@ Building APIs in Rust traditionally requires:
 
 ### The Solution
 
-RustAPI provides a **facade** â€” a clean, stable API that wraps all the complexity:
+RustAPI provides a **facade** — a clean, stable API that wraps all the complexity:
 
 ```rust
 // This is all you need. No boilerplate.
@@ -72,7 +72,7 @@ We achieve this through:
 ```toml
 # Your Cargo.toml - simple and stable
 [dependencies]
-rustapi-rs = "0.1.537"
+rustapi-rs = "0.1.550"
 ```
 
 You never write:
@@ -103,7 +103,7 @@ validator = "0.16"
 **Example scenario:** When `hyper 2.0` releases with breaking changes:
 1. We update `rustapi-core` to use `hyper 2.0`
 2. We bump `rustapi-rs` to `0.2.0`
-3. **Your code stays exactly the same** â€” just update the version
+3. **Your code stays exactly the same** — just update the version
 
 ### 4. ğŸ Batteries Included (But Optional)
 
@@ -111,13 +111,13 @@ validator = "0.16"
 
 ```toml
 # Just the basics
-rustapi-rs = "0.1.537"
+rustapi-rs = "0.1.550"
 
 # Kitchen sink
-rustapi-rs = { version = "0.1.537", features = ["full"] }
+rustapi-rs = { version = "0.1.550", features = ["full"] }
 
 # Pick what you need
-rustapi-rs = { version = "0.1.537", features = ["extras-jwt", "extras-cors", "protocol-toon"] }
+rustapi-rs = { version = "0.1.550", features = ["extras-jwt", "extras-cors", "protocol-toon"] }
 ```
 
 | Feature | What You Get |
@@ -146,9 +146,9 @@ users[(id:1,name:Alice)(id:2,name:Bob)]total:2
 â†’ **~9 tokens** (55% savings)
 
 RustAPI provides:
-- `Toon<T>` â€” Direct TOON responses
-- `LlmResponse<T>` â€” Content negotiation with token counting headers
-- `AcceptHeader` â€” Automatic format detection
+- `Toon<T>` — Direct TOON responses
+- `LlmResponse<T>` — Content negotiation with token counting headers
+- `AcceptHeader` — Automatic format detection
 
 ```rust
 #[rustapi_rs::get("/ai/data")]
@@ -239,9 +239,9 @@ async fn handler(Json(body): Json<T>) -> Json<R>
 
 RustAPI is not just another web framework. It's a **philosophy**:
 
-1. **Simplicity first** â€” 5 lines to production
-2. **Stability always** â€” Your code never breaks
-3. **Future-ready** â€” Built for AI, ready for anything
+1. **Simplicity first** — 5 lines to production
+2. **Stability always** — Your code never breaks
+3. **Future-ready** — Built for AI, ready for anything
 
 ```rust
 use rustapi_rs::prelude::*;

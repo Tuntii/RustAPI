@@ -1,4 +1,4 @@
-﻿# AI Integration
+# AI Integration
 
 RustAPI offers native support for building AI-friendly APIs using the `rustapi-toon` crate. This allows you to serve optimized content for Large Language Models (LLMs) while maintaining standard JSON responses for traditional clients.
 
@@ -34,7 +34,7 @@ This is handled automatically by the `LlmResponse<T>` type.
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.537", features = ["toon"] }
+rustapi-rs = { version = "0.1.550", features = ["toon"] }
 serde = { version = "1.0", features = ["derive"] }
 ```
 

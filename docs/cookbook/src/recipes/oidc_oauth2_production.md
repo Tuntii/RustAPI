@@ -1,4 +1,4 @@
-﻿# OIDC / OAuth2 in Production
+# OIDC / OAuth2 in Production
 
 This guide turns the basic OAuth2 client into a production-ready login flow.
 

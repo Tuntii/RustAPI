@@ -1,4 +1,4 @@
-﻿# Background Jobs
+# Background Jobs
 
 RustAPI provides a robust background job processing system through the `rustapi-jobs` crate. This allows you to offload time-consuming tasks (like sending emails, processing images, or generating reports) from the main request/response cycle, keeping your API fast and responsive.
 

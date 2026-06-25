@@ -1,4 +1,4 @@
-﻿# Community & Open Source
+# Community & Open Source
 
 RustAPI is an independent open-source project. Contributions, questions, and feedback are welcome.
 
@@ -17,17 +17,17 @@ Before opening an issue, search existing issues and discussions. For bugs, inclu
 
 We accept contributions of all sizes:
 
-- **Code** â€” bug fixes, features, tests, benchmarks
-- **Documentation** â€” README, cookbook, examples, typo fixes
-- **Examples** â€” in-repo samples or the [examples repository](https://github.com/Tuntii/rustapi-rs-examples)
-- **Community** â€” issue triage, discussion answers, release testing
+- **Code** — bug fixes, features, tests, benchmarks
+- **Documentation** — README, cookbook, examples, typo fixes
+- **Examples** — in-repo samples or the [examples repository](https://github.com/Tuntii/rustapi-rs-examples)
+- **Community** — issue triage, discussion answers, release testing
 
 Start here:
 
 1. Read [CONTRIBUTING.md](../CONTRIBUTING.md) for setup, testing, and PR workflow
 2. Read [CODE_OF_CONDUCT.md](../CODE_OF_CONDUCT.md)
 3. Pick an issue labeled [`good first issue`](https://github.com/Tuntii/RustAPI/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22) or [`help wanted`](https://github.com/Tuntii/RustAPI/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22) when available
-4. Fork â†’ branch â†’ PR (squash merge to `main`)
+4. Fork → branch → PR (squash merge to `main`)
 
 ### Documentation contributions
 
@@ -43,6 +43,12 @@ Documentation lives in several places:
 
 When you change public behavior, update the cookbook recipe or reference page that matches the feature. When you only fix internals, a CHANGELOG entry under **Changed** or **Fixed** is enough.
 
+Key docs to keep in sync on release:
+
+- Version pins in `docs/GETTING_STARTED.md`, cookbook recipes, and `README.md`
+- [Production Baseline](PRODUCTION_BASELINE.md) and [Production Checklist](PRODUCTION_CHECKLIST.md) when defaults change
+- [RustAPI Cloud recipe](cookbook/src/recipes/rustapi_cloud.md) when CLI cloud commands change
+
 ### Public API changes
 
 User-facing API surface is defined by the `rustapi-rs` facade. Changes that affect public types or feature flags may require:
@@ -55,14 +61,16 @@ See [CONTRACT.md](../CONTRACT.md) for stability rules.
 
 ## Project values
 
-- **Stable facade** â€” application code imports `rustapi-rs`, not internal crates
-- **Evidence over claims** â€” benchmarks and behavior changes should be test-backed
-- **Small, reviewable PRs** â€” easier to merge and safer for contributors
-- **Respectful collaboration** â€” see the Code of Conduct
+- **Stable facade** — application code imports `rustapi-rs`, not internal crates
+- **Evidence over claims** — benchmarks and behavior changes should be test-backed
+- **Small, reviewable PRs** — easier to merge and safer for contributors
+- **Respectful collaboration** — see the Code of Conduct
 
 ## Releases
 
 Releases are tagged `v0.1.<commit-count>` and published to [crates.io](https://crates.io/crates/rustapi-rs). See [CHANGELOG.md](../CHANGELOG.md) and [RELEASES.md](../RELEASES.md) for notes.
+
+**Repository split:** RustAPI Cloud backend development happens in [RustAPI-Cloud](https://github.com/Tuntii/RustAPI-Cloud). This repo ships the framework and CLI only.
 
 ## Security
 

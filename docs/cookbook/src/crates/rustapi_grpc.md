@@ -1,4 +1,4 @@
-﻿# rustapi-grpc: The Bridge
+# rustapi-grpc: The Bridge
 
 **Lens**: "The Bridge"  
 **Philosophy**: "HTTP and gRPC, one runtime."
@@ -16,7 +16,7 @@
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.537", features = ["grpc"] }
+rustapi-rs = { version = "0.1.550", features = ["grpc"] }
 ```
 
 ## Basic Usage

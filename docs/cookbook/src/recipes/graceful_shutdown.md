@@ -1,4 +1,4 @@
-﻿# Graceful Shutdown
+# Graceful Shutdown
 
 Graceful shutdown lets your API stop accepting new work, drain in-flight requests, and clean up resources before the process exits. In production, the missing piece is usually **draining**: marking the instance unready so upstream load balancers stop sending traffic before shutdown completes.
 

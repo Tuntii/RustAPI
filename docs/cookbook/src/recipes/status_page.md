@@ -1,4 +1,4 @@
-﻿# Automatic Status Page
+# Automatic Status Page
 
 RustAPI comes with a built-in, zero-configuration status page that gives you instant visibility into your application's health and performance.
 

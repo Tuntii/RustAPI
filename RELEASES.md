@@ -7,24 +7,24 @@
 
 ## Highlights
 
-v0.1.550 ships the **first production-ready RustAPI Cloud stack** alongside framework/CLI fixes for managed deploys.
+v0.1.550 ships the **first production-ready RustAPI Cloud CLI integration** alongside framework fixes for managed deploys.
 
 | Area | Change |
 |------|--------|
-| RustAPI Cloud | Vendored in monorepo (`RustAPI-Cloud/`, workspace-excluded); deploy pipeline, OAuth, storage, nginx wildcard routing |
-| Public deploy URLs | `https://{project}-{user8}.rustapi.tunayinbayramharcligi.com` |
+| RustAPI Cloud backend | [Tuntii/RustAPI-Cloud](https://github.com/Tuntii/RustAPI-Cloud) — deploy pipeline, OAuth, storage, nginx wildcard routing |
+| Public deploy URLs | `https://{project}-{user8}.rustapi.{domain}` (managed default domain: `rustapi.cloud`) |
 | CLI | `cargo rustapi deploy status`, `RUSTAPI_CONFIG_PATH`, multipart/Headers OpenAPI modifiers |
-| Production defaults | Cloud port `3002`, Postgres `127.0.0.1:5435`, wildcard TLS nginx template |
+| Default cloud API | `https://api.rustapi.cloud` (override with `--cloud-url` for self-hosted backends) |
 
 **Deploy flow:**
 
 ```bash
-cargo rustapi login --cloud-url https://rustapi.tunayinbayramharcligi.com
+cargo rustapi login
 cargo rustapi deploy cloud
-cargo rustapi deploy status
+cargo rustapi deploy status <deploy-id>
 ```
 
-**Repo layout:** RustAPI Cloud now lives in **[Tuntii/RustAPI-Cloud](https://github.com/Tuntii/RustAPI-Cloud)** (split after this release).
+**Repo layout:** This repository is **framework + CLI only**. Cloud backend development continues in **[RustAPI-Cloud](https://github.com/Tuntii/RustAPI-Cloud)**.
 
 ---
 

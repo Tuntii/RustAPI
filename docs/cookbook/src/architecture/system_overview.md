@@ -1,6 +1,6 @@
 ﻿# System Architecture
 
-RustAPI follows a **Facade Architecture** â€” a stable public API that shields you from internal complexity and breaking changes.
+RustAPI follows a **Facade Architecture** — a stable public API that shields you from internal complexity and breaking changes.
 
 ## System Overview
 
@@ -159,7 +159,7 @@ graph BT
 
 | Crate | Role |
 |-------|------|
-| `rustapi-rs` | Public facade â€” single `use` for everything |
+| `rustapi-rs` | Public facade — single `use` for everything |
 | `rustapi-core` | HTTP engine, routing, extractors, response handling |
 | `rustapi-macros` | Procedural macros: `#[rustapi_rs::get]`, `#[rustapi_rs::main]` |
 | `rustapi-openapi` | Native OpenAPI 3.1 model, schema registry, and docs endpoints |

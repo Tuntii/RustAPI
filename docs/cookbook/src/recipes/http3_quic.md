@@ -1,4 +1,4 @@
-﻿# HTTP/3 (QUIC) Support
+# HTTP/3 (QUIC) Support
 
 RustAPI supports HTTP/3 (QUIC), the next generation of the HTTP protocol, providing lower latency, better performance over unstable networks, and improved security.
 
@@ -8,9 +8,9 @@ HTTP/3 support is optional and can be enabled via feature flags in `Cargo.toml`.
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.537", features = ["http3"] }
+rustapi-rs = { version = "0.1.550", features = ["http3"] }
 # For development with self-signed certificates
-rustapi-rs = { version = "0.1.537", features = ["http3", "http3-dev"] }
+rustapi-rs = { version = "0.1.550", features = ["http3", "http3-dev"] }
 ```
 
 ## Running an HTTP/3 Server

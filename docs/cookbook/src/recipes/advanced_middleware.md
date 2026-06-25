@@ -1,4 +1,4 @@
-﻿# Advanced Middleware: Rate Limiting, Caching, and Deduplication
+# Advanced Middleware: Rate Limiting, Caching, and Deduplication
 
 As your API grows, you'll need to protect it from abuse and optimize performance. RustAPI provides a suite of advanced middleware in `rustapi-extras` to handle these concerns efficiently.
 
@@ -10,9 +10,9 @@ Add the `rustapi-extras` crate with the necessary features to your `Cargo.toml`.
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.537", features = ["full"] }
+rustapi-rs = { version = "0.1.550", features = ["full"] }
 # OR cherry-pick features
-# rustapi-extras = { version = "0.1.537", features = ["rate-limit", "dedup", "cache"] }
+# rustapi-extras = { version = "0.1.550", features = ["rate-limit", "dedup", "cache"] }
 ```
 
 ## Rate Limiting

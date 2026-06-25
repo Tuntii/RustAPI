@@ -1,4 +1,4 @@
-﻿# MCP In-Process Invocation
+# MCP In-Process Invocation
 
 By default, `tools/call` from an MCP server proxies over HTTP to your main RustAPI server (even on localhost). This guarantees that every middleware, interceptor, extractor, and validator runs exactly as for normal traffic.
 

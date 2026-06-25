@@ -1,4 +1,4 @@
-﻿# Troubleshooting: Common Gotchas
+# Troubleshooting: Common Gotchas
 
 This guide covers frequently encountered issues that can be confusing when working with RustAPI. If you're stuck on a cryptic error, chances are the solution is here.
 
@@ -47,7 +47,7 @@ utoipa = "4.2"  # âŒ Don't add this
 **Correct:**
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.537", features = ["full"] }
+rustapi-rs = { version = "0.1.550", features = ["full"] }
 # rustapi-openapi is re-exported through rustapi-rs
 ```
 
