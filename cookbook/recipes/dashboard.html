@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-9033ebbb.js";
+            window.path_to_searchindex_js = "../searchindex-f8dd45a5.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-09b14b8b.js"></script>
+        <script src="../toc-33fbcb1f.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -191,11 +191,11 @@ Keep the dashboard disabled by default in production-like environments unless it
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
 <p>Enable the canonical dashboard feature on the public facade:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.537", features = ["core-dashboard"] }
+rustapi-rs = { version = "0.1.550", features = ["core-dashboard"] }
 </code></pre>
 <p>If you also want the replay browser panel to load recorded traffic, enable replay too:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.537", features = ["core-dashboard", "extras-replay"] }
+rustapi-rs = { version = "0.1.550", features = ["core-dashboard", "extras-replay"] }
 </code></pre>
 <h2 id="usage"><a class="header" href="#usage">Usage</a></h2>
 <pre><code class="language-rust ignore">use rustapi_rs::prelude::*;
@@ -224,10 +224,10 @@ async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + 
 <h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
 <p><code>DashboardConfig</code> supports:</p>
 <ul>
-<li><code>.admin_token("...")</code> â€” protects <code>/api/*</code> dashboard JSON endpoints with <code>Authorization: Bearer &lt;token&gt;</code>.</li>
-<li><code>.path("/__rustapi/dashboard")</code> â€” changes where the dashboard is mounted.</li>
-<li><code>.title("...")</code> â€” labels the page for custom deployments.</li>
-<li><code>.replay_api_path("/__rustapi/replays")</code> â€” points the replay browser at the replay admin API path.</li>
+<li><code>.admin_token("...")</code> — protects <code>/api/*</code> dashboard JSON endpoints with <code>Authorization: Bearer &lt;token&gt;</code>.</li>
+<li><code>.path("/__rustapi/dashboard")</code> — changes where the dashboard is mounted.</li>
+<li><code>.title("...")</code> — labels the page for custom deployments.</li>
+<li><code>.replay_api_path("/__rustapi/replays")</code> — points the replay browser at the replay admin API path.</li>
 </ul>
 <p>The dashboard snapshot includes:</p>
 <ul>

@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-9033ebbb.js";
+            window.path_to_searchindex_js = "searchindex-f8dd45a5.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-09b14b8b.js"></script>
+        <script src="toc-33fbcb1f.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -193,7 +193,7 @@
 <li><strong>Recipes</strong>: Practical, step-by-step guides for adding features, testing, and maintaining cleanliness.</li>
 <li><strong>Learning Paths</strong>: Structured progressions with real-world examples.</li>
 </ul>
-<h2 id="ğÿš-new-examples-repository"><a class="header" href="#ğÿš-new-examples-repository">ğŸš€ New: Examples Repository</a></h2>
+<h2 id="examples-repository"><a class="header" href="#examples-repository">Examples Repository</a></h2>
 <p>Looking for hands-on learning? Check out our <strong><a href="https://github.com/Tuntii/rustapi-rs-examples">Examples Repository</a></strong> with 18 complete projects:</p>
 <div class="table-wrapper">
 <table>
@@ -210,14 +210,15 @@
 </tbody>
 </table>
 </div>
-<p>ğŸ‘‰ See <a href="learning/README.html">Learning &amp; Examples</a> for structured learning paths.</p>
+<p>See <a href="learning/README.html">Learning &amp; Examples</a> for structured learning paths.</p>
 <h2 id="visual-identity"><a class="header" href="#visual-identity">Visual Identity</a></h2>
 <p>This cookbook is styled with the <strong>RustAPI Premium Dark</strong> theme, focusing on readability, contrast, and modern “glassmorphism” aesthetics.</p>
 <h2 id="contributing-to-these-docs"><a class="header" href="#contributing-to-these-docs">Contributing to these docs</a></h2>
 <p>Found a gap or typo? See <a href="#community--open-source">Community &amp; Contributing</a> and <a href="../../CONTRIBUTING.html">CONTRIBUTING.md</a>. Cookbook source lives in <code>docs/cookbook/src/</code>.</p>
 <h2 id="quick-start"><a class="header" href="#quick-start">Quick Start</a></h2>
 <ul>
-<li>Want to add a feature? Jump to <a href="recipes/new_feature.html">Adding a New Feature</a>.</li>
+<li>Want to deploy? See <a href="#rustapi-cloud">RustAPI Cloud</a> or <a href="#deployment-1">Deployment</a>.</li>
+<li>Want to add a resource? Jump to <a href="#creating-resources">Creating Resources</a>.</li>
 <li>Want to understand performance? Read <a href="architecture/performance.html">Performance Philosophy</a>.</li>
 <li>Need to check code quality? See <a href="recipes/maintenance.html">Maintenance</a>.</li>
 <li><strong>New to RustAPI?</strong> Follow our <a href="learning/README.html">Learning Paths</a>.</li>
@@ -243,17 +244,17 @@
 <h2 id="contribute"><a class="header" href="#contribute">Contribute</a></h2>
 <p>We accept contributions of all sizes:</p>
 <ul>
-<li><strong>Code</strong> â€” bug fixes, features, tests, benchmarks</li>
-<li><strong>Documentation</strong> â€” README, cookbook, examples, typo fixes</li>
-<li><strong>Examples</strong> â€” in-repo samples or the <a href="https://github.com/Tuntii/rustapi-rs-examples">examples repository</a></li>
-<li><strong>Community</strong> â€” issue triage, discussion answers, release testing</li>
+<li><strong>Code</strong> — bug fixes, features, tests, benchmarks</li>
+<li><strong>Documentation</strong> — README, cookbook, examples, typo fixes</li>
+<li><strong>Examples</strong> — in-repo samples or the <a href="https://github.com/Tuntii/rustapi-rs-examples">examples repository</a></li>
+<li><strong>Community</strong> — issue triage, discussion answers, release testing</li>
 </ul>
 <p>Start here:</p>
 <ol>
 <li>Read <a href="../../../CONTRIBUTING.html">CONTRIBUTING.md</a> for setup, testing, and PR workflow</li>
 <li>Read <a href="../../../CODE_OF_CONDUCT.html">CODE_OF_CONDUCT.md</a></li>
 <li>Pick an issue labeled <a href="https://github.com/Tuntii/RustAPI/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22"><code>good first issue</code></a> or <a href="https://github.com/Tuntii/RustAPI/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22"><code>help wanted</code></a> when available</li>
-<li>Fork â†’ branch â†’ PR (squash merge to <code>main</code>)</li>
+<li>Fork → branch → PR (squash merge to <code>main</code>)</li>
 </ol>
 <h3 id="documentation-contributions"><a class="header" href="#documentation-contributions">Documentation contributions</a></h3>
 <p>Documentation lives in several places:</p>
@@ -272,6 +273,12 @@
 </table>
 </div>
 <p>When you change public behavior, update the cookbook recipe or reference page that matches the feature. When you only fix internals, a CHANGELOG entry under <strong>Changed</strong> or <strong>Fixed</strong> is enough.</p>
+<p>Key docs to keep in sync on release:</p>
+<ul>
+<li>Version pins in <code>docs/GETTING_STARTED.md</code>, cookbook recipes, and <code>README.md</code></li>
+<li><a href="../../PRODUCTION_BASELINE.html">Production Baseline</a> and <a href="../../PRODUCTION_CHECKLIST.html">Production Checklist</a> when defaults change</li>
+<li><a href="../../cookbook/src/recipes/rustapi_cloud.html">RustAPI Cloud recipe</a> when CLI cloud commands change</li>
+</ul>
 <h3 id="public-api-changes"><a class="header" href="#public-api-changes">Public API changes</a></h3>
 <p>User-facing API surface is defined by the <code>rustapi-rs</code> facade. Changes that affect public types or feature flags may require:</p>
 <ul>
@@ -282,13 +289,14 @@
 <p>See <a href="../../../CONTRACT.html">CONTRACT.md</a> for stability rules.</p>
 <h2 id="project-values"><a class="header" href="#project-values">Project values</a></h2>
 <ul>
-<li><strong>Stable facade</strong> â€” application code imports <code>rustapi-rs</code>, not internal crates</li>
-<li><strong>Evidence over claims</strong> â€” benchmarks and behavior changes should be test-backed</li>
-<li><strong>Small, reviewable PRs</strong> â€” easier to merge and safer for contributors</li>
-<li><strong>Respectful collaboration</strong> â€” see the Code of Conduct</li>
+<li><strong>Stable facade</strong> — application code imports <code>rustapi-rs</code>, not internal crates</li>
+<li><strong>Evidence over claims</strong> — benchmarks and behavior changes should be test-backed</li>
+<li><strong>Small, reviewable PRs</strong> — easier to merge and safer for contributors</li>
+<li><strong>Respectful collaboration</strong> — see the Code of Conduct</li>
 </ul>
 <h2 id="releases"><a class="header" href="#releases">Releases</a></h2>
 <p>Releases are tagged <code>v0.1.&lt;commit-count&gt;</code> and published to <a href="https://crates.io/crates/rustapi-rs">crates.io</a>. See <a href="../../../CHANGELOG.html">CHANGELOG.md</a> and <a href="../../../RELEASES.html">RELEASES.md</a> for notes.</p>
+<p><strong>Repository split:</strong> RustAPI Cloud backend development happens in <a href="https://github.com/Tuntii/RustAPI-Cloud">RustAPI-Cloud</a>. This repo ships the framework and CLI only.</p>
 <h2 id="security"><a class="header" href="#security">Security</a></h2>
 <p>Report vulnerabilities privately per <a href="../../../SECURITY.html">SECURITY.md</a>. Do not open public issues for undisclosed security problems.</p>
 <h2 id="license"><a class="header" href="#license">License</a></h2>
@@ -315,11 +323,11 @@
 </code></pre>
 <h2 id="adding-to-an-existing-project"><a class="header" href="#adding-to-an-existing-project">Adding to an Existing Project</a></h2>
 <p>If you prefer not to use the CLI, you can add RustAPI to your <code>Cargo.toml</code> manually:</p>
-<pre><code class="language-bash">cargo add rustapi-rs@0.1.537
+<pre><code class="language-bash">cargo add rustapi-rs@0.1.550
 </code></pre>
 <p>Or add this to your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = "0.1.537"
+rustapi-rs = "0.1.550"
 </code></pre>
 <h2 id="editor-setup"><a class="header" href="#editor-setup">Editor Setup</a></h2>
 <p>For the best experience, we recommend <strong>VS Code</strong> with the <strong>rust-analyzer</strong> extension. This provides:</p>
@@ -543,7 +551,7 @@ impl IntoResponse for ApiError {
 </ol>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="system-architecture"><a class="header" href="#system-architecture">System Architecture</a></h1>
-<p>RustAPI follows a <strong>Facade Architecture</strong> â€” a stable public API that shields you from internal complexity and breaking changes.</p>
+<p>RustAPI follows a <strong>Facade Architecture</strong> — a stable public API that shields you from internal complexity and breaking changes.</p>
 <h2 id="system-overview"><a class="header" href="#system-overview">System Overview</a></h2>
 <pre><code class="language-mermaid">graph TB
     subgraph Client["ğŸŒ Client Layer"]
@@ -700,7 +708,7 @@ impl IntoResponse for ApiError {
 <tr><th>Crate</th><th>Role</th></tr>
 </thead>
 <tbody>
-<tr><td><code>rustapi-rs</code></td><td>Public facade â€” single <code>use</code> for everything</td></tr>
+<tr><td><code>rustapi-rs</code></td><td>Public facade — single <code>use</code> for everything</td></tr>
 <tr><td><code>rustapi-core</code></td><td>HTTP engine, routing, extractors, response handling</td></tr>
 <tr><td><code>rustapi-macros</code></td><td>Procedural macros: <code>#[rustapi_rs::get]</code>, <code>#[rustapi_rs::main]</code></td></tr>
 <tr><td><code>rustapi-openapi</code></td><td>Native OpenAPI 3.1 model, schema registry, and docs endpoints</td></tr>
@@ -1401,7 +1409,7 @@ async fn show_form(token: CsrfToken) -&gt; Html&lt;String&gt; {
 <h2 id="traffic-insight"><a class="header" href="#traffic-insight">Traffic Insight</a></h2>
 <p>The <code>insight</code> feature provides powerful real-time traffic analysis and debugging capabilities without external dependencies. It is designed to be low-overhead and privacy-conscious.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-extras = { version = "0.1.537", features = ["insight"] }
+rustapi-extras = { version = "0.1.550", features = ["insight"] }
 </code></pre>
 <h3 id="setup-1"><a class="header" href="#setup-1">Setup</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -1710,7 +1718,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
 <h3 id="redis-backend"><a class="header" href="#redis-backend">Redis Backend</a></h3>
 <p>Enable the <code>redis</code> feature in <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-jobs = { version = "0.1.537", features = ["redis"] }
+rustapi-jobs = { version = "0.1.550", features = ["redis"] }
 </code></pre>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -1722,7 +1730,7 @@ let queue = JobQueue::new(backend);
 <h3 id="postgres-backend"><a class="header" href="#postgres-backend">Postgres Backend</a></h3>
 <p>Enable the <code>postgres</code> feature in <code>Cargo.toml</code>. This uses <code>sqlx</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-jobs = { version = "0.1.537", features = ["postgres"] }
+rustapi-jobs = { version = "0.1.550", features = ["postgres"] }
 </code></pre>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -1882,7 +1890,7 @@ server.expect(RequestMatcher::new(Method::POST, "/charge"))
 </ul>
 <h2 id="enable-it"><a class="header" href="#enable-it">Enable It</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.537", features = ["grpc"] }
+rustapi-rs = { version = "0.1.550", features = ["grpc"] }
 </code></pre>
 <h2 id="basic-usage-1"><a class="header" href="#basic-usage-1">Basic Usage</a></h2>
 <pre><code class="language-rust ignore">use rustapi_rs::grpc::{run_rustapi_and_grpc, tonic};
@@ -1951,8 +1959,8 @@ run_rustapi_and_mcp(app, "0.0.0.0:8080", mcp, "0.0.0.0:9090").await?;</code></pr
 <h2 id="security-model"><a class="header" href="#security-model">Security Model</a></h2>
 <p>Nothing is auto-exposed. The two main controls live in <code>McpConfig</code>:</p>
 <ul>
-<li><code>allowed_tags(...)</code> â€” only operations carrying at least one of the listed tags become tools.</li>
-<li><code>allow_path_prefix(...)</code> â€” additional path-based allow list.</li>
+<li><code>allowed_tags(...)</code> — only operations carrying at least one of the listed tags become tools.</li>
+<li><code>allow_path_prefix(...)</code> — additional path-based allow list.</li>
 </ul>
 <p>This is the same philosophy as the rest of RustAPI: explicit and auditable.</p>
 <h2 id="current-transport"><a class="header" href="#current-transport">Current Transport</a></h2>
@@ -1973,26 +1981,162 @@ run_rustapi_and_mcp(app, "0.0.0.0:8080", mcp, "0.0.0.0:9090").await?;</code></pr
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="cargo-rustapi-the-architect"><a class="header" href="#cargo-rustapi-the-architect">cargo-rustapi: The Architect</a></h1>
-<p><strong>Lens</strong>: “The Architect”
-<strong>Philosophy</strong>: “Scaffolding best practices from day one.”</p>
-<h2 id="the-cli"><a class="header" href="#the-cli">The CLI</a></h2>
-<p>The RustAPI CLI isn’t just a project generator; it’s a productivity multiplier.</p>
-<h3 id="commands"><a class="header" href="#commands">Commands</a></h3>
-<ul>
-<li><code>cargo rustapi new &lt;name&gt;</code>: Create a new project with the perfect directory structure.</li>
-<li><code>cargo rustapi run</code>: Run the development server.</li>
-<li><code>cargo rustapi run --reload</code>: Run with hot-reload (auto-rebuild on file changes).</li>
-<li><code>cargo rustapi generate resource &lt;name&gt;</code>: Scaffold a new API resource (Model + Handlers + Tests).</li>
-<li><code>cargo rustapi client --spec &lt;path&gt; --language &lt;lang&gt;</code>: Generate a client library (Rust, TS, Python) from OpenAPI spec.</li>
-<li><code>cargo rustapi deploy &lt;platform&gt;</code>: Generate deployment configs for Docker, Fly.io, Railway, or Shuttle.</li>
-<li><code>cargo rustapi migrate &lt;action&gt;</code>: Database migration commands (create, run, revert, status, reset).</li>
-</ul>
+<p><strong>Lens</strong>: “The Architect”<br><strong>Philosophy</strong>: “Scaffolding best practices from day one.”</p>
+<p>The RustAPI CLI (<code>cargo-rustapi</code>) is the productivity layer on top of the framework: project scaffolding, dev server, deployment, MCP tooling, observability helpers, and RustAPI Cloud integration.</p>
+<h2 id="installation-1"><a class="header" href="#installation-1">Installation</a></h2>
+<pre><code class="language-bash">cargo install cargo-rustapi
+</code></pre>
+<p>From source (this repository):</p>
+<pre><code class="language-bash">cargo install --path crates/cargo-rustapi
+</code></pre>
+<hr>
+<h2 id="command-reference"><a class="header" href="#command-reference">Command reference</a></h2>
+<h3 id="project-lifecycle"><a class="header" href="#project-lifecycle">Project lifecycle</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>cargo rustapi new &lt;name&gt;</code></td><td>Create a new project</td></tr>
+<tr><td><code>cargo rustapi new &lt;name&gt; --template api</code></td><td>REST API layout (handlers + models)</td></tr>
+<tr><td><code>cargo rustapi new &lt;name&gt; --template web</code></td><td>Web app with <code>rustapi-view</code> templates</td></tr>
+<tr><td><code>cargo rustapi new &lt;name&gt; --template full</code></td><td>Database, auth, Docker scaffolding</td></tr>
+<tr><td><code>cargo rustapi new &lt;name&gt; --preset prod-api</code></td><td>Production middleware bundle</td></tr>
+<tr><td><code>cargo rustapi new &lt;name&gt; --preset ai-api</code></td><td>TOON + AI-oriented defaults</td></tr>
+<tr><td><code>cargo rustapi new &lt;name&gt; --preset realtime-api</code></td><td>WebSocket defaults</td></tr>
+<tr><td><code>cargo rustapi run</code></td><td>Run the dev server</td></tr>
+<tr><td><code>cargo rustapi run --reload</code></td><td>Hot-reload via <code>cargo-watch</code></td></tr>
+<tr><td><code>cargo rustapi watch</code></td><td>Alias for reload mode</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="code-generation"><a class="header" href="#code-generation">Code generation</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>cargo rustapi generate resource &lt;name&gt;</code></td><td>Scaffold model + handlers + tests</td></tr>
+<tr><td><code>cargo rustapi client --spec &lt;path&gt; --language rust</code></td><td>Client from OpenAPI (Rust, TS, Python)</td></tr>
+<tr><td><code>cargo rustapi migrate create &lt;name&gt;</code></td><td>Create SQL migration</td></tr>
+<tr><td><code>cargo rustapi migrate run</code></td><td>Apply pending migrations</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="mcp--ai-agents"><a class="header" href="#mcp--ai-agents">MCP &amp; AI agents</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>cargo rustapi mcp generate --spec &lt;file|url&gt; --target &lt;backend&gt;</code></td><td>OpenAPI → live MCP server</td></tr>
+<tr><td><code>cargo rustapi mcp stdio</code></td><td>Run MCP over stdio (Claude Desktop, Cursor)</td></tr>
+</tbody>
+</table>
+</div>
+<p>See <a href="#mcp-integration-agent-tools">MCP Integration</a>, <a href="#mcp-in-process-invocation">MCP In-Process</a>, and <a href="#openapi-to-mcp-cli">OpenAPI to MCP CLI</a>.</p>
+<h3 id="deployment"><a class="header" href="#deployment">Deployment</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>cargo rustapi deploy docker</code></td><td>Generate production <code>Dockerfile</code></td></tr>
+<tr><td><code>cargo rustapi deploy fly</code></td><td>Generate <code>fly.toml</code></td></tr>
+<tr><td><code>cargo rustapi deploy railway</code></td><td>Generate Railway config</td></tr>
+<tr><td><code>cargo rustapi deploy shuttle</code></td><td>Generate Shuttle.rs config</td></tr>
+<tr><td><code>cargo rustapi deploy cloud</code></td><td>Deploy to RustAPI Cloud (managed)</td></tr>
+<tr><td><code>cargo rustapi deploy status &lt;id&gt;</code></td><td>Poll cloud deploy job</td></tr>
+</tbody>
+</table>
+</div>
+<p>Self-hosted platforms: <a href="#deployment-1">Deployment recipe</a>.<br>Managed hosting: <a href="#rustapi-cloud">RustAPI Cloud recipe</a>.</p>
+<h3 id="rustapi-cloud-auth"><a class="header" href="#rustapi-cloud-auth">RustAPI Cloud auth</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>cargo rustapi login</code></td><td>Device-code OAuth (default: <code>https://api.rustapi.cloud</code>)</td></tr>
+<tr><td><code>cargo rustapi login --cloud-url &lt;url&gt;</code></td><td>Point at self-hosted cloud backend</td></tr>
+<tr><td><code>cargo rustapi login --no-browser</code></td><td>Print verification URL only</td></tr>
+<tr><td><code>cargo rustapi whoami</code></td><td>Show logged-in user and tier</td></tr>
+<tr><td><code>cargo rustapi logout</code></td><td>Clear local credentials</td></tr>
+</tbody>
+</table>
+</div>
+<p>Credentials stored at <code>~/.rustapi/config.json</code> (override with <code>RUSTAPI_CONFIG_PATH</code>).</p>
+<h3 id="operations--debugging"><a class="header" href="#operations--debugging">Operations &amp; debugging</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>cargo rustapi doctor [--strict]</code></td><td>Toolchain + production signal scan</td></tr>
+<tr><td><code>cargo rustapi observability [--check]</code></td><td>Observability docs and feature recommendations</td></tr>
+<tr><td><code>cargo rustapi bench</code></td><td>Run benchmark workflow</td></tr>
+<tr><td><code>cargo rustapi replay list -t &lt;token&gt;</code></td><td>List captured replay entries</td></tr>
+<tr><td><code>cargo rustapi replay run &lt;id&gt; -t &lt;token&gt;</code></td><td>Replay a captured request</td></tr>
+<tr><td><code>cargo rustapi replay diff &lt;id&gt; -t &lt;token&gt;</code></td><td>Diff replay against target URL</td></tr>
+</tbody>
+</table>
+</div>
+<p>See <a href="#replay-workflow-time-travel-debugging">Replay recipe</a> and <a href="../PRODUCTION_CHECKLIST.html">Production Checklist</a>.</p>
+<hr>
+<h2 id="quick-start-1"><a class="header" href="#quick-start-1">Quick start</a></h2>
+<pre><code class="language-bash">cargo rustapi new my-api --template api --preset prod-api
+cd my-api
+cargo rustapi run --reload
+</code></pre>
+<p>Open <code>http://127.0.0.1:8080/docs</code> for Swagger UI.</p>
+<hr>
+<h2 id="cloud-deploy-workflow"><a class="header" href="#cloud-deploy-workflow">Cloud deploy workflow</a></h2>
+<pre><code class="language-bash">cargo rustapi login
+cargo rustapi whoami
+cargo rustapi deploy cloud
+cargo rustapi deploy status &lt;deploy-id&gt;
+</code></pre>
+<p>Backend source: <a href="https://github.com/Tuntii/RustAPI-Cloud">github.com/Tuntii/RustAPI-Cloud</a></p>
+<hr>
 <h2 id="templates"><a class="header" href="#templates">Templates</a></h2>
-<p>The templates used by the CLI are opinionated but flexible. They enforce:</p>
+<p>Templates enforce:</p>
 <ul>
-<li>Modular folder structure.</li>
-<li>Implementation of <code>State</code> pattern.</li>
-<li>Separation of <code>Error</code> types.</li>
+<li>Modular folder structure</li>
+<li><code>State</code> pattern for shared resources</li>
+<li>Separated error types</li>
+</ul>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Template</th><th>Best for</th></tr>
+</thead>
+<tbody>
+<tr><td><code>minimal</code></td><td>Smallest possible <code>main.rs</code></td></tr>
+<tr><td><code>api</code></td><td>REST APIs</td></tr>
+<tr><td><code>web</code></td><td>Server-rendered HTML</td></tr>
+<tr><td><code>full</code></td><td>DB + auth + Docker</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="feature-flag-cloud"><a class="header" href="#feature-flag-cloud">Feature flag: <code>cloud</code></a></h2>
+<p>Cloud commands require the <code>cloud</code> feature (default-on):</p>
+<pre><code class="language-toml">[dependencies]
+cargo-rustapi = { version = "0.1.550", default-features = false }
+</code></pre>
+<p>Disabling removes <code>login</code>, <code>deploy cloud</code>, and <code>deploy status</code> — useful for minimal CI builds.</p>
+<hr>
+<h2 id="related"><a class="header" href="#related">Related</a></h2>
+<ul>
+<li><a href="#rustapi-cloud">RustAPI Cloud recipe</a></li>
+<li><a href="#deployment-1">Deployment recipe</a></li>
+<li><a href="#installation">Getting Started: Installation</a></li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="reference"><a class="header" href="#reference">Reference</a></h1>
@@ -2278,7 +2422,8 @@ async fn get_user(Path(_id): Path&lt;String&gt;) -&gt; Result&lt;&amp;'static st
 <li><a href="#middleware-debugging">Middleware Debugging</a></li>
 <li><a href="#graceful-shutdown-1">Graceful Shutdown</a></li>
 <li><a href="#replay-workflow-time-travel-debugging">Time-Travel Debugging (Replay)</a></li>
-<li><a href="#deployment">Deployment</a></li>
+<li><a href="#deployment-1">Deployment</a></li>
+<li><a href="#rustapi-cloud">RustAPI Cloud (Managed Hosting)</a></li>
 <li><a href="#http3-quic-support">HTTP/3 (QUIC)</a></li>
 <li><a href="#grpc-integration">gRPC Integration</a></li>
 <li><a href="#automatic-status-page">Automatic Status Page</a></li>
@@ -2555,7 +2700,7 @@ impl RustApiSchema for MyCustomType {
 <h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
 <p>Enable the <code>extras-jwt</code> feature in your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.537", features = ["extras-jwt"] }
+rustapi-rs = { version = "0.1.550", features = ["extras-jwt"] }
 serde = { version = "1", features = ["derive"] }
 </code></pre>
 <h2 id="1-define-claims"><a class="header" href="#1-define-claims">1. Define Claims</a></h2>
@@ -3104,9 +3249,9 @@ let session_config = SessionConfig::new()
 <li>Requiring the same token in a request header for state-changing requests</li>
 <li>Rejecting requests where the cookie and header don’t match</li>
 </ol>
-<h2 id="quick-start-1"><a class="header" href="#quick-start-1">Quick Start</a></h2>
+<h2 id="quick-start-2"><a class="header" href="#quick-start-2">Quick Start</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.537", features = ["csrf"] }
+rustapi-rs = { version = "0.1.550", features = ["csrf"] }
 </code></pre>
 <pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
 use rustapi_extras::csrf::{CsrfConfig, CsrfLayer, CsrfToken};
@@ -3337,7 +3482,7 @@ async fn test_csrf_protection() {
 <p>This recipe shows how to integrate PostgreSQL/MySQL/SQLite using a shared pool, how to choose between <strong>SQLx</strong>, <strong>Diesel</strong>, and <strong>SeaORM</strong>, how to think about migrations, and which pooling practices are safest in production.</p>
 <h2 id="dependencies-1"><a class="header" href="#dependencies-1">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.537", features = ["extras-sqlx"] } # Canonical facade feature for SQLx error conversion
+rustapi-rs = { version = "0.1.550", features = ["extras-sqlx"] } # Canonical facade feature for SQLx error conversion
 sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "uuid"] }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
@@ -3596,7 +3741,7 @@ mod tests {
 <h2 id="dependencies-2"><a class="header" href="#dependencies-2">Dependencies</a></h2>
 <p>Add <code>rustapi-testing</code> to your <code>Cargo.toml</code>. It is usually added as a dev-dependency.</p>
 <pre><code class="language-toml">[dev-dependencies]
-rustapi-testing = "0.1.537"
+rustapi-testing = "0.1.550"
 tokio = { version = "1", features = ["full"] }
 </code></pre>
 <h2 id="integration-testing-with-testclient"><a class="header" href="#integration-testing-with-testclient">Integration Testing with TestClient</a></h2>
@@ -3724,7 +3869,7 @@ async fn test_protected_route() {
 <h2 id="dependencies-3"><a class="header" href="#dependencies-3">Dependencies</a></h2>
 <p>Add <code>uuid</code> and <code>tokio</code> with <code>fs</code> features to your <code>Cargo.toml</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = "0.1.537"
+rustapi-rs = "0.1.550"
 tokio = { version = "1", features = ["fs", "io-util"] }
 uuid = { version = "1", features = ["v4"] }
 </code></pre>
@@ -4911,7 +5056,7 @@ async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + 
 }</code></pre>
 <h3 id="migration-note-1-1"><a class="header" href="#migration-note-1-1">Migration note</a></h3>
 <ul>
-<li><code>RustApi::auto()</code> is the primary entry point â€” macro-annotated handlers are registered automatically, no wiring needed.</li>
+<li><code>RustApi::auto()</code> is the primary entry point — macro-annotated handlers are registered automatically, no wiring needed.</li>
 <li><code>RustApi::new()</code> is available for manual route registration and maps directly to Actix’s explicit <code>.route()</code> pattern.</li>
 <li><code>RustApi::route()</code> is the closest equivalent to explicit Actix route registration.</li>
 </ul>
@@ -5146,9 +5291,9 @@ async fn test_hello() {
 <h2 id="prerequisites-4"><a class="header" href="#prerequisites-4">Prerequisites</a></h2>
 <p>Add the <code>rustapi-extras</code> crate with the necessary features to your <code>Cargo.toml</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.537", features = ["full"] }
+rustapi-rs = { version = "0.1.550", features = ["full"] }
 # OR cherry-pick features
-# rustapi-extras = { version = "0.1.537", features = ["rate-limit", "dedup", "cache"] }
+# rustapi-extras = { version = "0.1.550", features = ["rate-limit", "dedup", "cache"] }
 </code></pre>
 <h2 id="rate-limiting"><a class="header" href="#rate-limiting">Rate Limiting</a></h2>
 <p>Rate limiting protects your API from being overwhelmed by too many requests from a single client. It uses a “Token Bucket” or “Fixed Window” algorithm to enforce limits.</p>
@@ -5241,7 +5386,7 @@ fn main() {
 <p>WebSockets allow full-duplex communication between the client and server. RustAPI leverages the <code>rustapi-ws</code> crate (based on <code>tungstenite</code> and <code>tokio</code>) to make this easy.</p>
 <h2 id="dependencies-4"><a class="header" href="#dependencies-4">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-ws = "0.1.537"
+rustapi-ws = "0.1.550"
 tokio = { version = "1", features = ["sync", "macros"] }
 futures = "0.3"
 </code></pre>
@@ -5348,7 +5493,7 @@ ws.send("Hello from JS!");
 <h2 id="dependencies-5"><a class="header" href="#dependencies-5">Dependencies</a></h2>
 <p>Add the following to your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.537", features = ["view"] }
+rustapi-rs = { version = "0.1.550", features = ["view"] }
 serde = { version = "1.0", features = ["derive"] }
 </code></pre>
 <h2 id="creating-templates"><a class="header" href="#creating-templates">Creating Templates</a></h2>
@@ -5481,7 +5626,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&g
 <p>This is handled automatically by the <code>LlmResponse&lt;T&gt;</code> type.</p>
 <h2 id="dependencies-6"><a class="header" href="#dependencies-6">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.537", features = ["toon"] }
+rustapi-rs = { version = "0.1.550", features = ["toon"] }
 serde = { version = "1.0", features = ["derive"] }
 </code></pre>
 <h2 id="implementation"><a class="header" href="#implementation">Implementation</a></h2>
@@ -5772,7 +5917,7 @@ async fn stripe_webhook() -&gt; ... { ... }
 <li><a href="#mcp-in-process-invocation">MCP In-Process Invocation</a></li>
 <li><a href="#openapi-to-mcp-cli">OpenAPI to MCP CLI</a></li>
 <li><a href="#mcp-stdio-transport">MCP stdio Transport</a></li>
-<li>Full standalone <strong>MCP tool example</strong> (05-mcp-server with in-process mode): <a href="https://github.com/Tuntii/rustapi-rs-examples/tree/main/05-mcp-server">rustapi-rs-examples</a> â€” see also the quick internal demo in this repo at <code>crates/rustapi-rs/examples/mcp_tools.rs</code></li>
+<li>Full standalone <strong>MCP tool example</strong> (05-mcp-server with in-process mode): <a href="https://github.com/Tuntii/rustapi-rs-examples/tree/main/05-mcp-server">rustapi-rs-examples</a> — see also the quick internal demo in this repo at <code>crates/rustapi-rs/examples/mcp_tools.rs</code></li>
 <li>Native MCP plan: <code>memories/native_mcp_orchestration_plan.md</code></li>
 <li>gRPC side-by-side pattern: <a href="#grpc-integration">gRPC Integration</a></li>
 <li>TOON for LLM efficiency: <a href="#ai-integration">AI Integration (TOON)</a></li>
@@ -5836,7 +5981,7 @@ let mcp = McpServer::from_rustapi(
 <h1 id="openapi-to-mcp-cli"><a class="header" href="#openapi-to-mcp-cli">OpenAPI to MCP CLI</a></h1>
 <p>The <code>cargo-rustapi</code> CLI includes <code>rustapi mcp generate</code>. It takes <strong>any</strong> OpenAPI 3.x spec (from FastAPI, Express, Go, Spring, etc.) and instantly spins up an MCP server. Tool calls are proxied to the real backend.</p>
 <p>This is a major growth feature: non-Rust teams can get first-class agent tools with zero Rust code.</p>
-<h2 id="installation-1"><a class="header" href="#installation-1">Installation</a></h2>
+<h2 id="installation-2"><a class="header" href="#installation-2">Installation</a></h2>
 <pre><code class="language-bash">cargo install cargo-rustapi
 # or from source
 cargo install --path crates/cargo-rustapi
@@ -5910,7 +6055,7 @@ rustapi mcp generate --stdio
 </ul>
 <h2 id="security-note"><a class="header" href="#security-note">Security Note</a></h2>
 <p>The generated MCP server is only as secure as the filters you apply (<code>--tags</code>, <code>--allow-path-prefix</code>). Never expose internal/admin routes to agents unless you intend to.</p>
-<h2 id="related"><a class="header" href="#related">Related</a></h2>
+<h2 id="related-1"><a class="header" href="#related-1">Related</a></h2>
 <ul>
 <li>Native MCP: <a href="#mcp-integration-agent-tools">MCP Integration</a></li>
 <li>In-process: <a href="#mcp-in-process-invocation">MCP In-Process Invocation</a></li>
@@ -5988,7 +6133,7 @@ async fn main() {
 <h2 id="dependencies-8"><a class="header" href="#dependencies-8">Dependencies</a></h2>
 <p>To use compression, you must enable the <code>compression</code> feature in <code>rustapi-core</code> (or <code>rustapi-rs</code>). For Brotli support, enable <code>compression-brotli</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.537", features = ["compression", "compression-brotli"] }
+rustapi-rs = { version = "0.1.550", features = ["compression", "compression-brotli"] }
 </code></pre>
 <h2 id="basic-usage-3"><a class="header" href="#basic-usage-3">Basic Usage</a></h2>
 <p>The simplest way to enable compression is to add the layer to your application:</p>
@@ -6058,9 +6203,9 @@ async fn main() -&gt; Result&lt;()&gt; {
 <h2 id="prerequisites-5"><a class="header" href="#prerequisites-5">Prerequisites</a></h2>
 <p>Add the resilience features to your <code>Cargo.toml</code>. For example:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.537", features = ["full"] }
+rustapi-rs = { version = "0.1.550", features = ["full"] }
 # OR cherry-pick features
-# rustapi-extras = { version = "0.1.537", features = ["circuit-breaker", "retry", "timeout"] }
+# rustapi-extras = { version = "0.1.550", features = ["circuit-breaker", "retry", "timeout"] }
 </code></pre>
 <h2 id="circuit-breaker-1"><a class="header" href="#circuit-breaker-1">Circuit Breaker</a></h2>
 <p>The Circuit Breaker pattern prevents your application from repeatedly trying to execute an operation that’s likely to fail. It gives the failing service time to recover.</p>
@@ -6170,7 +6315,7 @@ fn main() {
 <h2 id="prerequisites-6"><a class="header" href="#prerequisites-6">Prerequisites</a></h2>
 <p>Enable the relevant features:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.537", features = [
+rustapi-rs = { version = "0.1.550", features = [
   "core",
   "extras-otel",
   "extras-structured-logging",
@@ -6330,11 +6475,11 @@ Keep the dashboard disabled by default in production-like environments unless it
 <h2 id="prerequisites-7"><a class="header" href="#prerequisites-7">Prerequisites</a></h2>
 <p>Enable the canonical dashboard feature on the public facade:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.537", features = ["core-dashboard"] }
+rustapi-rs = { version = "0.1.550", features = ["core-dashboard"] }
 </code></pre>
 <p>If you also want the replay browser panel to load recorded traffic, enable replay too:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.537", features = ["core-dashboard", "extras-replay"] }
+rustapi-rs = { version = "0.1.550", features = ["core-dashboard", "extras-replay"] }
 </code></pre>
 <h2 id="usage-5"><a class="header" href="#usage-5">Usage</a></h2>
 <pre><code class="language-rust ignore">use rustapi_rs::prelude::*;
@@ -6363,10 +6508,10 @@ async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + 
 <h2 id="configuration-2"><a class="header" href="#configuration-2">Configuration</a></h2>
 <p><code>DashboardConfig</code> supports:</p>
 <ul>
-<li><code>.admin_token("...")</code> â€” protects <code>/api/*</code> dashboard JSON endpoints with <code>Authorization: Bearer &lt;token&gt;</code>.</li>
-<li><code>.path("/__rustapi/dashboard")</code> â€” changes where the dashboard is mounted.</li>
-<li><code>.title("...")</code> â€” labels the page for custom deployments.</li>
-<li><code>.replay_api_path("/__rustapi/replays")</code> â€” points the replay browser at the replay admin API path.</li>
+<li><code>.admin_token("...")</code> — protects <code>/api/*</code> dashboard JSON endpoints with <code>Authorization: Bearer &lt;token&gt;</code>.</li>
+<li><code>.path("/__rustapi/dashboard")</code> — changes where the dashboard is mounted.</li>
+<li><code>.title("...")</code> — labels the page for custom deployments.</li>
+<li><code>.replay_api_path("/__rustapi/replays")</code> — points the replay browser at the replay admin API path.</li>
 </ul>
 <p>The dashboard snapshot includes:</p>
 <ul>
@@ -6723,7 +6868,7 @@ async fn hello() -&gt; &amp;'static str {
 <li>Allow graceful shutdown to complete.</li>
 <li>Run shutdown hooks.</li>
 </ol>
-<p>Pair this with the cookbook <a href="#deployment">Deployment</a> recipe and the docs <a href="../../PRODUCTION_CHECKLIST.html">Production Checklist</a>.</p>
+<p>Pair this with the cookbook <a href="#deployment-1">Deployment</a> recipe and the docs <a href="../../PRODUCTION_CHECKLIST.html">Production Checklist</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="audit-logging--compliance"><a class="header" href="#audit-logging--compliance">Audit Logging &amp; Compliance</a></h1>
 <p>In many enterprise applications, maintaining a detailed audit trail is crucial for security, compliance (GDPR, SOC2), and troubleshooting. RustAPI provides a comprehensive audit logging system in <code>rustapi-extras</code>.</p>
@@ -6731,7 +6876,7 @@ async fn hello() -&gt; &amp;'static str {
 <h2 id="prerequisites-8"><a class="header" href="#prerequisites-8">Prerequisites</a></h2>
 <p>Add <code>rustapi-extras</code> with the <code>audit</code> feature to your <code>Cargo.toml</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-extras = { version = "0.1.537", features = ["audit"] }
+rustapi-extras = { version = "0.1.550", features = ["audit"] }
 </code></pre>
 <h2 id="core-concepts-1"><a class="header" href="#core-concepts-1">Core Concepts</a></h2>
 <p>The audit system is built around three main components:</p>
@@ -6831,7 +6976,7 @@ Replay is intended for <strong>development, staging, canary, and incident-respon
 <h2 id="prerequisites-9"><a class="header" href="#prerequisites-9">Prerequisites</a></h2>
 <p>Enable the canonical replay feature in your application:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.537", features = ["extras-replay"] }
+rustapi-rs = { version = "0.1.550", features = ["extras-replay"] }
 </code></pre>
 <p>On the CLI side, <code>cargo-rustapi</code> is enough; replay commands are part of the default installation:</p>
 <pre><code class="language-bash">cargo install cargo-rustapi
@@ -7096,7 +7241,7 @@ impl ReplayStore for MyCustomStore {
 <li>consider turning replay recording off after the incident</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="deployment"><a class="header" href="#deployment">Deployment</a></h1>
+<h1 id="deployment-1"><a class="header" href="#deployment-1">Deployment</a></h1>
 <p>RustAPI includes built-in deployment tooling to help you ship applications, but production deployment is more than generating a config file. This guide covers both the CLI-assisted setup and the operational recommendations for health, readiness, liveness, and rollout safety.</p>
 <h2 id="supported-platforms"><a class="header" href="#supported-platforms">Supported Platforms</a></h2>
 <ul>
@@ -7104,6 +7249,7 @@ impl ReplayStore for MyCustomStore {
 <li><strong>Fly.io</strong>: Generate <code>fly.toml</code> and deploy instructions.</li>
 <li><strong>Railway</strong>: Generate <code>railway.toml</code> and project setup.</li>
 <li><strong>Shuttle.rs</strong>: Generate <code>Shuttle.toml</code> and setup instructions.</li>
+<li><strong>RustAPI Cloud</strong>: Managed hosting via <code>cargo rustapi deploy cloud</code> — see <a href="#rustapi-cloud">RustAPI Cloud</a>.</li>
 </ul>
 <h2 id="usage-6"><a class="header" href="#usage-6">Usage</a></h2>
 <h3 id="docker"><a class="header" href="#docker">Docker</a></h3>
@@ -7151,9 +7297,9 @@ impl ReplayStore for MyCustomStore {
 <h2 id="probe-recommendations"><a class="header" href="#probe-recommendations">Probe recommendations</a></h2>
 <p>RustAPI has first-class built-in probe endpoints:</p>
 <ul>
-<li><code>/health</code> â€” aggregate service and dependency health</li>
-<li><code>/ready</code> â€” readiness for load balancers and orchestrators</li>
-<li><code>/live</code> â€” lightweight liveness probe</li>
+<li><code>/health</code> — aggregate service and dependency health</li>
+<li><code>/ready</code> — readiness for load balancers and orchestrators</li>
+<li><code>/live</code> — lightweight liveness probe</li>
 </ul>
 <p>You can enable them via:</p>
 <ul>
@@ -7163,9 +7309,9 @@ impl ReplayStore for MyCustomStore {
 </ul>
 <h3 id="recommended-semantics"><a class="header" href="#recommended-semantics">Recommended semantics</a></h3>
 <ul>
-<li><strong>Liveness</strong> should answer: â€œIs the process alive?â€</li>
-<li><strong>Readiness</strong> should answer: â€œShould this instance receive traffic right now?â€</li>
-<li><strong>Health</strong> should answer: â€œWhat is the aggregate state of the service and its dependencies?â€</li>
+<li><strong>Liveness</strong> should answer: “Is the process alive?”</li>
+<li><strong>Readiness</strong> should answer: “Should this instance receive traffic right now?”</li>
+<li><strong>Health</strong> should answer: “What is the aggregate state of the service and its dependencies?”</li>
 </ul>
 <p>In practice:</p>
 <ul>
@@ -7238,14 +7384,203 @@ let app = RustApi::new().with_health_check(health);
 </ol>
 <p>For the full operational list, see <a href="../../PRODUCTION_CHECKLIST.html">Production Checklist</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div>
+<h1 id="rustapi-cloud"><a class="header" href="#rustapi-cloud">RustAPI Cloud</a></h1>
+<p>Deploy RustAPI applications to managed hosting with a single CLI workflow. The <strong>framework and CLI</strong> live in this repository; the <strong>cloud backend</strong> (OAuth, storage, nginx routing, deploy pipeline) lives in the separate <a href="https://github.com/Tuntii/RustAPI-Cloud">RustAPI-Cloud</a> repository.</p>
+<hr>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Component</th><th>Repository</th><th>Role</th></tr>
+</thead>
+<tbody>
+<tr><td><code>rustapi-rs</code> + <code>cargo-rustapi</code></td><td><a href="https://github.com/Tuntii/RustAPI">Tuntii/RustAPI</a></td><td>Framework, CLI, <code>deploy cloud</code> client</td></tr>
+<tr><td>RustAPI Cloud backend</td><td><a href="https://github.com/Tuntii/RustAPI-Cloud">Tuntii/RustAPI-Cloud</a></td><td>Auth, build pipeline, HTTPS routing, app hosting</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Default cloud API:</strong> <code>https://api.rustapi.cloud</code></p>
+<p>Self-hosted operators can run their own cloud backend from RustAPI-Cloud and point the CLI with <code>--cloud-url</code>.</p>
+<hr>
+<h2 id="prerequisites-10"><a class="header" href="#prerequisites-10">Prerequisites</a></h2>
+<ul>
+<li>Rust 1.85+ and a working <code>cargo</code> toolchain</li>
+<li><code>cargo-rustapi</code> installed (<code>cargo install cargo-rustapi</code>)</li>
+<li>A RustAPI project with a release binary (the CLI builds <code>cargo build --release</code> automatically)</li>
+<li>Cloud feature enabled (on by default in <code>cargo-rustapi</code>)</li>
+</ul>
+<hr>
+<h2 id="quick-start-3"><a class="header" href="#quick-start-3">Quick start</a></h2>
+<pre><code class="language-bash"># 1. Authenticate (device-code OAuth — opens browser)
+cargo rustapi login
+
+# 2. Verify session
+cargo rustapi whoami
+
+# 3. Deploy from project root (builds, packages, uploads)
+cargo rustapi deploy cloud
+
+# 4. Poll deploy progress (use ID from deploy output)
+cargo rustapi deploy status &lt;deploy-id&gt;
+</code></pre>
+<p>After a successful deploy, your app is available at a public HTTPS URL:</p>
+<pre><code>https://{project}-{user8}.rustapi.{domain}
+</code></pre>
+<ul>
+<li><code>{project}</code> — Cargo package name or <code>--name</code> override</li>
+<li><code>{user8}</code> — first 8 characters of your GitHub user id</li>
+<li><code>{domain}</code> — configured on the cloud backend (managed default: <code>rustapi.cloud</code>)</li>
+</ul>
+<hr>
+<h2 id="authentication"><a class="header" href="#authentication">Authentication</a></h2>
+<h3 id="cargo-rustapi-login"><a class="header" href="#cargo-rustapi-login"><code>cargo rustapi login</code></a></h3>
+<p>Device-code OAuth flow (RFC 8628):</p>
+<pre><code class="language-bash">cargo rustapi login
+cargo rustapi login --cloud-url https://api.rustapi.cloud
+cargo rustapi login --no-browser   # print URL only, no auto-open
+</code></pre>
+<p><strong>What happens:</strong></p>
+<ol>
+<li>CLI requests a device code from <code>{cloud_url}/auth/device</code></li>
+<li>You open the verification URL and enter the user code</li>
+<li>CLI polls <code>{cloud_url}/auth/token</code> until authorized</li>
+<li>Access + refresh tokens saved to <code>~/.rustapi/config.json</code> (or <code>RUSTAPI_CONFIG_PATH</code>)</li>
+</ol>
+<h3 id="cargo-rustapi-whoami"><a class="header" href="#cargo-rustapi-whoami"><code>cargo rustapi whoami</code></a></h3>
+<p>Prints the logged-in GitHub username, tier, and cloud URL from local config.</p>
+<h3 id="cargo-rustapi-logout"><a class="header" href="#cargo-rustapi-logout"><code>cargo rustapi logout</code></a></h3>
+<p>Removes local credentials. Does not revoke tokens server-side.</p>
+<hr>
+<h2 id="deploy"><a class="header" href="#deploy">Deploy</a></h2>
+<h3 id="cargo-rustapi-deploy-cloud"><a class="header" href="#cargo-rustapi-deploy-cloud"><code>cargo rustapi deploy cloud</code></a></h3>
+<p>Builds a release binary, packages it, and uploads to RustAPI Cloud.</p>
+<pre><code class="language-bash">cargo rustapi deploy cloud
+cargo rustapi deploy cloud --name my-api
+cargo rustapi deploy cloud --no-wait   # return immediately after upload
+</code></pre>
+<p><strong>Pipeline steps (server-side, in RustAPI-Cloud):</strong></p>
+<ol>
+<li>Receive upload and queue deploy job</li>
+<li>Extract binary and configure runtime</li>
+<li>Route traffic via nginx wildcard vhost</li>
+<li>Expose HTTPS URL</li>
+</ol>
+<h3 id="cargo-rustapi-deploy-status-deploy-id"><a class="header" href="#cargo-rustapi-deploy-status-deploy-id"><code>cargo rustapi deploy status &lt;deploy-id&gt;</code></a></h3>
+<p>Poll deploy job state:</p>
+<pre><code class="language-bash">cargo rustapi deploy status abc123-def456
+</code></pre>
+<p>Typical states: <code>queued</code> → <code>building</code> → <code>deploying</code> → <code>running</code> / <code>failed</code>.</p>
+<p>Use this when <code>--no-wait</code> was passed or when checking a long-running deploy from CI.</p>
+<hr>
+<h2 id="configuration-3"><a class="header" href="#configuration-3">Configuration</a></h2>
+<h3 id="local-credentials"><a class="header" href="#local-credentials">Local credentials</a></h3>
+<p>Default path:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>OS</th><th>Path</th></tr>
+</thead>
+<tbody>
+<tr><td>Linux/macOS</td><td><code>~/.rustapi/config.json</code></td></tr>
+<tr><td>Windows</td><td><code>%USERPROFILE%\.rustapi\config.json</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>Schema:</p>
+<pre><code class="language-json">{
+  "token": "&lt;access-token&gt;",
+  "refresh_token": "&lt;refresh-token&gt;",
+  "user": {
+    "login": "your-github-username",
+    "tier": "hobby",
+    "avatar_url": "https://..."
+  },
+  "last_login": "2026-06-25T12:00:00Z",
+  "cloud_url": "https://api.rustapi.cloud"
+}
+</code></pre>
+<h3 id="rustapi_config_path"><a class="header" href="#rustapi_config_path"><code>RUSTAPI_CONFIG_PATH</code></a></h3>
+<p>Override config file location — useful for CI, multiple profiles, or isolated tests:</p>
+<pre><code class="language-bash">export RUSTAPI_CONFIG_PATH=/tmp/rustapi-ci-config.json
+cargo rustapi deploy cloud
+</code></pre>
+<p>The CLI creates parent directories when saving config.</p>
+<hr>
+<h2 id="cloud-feature-flag"><a class="header" href="#cloud-feature-flag">Cloud feature flag</a></h2>
+<p>Cloud HTTP commands are gated behind the <code>cloud</code> feature on <code>cargo-rustapi</code> (enabled by default):</p>
+<pre><code class="language-toml"># Cargo.toml — disable cloud commands
+[dependencies]
+cargo-rustapi = { version = "0.1.550", default-features = false }
+</code></pre>
+<p>When disabled, <code>login</code>, <code>deploy cloud</code>, and <code>deploy status</code> are not compiled. Workspace builds with <code>--no-default-features</code> remain supported.</p>
+<hr>
+<h2 id="self-hosted-cloud-backend"><a class="header" href="#self-hosted-cloud-backend">Self-hosted cloud backend</a></h2>
+<p>To run your own RustAPI Cloud instance:</p>
+<ol>
+<li>Clone <a href="https://github.com/Tuntii/RustAPI-Cloud">Tuntii/RustAPI-Cloud</a></li>
+<li>Follow its <code>install.sh</code> / docker-compose setup</li>
+<li>Point CLI at your API:</li>
+</ol>
+<pre><code class="language-bash">cargo rustapi login --cloud-url https://cloud.example.com
+cargo rustapi deploy cloud
+</code></pre>
+<p>Backend configuration (ports, Postgres, wildcard TLS, nginx templates) is documented in the RustAPI-Cloud repository.</p>
+<hr>
+<h2 id="production-recommendations"><a class="header" href="#production-recommendations">Production recommendations</a></h2>
+<p>Before deploying to cloud:</p>
+<ol>
+<li>Enable <code>.production_defaults("your-service")</code> — see <a href="../PRODUCTION_BASELINE.html">Production Baseline</a></li>
+<li>Set <code>RUSTAPI_ENV=production</code></li>
+<li>Run <code>cargo rustapi doctor --strict</code></li>
+<li>Complete the <a href="../PRODUCTION_CHECKLIST.html">Production Checklist</a></li>
+</ol>
+<p>For self-managed infra (Docker, K8s, Fly.io), see <a href="#deployment-1">Deployment</a> instead.</p>
+<hr>
+<h2 id="troubleshooting"><a class="header" href="#troubleshooting">Troubleshooting</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Problem</th><th>Fix</th></tr>
+</thead>
+<tbody>
+<tr><td><code>Not logged in</code></td><td>Run <code>cargo rustapi login</code></td></tr>
+<tr><td>Device code expired</td><td>Re-run <code>cargo rustapi login</code></td></tr>
+<tr><td>Deploy times out</td><td>Check <code>cargo rustapi deploy status &lt;id&gt;</code>; verify cloud backend health</td></tr>
+<tr><td>Wrong cloud instance</td><td><code>logout</code>, then <code>login --cloud-url &lt;correct-url&gt;</code></td></tr>
+<tr><td>CI needs isolated creds</td><td>Set <code>RUSTAPI_CONFIG_PATH</code> to a temp file with test tokens</td></tr>
+<tr><td><code>cloud</code> commands missing</td><td>Reinstall with default features: <code>cargo install cargo-rustapi</code></td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="architecture-high-level"><a class="header" href="#architecture-high-level">Architecture (high level)</a></h2>
+<pre><code class="language-text">Developer machine                    RustAPI Cloud backend
+┌─────────────────────┐             ┌──────────────────────────┐
+│ cargo rustapi login │──OAuth─────▶│ /auth/device, /auth/token│
+│ cargo rustapi       │             │                          │
+│   deploy cloud      │──upload────▶│ /deploy                  │
+│ cargo rustapi       │             │   → build queue          │
+│   deploy status     │◀──poll──────│   → nginx wildcard route │
+└─────────────────────┘             │   → HTTPS public URL     │
+                                    └──────────────────────────┘
+</code></pre>
+<hr>
+<h2 id="related-2"><a class="header" href="#related-2">Related</a></h2>
+<ul>
+<li><a href="#cargo-rustapi-the-architect">cargo-rustapi deep dive</a></li>
+<li><a href="#deployment-1">Deployment (self-hosted)</a></li>
+<li><a href="../PRODUCTION_BASELINE.html">Production Baseline</a></li>
+<li><a href="https://github.com/Tuntii/RustAPI-Cloud">RustAPI-Cloud repository</a></li>
+</ul>
+<div style="break-before: page; page-break-before: always;"></div>
 <h1 id="http3-quic-support"><a class="header" href="#http3-quic-support">HTTP/3 (QUIC) Support</a></h1>
 <p>RustAPI supports HTTP/3 (QUIC), the next generation of the HTTP protocol, providing lower latency, better performance over unstable networks, and improved security.</p>
 <h2 id="enabling-http3"><a class="header" href="#enabling-http3">Enabling HTTP/3</a></h2>
 <p>HTTP/3 support is optional and can be enabled via feature flags in <code>Cargo.toml</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.537", features = ["http3"] }
+rustapi-rs = { version = "0.1.550", features = ["http3"] }
 # For development with self-signed certificates
-rustapi-rs = { version = "0.1.537", features = ["http3", "http3-dev"] }
+rustapi-rs = { version = "0.1.550", features = ["http3", "http3-dev"] }
 </code></pre>
 <h2 id="running-an-http3-server"><a class="header" href="#running-an-http3-server">Running an HTTP/3 Server</a></h2>
 <p>Since HTTP/3 requires TLS (even for local development), RustAPI provides helpers to make this easy.</p>
@@ -7307,7 +7642,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&g
 <h2 id="dependencies-9"><a class="header" href="#dependencies-9">Dependencies</a></h2>
 <p>Add the following to your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.537", features = ["grpc"] }
+rustapi-rs = { version = "0.1.550", features = ["grpc"] }
 tonic = "0.10"
 prost = "0.12"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
@@ -7574,7 +7909,7 @@ utoipa = "4.2"  # âŒ Don't add this
 </code></pre>
 <p><strong>Correct:</strong></p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.537", features = ["full"] }
+rustapi-rs = { version = "0.1.550", features = ["full"] }
 # rustapi-openapi is re-exported through rustapi-rs
 </code></pre>
 <p><strong>Why?</strong></p>
@@ -7968,7 +8303,7 @@ RustApi::auto()
 <li><a href="#background-jobs-rustapi-extras-jobs-feature">rustapi-jobs</a></li>
 <li><a href="#custom-middleware">Custom Middleware</a></li>
 <li><a href="#production-tuning">Production Tuning</a></li>
-<li><a href="#deployment">Deployment</a></li>
+<li><a href="#deployment-1">Deployment</a></li>
 </ul>
 <hr>
 <h3 id="âš-path-3-real-time-applications"><a class="header" href="#âš-path-3-real-time-applications">âš¡ Path 3: Real-time Applications</a></h3>
@@ -8185,7 +8520,7 @@ cargo test
 <tr><td><a href="#production-tuning">Production Tuning</a></td><td><code>microservices-advanced</code></td></tr>
 <tr><td><a href="#resilience-patterns">Resilience Patterns</a></td><td><code>microservices</code></td></tr>
 <tr><td><a href="#replay-workflow-time-travel-debugging">Time-Travel Debugging</a></td><td><code>microservices</code></td></tr>
-<tr><td><a href="#deployment">Deployment</a></td><td><code>serverless-lambda</code></td></tr>
+<tr><td><a href="#deployment-1">Deployment</a></td><td><code>serverless-lambda</code></td></tr>
 </tbody>
 </table>
 </div>
@@ -8436,7 +8771,7 @@ cargo test
 <h3 id="module-10-production-readiness--deployment"><a class="header" href="#module-10-production-readiness--deployment">Module 10: Production Readiness &amp; Deployment</a></h3>
 <ul>
 <li><strong>Prerequisites:</strong> Phase 3.</li>
-<li><strong>Reading:</strong> <a href="#production-tuning">Production Tuning</a>, <a href="#resilience-patterns">Resilience</a>, <a href="#deployment">Deployment</a>.</li>
+<li><strong>Reading:</strong> <a href="#production-tuning">Production Tuning</a>, <a href="#resilience-patterns">Resilience</a>, <a href="#deployment-1">Deployment</a>.</li>
 <li><strong>Task:</strong>
 <ol>
 <li>Add <code>CompressionLayer</code>, and <code>TimeoutLayer</code>.</li>

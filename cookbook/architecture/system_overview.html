@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-9033ebbb.js";
+            window.path_to_searchindex_js = "../searchindex-f8dd45a5.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-09b14b8b.js"></script>
+        <script src="../toc-33fbcb1f.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -182,7 +182,7 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="system-architecture"><a class="header" href="#system-architecture">System Architecture</a></h1>
-<p>RustAPI follows a <strong>Facade Architecture</strong> â€” a stable public API that shields you from internal complexity and breaking changes.</p>
+<p>RustAPI follows a <strong>Facade Architecture</strong> — a stable public API that shields you from internal complexity and breaking changes.</p>
 <h2 id="system-overview"><a class="header" href="#system-overview">System Overview</a></h2>
 <pre><code class="language-mermaid">graph TB
     subgraph Client["ğŸŒ Client Layer"]
@@ -339,7 +339,7 @@
 <tr><th>Crate</th><th>Role</th></tr>
 </thead>
 <tbody>
-<tr><td><code>rustapi-rs</code></td><td>Public facade â€” single <code>use</code> for everything</td></tr>
+<tr><td><code>rustapi-rs</code></td><td>Public facade — single <code>use</code> for everything</td></tr>
 <tr><td><code>rustapi-core</code></td><td>HTTP engine, routing, extractors, response handling</td></tr>
 <tr><td><code>rustapi-macros</code></td><td>Procedural macros: <code>#[rustapi_rs::get]</code>, <code>#[rustapi_rs::main]</code></td></tr>
 <tr><td><code>rustapi-openapi</code></td><td>Native OpenAPI 3.1 model, schema registry, and docs endpoints</td></tr>

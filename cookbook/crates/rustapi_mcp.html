@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-9033ebbb.js";
+            window.path_to_searchindex_js = "../searchindex-f8dd45a5.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-09b14b8b.js"></script>
+        <script src="../toc-33fbcb1f.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -215,8 +215,8 @@ run_rustapi_and_mcp(app, "0.0.0.0:8080", mcp, "0.0.0.0:9090").await?;</code></pr
 <h2 id="security-model"><a class="header" href="#security-model">Security Model</a></h2>
 <p>Nothing is auto-exposed. The two main controls live in <code>McpConfig</code>:</p>
 <ul>
-<li><code>allowed_tags(...)</code> â€” only operations carrying at least one of the listed tags become tools.</li>
-<li><code>allow_path_prefix(...)</code> â€” additional path-based allow list.</li>
+<li><code>allowed_tags(...)</code> — only operations carrying at least one of the listed tags become tools.</li>
+<li><code>allow_path_prefix(...)</code> — additional path-based allow list.</li>
 </ul>
 <p>This is the same philosophy as the rest of RustAPI: explicit and auditable.</p>
 <h2 id="current-transport"><a class="header" href="#current-transport">Current Transport</a></h2>

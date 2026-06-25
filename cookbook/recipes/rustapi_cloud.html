@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>JWT Authentication - RustAPI Architecture Cookbook</title>
+        <title>RustAPI Cloud (Managed Hosting) - RustAPI Architecture Cookbook</title>
 
 
         <!-- Custom HTML head -->
@@ -147,7 +147,7 @@
                         <a href="https://github.com/Tuntii/RustAPI" title="Git repository" aria-label="Git repository">
                             <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg></span>
                         </a>
-                        <a href="https://github.com/Tuntii/RustAPI/edit/master/docs/cookbook/src/recipes/jwt_auth.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
+                        <a href="https://github.com/Tuntii/RustAPI/edit/master/docs/cookbook/src/recipes/rustapi_cloud.md" title="Suggest an edit" aria-label="Suggest an edit" rel="edit">
                             <span class=fa-svg id="git-edit-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M421.7 220.3l-11.3 11.3-22.6 22.6-205 205c-6.6 6.6-14.8 11.5-23.8 14.1L30.8 511c-8.4 2.5-17.5 .2-23.7-6.1S-1.5 489.7 1 481.2L38.7 353.1c2.6-9 7.5-17.2 14.1-23.8l205-205 22.6-22.6 11.3-11.3 33.9 33.9 62.1 62.1 33.9 33.9zM96 353.9l-9.3 9.3c-.9 .9-1.6 2.1-2 3.4l-25.3 86 86-25.3c1.3-.4 2.5-1.1 3.4-2l9.3-9.3H112c-8.8 0-16-7.2-16-16V353.9zM453.3 19.3l39.4 39.4c25 25 25 65.5 0 90.5l-14.5 14.5-22.6 22.6-11.3 11.3-33.9-33.9-62.1-62.1L314.3 67.7l11.3-11.3 22.6-22.6 14.5-14.5c25-25 65.5-25 90.5 0z"/></svg></span>
                         </a>
 
@@ -181,121 +181,204 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="jwt-authentication"><a class="header" href="#jwt-authentication">JWT Authentication</a></h1>
-<p>Authentication is critical for almost every API. RustAPI provides a built-in, production-ready JWT authentication system via the <code>extras-jwt</code> feature.</p>
-<h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
-<p>Enable the <code>extras-jwt</code> feature in your <code>Cargo.toml</code>:</p>
-<pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.550", features = ["extras-jwt"] }
-serde = { version = "1", features = ["derive"] }
+                        <h1 id="rustapi-cloud"><a class="header" href="#rustapi-cloud">RustAPI Cloud</a></h1>
+<p>Deploy RustAPI applications to managed hosting with a single CLI workflow. The <strong>framework and CLI</strong> live in this repository; the <strong>cloud backend</strong> (OAuth, storage, nginx routing, deploy pipeline) lives in the separate <a href="https://github.com/Tuntii/RustAPI-Cloud">RustAPI-Cloud</a> repository.</p>
+<hr>
+<h2 id="overview"><a class="header" href="#overview">Overview</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Component</th><th>Repository</th><th>Role</th></tr>
+</thead>
+<tbody>
+<tr><td><code>rustapi-rs</code> + <code>cargo-rustapi</code></td><td><a href="https://github.com/Tuntii/RustAPI">Tuntii/RustAPI</a></td><td>Framework, CLI, <code>deploy cloud</code> client</td></tr>
+<tr><td>RustAPI Cloud backend</td><td><a href="https://github.com/Tuntii/RustAPI-Cloud">Tuntii/RustAPI-Cloud</a></td><td>Auth, build pipeline, HTTPS routing, app hosting</td></tr>
+</tbody>
+</table>
+</div>
+<p><strong>Default cloud API:</strong> <code>https://api.rustapi.cloud</code></p>
+<p>Self-hosted operators can run their own cloud backend from RustAPI-Cloud and point the CLI with <code>--cloud-url</code>.</p>
+<hr>
+<h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
+<ul>
+<li>Rust 1.85+ and a working <code>cargo</code> toolchain</li>
+<li><code>cargo-rustapi</code> installed (<code>cargo install cargo-rustapi</code>)</li>
+<li>A RustAPI project with a release binary (the CLI builds <code>cargo build --release</code> automatically)</li>
+<li>Cloud feature enabled (on by default in <code>cargo-rustapi</code>)</li>
+</ul>
+<hr>
+<h2 id="quick-start"><a class="header" href="#quick-start">Quick start</a></h2>
+<pre><code class="language-bash"># 1. Authenticate (device-code OAuth — opens browser)
+cargo rustapi login
+
+# 2. Verify session
+cargo rustapi whoami
+
+# 3. Deploy from project root (builds, packages, uploads)
+cargo rustapi deploy cloud
+
+# 4. Poll deploy progress (use ID from deploy output)
+cargo rustapi deploy status &lt;deploy-id&gt;
 </code></pre>
-<h2 id="1-define-claims"><a class="header" href="#1-define-claims">1. Define Claims</a></h2>
-<p>Define your custom claims struct. It must be serializable and deserializable.</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use serde::{Deserialize, Serialize};
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Claims {
-    pub sub: String,   // Subject (User ID)
-    pub role: String,  // Custom claim: "admin", "user"
-    pub exp: usize,    // Required for JWT expiration validation
-}
-<span class="boring">}</span></code></pre>
-<h2 id="2-shared-state"><a class="header" href="#2-shared-state">2. Shared State</a></h2>
-<p>To avoid hardcoding secrets in multiple places, we’ll store our secret key in the application state.</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>#[derive(Clone)]
-pub struct AppState {
-    pub secret: String,
-}
-<span class="boring">}</span></code></pre>
-<h2 id="3-the-handlers"><a class="header" href="#3-the-handlers">3. The Handlers</a></h2>
-<p>We use the <code>AuthUser&lt;T&gt;</code> extractor to protect routes, and <code>State&lt;T&gt;</code> to access the secret for signing tokens during login.</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>use rustapi_rs::prelude::*;
-use std::time::{SystemTime, UNIX_EPOCH};
-
-#[rustapi_rs::get("/profile")]
-async fn protected_profile(
-    // This handler will only be called if a valid token is present
-    AuthUser(claims): AuthUser&lt;Claims&gt;
-) -&gt; Json&lt;String&gt; {
-    Json(format!("Welcome back, {}! You are a {}.", claims.sub, claims.role))
-}
-
-#[rustapi_rs::post("/login")]
-async fn login(State(state): State&lt;AppState&gt;) -&gt; Result&lt;Json&lt;String&gt;&gt; {
-    // In a real app, validate credentials first!
-    use std::time::{SystemTime, UNIX_EPOCH};
-    
-    let expiration = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap()
-        .as_secs() + 3600; // Token expires in 1 hour (3600 seconds)
-    
-    let claims = Claims {
-        sub: "user_123".to_owned(),
-        role: "admin".to_owned(),
-        exp: expiration as usize,
-    };
-
-    // We use the secret from our shared state
-    let token = create_token(&amp;claims, &amp;state.secret)?;
-
-    Ok(Json(token))
-}
-<span class="boring">}</span></code></pre>
-<h2 id="4-wiring-it-up"><a class="header" href="#4-wiring-it-up">4. Wiring it Up</a></h2>
-<p>Register the <code>JwtLayer</code> and the state in your application.</p>
-<pre class="playground"><code class="language-rust">#[rustapi_rs::main]
-async fn main() -&gt; Result&lt;()&gt; {
-    // In production, load this from an environment variable!
-    let secret = "my_secret_key".to_string();
-
-    let state = AppState {
-        secret: secret.clone(),
-    };
-
-    // Configure JWT validation with the same secret
-    let jwt_layer = JwtLayer::&lt;Claims&gt;::new(secret);
-
-    RustApi::auto()
-        .state(state)     // Register the shared state
-        .layer(jwt_layer) // Add the middleware
-        .run("127.0.0.1:8080")
-        .await
-}</code></pre>
-<h2 id="bonus-role-based-access-control-rbac"><a class="header" href="#bonus-role-based-access-control-rbac">Bonus: Role-Based Access Control (RBAC)</a></h2>
-<p>Since we have the <code>role</code> in our claims, we can enforce permissions easily within the handler:</p>
-<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
-</span><span class="boring">fn main() {
-</span>#[rustapi_rs::get("/admin")]
-async fn admin_only(AuthUser(claims): AuthUser&lt;Claims&gt;) -&gt; Result&lt;String, StatusCode&gt; {
-    if claims.role != "admin" {
-        return Err(StatusCode::FORBIDDEN);
-    }
-    Ok("Sensitive Admin Data".to_string())
-}
-<span class="boring">}</span></code></pre>
-<h2 id="how-it-works"><a class="header" href="#how-it-works">How It Works</a></h2>
+<p>After a successful deploy, your app is available at a public HTTPS URL:</p>
+<pre><code>https://{project}-{user8}.rustapi.{domain}
+</code></pre>
+<ul>
+<li><code>{project}</code> — Cargo package name or <code>--name</code> override</li>
+<li><code>{user8}</code> — first 8 characters of your GitHub user id</li>
+<li><code>{domain}</code> — configured on the cloud backend (managed default: <code>rustapi.cloud</code>)</li>
+</ul>
+<hr>
+<h2 id="authentication"><a class="header" href="#authentication">Authentication</a></h2>
+<h3 id="cargo-rustapi-login"><a class="header" href="#cargo-rustapi-login"><code>cargo rustapi login</code></a></h3>
+<p>Device-code OAuth flow (RFC 8628):</p>
+<pre><code class="language-bash">cargo rustapi login
+cargo rustapi login --cloud-url https://api.rustapi.cloud
+cargo rustapi login --no-browser   # print URL only, no auto-open
+</code></pre>
+<p><strong>What happens:</strong></p>
 <ol>
-<li><strong><code>JwtLayer</code> Middleware</strong>: Intercepts requests, looks for <code>Authorization: Bearer &lt;token&gt;</code>, validates the signature, and stores the decoded claims in the request extensions.</li>
-<li><strong><code>AuthUser</code> Extractor</strong>: Retrieves the claims from the request extensions. If the middleware failed or didn’t run, or if the token was missing/invalid, the extractor returns a <code>401 Unauthorized</code> error.</li>
+<li>CLI requests a device code from <code>{cloud_url}/auth/device</code></li>
+<li>You open the verification URL and enter the user code</li>
+<li>CLI polls <code>{cloud_url}/auth/token</code> until authorized</li>
+<li>Access + refresh tokens saved to <code>~/.rustapi/config.json</code> (or <code>RUSTAPI_CONFIG_PATH</code>)</li>
 </ol>
-<p>This separation allows you to have some public routes (where <code>JwtLayer</code> might just pass through) and some protected routes (where <code>AuthUser</code> enforces presence). Note that <code>JwtLayer</code> by default does <em>not</em> reject requests without tokens; it just doesn’t attach claims. The <em>extractor</em> does the rejection.</p>
+<h3 id="cargo-rustapi-whoami"><a class="header" href="#cargo-rustapi-whoami"><code>cargo rustapi whoami</code></a></h3>
+<p>Prints the logged-in GitHub username, tier, and cloud URL from local config.</p>
+<h3 id="cargo-rustapi-logout"><a class="header" href="#cargo-rustapi-logout"><code>cargo rustapi logout</code></a></h3>
+<p>Removes local credentials. Does not revoke tokens server-side.</p>
+<hr>
+<h2 id="deploy"><a class="header" href="#deploy">Deploy</a></h2>
+<h3 id="cargo-rustapi-deploy-cloud"><a class="header" href="#cargo-rustapi-deploy-cloud"><code>cargo rustapi deploy cloud</code></a></h3>
+<p>Builds a release binary, packages it, and uploads to RustAPI Cloud.</p>
+<pre><code class="language-bash">cargo rustapi deploy cloud
+cargo rustapi deploy cloud --name my-api
+cargo rustapi deploy cloud --no-wait   # return immediately after upload
+</code></pre>
+<p><strong>Pipeline steps (server-side, in RustAPI-Cloud):</strong></p>
+<ol>
+<li>Receive upload and queue deploy job</li>
+<li>Extract binary and configure runtime</li>
+<li>Route traffic via nginx wildcard vhost</li>
+<li>Expose HTTPS URL</li>
+</ol>
+<h3 id="cargo-rustapi-deploy-status-deploy-id"><a class="header" href="#cargo-rustapi-deploy-status-deploy-id"><code>cargo rustapi deploy status &lt;deploy-id&gt;</code></a></h3>
+<p>Poll deploy job state:</p>
+<pre><code class="language-bash">cargo rustapi deploy status abc123-def456
+</code></pre>
+<p>Typical states: <code>queued</code> → <code>building</code> → <code>deploying</code> → <code>running</code> / <code>failed</code>.</p>
+<p>Use this when <code>--no-wait</code> was passed or when checking a long-running deploy from CI.</p>
+<hr>
+<h2 id="configuration"><a class="header" href="#configuration">Configuration</a></h2>
+<h3 id="local-credentials"><a class="header" href="#local-credentials">Local credentials</a></h3>
+<p>Default path:</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>OS</th><th>Path</th></tr>
+</thead>
+<tbody>
+<tr><td>Linux/macOS</td><td><code>~/.rustapi/config.json</code></td></tr>
+<tr><td>Windows</td><td><code>%USERPROFILE%\.rustapi\config.json</code></td></tr>
+</tbody>
+</table>
+</div>
+<p>Schema:</p>
+<pre><code class="language-json">{
+  "token": "&lt;access-token&gt;",
+  "refresh_token": "&lt;refresh-token&gt;",
+  "user": {
+    "login": "your-github-username",
+    "tier": "hobby",
+    "avatar_url": "https://..."
+  },
+  "last_login": "2026-06-25T12:00:00Z",
+  "cloud_url": "https://api.rustapi.cloud"
+}
+</code></pre>
+<h3 id="rustapi_config_path"><a class="header" href="#rustapi_config_path"><code>RUSTAPI_CONFIG_PATH</code></a></h3>
+<p>Override config file location — useful for CI, multiple profiles, or isolated tests:</p>
+<pre><code class="language-bash">export RUSTAPI_CONFIG_PATH=/tmp/rustapi-ci-config.json
+cargo rustapi deploy cloud
+</code></pre>
+<p>The CLI creates parent directories when saving config.</p>
+<hr>
+<h2 id="cloud-feature-flag"><a class="header" href="#cloud-feature-flag">Cloud feature flag</a></h2>
+<p>Cloud HTTP commands are gated behind the <code>cloud</code> feature on <code>cargo-rustapi</code> (enabled by default):</p>
+<pre><code class="language-toml"># Cargo.toml — disable cloud commands
+[dependencies]
+cargo-rustapi = { version = "0.1.550", default-features = false }
+</code></pre>
+<p>When disabled, <code>login</code>, <code>deploy cloud</code>, and <code>deploy status</code> are not compiled. Workspace builds with <code>--no-default-features</code> remain supported.</p>
+<hr>
+<h2 id="self-hosted-cloud-backend"><a class="header" href="#self-hosted-cloud-backend">Self-hosted cloud backend</a></h2>
+<p>To run your own RustAPI Cloud instance:</p>
+<ol>
+<li>Clone <a href="https://github.com/Tuntii/RustAPI-Cloud">Tuntii/RustAPI-Cloud</a></li>
+<li>Follow its <code>install.sh</code> / docker-compose setup</li>
+<li>Point CLI at your API:</li>
+</ol>
+<pre><code class="language-bash">cargo rustapi login --cloud-url https://cloud.example.com
+cargo rustapi deploy cloud
+</code></pre>
+<p>Backend configuration (ports, Postgres, wildcard TLS, nginx templates) is documented in the RustAPI-Cloud repository.</p>
+<hr>
+<h2 id="production-recommendations"><a class="header" href="#production-recommendations">Production recommendations</a></h2>
+<p>Before deploying to cloud:</p>
+<ol>
+<li>Enable <code>.production_defaults("your-service")</code> — see <a href="../../PRODUCTION_BASELINE.html">Production Baseline</a></li>
+<li>Set <code>RUSTAPI_ENV=production</code></li>
+<li>Run <code>cargo rustapi doctor --strict</code></li>
+<li>Complete the <a href="../../PRODUCTION_CHECKLIST.html">Production Checklist</a></li>
+</ol>
+<p>For self-managed infra (Docker, K8s, Fly.io), see <a href="deployment.html">Deployment</a> instead.</p>
+<hr>
+<h2 id="troubleshooting"><a class="header" href="#troubleshooting">Troubleshooting</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Problem</th><th>Fix</th></tr>
+</thead>
+<tbody>
+<tr><td><code>Not logged in</code></td><td>Run <code>cargo rustapi login</code></td></tr>
+<tr><td>Device code expired</td><td>Re-run <code>cargo rustapi login</code></td></tr>
+<tr><td>Deploy times out</td><td>Check <code>cargo rustapi deploy status &lt;id&gt;</code>; verify cloud backend health</td></tr>
+<tr><td>Wrong cloud instance</td><td><code>logout</code>, then <code>login --cloud-url &lt;correct-url&gt;</code></td></tr>
+<tr><td>CI needs isolated creds</td><td>Set <code>RUSTAPI_CONFIG_PATH</code> to a temp file with test tokens</td></tr>
+<tr><td><code>cloud</code> commands missing</td><td>Reinstall with default features: <code>cargo install cargo-rustapi</code></td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="architecture-high-level"><a class="header" href="#architecture-high-level">Architecture (high level)</a></h2>
+<pre><code class="language-text">Developer machine                    RustAPI Cloud backend
+┌─────────────────────┐             ┌──────────────────────────┐
+│ cargo rustapi login │──OAuth─────▶│ /auth/device, /auth/token│
+│ cargo rustapi       │             │                          │
+│   deploy cloud      │──upload────▶│ /deploy                  │
+│ cargo rustapi       │             │   → build queue          │
+│   deploy status     │◀──poll──────│   → nginx wildcard route │
+└─────────────────────┘             │   → HTTPS public URL     │
+                                    └──────────────────────────┘
+</code></pre>
+<hr>
+<h2 id="related"><a class="header" href="#related">Related</a></h2>
+<ul>
+<li><a href="../crates/cargo_rustapi.html">cargo-rustapi deep dive</a></li>
+<li><a href="deployment.html">Deployment (self-hosted)</a></li>
+<li><a href="../../PRODUCTION_BASELINE.html">Production Baseline</a></li>
+<li><a href="https://github.com/Tuntii/RustAPI-Cloud">RustAPI-Cloud repository</a></li>
+</ul>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../recipes/openapi_refs.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../recipes/deployment.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="../recipes/session_auth.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../recipes/http3_quic.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -305,11 +388,11 @@ async fn admin_only(AuthUser(claims): AuthUser&lt;Claims&gt;) -&gt; Result&lt;St
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../recipes/openapi_refs.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../recipes/deployment.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="../recipes/session_auth.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../recipes/http3_quic.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>

@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-9033ebbb.js";
+            window.path_to_searchindex_js = "../searchindex-f8dd45a5.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-09b14b8b.js"></script>
+        <script src="../toc-33fbcb1f.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -182,26 +182,162 @@
                 <div id="mdbook-content" class="content">
                     <main>
                         <h1 id="cargo-rustapi-the-architect"><a class="header" href="#cargo-rustapi-the-architect">cargo-rustapi: The Architect</a></h1>
-<p><strong>Lens</strong>: “The Architect”
-<strong>Philosophy</strong>: “Scaffolding best practices from day one.”</p>
-<h2 id="the-cli"><a class="header" href="#the-cli">The CLI</a></h2>
-<p>The RustAPI CLI isn’t just a project generator; it’s a productivity multiplier.</p>
-<h3 id="commands"><a class="header" href="#commands">Commands</a></h3>
-<ul>
-<li><code>cargo rustapi new &lt;name&gt;</code>: Create a new project with the perfect directory structure.</li>
-<li><code>cargo rustapi run</code>: Run the development server.</li>
-<li><code>cargo rustapi run --reload</code>: Run with hot-reload (auto-rebuild on file changes).</li>
-<li><code>cargo rustapi generate resource &lt;name&gt;</code>: Scaffold a new API resource (Model + Handlers + Tests).</li>
-<li><code>cargo rustapi client --spec &lt;path&gt; --language &lt;lang&gt;</code>: Generate a client library (Rust, TS, Python) from OpenAPI spec.</li>
-<li><code>cargo rustapi deploy &lt;platform&gt;</code>: Generate deployment configs for Docker, Fly.io, Railway, or Shuttle.</li>
-<li><code>cargo rustapi migrate &lt;action&gt;</code>: Database migration commands (create, run, revert, status, reset).</li>
-</ul>
+<p><strong>Lens</strong>: “The Architect”<br><strong>Philosophy</strong>: “Scaffolding best practices from day one.”</p>
+<p>The RustAPI CLI (<code>cargo-rustapi</code>) is the productivity layer on top of the framework: project scaffolding, dev server, deployment, MCP tooling, observability helpers, and RustAPI Cloud integration.</p>
+<h2 id="installation"><a class="header" href="#installation">Installation</a></h2>
+<pre><code class="language-bash">cargo install cargo-rustapi
+</code></pre>
+<p>From source (this repository):</p>
+<pre><code class="language-bash">cargo install --path crates/cargo-rustapi
+</code></pre>
+<hr>
+<h2 id="command-reference"><a class="header" href="#command-reference">Command reference</a></h2>
+<h3 id="project-lifecycle"><a class="header" href="#project-lifecycle">Project lifecycle</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>cargo rustapi new &lt;name&gt;</code></td><td>Create a new project</td></tr>
+<tr><td><code>cargo rustapi new &lt;name&gt; --template api</code></td><td>REST API layout (handlers + models)</td></tr>
+<tr><td><code>cargo rustapi new &lt;name&gt; --template web</code></td><td>Web app with <code>rustapi-view</code> templates</td></tr>
+<tr><td><code>cargo rustapi new &lt;name&gt; --template full</code></td><td>Database, auth, Docker scaffolding</td></tr>
+<tr><td><code>cargo rustapi new &lt;name&gt; --preset prod-api</code></td><td>Production middleware bundle</td></tr>
+<tr><td><code>cargo rustapi new &lt;name&gt; --preset ai-api</code></td><td>TOON + AI-oriented defaults</td></tr>
+<tr><td><code>cargo rustapi new &lt;name&gt; --preset realtime-api</code></td><td>WebSocket defaults</td></tr>
+<tr><td><code>cargo rustapi run</code></td><td>Run the dev server</td></tr>
+<tr><td><code>cargo rustapi run --reload</code></td><td>Hot-reload via <code>cargo-watch</code></td></tr>
+<tr><td><code>cargo rustapi watch</code></td><td>Alias for reload mode</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="code-generation"><a class="header" href="#code-generation">Code generation</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>cargo rustapi generate resource &lt;name&gt;</code></td><td>Scaffold model + handlers + tests</td></tr>
+<tr><td><code>cargo rustapi client --spec &lt;path&gt; --language rust</code></td><td>Client from OpenAPI (Rust, TS, Python)</td></tr>
+<tr><td><code>cargo rustapi migrate create &lt;name&gt;</code></td><td>Create SQL migration</td></tr>
+<tr><td><code>cargo rustapi migrate run</code></td><td>Apply pending migrations</td></tr>
+</tbody>
+</table>
+</div>
+<h3 id="mcp--ai-agents"><a class="header" href="#mcp--ai-agents">MCP &amp; AI agents</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>cargo rustapi mcp generate --spec &lt;file|url&gt; --target &lt;backend&gt;</code></td><td>OpenAPI → live MCP server</td></tr>
+<tr><td><code>cargo rustapi mcp stdio</code></td><td>Run MCP over stdio (Claude Desktop, Cursor)</td></tr>
+</tbody>
+</table>
+</div>
+<p>See <a href="../recipes/mcp_integration.html">MCP Integration</a>, <a href="../recipes/mcp_in_process.html">MCP In-Process</a>, and <a href="../recipes/mcp_openapi_cli.html">OpenAPI to MCP CLI</a>.</p>
+<h3 id="deployment"><a class="header" href="#deployment">Deployment</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>cargo rustapi deploy docker</code></td><td>Generate production <code>Dockerfile</code></td></tr>
+<tr><td><code>cargo rustapi deploy fly</code></td><td>Generate <code>fly.toml</code></td></tr>
+<tr><td><code>cargo rustapi deploy railway</code></td><td>Generate Railway config</td></tr>
+<tr><td><code>cargo rustapi deploy shuttle</code></td><td>Generate Shuttle.rs config</td></tr>
+<tr><td><code>cargo rustapi deploy cloud</code></td><td>Deploy to RustAPI Cloud (managed)</td></tr>
+<tr><td><code>cargo rustapi deploy status &lt;id&gt;</code></td><td>Poll cloud deploy job</td></tr>
+</tbody>
+</table>
+</div>
+<p>Self-hosted platforms: <a href="../recipes/deployment.html">Deployment recipe</a>.<br>Managed hosting: <a href="../recipes/rustapi_cloud.html">RustAPI Cloud recipe</a>.</p>
+<h3 id="rustapi-cloud-auth"><a class="header" href="#rustapi-cloud-auth">RustAPI Cloud auth</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>cargo rustapi login</code></td><td>Device-code OAuth (default: <code>https://api.rustapi.cloud</code>)</td></tr>
+<tr><td><code>cargo rustapi login --cloud-url &lt;url&gt;</code></td><td>Point at self-hosted cloud backend</td></tr>
+<tr><td><code>cargo rustapi login --no-browser</code></td><td>Print verification URL only</td></tr>
+<tr><td><code>cargo rustapi whoami</code></td><td>Show logged-in user and tier</td></tr>
+<tr><td><code>cargo rustapi logout</code></td><td>Clear local credentials</td></tr>
+</tbody>
+</table>
+</div>
+<p>Credentials stored at <code>~/.rustapi/config.json</code> (override with <code>RUSTAPI_CONFIG_PATH</code>).</p>
+<h3 id="operations--debugging"><a class="header" href="#operations--debugging">Operations &amp; debugging</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Command</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>cargo rustapi doctor [--strict]</code></td><td>Toolchain + production signal scan</td></tr>
+<tr><td><code>cargo rustapi observability [--check]</code></td><td>Observability docs and feature recommendations</td></tr>
+<tr><td><code>cargo rustapi bench</code></td><td>Run benchmark workflow</td></tr>
+<tr><td><code>cargo rustapi replay list -t &lt;token&gt;</code></td><td>List captured replay entries</td></tr>
+<tr><td><code>cargo rustapi replay run &lt;id&gt; -t &lt;token&gt;</code></td><td>Replay a captured request</td></tr>
+<tr><td><code>cargo rustapi replay diff &lt;id&gt; -t &lt;token&gt;</code></td><td>Diff replay against target URL</td></tr>
+</tbody>
+</table>
+</div>
+<p>See <a href="../recipes/replay.html">Replay recipe</a> and <a href="../../PRODUCTION_CHECKLIST.html">Production Checklist</a>.</p>
+<hr>
+<h2 id="quick-start"><a class="header" href="#quick-start">Quick start</a></h2>
+<pre><code class="language-bash">cargo rustapi new my-api --template api --preset prod-api
+cd my-api
+cargo rustapi run --reload
+</code></pre>
+<p>Open <code>http://127.0.0.1:8080/docs</code> for Swagger UI.</p>
+<hr>
+<h2 id="cloud-deploy-workflow"><a class="header" href="#cloud-deploy-workflow">Cloud deploy workflow</a></h2>
+<pre><code class="language-bash">cargo rustapi login
+cargo rustapi whoami
+cargo rustapi deploy cloud
+cargo rustapi deploy status &lt;deploy-id&gt;
+</code></pre>
+<p>Backend source: <a href="https://github.com/Tuntii/RustAPI-Cloud">github.com/Tuntii/RustAPI-Cloud</a></p>
+<hr>
 <h2 id="templates"><a class="header" href="#templates">Templates</a></h2>
-<p>The templates used by the CLI are opinionated but flexible. They enforce:</p>
+<p>Templates enforce:</p>
 <ul>
-<li>Modular folder structure.</li>
-<li>Implementation of <code>State</code> pattern.</li>
-<li>Separation of <code>Error</code> types.</li>
+<li>Modular folder structure</li>
+<li><code>State</code> pattern for shared resources</li>
+<li>Separated error types</li>
+</ul>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Template</th><th>Best for</th></tr>
+</thead>
+<tbody>
+<tr><td><code>minimal</code></td><td>Smallest possible <code>main.rs</code></td></tr>
+<tr><td><code>api</code></td><td>REST APIs</td></tr>
+<tr><td><code>web</code></td><td>Server-rendered HTML</td></tr>
+<tr><td><code>full</code></td><td>DB + auth + Docker</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="feature-flag-cloud"><a class="header" href="#feature-flag-cloud">Feature flag: <code>cloud</code></a></h2>
+<p>Cloud commands require the <code>cloud</code> feature (default-on):</p>
+<pre><code class="language-toml">[dependencies]
+cargo-rustapi = { version = "0.1.550", default-features = false }
+</code></pre>
+<p>Disabling removes <code>login</code>, <code>deploy cloud</code>, and <code>deploy status</code> — useful for minimal CI builds.</p>
+<hr>
+<h2 id="related"><a class="header" href="#related">Related</a></h2>
+<ul>
+<li><a href="../recipes/rustapi_cloud.html">RustAPI Cloud recipe</a></li>
+<li><a href="../recipes/deployment.html">Deployment recipe</a></li>
+<li><a href="../getting_started/installation.html">Getting Started: Installation</a></li>
 </ul>
 
                     </main>

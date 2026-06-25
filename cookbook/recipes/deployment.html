@@ -36,10 +36,10 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-9033ebbb.js";
+            window.path_to_searchindex_js = "../searchindex-f8dd45a5.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="../toc-09b14b8b.js"></script>
+        <script src="../toc-33fbcb1f.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -189,6 +189,7 @@
 <li><strong>Fly.io</strong>: Generate <code>fly.toml</code> and deploy instructions.</li>
 <li><strong>Railway</strong>: Generate <code>railway.toml</code> and project setup.</li>
 <li><strong>Shuttle.rs</strong>: Generate <code>Shuttle.toml</code> and setup instructions.</li>
+<li><strong>RustAPI Cloud</strong>: Managed hosting via <code>cargo rustapi deploy cloud</code> — see <a href="rustapi_cloud.html">RustAPI Cloud</a>.</li>
 </ul>
 <h2 id="usage"><a class="header" href="#usage">Usage</a></h2>
 <h3 id="docker"><a class="header" href="#docker">Docker</a></h3>
@@ -236,9 +237,9 @@
 <h2 id="probe-recommendations"><a class="header" href="#probe-recommendations">Probe recommendations</a></h2>
 <p>RustAPI has first-class built-in probe endpoints:</p>
 <ul>
-<li><code>/health</code> â€” aggregate service and dependency health</li>
-<li><code>/ready</code> â€” readiness for load balancers and orchestrators</li>
-<li><code>/live</code> â€” lightweight liveness probe</li>
+<li><code>/health</code> — aggregate service and dependency health</li>
+<li><code>/ready</code> — readiness for load balancers and orchestrators</li>
+<li><code>/live</code> — lightweight liveness probe</li>
 </ul>
 <p>You can enable them via:</p>
 <ul>
@@ -248,9 +249,9 @@
 </ul>
 <h3 id="recommended-semantics"><a class="header" href="#recommended-semantics">Recommended semantics</a></h3>
 <ul>
-<li><strong>Liveness</strong> should answer: â€œIs the process alive?â€</li>
-<li><strong>Readiness</strong> should answer: â€œShould this instance receive traffic right now?â€</li>
-<li><strong>Health</strong> should answer: â€œWhat is the aggregate state of the service and its dependencies?â€</li>
+<li><strong>Liveness</strong> should answer: “Is the process alive?”</li>
+<li><strong>Readiness</strong> should answer: “Should this instance receive traffic right now?”</li>
+<li><strong>Health</strong> should answer: “What is the aggregate state of the service and its dependencies?”</li>
 </ul>
 <p>In practice:</p>
 <ul>
@@ -331,7 +332,7 @@ let app = RustApi::new().with_health_check(health);
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="../recipes/http3_quic.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../recipes/rustapi_cloud.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -345,7 +346,7 @@ let app = RustApi::new().with_health_check(health);
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="../recipes/http3_quic.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../recipes/rustapi_cloud.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>
