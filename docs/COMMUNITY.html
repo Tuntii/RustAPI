@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-9033ebbb.js";
+            window.path_to_searchindex_js = "searchindex-f8dd45a5.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-888d8050.js"></script>
+        <script src="toc-17de643b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -201,17 +201,17 @@
 <h2 id="contribute"><a class="header" href="#contribute">Contribute</a></h2>
 <p>We accept contributions of all sizes:</p>
 <ul>
-<li><strong>Code</strong> â€” bug fixes, features, tests, benchmarks</li>
-<li><strong>Documentation</strong> â€” README, cookbook, examples, typo fixes</li>
-<li><strong>Examples</strong> â€” in-repo samples or the <a href="https://github.com/Tuntii/rustapi-rs-examples">examples repository</a></li>
-<li><strong>Community</strong> â€” issue triage, discussion answers, release testing</li>
+<li><strong>Code</strong> — bug fixes, features, tests, benchmarks</li>
+<li><strong>Documentation</strong> — README, cookbook, examples, typo fixes</li>
+<li><strong>Examples</strong> — in-repo samples or the <a href="https://github.com/Tuntii/rustapi-rs-examples">examples repository</a></li>
+<li><strong>Community</strong> — issue triage, discussion answers, release testing</li>
 </ul>
 <p>Start here:</p>
 <ol>
 <li>Read <a href="../CONTRIBUTING.html">CONTRIBUTING.md</a> for setup, testing, and PR workflow</li>
 <li>Read <a href="../CODE_OF_CONDUCT.html">CODE_OF_CONDUCT.md</a></li>
 <li>Pick an issue labeled <a href="https://github.com/Tuntii/RustAPI/issues?q=is%3Aissue+is%3Aopen+label%3A%22good+first+issue%22"><code>good first issue</code></a> or <a href="https://github.com/Tuntii/RustAPI/issues?q=is%3Aissue+is%3Aopen+label%3A%22help+wanted%22"><code>help wanted</code></a> when available</li>
-<li>Fork â†’ branch â†’ PR (squash merge to <code>main</code>)</li>
+<li>Fork → branch → PR (squash merge to <code>main</code>)</li>
 </ol>
 <h3 id="documentation-contributions"><a class="header" href="#documentation-contributions">Documentation contributions</a></h3>
 <p>Documentation lives in several places:</p>
@@ -230,6 +230,12 @@
 </table>
 </div>
 <p>When you change public behavior, update the cookbook recipe or reference page that matches the feature. When you only fix internals, a CHANGELOG entry under <strong>Changed</strong> or <strong>Fixed</strong> is enough.</p>
+<p>Key docs to keep in sync on release:</p>
+<ul>
+<li>Version pins in <code>docs/GETTING_STARTED.md</code>, cookbook recipes, and <code>README.md</code></li>
+<li><a href="PRODUCTION_BASELINE.html">Production Baseline</a> and <a href="PRODUCTION_CHECKLIST.html">Production Checklist</a> when defaults change</li>
+<li><a href="cookbook/src/recipes/rustapi_cloud.html">RustAPI Cloud recipe</a> when CLI cloud commands change</li>
+</ul>
 <h3 id="public-api-changes"><a class="header" href="#public-api-changes">Public API changes</a></h3>
 <p>User-facing API surface is defined by the <code>rustapi-rs</code> facade. Changes that affect public types or feature flags may require:</p>
 <ul>
@@ -240,13 +246,14 @@
 <p>See <a href="../CONTRACT.html">CONTRACT.md</a> for stability rules.</p>
 <h2 id="project-values"><a class="header" href="#project-values">Project values</a></h2>
 <ul>
-<li><strong>Stable facade</strong> â€” application code imports <code>rustapi-rs</code>, not internal crates</li>
-<li><strong>Evidence over claims</strong> â€” benchmarks and behavior changes should be test-backed</li>
-<li><strong>Small, reviewable PRs</strong> â€” easier to merge and safer for contributors</li>
-<li><strong>Respectful collaboration</strong> â€” see the Code of Conduct</li>
+<li><strong>Stable facade</strong> — application code imports <code>rustapi-rs</code>, not internal crates</li>
+<li><strong>Evidence over claims</strong> — benchmarks and behavior changes should be test-backed</li>
+<li><strong>Small, reviewable PRs</strong> — easier to merge and safer for contributors</li>
+<li><strong>Respectful collaboration</strong> — see the Code of Conduct</li>
 </ul>
 <h2 id="releases"><a class="header" href="#releases">Releases</a></h2>
 <p>Releases are tagged <code>v0.1.&lt;commit-count&gt;</code> and published to <a href="https://crates.io/crates/rustapi-rs">crates.io</a>. See <a href="../CHANGELOG.html">CHANGELOG.md</a> and <a href="../RELEASES.html">RELEASES.md</a> for notes.</p>
+<p><strong>Repository split:</strong> RustAPI Cloud backend development happens in <a href="https://github.com/Tuntii/RustAPI-Cloud">RustAPI-Cloud</a>. This repo ships the framework and CLI only.</p>
 <h2 id="security"><a class="header" href="#security">Security</a></h2>
 <p>Report vulnerabilities privately per <a href="../SECURITY.html">SECURITY.md</a>. Do not open public issues for undisclosed security problems.</p>
 <h2 id="license"><a class="header" href="#license">License</a></h2>
