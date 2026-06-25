@@ -117,13 +117,13 @@ mod tests {
     fn public_deploy_url_uses_https_and_wildcard_host() {
         let url = public_deploy_url(
             "https",
-            "rustapi.tunayinbayramharciligi.com",
+            "rustapi.tunayinbayramharcligi.com",
             "my-api",
             "a5c231e4-4bbd-4c99-8993-771aacd3dd35",
         );
         assert_eq!(
             url,
-            "https://my-api-a5c231e4.rustapi.tunayinbayramharciligi.com"
+            "https://my-api-a5c231e4.rustapi.tunayinbayramharcligi.com"
         );
     }
 
@@ -132,7 +132,7 @@ mod tests {
         let dir = tempfile::tempdir().expect("tempdir");
         upsert_nginx_map_entry(
             dir.path(),
-            "my-api-a5c231e4.rustapi.tunayinbayramharciligi.com",
+            "my-api-a5c231e4.rustapi.tunayinbayramharcligi.com",
             30123,
         )
         .expect("write map");
@@ -140,7 +140,7 @@ mod tests {
             std::fs::read_to_string(dir.path().join("my-api-a5c231e4.conf")).expect("read");
         assert_eq!(
             content,
-            "my-api-a5c231e4.rustapi.tunayinbayramharciligi.com 30123;\n"
+            "my-api-a5c231e4.rustapi.tunayinbayramharcligi.com 30123;\n"
         );
     }
 }

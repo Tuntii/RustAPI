@@ -5,6 +5,26 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.550] - 2026-06-25
+
+### Added
+
+- **RustAPI Cloud (v0.1.1)** vendored under `RustAPI-Cloud/`: deploy pipeline, GitHub OAuth, public HTTPS URLs for user apps (`https://{project}-{user8}.rustapi.{domain}`), nginx wildcard routing, and production `install.sh`.
+- **`cargo rustapi deploy status`**: poll deploy job progress from the CLI.
+- **`RUSTAPI_CONFIG_PATH`**: isolate CLI cloud credentials during tests and multi-profile setups.
+- **`Multipart` / `Headers` `OperationModifier`**: OpenAPI-aware handler metadata for deploy and upload routes.
+
+### Fixed
+
+- Binary-safe multipart parsing in `rustapi-core`.
+- CLI deploy status HTTP client timeout.
+- Domain spelling and production defaults for `tunayinbayramharcligi.com` deploy host.
+
+### Changed
+
+- `RustAPI-Cloud` stays in the monorepo but **excluded** from the published workspace (not on crates.io).
+- Cloud default port `3002`; Postgres bound to `127.0.0.1:5435` in docker-compose.
+
 ## [0.1.537] - 2026-06-23
 
 ### Changed
@@ -550,7 +570,8 @@ This release delivers a **12x performance improvement**, bringing RustAPI from ~
 - `extras` meta-feature for common optional features
 - `full` feature for all optional features
 
-[Unreleased]: https://github.com/Tuntii/RustAPI/compare/v0.1.537...HEAD
+[Unreleased]: https://github.com/Tuntii/RustAPI/compare/v0.1.550...HEAD
+[0.1.550]: https://github.com/Tuntii/RustAPI/compare/v0.1.537...v0.1.550
 [0.1.537]: https://github.com/Tuntii/RustAPI/compare/v0.1.528...v0.1.537
 [0.1.528]: https://github.com/Tuntii/RustAPI/compare/v0.1.508...v0.1.528
 [0.1.397]: https://github.com/Tuntii/RustAPI/compare/v0.1.335...v0.1.397

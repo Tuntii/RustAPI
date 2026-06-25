@@ -2247,7 +2247,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-cloud"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "anyhow",
  "bytes",
@@ -2276,7 +2276,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-core"
-version = "0.1.537"
+version = "0.1.550"
 dependencies = [
  "bytes",
  "futures-util",
@@ -2303,7 +2303,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-macros"
-version = "0.1.537"
+version = "0.1.550"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -2314,7 +2314,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-openapi"
-version = "0.1.537"
+version = "0.1.550"
 dependencies = [
  "bytes",
  "http 1.4.2",
@@ -2326,7 +2326,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-rs"
-version = "0.1.537"
+version = "0.1.550"
 dependencies = [
  "async-trait",
  "futures-util",
@@ -2342,7 +2342,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-validate"
-version = "0.1.537"
+version = "0.1.550"
 dependencies = [
  "async-trait",
  "http 1.4.2",

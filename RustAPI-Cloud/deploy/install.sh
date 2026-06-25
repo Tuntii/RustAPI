@@ -3,7 +3,8 @@
 # Usage: DOMAIN=api.example.com JWT_SECRET=... GITHUB_CLIENT_ID=... GITHUB_CLIENT_SECRET=... ./install.sh
 set -euo pipefail
 
-DOMAIN="${DOMAIN:-rustapi.tunayinbayramharciligi.com}"
+DOMAIN="${DOMAIN:-rustapi.tunayinbayramharcligi.com}"
+CLOUD_PORT="${CLOUD_PORT:-3002}"
 APP_ROOT="${APP_ROOT:-/opt/rustapi}"
 CLOUD_DIR="${APP_ROOT}/RustAPI-Cloud"
 SERVICE_USER="${SERVICE_USER:-rustapi}"
@@ -79,9 +80,9 @@ mkdir -p "${STORAGE_ROOT}"
 chown -R "${SERVICE_USER}:${SERVICE_USER}" "${STORAGE_ROOT}"
 
 cat > "${CLOUD_DIR}/.env" <<EOF
-DATABASE_URL=postgres://rustapi:rustapi@localhost:5432/rustapi_cloud
+DATABASE_URL=postgres://rustapi:rustapi@localhost:5435/rustapi_cloud
 HOST=127.0.0.1
-PORT=3000
+PORT=${CLOUD_PORT}
 JWT_SECRET=${JWT_SECRET}
 GITHUB_CLIENT_ID=${GITHUB_CLIENT_ID}
 GITHUB_CLIENT_SECRET=${GITHUB_CLIENT_SECRET}
@@ -110,6 +111,7 @@ chmod 0440 /etc/sudoers.d/rustapi-nginx-reload
 
 install -m 0644 "${CLOUD_DIR}/deploy/nginx-rustapi-cloud.conf" /etc/nginx/sites-available/rustapi-cloud
 sed -i "s|__DOMAIN__|${DOMAIN}|g" /etc/nginx/sites-available/rustapi-cloud
+sed -i "s|__CLOUD_PORT__|${CLOUD_PORT}|g" /etc/nginx/sites-available/rustapi-cloud
 ln -sf /etc/nginx/sites-available/rustapi-cloud /etc/nginx/sites-enabled/rustapi-cloud
 
 install -m 0644 "${CLOUD_DIR}/deploy/nginx-rustapi-apps.conf" /etc/nginx/sites-available/rustapi-apps
@@ -139,7 +141,7 @@ fi
 
 echo "==> Health check"
 sleep 3
-curl -fsS "http://127.0.0.1:3000/health" && echo
+curl -fsS "http://127.0.0.1:${CLOUD_PORT}/health" && echo
 echo "DONE: https://${DOMAIN}/health"
 echo "User apps: https://{project}-{user8}.${DOMAIN}"
 echo "DNS: A ${DOMAIN} -> server IP, A *.${DOMAIN} -> server IP (wildcard)"

@@ -451,7 +451,7 @@ async fn deploy_returns_public_https_url_when_production_host_configured() {
         pool.clone(),
         storage.path(),
         DeploySettings {
-            public_host: Some("rustapi.tunayinbayramharciligi.com".into()),
+            public_host: Some("rustapi.tunayinbayramharcligi.com".into()),
             url_scheme: "https".into(),
             nginx_map_dir: Some(map_dir.to_string_lossy().into_owned()),
         },
@@ -470,7 +470,7 @@ async fn deploy_returns_public_https_url_when_production_host_configured() {
         .take(8)
         .collect();
     let expected_url = format!(
-        "https://listener-app-{user_prefix}.rustapi.tunayinbayramharciligi.com"
+        "https://listener-app-{user_prefix}.rustapi.tunayinbayramharcligi.com"
     );
 
     for _ in 0..40 {

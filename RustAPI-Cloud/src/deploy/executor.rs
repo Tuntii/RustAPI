@@ -255,7 +255,7 @@ mod tests {
             project_name: "my-api".into(),
             user_id: "a5c231e4-4bbd-4c99-8993-771aacd3dd35".into(),
             deploy: DeploySettings {
-                public_host: Some("rustapi.tunayinbayramharciligi.com".into()),
+                public_host: Some("rustapi.tunayinbayramharcligi.com".into()),
                 url_scheme: "https".into(),
                 nginx_map_dir: None,
             },
@@ -263,7 +263,7 @@ mod tests {
         let url = resolve_public_url(30123, &params);
         assert_eq!(
             url,
-            "https://my-api-a5c231e4.rustapi.tunayinbayramharciligi.com"
+            "https://my-api-a5c231e4.rustapi.tunayinbayramharcligi.com"
         );
     }
 

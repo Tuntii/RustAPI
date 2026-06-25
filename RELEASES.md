@@ -1,3 +1,33 @@
+# RustAPI v0.1.550 + RustAPI Cloud v0.1.1 Release Notes
+
+**Release Date**: June 25, 2026
+**Full Changelog**: https://github.com/Tuntii/RustAPI/compare/v0.1.537...v0.1.550
+
+---
+
+## Highlights
+
+v0.1.550 ships the **first production-ready RustAPI Cloud stack** alongside framework/CLI fixes for managed deploys.
+
+| Area | Change |
+|------|--------|
+| RustAPI Cloud | Vendored in monorepo (`RustAPI-Cloud/`, workspace-excluded); deploy pipeline, OAuth, storage, nginx wildcard routing |
+| Public deploy URLs | `https://{project}-{user8}.rustapi.tunayinbayramharcligi.com` |
+| CLI | `cargo rustapi deploy status`, `RUSTAPI_CONFIG_PATH`, multipart/Headers OpenAPI modifiers |
+| Production defaults | Cloud port `3002`, Postgres `127.0.0.1:5435`, wildcard TLS nginx template |
+
+**Deploy flow:**
+
+```bash
+cargo rustapi login --cloud-url https://rustapi.tunayinbayramharcligi.com
+cargo rustapi deploy cloud
+cargo rustapi deploy status
+```
+
+**Repo layout:** `RustAPI-Cloud/` lives in the main RustAPI repo (not a separate git tree). It is excluded from `cargo publish` because it path-depends on the framework during development.
+
+---
+
 # RustAPI v0.1.537 Release Notes
 
 **Release Date**: June 23, 2026
