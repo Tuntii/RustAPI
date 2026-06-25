@@ -1,0 +1,31 @@
+# Canonical deploy-pipeline goal patch manifest (both repos).
+# Verification step 6 copies this file to {SCRATCH}/CHANGED_FILES.txt and changed-files.txt.
+# One path per line; repo prefix required for dual-repo honesty.
+
+# --- RustAPI ---
+RustAPI/.gitignore
+RustAPI/crates/cargo-rustapi/src/commands/deploy.rs
+RustAPI/crates/cargo-rustapi/src/config.rs
+RustAPI/crates/cargo-rustapi/tests/cli_tests.rs
+RustAPI/crates/rustapi-core/src/extract.rs
+RustAPI/crates/rustapi-core/src/multipart.rs
+RustAPI/scripts/run-verification-plan.ps1
+
+# --- RustAPI-Cloud (verification drivers called out in plan step 6) ---
+RustAPI-Cloud/.cargo/config.toml
+RustAPI-Cloud/.gitignore
+RustAPI-Cloud/Cargo.toml
+RustAPI-Cloud/fixtures/port-listener/Cargo.toml
+RustAPI-Cloud/fixtures/port-listener/src/main.rs
+RustAPI-Cloud/migrations/002_deploy.sql
+RustAPI-Cloud/scripts/run-verification-plan.ps1
+RustAPI-Cloud/src/auth/bearer.rs
+RustAPI-Cloud/src/bin/mint-verify-jwt.rs
+RustAPI-Cloud/src/bin/verify-deploy-e2e.rs
+RustAPI-Cloud/src/deploy/executor.rs
+RustAPI-Cloud/src/deploy/service.rs
+RustAPI-Cloud/src/lib.rs
+RustAPI-Cloud/src/routes/deploy.rs
+RustAPI-Cloud/src/verify_db.rs
+RustAPI-Cloud/tests/common/mod.rs
+RustAPI-Cloud/tests/deploy_pipeline.rs
