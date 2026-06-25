@@ -52,10 +52,12 @@ pub fn load_config() -> Result<CloudConfig> {
 }
 
 pub fn save_config(config: &CloudConfig) -> Result<()> {
-    let dir = config_dir();
-    std::fs::create_dir_all(&dir).with_context(|| format!("Failed to create {}", dir.display()))?;
-
     let path = config_path();
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent)
+            .with_context(|| format!("Failed to create {}", parent.display()))?;
+    }
+
     let json = serde_json::to_string_pretty(config).context("Failed to serialize config")?;
     std::fs::write(&path, json)
         .with_context(|| format!("Failed to write config to {}", path.display()))?;
@@ -70,4 +72,41 @@ pub fn clear_config() -> Result<()> {
             .with_context(|| format!("Failed to remove {}", path.display()))?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::sync::{Mutex, OnceLock};
+
+    static ENV_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+
+    fn env_lock() -> std::sync::MutexGuard<'static, ()> {
+        ENV_LOCK.get_or_init(|| Mutex::new(())).lock().unwrap()
+    }
+
+    #[test]
+    fn save_config_creates_parent_dir_for_rustapi_config_path_override() {
+        let _guard = env_lock();
+        let dir = tempfile::tempdir().expect("tempdir");
+        let config_file = dir.path().join("nested").join("cloud-config.json");
+        std::env::set_var("RUSTAPI_CONFIG_PATH", config_file.to_str().unwrap());
+
+        let cfg = CloudConfig {
+            token: Some("test-token".into()),
+            refresh_token: None,
+            user: Some(UserInfo {
+                login: "test".into(),
+                tier: "hobby".into(),
+                avatar_url: None,
+            }),
+            last_login: None,
+            cloud_url: Some("http://127.0.0.1:8080".into()),
+        };
+
+        save_config(&cfg).expect("save under override path");
+        assert!(config_file.exists());
+
+        std::env::remove_var("RUSTAPI_CONFIG_PATH");
+    }
 }
