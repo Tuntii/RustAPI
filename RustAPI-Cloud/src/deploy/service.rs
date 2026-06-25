@@ -7,8 +7,9 @@ use rustapi_rs::prelude::*;
 use serde::Serialize;
 use tokio::fs;
 
+use crate::config::DeploySettings;
 use crate::db::DbPool;
-use crate::deploy::executor;
+use crate::deploy::executor::{self, LaunchParams};
 use crate::models::{Deploy, DeployStatus, NewDeploy, NewProject, Project};
 use crate::schema::{deploys, projects};
 
@@ -23,13 +24,15 @@ pub struct DeployResponse {
 pub struct DeployService {
     pool: Arc<DbPool>,
     storage_root: PathBuf,
+    deploy: DeploySettings,
 }
 
 impl DeployService {
-    pub fn new(pool: DbPool, storage_root: impl Into<PathBuf>) -> Self {
+    pub fn new(pool: DbPool, storage_root: impl Into<PathBuf>, deploy: DeploySettings) -> Self {
         Self {
             pool: Arc::new(pool),
             storage_root: storage_root.into(),
+            deploy,
         }
     }
 
@@ -125,9 +128,22 @@ impl DeployService {
         let pool = self.pool.clone();
         let launch_path = binary_path_str.clone();
         let launch_id = deploy_id.clone();
+        let launch_user = user_id.to_string();
+        let launch_project = project.name.clone();
+        let deploy_settings = self.deploy.clone();
 
         tokio::spawn(async move {
-            executor::launch_binary(pool, launch_id, launch_path).await;
+            executor::launch_binary(
+                pool,
+                LaunchParams {
+                    deploy_id: launch_id,
+                    binary_path: launch_path,
+                    project_name: launch_project,
+                    user_id: launch_user,
+                    deploy: deploy_settings,
+                },
+            )
+            .await;
         });
 
         Ok(DeployResponse {

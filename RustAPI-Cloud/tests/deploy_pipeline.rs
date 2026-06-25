@@ -7,7 +7,7 @@ use std::time::Duration;
 
 use common::JWT_SECRET;
 use rustapi_cloud::auth::jwt;
-use rustapi_cloud::config::Config;
+use rustapi_cloud::config::{Config, DeploySettings};
 use rustapi_cloud::db::create_pool;
 use rustapi_cloud::deploy::DeployService;
 use rustapi_cloud::models::{DeployStatus, NewUser};
@@ -98,7 +98,7 @@ async fn create_from_upload_persists_deploy_and_returns_queued() {
     let pool = setup_pool().await;
     let (user_id, token) = insert_test_user(&pool).await;
     let storage = tempdir().expect("tempdir");
-    let service = DeployService::new(pool.clone(), storage.path());
+    let service = DeployService::new(pool.clone(), storage.path(), DeploySettings::default());
 
     let binary = listener_binary();
     let bytes = std::fs::read(&binary).expect("read fixture binary");
@@ -147,7 +147,7 @@ async fn get_status_rejects_other_users_deploy() {
     let (owner_id, _) = insert_test_user(&pool).await;
     let (other_id, _) = insert_test_user(&pool).await;
     let storage = tempdir().expect("tempdir");
-    let service = DeployService::new(pool, storage.path());
+    let service = DeployService::new(pool, storage.path(), DeploySettings::default());
 
     let created = service
         .create_from_upload(&owner_id, "private-app", b"not-a-real-binary")
@@ -179,6 +179,7 @@ async fn deploy_routes_require_auth_over_http() {
         github_client_secret: "test".into(),
         github_redirect_uri: "http://localhost/auth/callback".into(),
         storage_root: storage.path().to_string_lossy().into(),
+        deploy: DeploySettings::default(),
     };
 
     let app = rustapi_cloud::build_app(config, pool);
@@ -252,6 +253,7 @@ async fn deploy_create_over_http_with_auth_returns_deploy_id() {
         github_client_secret: "test".into(),
         github_redirect_uri: "http://localhost/auth/callback".into(),
         storage_root: storage.path().to_string_lossy().into(),
+        deploy: DeploySettings::default(),
     };
 
     let app = rustapi_cloud::build_app(config, pool);
@@ -362,6 +364,7 @@ async fn full_stack_deploy_flow_over_tcp() {
         github_client_secret: "test".into(),
         github_redirect_uri: "http://localhost/auth/callback".into(),
         storage_root: storage.path().to_string_lossy().into(),
+        deploy: DeploySettings::default(),
     };
 
     let pool_for_errors = pool.clone();
@@ -436,4 +439,61 @@ async fn full_stack_deploy_flow_over_tcp() {
     let _ = user_id;
     let _ = token;
     server.abort();
+}
+
+#[tokio::test]
+async fn deploy_returns_public_https_url_when_production_host_configured() {
+    let pool = setup_pool().await;
+    let (user_id, _) = insert_test_user(&pool).await;
+    let storage = tempdir().expect("tempdir");
+    let map_dir = storage.path().join("nginx-map");
+    let service = DeployService::new(
+        pool.clone(),
+        storage.path(),
+        DeploySettings {
+            public_host: Some("rustapi.tunayinbayramharciligi.com".into()),
+            url_scheme: "https".into(),
+            nginx_map_dir: Some(map_dir.to_string_lossy().into_owned()),
+        },
+    );
+
+    let binary = listener_binary();
+    let bytes = std::fs::read(&binary).expect("read fixture binary");
+    let created = service
+        .create_from_upload(&user_id, "listener-app", &bytes)
+        .await
+        .expect("create deploy");
+
+    let user_prefix: String = user_id
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric())
+        .take(8)
+        .collect();
+    let expected_url = format!(
+        "https://listener-app-{user_prefix}.rustapi.tunayinbayramharciligi.com"
+    );
+
+    for _ in 0..40 {
+        sleep(Duration::from_millis(250)).await;
+        let current = service
+            .get_status(&user_id, &created.deploy_id)
+            .await
+            .expect("poll status");
+        if current.status == DeployStatus::Live.as_str() {
+            assert_eq!(current.url.as_deref(), Some(expected_url.as_str()));
+            let map_file = map_dir.join(format!("listener-app-{user_prefix}.conf"));
+            let hostname = expected_url.trim_start_matches("https://");
+            let map_content = std::fs::read_to_string(&map_file).unwrap_or_else(|err| {
+                panic!("nginx map file {} missing: {err}", map_file.display())
+            });
+            assert!(map_content.contains(hostname));
+            assert!(map_content.contains(';'));
+            return;
+        }
+        if current.status == DeployStatus::Failed.as_str() {
+            panic!("deploy failed unexpectedly");
+        }
+    }
+
+    panic!("deploy did not reach live with public URL");
 }

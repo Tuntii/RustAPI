@@ -110,6 +110,7 @@ async fn main() -> anyhow::Result<()> {
         github_client_secret: "test".into(),
         github_redirect_uri: format!("http://127.0.0.1:{port}/auth/callback"),
         storage_root: storage.to_string_lossy().into(),
+        deploy: rustapi_cloud::config::DeploySettings::default(),
     };
 
     let pool = create_pool(&database_url).await;

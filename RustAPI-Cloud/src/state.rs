@@ -10,7 +10,8 @@ pub struct AppState {
 
 impl AppState {
     pub fn new(config: Config, pool: DbPool) -> Self {
-        let deploy_service = DeployService::new(pool, &config.storage_root);
+        let deploy_service =
+            DeployService::new(pool, &config.storage_root, config.deploy.clone());
         Self {
             config,
             deploy_service,

@@ -1,0 +1,17 @@
+[Unit]
+Description=RustAPI Cloud API
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+User=__SERVICE_USER__
+Group=__SERVICE_USER__
+WorkingDirectory=__APP_ROOT__/RustAPI-Cloud
+EnvironmentFile=__APP_ROOT__/RustAPI-Cloud/.env
+ExecStart=__APP_ROOT__/RustAPI-Cloud/target/release/rustapi-cloud
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
