@@ -6,6 +6,8 @@
 .env.*
 !.env.example
 /scripts
+!scripts/run-verification-plan.ps1
+/terminals
 # /benches
 /.kiro
 

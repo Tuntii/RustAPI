@@ -509,19 +509,14 @@ mod deploy_command {
         (cloud_url, handle)
     }
 
-    fn write_cloud_config(home: &std::path::Path, cloud_url: &str, token: &str) {
-        let dir = home.join(".rustapi");
-        fs::create_dir_all(&dir).expect("config dir");
+    fn write_cloud_config_file(path: &std::path::Path, cloud_url: &str, token: &str) {
         let config = serde_json::json!({
             "token": token,
             "cloud_url": cloud_url,
             "user": { "login": "cli-test", "tier": "hobby" }
         });
-        fs::write(
-            dir.join("config.json"),
-            serde_json::to_string_pretty(&config).expect("json"),
-        )
-        .expect("write config");
+        fs::write(path, serde_json::to_string_pretty(&config).expect("json"))
+            .expect("write config");
     }
 
     #[test]
@@ -546,12 +541,12 @@ mod deploy_command {
     fn test_deploy_status_fetches_live_response_from_cloud() {
         let deploy_id = "cli-mock-deploy-1";
         let (cloud_url, server) = spawn_mock_deploy_status_server(deploy_id);
-        let home = tempdir().expect("cli home");
-        write_cloud_config(home.path(), &cloud_url, "mock-jwt-token");
+        let dir = tempdir().expect("config dir");
+        let config_path = dir.path().join("cloud-config.json");
+        write_cloud_config_file(&config_path, &cloud_url, "mock-jwt-token");
 
         cargo_rustapi()
-            .env("USERPROFILE", home.path())
-            .env("HOME", home.path())
+            .env("RUSTAPI_CONFIG_PATH", &config_path)
             .args(["deploy", "status", deploy_id])
             .assert()
             .success()
