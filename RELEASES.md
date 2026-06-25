@@ -24,7 +24,7 @@ cargo rustapi deploy cloud
 cargo rustapi deploy status
 ```
 
-**Repo layout:** `RustAPI-Cloud/` lives in the main RustAPI repo (not a separate git tree). It is excluded from `cargo publish` because it path-depends on the framework during development.
+**Repo layout:** RustAPI Cloud now lives in **[Tuntii/RustAPI-Cloud](https://github.com/Tuntii/RustAPI-Cloud)** (split after this release).
 
 ---
 

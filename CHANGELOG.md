@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **RustAPI Cloud** moved to its own repository: [github.com/Tuntii/RustAPI-Cloud](https://github.com/Tuntii/RustAPI-Cloud). This repo is now framework + CLI only.
+
 ## [0.1.550] - 2026-06-25
 
 ### Added
@@ -22,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- `RustAPI-Cloud` stays in the monorepo but **excluded** from the published workspace (not on crates.io).
+- `RustAPI-Cloud` was initially vendored here; superseded by the standalone [RustAPI-Cloud](https://github.com/Tuntii/RustAPI-Cloud) repo in a follow-up split.
 - Cloud default port `3002`; Postgres bound to `127.0.0.1:5435` in docker-compose.
 
 ## [0.1.537] - 2026-06-23

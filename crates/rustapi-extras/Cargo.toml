@@ -147,3 +147,4 @@ observability = ["otel", "structured-logging"]
 
 # Full feature set (retry temporarily disabled)
 full = ["extras", "config", "cookies", "sqlx", "insight", "webhook", "timeout", "guard", "logging", "circuit-breaker", "security-headers", "api-key", "cache", "dedup", "sanitization", "retry", "otel", "structured-logging", "csrf", "oauth2-client", "audit", "session", "session-redis", "jobs", "jobs-redis", "jobs-postgres", "replay"]
+

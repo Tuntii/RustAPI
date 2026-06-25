@@ -15,7 +15,7 @@ members = [
     "crates/rustapi-mcp",
     "crates/cargo-rustapi",
 ]
-exclude = ["RustAPI-Cloud", "apps/bayram-leaderboard"]
+exclude = ["apps/bayram-leaderboard"]
 
 [workspace.package]
 version = "0.1.550"

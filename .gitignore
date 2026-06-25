@@ -8,9 +8,7 @@
 /scripts
 !scripts/run-verification-plan.ps1
 /terminals
-RustAPI-Cloud/target/
-RustAPI-Cloud/fixtures/**/target/
-RustAPI-Cloud/.env
+
 # /benches
 /.kiro
 

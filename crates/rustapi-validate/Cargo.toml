@@ -36,3 +36,4 @@ tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 proptest = "1.4"
 rust-i18n = "3.0"
 rustapi-core = { workspace = true, default-features = false }
+
