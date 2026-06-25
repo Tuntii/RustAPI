@@ -1,0 +1,8 @@
+[package]
+name = "port-listener"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "port-listener"
+path = "src/main.rs"

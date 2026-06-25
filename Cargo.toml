@@ -15,6 +15,7 @@ members = [
     "crates/rustapi-mcp",
     "crates/cargo-rustapi",
 ]
+exclude = ["RustAPI-Cloud"]
 
 [workspace.package]
 version = "0.1.537"

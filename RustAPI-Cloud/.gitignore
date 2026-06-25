@@ -1,0 +1,3 @@
+/target
+fixtures/**/target/
+.env
