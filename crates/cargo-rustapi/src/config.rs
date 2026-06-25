@@ -33,6 +33,9 @@ fn config_dir() -> PathBuf {
 }
 
 fn config_path() -> PathBuf {
+    if let Ok(path) = std::env::var("RUSTAPI_CONFIG_PATH") {
+        return PathBuf::from(path);
+    }
     config_dir().join("config.json")
 }
 

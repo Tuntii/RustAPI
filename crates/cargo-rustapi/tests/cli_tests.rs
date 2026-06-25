@@ -470,6 +470,59 @@ mod migrate_command {
 #[cfg(feature = "cloud")]
 mod deploy_command {
     use super::*;
+    use std::io::Write;
+    use std::net::TcpListener;
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::sync::Arc;
+    use std::thread;
+    use std::time::Duration;
+
+    fn spawn_mock_deploy_status_server(deploy_id: &str) -> (String, thread::JoinHandle<()>) {
+        let listener = TcpListener::bind("127.0.0.1:0").expect("bind mock cloud");
+        let port = listener.local_addr().expect("addr").port();
+        let cloud_url = format!("http://127.0.0.1:{port}");
+        let id = deploy_id.to_string();
+        let hits = Arc::new(AtomicUsize::new(0));
+
+        let handle = thread::spawn(move || {
+            listener.set_nonblocking(true).ok();
+            let deadline = std::time::Instant::now() + Duration::from_secs(30);
+            while hits.load(Ordering::SeqCst) < 2 && std::time::Instant::now() < deadline {
+                if let Ok((mut stream, _)) = listener.accept() {
+                    let mut buf = [0u8; 4096];
+                    let _ = std::io::Read::read(&mut stream, &mut buf);
+                    let body = format!(
+                        r#"{{"deploy_id":"{id}","status":"live","url":"http://127.0.0.1:59999"}}"#
+                    );
+                    let response = format!(
+                        "HTTP/1.1 200 OK\r\nContent-Type: application/json\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+                        body.len()
+                    );
+                    let _ = stream.write_all(response.as_bytes());
+                    hits.fetch_add(1, Ordering::SeqCst);
+                } else {
+                    thread::sleep(Duration::from_millis(20));
+                }
+            }
+        });
+
+        (cloud_url, handle)
+    }
+
+    fn write_cloud_config(home: &std::path::Path, cloud_url: &str, token: &str) {
+        let dir = home.join(".rustapi");
+        fs::create_dir_all(&dir).expect("config dir");
+        let config = serde_json::json!({
+            "token": token,
+            "cloud_url": cloud_url,
+            "user": { "login": "cli-test", "tier": "hobby" }
+        });
+        fs::write(
+            dir.join("config.json"),
+            serde_json::to_string_pretty(&config).expect("json"),
+        )
+        .expect("write config");
+    }
 
     #[test]
     fn test_deploy_status_help() {
@@ -487,5 +540,26 @@ mod deploy_command {
             .assert()
             .success()
             .stdout(predicate::str::contains("RustAPI Cloud"));
+    }
+
+    #[test]
+    fn test_deploy_status_fetches_live_response_from_cloud() {
+        let deploy_id = "cli-mock-deploy-1";
+        let (cloud_url, server) = spawn_mock_deploy_status_server(deploy_id);
+        let home = tempdir().expect("cli home");
+        write_cloud_config(home.path(), &cloud_url, "mock-jwt-token");
+
+        cargo_rustapi()
+            .env("USERPROFILE", home.path())
+            .env("HOME", home.path())
+            .args(["deploy", "status", deploy_id])
+            .assert()
+            .success()
+            .stdout(predicate::str::contains(deploy_id))
+            .stdout(predicate::str::contains("live"))
+            .stdout(predicate::str::contains("URL:"))
+            .stdout(predicate::str::contains("http://127.0.0.1:59999"));
+
+        server.join().expect("mock server thread");
     }
 }
