@@ -3,6 +3,7 @@
 # One path per line; repo prefix required for dual-repo honesty.
 
 # --- RustAPI ---
+RustAPI/CHANGED_FILES
 RustAPI/.gitignore
 RustAPI/crates/cargo-rustapi/src/commands/deploy.rs
 RustAPI/crates/cargo-rustapi/src/config.rs
