@@ -44,11 +44,18 @@ pub struct DeployStatusArgs {
 }
 
 #[cfg(feature = "cloud")]
+const CLOUD_LINUX_TARGET: &str = "x86_64-unknown-linux-gnu";
+
+#[cfg(feature = "cloud")]
 #[derive(Args, Debug)]
 pub struct CloudArgs {
     /// Project name (defaults to Cargo.toml package name)
     #[arg(short, long)]
     pub name: Option<String>,
+
+    /// Cross-compile target (default: x86_64-unknown-linux-gnu when not on Linux)
+    #[arg(long)]
+    pub target: Option<String>,
 
     /// Do not wait for deployment to complete
     #[arg(long)]
@@ -349,13 +356,340 @@ struct DeployResponse {
 }
 
 #[cfg(feature = "cloud")]
+fn resolve_cloud_build_target(override_target: Option<&str>) -> Result<Option<String>> {
+    if let Some(target) = override_target {
+        return Ok(Some(target.to_string()));
+    }
+    if cfg!(all(target_os = "linux", target_arch = "x86_64")) {
+        Ok(None)
+    } else {
+        Ok(Some(CLOUD_LINUX_TARGET.to_string()))
+    }
+}
+
+#[cfg(feature = "cloud")]
+fn ensure_rustup_target(target: &str) -> Result<()> {
+    let output = std::process::Command::new("rustup")
+        .args(["target", "list", "--installed"])
+        .output()
+        .context("Failed to run rustup")?;
+
+    if !output.status.success() {
+        return Err(anyhow::anyhow!("rustup target list failed"));
+    }
+
+    let installed = String::from_utf8_lossy(&output.stdout);
+    if installed.lines().any(|line| line.trim() == target) {
+        return Ok(());
+    }
+
+    println!("  📥 Installing Rust target {target}...");
+    let status = std::process::Command::new("rustup")
+        .args(["target", "add", target])
+        .status()
+        .context("Failed to run rustup target add")?;
+
+    if !status.success() {
+        return Err(anyhow::anyhow!("Failed to install target {target}"));
+    }
+
+    Ok(())
+}
+
+#[cfg(feature = "cloud")]
+fn cargo_subcommand_available(subcommand: &str) -> bool {
+    std::process::Command::new("cargo")
+        .arg(subcommand)
+        .arg("--help")
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .map(|status| status.success())
+        .unwrap_or(false)
+}
+
+#[cfg(feature = "cloud")]
+fn zig_runs(path: &str) -> bool {
+    std::process::Command::new(path)
+        .arg("version")
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .map(|status| status.success())
+        .unwrap_or(false)
+}
+
+#[cfg(feature = "cloud")]
+fn locate_zig() -> Option<String> {
+    if zig_runs("zig") {
+        return Some("zig".to_string());
+    }
+
+    #[cfg(windows)]
+    {
+        let mut candidates = Vec::new();
+        if let Ok(local) = std::env::var("LOCALAPPDATA") {
+            candidates.push(format!(r"{local}\Microsoft\WinGet\Links\zig.exe"));
+        }
+        if let Ok(home) = std::env::var("USERPROFILE") {
+            candidates.push(format!(r"{home}\scoop\shims\zig.exe"));
+        }
+        for candidate in candidates {
+            if zig_runs(&candidate) {
+                return Some(candidate);
+            }
+        }
+    }
+
+    None
+}
+
+#[cfg(feature = "cloud")]
+fn prepend_path(cmd: &mut std::process::Command, dir: &std::path::Path) {
+    let sep = if cfg!(windows) { ";" } else { ":" };
+    let existing = std::env::var_os("PATH")
+        .map(|value| value.to_string_lossy().into_owned())
+        .unwrap_or_default();
+    let merged = if existing.is_empty() {
+        dir.display().to_string()
+    } else {
+        format!("{}{}{}", dir.display(), sep, existing)
+    };
+    cmd.env("PATH", merged);
+}
+
+#[cfg(feature = "cloud")]
+fn docker_daemon_ready() -> bool {
+    std::process::Command::new("docker")
+        .args(["info"])
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .map(|status| status.success())
+        .unwrap_or(false)
+}
+
+#[cfg(all(feature = "cloud", windows))]
+fn wsl_has_cargo() -> bool {
+    std::process::Command::new("wsl")
+        .args(["cargo", "--version"])
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .map(|status| status.success())
+        .unwrap_or(false)
+}
+
+#[cfg(all(feature = "cloud", windows))]
+fn windows_path_for_wsl(path: &std::path::Path) -> Result<String> {
+    let canonical = path
+        .canonicalize()
+        .with_context(|| format!("Failed to resolve project path {}", path.display()))?;
+    let text = canonical.display().to_string();
+    let drive = text
+        .chars()
+        .next()
+        .ok_or_else(|| anyhow::anyhow!("Invalid project path"))?
+        .to_ascii_lowercase();
+    let rest = text.get(2..).unwrap_or("").replace('\\', "/");
+    Ok(format!("/mnt/{drive}{rest}"))
+}
+
+#[cfg(feature = "cloud")]
+struct CloudBuildResult {
+    success: bool,
+    stderr: String,
+    /// `Some(target)` for cross-compile output layout; `None` for Linux-native (Docker/WSL).
+    binary_target: Option<String>,
+}
+
+#[cfg(feature = "cloud")]
+fn run_cargo_command(args: &[&str], binary: &str) -> Result<std::process::Output> {
+    let mut cmd = std::process::Command::new("cargo");
+    cmd.args(args).args(["--bin", binary]);
+    cmd.stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped());
+    cmd.output()
+        .with_context(|| format!("Failed to run cargo {}", args.first().unwrap_or(&"")))
+}
+
+#[cfg(feature = "cloud")]
+fn run_zigbuild(target: &str, zig: &str, binary: &str) -> Result<std::process::Output> {
+    let mut cmd = std::process::Command::new("cargo");
+    cmd.args(["zigbuild", "--release", "--target", target, "--bin", binary]);
+    if zig != "zig" {
+        prepend_path(
+            &mut cmd,
+            std::path::Path::new(zig)
+                .parent()
+                .unwrap_or_else(|| ".".as_ref()),
+        );
+    }
+    cmd.stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped());
+    cmd.output().context("Failed to run cargo zigbuild")
+}
+
+#[cfg(feature = "cloud")]
+fn run_docker_linux_build(
+    project_dir: &std::path::Path,
+    binary: &str,
+) -> Result<std::process::Output> {
+    let mount = project_dir
+        .canonicalize()
+        .with_context(|| format!("Failed to resolve {}", project_dir.display()))?;
+    let script = format!(
+        "set -euo pipefail; \
+        apt-get update -qq && apt-get install -y -qq pkg-config libssl-dev >/dev/null; \
+        cargo build --release --bin {binary}"
+    );
+    let output = std::process::Command::new("docker")
+        .args([
+            "run",
+            "--rm",
+            "-v",
+            &format!("{}:/app", mount.display()),
+            "-w",
+            "/app",
+            "rust:1-bookworm",
+            "bash",
+            "-lc",
+            &script,
+        ])
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .output()
+        .context("Failed to run docker build")?;
+    Ok(output)
+}
+
+#[cfg(all(feature = "cloud", windows))]
+fn run_wsl_linux_build(
+    project_dir: &std::path::Path,
+    binary: &str,
+) -> Result<std::process::Output> {
+    let wsl_path = windows_path_for_wsl(project_dir)?;
+    let script = format!("cd '{wsl_path}' && cargo build --release --bin {binary}");
+    std::process::Command::new("wsl")
+        .args(["bash", "-lc", &script])
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .output()
+        .context("Failed to run WSL cargo build")
+}
+
+#[cfg(feature = "cloud")]
+fn run_cloud_release_build(target: Option<&str>, binary: &str) -> Result<CloudBuildResult> {
+    if target.is_none() {
+        let output = run_cargo_command(&["build", "--release"], binary)?;
+        return Ok(CloudBuildResult {
+            success: output.status.success(),
+            stderr: String::from_utf8_lossy(&output.stderr).into_owned(),
+            binary_target: None,
+        });
+    }
+
+    let target = target.unwrap();
+    let mut errors = Vec::new();
+
+    if cargo_subcommand_available("zigbuild") {
+        if let Some(zig) = locate_zig() {
+            println!("  🦎 Cross-compiling with Zig ({target})...");
+            let output = run_zigbuild(target, &zig, binary)?;
+            if output.status.success() {
+                return Ok(CloudBuildResult {
+                    success: true,
+                    stderr: String::from_utf8_lossy(&output.stderr).into_owned(),
+                    binary_target: Some(target.to_string()),
+                });
+            }
+            errors.push(format!(
+                "Zig cross-compile failed:\n{}",
+                String::from_utf8_lossy(&output.stderr)
+            ));
+        } else {
+            errors.push(
+                "Zig not found in PATH (install: winget install zig.zig, or https://ziglang.org/download/)"
+                    .to_string(),
+            );
+        }
+    } else {
+        errors.push("cargo-zigbuild not installed (cargo install cargo-zigbuild)".to_string());
+    }
+
+    if docker_daemon_ready() {
+        println!("  🐳 Building Linux binary via Docker...");
+        let cwd = std::env::current_dir().context("Failed to get current directory")?;
+        let output = run_docker_linux_build(&cwd, binary)?;
+        if output.status.success() {
+            return Ok(CloudBuildResult {
+                success: true,
+                stderr: String::from_utf8_lossy(&output.stderr).into_owned(),
+                binary_target: None,
+            });
+        }
+        errors.push(format!(
+            "Docker build failed:\n{}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+
+    #[cfg(windows)]
+    if wsl_has_cargo() {
+        println!("  🐧 Building Linux binary via WSL...");
+        let cwd = std::env::current_dir().context("Failed to get current directory")?;
+        let output = run_wsl_linux_build(&cwd, binary)?;
+        if output.status.success() {
+            return Ok(CloudBuildResult {
+                success: true,
+                stderr: String::from_utf8_lossy(&output.stderr).into_owned(),
+                binary_target: None,
+            });
+        }
+        errors.push(format!(
+            "WSL build failed:\n{}",
+            String::from_utf8_lossy(&output.stderr)
+        ));
+    }
+
+    Ok(CloudBuildResult {
+        success: false,
+        stderr: errors.join("\n\n"),
+        binary_target: Some(target.to_string()),
+    })
+}
+
+#[cfg(feature = "cloud")]
+fn cross_compile_hint(target: Option<&str>) -> &'static str {
+    if target.is_none() {
+        return "";
+    }
+    "\nHint: RustAPI Cloud needs a Linux binary. From Windows/macOS we try automatically:\n\
+     • Zig cross-compile (cargo-zigbuild + zig in PATH)\n\
+     • Docker (start Docker Desktop if installed)\n\
+     • WSL with Rust installed\n\
+     Projects using OpenSSL (reqwest native-tls) usually need Docker or WSL.\n\
+     Or deploy from a Linux machine."
+}
+
+#[cfg(feature = "cloud")]
+fn cloud_binary_path(project_name: &str, target: Option<&str>) -> PathBuf {
+    let mut path = PathBuf::from("target");
+    if let Some(t) = target {
+        path.push(t);
+    }
+    path.push("release");
+    path.push(project_name);
+    path
+}
+
+#[cfg(feature = "cloud")]
 async fn deploy_cloud(args: CloudArgs) -> Result<()> {
     let config = load_config()?;
 
-    let token = config
-        .token
-        .as_ref()
-        .ok_or_else(|| anyhow::anyhow!("Not logged in. Run `rustapi login` first."))?;
+    let token = config.token.as_ref().ok_or_else(|| {
+        anyhow::anyhow!("Not logged in. Run `cargo rustapi login` or `cargo-rustapi login` first.")
+    })?;
 
     let cloud_url = config
         .cloud_url
@@ -376,32 +710,24 @@ async fn deploy_cloud(args: CloudArgs) -> Result<()> {
         println!("  Continuing anyway...");
     }
 
-    // Build
-    println!("  🔨 Building {} (release)...", project_name);
+    let build_target = resolve_cloud_build_target(args.target.as_deref())?;
+    if let Some(target) = &build_target {
+        ensure_rustup_target(target)?;
+        println!("  🔨 Building {} for {} (release)...", project_name, target);
+    } else {
+        println!("  🔨 Building {} (release)...", project_name);
+    }
 
-    let build = std::process::Command::new("cargo")
-        .args(["build", "--release"])
-        .stdout(std::process::Stdio::piped())
-        .stderr(std::process::Stdio::piped())
-        .spawn()
-        .context("Failed to start cargo build")?;
+    let build = run_cloud_release_build(build_target.as_deref(), &project_name)?;
 
-    let output = build
-        .wait_with_output()
-        .context("Failed to wait for cargo build")?;
-
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        return Err(anyhow::anyhow!("Build failed:\n{}", stderr));
+    if !build.success {
+        let hint = cross_compile_hint(build_target.as_deref());
+        return Err(anyhow::anyhow!("Build failed:\n{}{}", build.stderr, hint));
     }
 
     println!("  ✅ Build complete");
 
-    // Find binary
-    let binary_path = PathBuf::from("target/release")
-        .join(&project_name)
-        .with_extension(std::env::consts::EXE_SUFFIX);
-
+    let binary_path = cloud_binary_path(&project_name, build.binary_target.as_deref());
     if !binary_path.exists() {
         return Err(anyhow::anyhow!(
             "Binary not found at {}. Make sure the package name matches the binary name.",
@@ -416,7 +742,12 @@ async fn deploy_cloud(args: CloudArgs) -> Result<()> {
     // Upload
     println!("  ☁️  Uploading to RustAPI Cloud...");
 
-    let client = cloud_http_client()?;
+    let upload_mb = binary_data.len() as f64 / (1024.0 * 1024.0);
+    if upload_mb > 1.0 {
+        println!("  📤 Uploading {:.1} MB...", upload_mb);
+    }
+
+    let client = cloud_upload_client(binary_data.len())?;
     let form = reqwest::multipart::Form::new()
         .text("project_name", project_name.clone())
         .part(
@@ -430,7 +761,12 @@ async fn deploy_cloud(args: CloudArgs) -> Result<()> {
         .multipart(form)
         .send()
         .await
-        .context("Failed to connect to RustAPI Cloud")?
+        .with_context(|| {
+            format!(
+                "Failed to upload to RustAPI Cloud ({cloud_url}/deploy). \
+                 If the connection timed out, check your upload speed or try again."
+            )
+        })?
         .json()
         .await
         .context("Invalid response from deploy endpoint")?;
@@ -486,9 +822,26 @@ async fn deploy_cloud(args: CloudArgs) -> Result<()> {
 #[cfg(feature = "cloud")]
 fn cloud_http_client() -> Result<reqwest::Client> {
     reqwest::Client::builder()
-        .timeout(Duration::from_secs(10))
+        .timeout(Duration::from_secs(30))
         .build()
         .context("Failed to build HTTP client")
+}
+
+#[cfg(feature = "cloud")]
+fn upload_timeout_secs(binary_bytes: usize) -> u64 {
+    // ~13 MB needs more than 10s on typical home uplinks; scale with payload size.
+    let min_secs = 120u64;
+    let size_secs = (binary_bytes as u64 / (256 * 1024)).max(1);
+    min_secs.max(size_secs).min(600)
+}
+
+#[cfg(feature = "cloud")]
+fn cloud_upload_client(binary_bytes: usize) -> Result<reqwest::Client> {
+    let timeout_secs = upload_timeout_secs(binary_bytes);
+    reqwest::Client::builder()
+        .timeout(Duration::from_secs(timeout_secs))
+        .build()
+        .context("Failed to build HTTP upload client")
 }
 
 #[cfg(feature = "cloud")]
@@ -523,7 +876,14 @@ async fn fetch_deploy_status(
 
 #[cfg(all(feature = "cloud", test))]
 mod status_tests {
-    use super::DeployResponse;
+    use super::{cloud_binary_path, upload_timeout_secs, DeployResponse, CLOUD_LINUX_TARGET};
+
+    #[test]
+    fn cloud_binary_path_uses_target_dir_for_cross_compile() {
+        let path = cloud_binary_path("hello-rustapi", Some(CLOUD_LINUX_TARGET));
+        assert!(path.to_string_lossy().contains("x86_64-unknown-linux-gnu"));
+        assert!(path.to_string_lossy().ends_with("hello-rustapi"));
+    }
 
     #[test]
     fn deploy_response_matches_cloud_api_shape() {
@@ -533,16 +893,22 @@ mod status_tests {
         assert_eq!(parsed.status, "live");
         assert_eq!(parsed.url.as_deref(), Some("http://127.0.0.1:30001"));
     }
+
+    #[test]
+    fn upload_timeout_scales_with_binary_size() {
+        assert_eq!(upload_timeout_secs(1024), 120);
+        assert_eq!(upload_timeout_secs(13 * 1024 * 1024), 120);
+        assert!(upload_timeout_secs(200 * 1024 * 1024) <= 600);
+    }
 }
 
 #[cfg(feature = "cloud")]
 async fn deploy_status(args: DeployStatusArgs) -> Result<()> {
     let config = load_config()?;
 
-    let token = config
-        .token
-        .as_ref()
-        .ok_or_else(|| anyhow::anyhow!("Not logged in. Run `rustapi login` first."))?;
+    let token = config.token.as_ref().ok_or_else(|| {
+        anyhow::anyhow!("Not logged in. Run `cargo rustapi login` or `cargo-rustapi login` first.")
+    })?;
 
     let cloud_url = config
         .cloud_url

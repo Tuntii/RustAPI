@@ -105,7 +105,7 @@ pub async fn login(args: LoginArgs) -> anyhow::Result<()> {
         if start.elapsed().as_secs() > POLL_TIMEOUT_SECS {
             spinner.finish_with_message("Login timed out");
             return Err(anyhow!(
-                "Device code expired. Please run `rustapi login` again."
+                "Device code expired. Please run `cargo rustapi login` again."
             ));
         }
 

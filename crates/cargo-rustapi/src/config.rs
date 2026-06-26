@@ -42,7 +42,9 @@ fn config_path() -> PathBuf {
 pub fn load_config() -> Result<CloudConfig> {
     let path = config_path();
     if !path.exists() {
-        return Err(anyhow::anyhow!("Not logged in. Run `rustapi login` first."));
+        return Err(anyhow::anyhow!(
+            "Not logged in. Run `cargo rustapi login` or `cargo-rustapi login` first."
+        ));
     }
 
     let json = std::fs::read_to_string(&path)

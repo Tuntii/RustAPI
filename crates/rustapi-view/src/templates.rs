@@ -103,6 +103,27 @@ impl Templates {
         }
     }
 
+    /// Load templates from in-memory sources (e.g. `include_str!` for portable deploys).
+    pub fn from_raw<I, S>(templates: I) -> Result<Self, ViewError>
+    where
+        I: IntoIterator<Item = (S, S)>,
+        S: AsRef<str>,
+    {
+        let mut tera = Tera::default();
+        for (name, content) in templates {
+            tera.add_raw_template(name.as_ref(), content.as_ref())?;
+        }
+        register_builtin_filters(&mut tera);
+        Ok(Self {
+            inner: Arc::new(RwLock::new(tera)),
+            config: TemplatesConfig {
+                glob: "embedded://".into(),
+                auto_reload: false,
+                strict_mode: false,
+            },
+        })
+    }
+
     /// Add a template from a string
     pub async fn add_template(
         &self,
@@ -224,6 +245,26 @@ mod tests {
 
         let result = templates.render("test", &ctx).await.unwrap();
         assert_eq!(result, "Hello, World!");
+    }
+
+    #[test]
+    fn from_raw_loads_embedded_templates() {
+        let templates = Templates::from_raw([
+            ("layout.html", "<html>{% block body %}{% endblock %}</html>"),
+            (
+                "page.html",
+                r#"{% extends "layout.html" %}{% block body %}Hi{% endblock %}"#,
+            ),
+        ])
+        .expect("from_raw");
+        let rt = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        let html = rt
+            .block_on(templates.render("page.html", &tera::Context::new()))
+            .expect("render");
+        assert!(html.contains("Hi"));
     }
 
     #[tokio::test]
