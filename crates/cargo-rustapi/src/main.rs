@@ -3,6 +3,8 @@
 //! Provides project scaffolding and development utilities for RustAPI.
 
 mod cli;
+#[cfg(feature = "cloud")]
+mod cloud;
 mod commands;
 mod config;
 mod templates;
@@ -28,7 +30,7 @@ async fn main() -> anyhow::Result<()> {
     cli.execute().await
 }
 
-/// Strip `rustapi` when `cargo rustapi <cmd>` forwards it as argv[1].
+/// Strip `rustapi` when `cargo rustapi <cmd>` forwards it as argv\[1\].
 pub(crate) fn strip_cargo_forwarded_subcommand(
     mut args: Vec<std::ffi::OsString>,
 ) -> Vec<std::ffi::OsString> {

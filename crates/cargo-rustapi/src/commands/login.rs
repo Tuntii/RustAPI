@@ -188,7 +188,7 @@ async fn fetch_user_info(
 
     Ok(UserInfo {
         login: v["login"].as_str().unwrap_or("unknown").into(),
-        tier: v["tier"].as_str().unwrap_or("hobby").into(),
+        tier: v["tier"].as_str().unwrap_or("unlimited").into(),
         avatar_url: v["avatar_url"].as_str().map(String::from),
     })
 }

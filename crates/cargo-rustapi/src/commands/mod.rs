@@ -4,6 +4,8 @@ mod add;
 mod bench;
 mod client;
 mod deploy;
+#[cfg(feature = "cloud")]
+mod deploys;
 mod docs;
 mod doctor;
 mod generate;
@@ -21,6 +23,8 @@ pub use add::{add, AddArgs};
 pub use bench::{bench, BenchArgs};
 pub use client::{client, ClientArgs};
 pub use deploy::{deploy, DeployArgs};
+#[cfg(feature = "cloud")]
+pub use deploys::deploys_list;
 pub use docs::open_docs;
 pub use doctor::{doctor, DoctorArgs};
 pub use generate::{generate, GenerateArgs};

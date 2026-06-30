@@ -685,18 +685,7 @@ fn cloud_binary_path(project_name: &str, target: Option<&str>) -> PathBuf {
 
 #[cfg(feature = "cloud")]
 async fn deploy_cloud(args: CloudArgs) -> Result<()> {
-    let config = load_config()?;
-
-    let token = config.token.as_ref().ok_or_else(|| {
-        anyhow::anyhow!("Not logged in. Run `cargo rustapi login` or `cargo-rustapi login` first.")
-    })?;
-
-    let cloud_url = config
-        .cloud_url
-        .as_deref()
-        .unwrap_or("https://api.rustapi.cloud")
-        .trim_end_matches('/');
-
+    let _config = load_config()?;
     let project_name = args
         .name
         .unwrap_or_else(|| get_package_name().unwrap_or_else(|_| "rustapi-app".to_string()));
@@ -747,31 +736,39 @@ async fn deploy_cloud(args: CloudArgs) -> Result<()> {
         println!("  📤 Uploading {:.1} MB...", upload_mb);
     }
 
-    let client = cloud_upload_client(binary_data.len())?;
-    let form = reqwest::multipart::Form::new()
-        .text("project_name", project_name.clone())
-        .part(
-            "binary",
-            reqwest::multipart::Part::bytes(binary_data).file_name(format!("{}.bin", project_name)),
-        );
+    let deploy_id = crate::cloud::with_access_token(|_client, cloud_url, token| {
+        let project_name = project_name.clone();
+        let binary_data = binary_data.clone();
+        async move {
+            let upload_client = cloud_upload_client(binary_data.len())?;
+            let form = reqwest::multipart::Form::new()
+                .text("project_name", project_name.clone())
+                .part(
+                    "binary",
+                    reqwest::multipart::Part::bytes(binary_data)
+                        .file_name(format!("{}.bin", project_name)),
+                );
 
-    let deploy_resp: DeployResponse = client
-        .post(format!("{}/deploy", cloud_url))
-        .header("Authorization", format!("Bearer {}", token))
-        .multipart(form)
-        .send()
-        .await
-        .with_context(|| {
-            format!(
-                "Failed to upload to RustAPI Cloud ({cloud_url}/deploy). \
-                 If the connection timed out, check your upload speed or try again."
-            )
-        })?
-        .json()
-        .await
-        .context("Invalid response from deploy endpoint")?;
+            let deploy_resp: DeployResponse = upload_client
+                .post(format!("{}/deploy", cloud_url.trim_end_matches('/')))
+                .header("Authorization", format!("Bearer {}", token))
+                .multipart(form)
+                .send()
+                .await
+                .with_context(|| {
+                    format!(
+                        "Failed to upload to RustAPI Cloud ({cloud_url}/deploy). \
+                         If the connection timed out, check your upload speed or try again."
+                    )
+                })?
+                .json()
+                .await
+                .context("Invalid response from deploy endpoint")?;
 
-    let deploy_id = deploy_resp.deploy_id;
+            Ok(deploy_resp.deploy_id)
+        }
+    })
+    .await?;
 
     if args.no_wait {
         println!("  ✅ Deploy queued: {}", deploy_id);
@@ -788,7 +785,12 @@ async fn deploy_cloud(args: CloudArgs) -> Result<()> {
         tokio::time::sleep(Duration::from_secs(3)).await;
 
         let status_resp: DeployResponse =
-            match fetch_deploy_status(cloud_url, token, &deploy_id).await {
+            match crate::cloud::with_access_token(|client, base, token| {
+                let deploy_id = deploy_id.clone();
+                async move { fetch_deploy_status(&client, &base, &token, &deploy_id).await }
+            })
+            .await
+            {
                 Ok(body) => body,
                 Err(_) => continue,
             };
@@ -820,14 +822,6 @@ async fn deploy_cloud(args: CloudArgs) -> Result<()> {
 }
 
 #[cfg(feature = "cloud")]
-fn cloud_http_client() -> Result<reqwest::Client> {
-    reqwest::Client::builder()
-        .timeout(Duration::from_secs(30))
-        .build()
-        .context("Failed to build HTTP client")
-}
-
-#[cfg(feature = "cloud")]
 fn upload_timeout_secs(binary_bytes: usize) -> u64 {
     // ~13 MB needs more than 10s on typical home uplinks; scale with payload size.
     let min_secs = 120u64;
@@ -846,11 +840,11 @@ fn cloud_upload_client(binary_bytes: usize) -> Result<reqwest::Client> {
 
 #[cfg(feature = "cloud")]
 async fn fetch_deploy_status(
+    client: &reqwest::Client,
     cloud_url: &str,
     token: &str,
     deploy_id: &str,
 ) -> Result<DeployResponse> {
-    let client = cloud_http_client()?;
     let response = client
         .get(format!("{}/deploy/{}/status", cloud_url, deploy_id))
         .header("Authorization", format!("Bearer {}", token))
@@ -904,19 +898,11 @@ mod status_tests {
 
 #[cfg(feature = "cloud")]
 async fn deploy_status(args: DeployStatusArgs) -> Result<()> {
-    let config = load_config()?;
-
-    let token = config.token.as_ref().ok_or_else(|| {
-        anyhow::anyhow!("Not logged in. Run `cargo rustapi login` or `cargo-rustapi login` first.")
-    })?;
-
-    let cloud_url = config
-        .cloud_url
-        .as_deref()
-        .unwrap_or("https://api.rustapi.cloud")
-        .trim_end_matches('/');
-
-    let status = fetch_deploy_status(cloud_url, token, &args.deploy_id).await?;
+    let status = crate::cloud::with_access_token(|client, cloud_url, token| {
+        let deploy_id = args.deploy_id.clone();
+        async move { fetch_deploy_status(&client, &cloud_url, &token, &deploy_id).await }
+    })
+    .await?;
 
     println!("  Deploy ID: {}", status.deploy_id);
     println!("  Status:    {}", status.status);

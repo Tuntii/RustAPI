@@ -87,6 +87,10 @@ enum Commands {
     /// Logout from RustAPI Cloud
     Logout(LogoutArgs),
 
+    /// List your RustAPI Cloud deploys
+    #[cfg(feature = "cloud")]
+    Deploys,
+
     /// Deploy to various platforms
     #[command(subcommand)]
     Deploy(DeployArgs),
@@ -118,6 +122,8 @@ impl Cli {
             Commands::Login(args) => commands::login(args).await,
             Commands::Whoami(args) => commands::whoami(args).await,
             Commands::Logout(args) => commands::logout(args).await,
+            #[cfg(feature = "cloud")]
+            Commands::Deploys => commands::deploys_list().await,
             Commands::Deploy(args) => commands::deploy(args).await,
             #[cfg(feature = "replay")]
             Commands::Replay(args) => commands::replay(args).await,
