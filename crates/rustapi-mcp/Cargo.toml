@@ -34,7 +34,7 @@ hyper-util = { workspace = true, features = ["tokio"] }
 
 # Utilities
 tracing = { workspace = true }
-thiserror = "1.0"
+thiserror = "2.0"
 uuid = { workspace = true, features = ["v4"] }
 
 # For MCP tool invocation proxy (calls back into the main HTTP API over localhost)
