@@ -1,6 +1,6 @@
 <div align="center">
 
-  <img src="https://raw.githubusercontent.com/Tuntii/RustAPI/refs/heads/main/assets/logo.png" alt="RustAPI" width="140" />
+  <img src="https://raw.githubusercontent.com/Tuntii/RustAPI/refs/heads/main/assets/LOGO.png" alt="RustAPI" width="140" />
 
   # RustAPI
 
