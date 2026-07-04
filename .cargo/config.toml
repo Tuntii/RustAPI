@@ -1,0 +1,28 @@
+# Low-memory build defaults for local development.
+#
+# This workspace has 13 crates. With 16 logical CPUs, Cargo defaults to 16
+# parallel rustc processes — each can use 1–4+ GB RAM during LLVM/codegen.
+# On a ~16 GB machine that routinely causes swap thrashing and Windows BSODs.
+#
+# Override any time:
+#   CARGO_BUILD_JOBS=4 cargo build --workspace
+#   CARGO_BUILD_JOBS=0 cargo build --workspace   # 0 = use all logical CPUs
+#
+# CI sets CARGO_BUILD_JOBS=0 in workflow env so runners keep full parallelism.
+
+[build]
+jobs = 2
+incremental = true
+
+[alias]
+# Dev / check / lint (respects [build].jobs above)
+check-all = "check --workspace --all-targets"
+clippy-all = "clippy --workspace --all-targets -- -D warnings"
+
+# Release without fat LTO — avoids 8–16 GB link-step RAM spikes on Windows
+release-safe = "build --profile release-low-mem --workspace"
+release-safe-pkg = "build --profile release-low-mem -p"
+
+# Single-crate iteration (much lighter than --workspace)
+dev-core = "build -p rustapi-core"
+dev-rs = "build -p rustapi-rs"

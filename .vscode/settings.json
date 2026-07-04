@@ -1,0 +1,11 @@
+{
+  "rust-analyzer.cargo.extraEnv": {
+    "CARGO_BUILD_JOBS": "2"
+  },
+  "rust-analyzer.check.extraEnv": {
+    "CARGO_BUILD_JOBS": "2"
+  },
+  "rust-analyzer.cargo.buildScripts.extraEnv": {
+    "CARGO_BUILD_JOBS": "2"
+  }
+}

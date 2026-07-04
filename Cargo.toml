@@ -127,6 +127,20 @@ panic = "abort"
 strip = true
 debug = false
 
+# Low-RAM release: thin LTO + split codegen avoids Windows OOM/BSOD during linking.
+# Use: cargo build --profile release-low-mem --workspace
+# Or:  cargo release-safe
+[profile.release-low-mem]
+inherits = "release"
+lto = "thin"
+codegen-units = 4
+
+# Lighter dev profile when even debug builds spike RAM (optional).
+# Use: cargo build --profile dev-low-mem -p rustapi-core
+[profile.dev-low-mem]
+inherits = "dev"
+debug = 1
+
 # Benchmark Profile - Even more aggressive
 [profile.bench]
 inherits = "release"

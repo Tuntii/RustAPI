@@ -12,6 +12,8 @@ permissions:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+  # Override .cargo/config.toml jobs=2 — CI runners have enough RAM for full parallelism.
+  CARGO_BUILD_JOBS: 0
 
 jobs:
   test:
