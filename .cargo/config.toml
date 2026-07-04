@@ -4,14 +4,12 @@
 # parallel rustc processes — each can use 1–4+ GB RAM during LLVM/codegen.
 # On a ~16 GB machine that routinely causes swap thrashing and Windows BSODs.
 #
-# Override any time:
-#   CARGO_BUILD_JOBS=4 cargo build --workspace
-#   CARGO_BUILD_JOBS=0 cargo build --workspace   # 0 = use all logical CPUs
-#
-# CI sets CARGO_BUILD_JOBS=0 in workflow env so runners keep full parallelism.
+# Local low-memory default (Windows ~16 GB machines):
+#   set CARGO_BUILD_JOBS=2   # PowerShell / cmd
+#   export CARGO_BUILD_JOBS=2  # bash
+# Or uncomment in .env.example. CI uses Cargo's default (all CPUs).
 
 [build]
-jobs = 2
 incremental = true
 
 [alias]
