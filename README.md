@@ -1,9 +1,34 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/Tuntii/RustAPI/refs/heads/main/assets/logo.jpg" alt="RustAPI" width="200" />
-  
+
+  <img src="https://raw.githubusercontent.com/Tuntii/RustAPI/refs/heads/main/assets/logo.png" alt="RustAPI" width="140" />
+
   # RustAPI
-  
-  A high-performance, ergonomic web framework for Rust with native AI/LLM support.
+
+  **High-performance APIs in Rust — define handlers, get OpenAPI, deploy to HTTPS in minutes.**
+
+  Native AI/LLM support · compile-time routes · `cargo rustapi` CLI
+
+  <br />
+
+  <a href="https://rustapi.cloud"><strong>Website</strong></a> ·
+  <a href="docs/cookbook/src/SUMMARY.md"><strong>Cookbook</strong></a> ·
+  <a href="docs/cookbook/src/recipes/rustapi_cloud.md"><strong>Deploy to Cloud</strong></a> ·
+  <a href="https://crates.io/crates/rustapi-rs"><strong>crates.io</strong></a>
+
+  <br /><br />
+
+  <video
+    src="https://raw.githubusercontent.com/Tuntii/RustAPI/refs/heads/main/assets/rustapi-corporate.mp4"
+    width="920"
+    autoplay
+    loop
+    muted
+    playsinline
+  ></video>
+
+  <p><sub><em>Write a 5-line handler → auto OpenAPI → <code>cargo rustapi deploy cloud</code> → live on <code>*.rustapi.cloud</code></em></sub></p>
+
+  <br />
 
   [![Crates.io](https://img.shields.io/crates/v/rustapi-rs.svg)](https://crates.io/crates/rustapi-rs)
   [![Docs](https://img.shields.io/badge/docs-cookbook-brightgreen)](docs/cookbook/src/SUMMARY.md)
@@ -12,6 +37,7 @@
   [![Security Audit](https://github.com/Tuntii/RustAPI/actions/workflows/audit.yml/badge.svg)](https://github.com/Tuntii/RustAPI/actions/workflows/audit.yml)
   [![Coverage](https://img.shields.io/badge/coverage-tarpaulin-blue)](https://github.com/Tuntii/RustAPI/actions/workflows/ci.yml)
   [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Tuntii/RustAPI)
+
 </div>
 
 ---
