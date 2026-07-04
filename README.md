@@ -1,8 +1,5 @@
 <div align="center">
 
-  <img src="https://raw.githubusercontent.com/Tuntii/RustAPI/refs/heads/main/assets/logo.jpg
-    " alt="RustAPI" width="140" />
-
   # RustAPI
 
   **High-performance APIs in Rust — define handlers, get OpenAPI, deploy to HTTPS in minutes.**
