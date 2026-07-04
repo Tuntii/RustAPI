@@ -18,14 +18,11 @@
 
   <br /><br />
 
-  <video
-    src="https://raw.githubusercontent.com/Tuntii/RustAPI/refs/heads/main/assets/rustapi-corporate.mp4"
+  <img
+    src="https://raw.githubusercontent.com/Tuntii/RustAPI/refs/heads/main/assets/rustapi-corporate.gif"
     width="920"
-    autoplay
-    loop
-    muted
-    playsinline
-  ></video>
+    alt="RustAPI — define a handler, auto OpenAPI, deploy with cargo rustapi"
+  />
 
   <p><sub><em>Write a 5-line handler → auto OpenAPI → <code>cargo rustapi deploy cloud</code> → live on <code>*.rustapi.cloud</code></em></sub></p>
 
