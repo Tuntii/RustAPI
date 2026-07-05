@@ -327,6 +327,7 @@ mod generate_command {
             .parent()
             .and_then(|p| p.parent())
             .expect("workspace root");
+        let workspace_version = env!("CARGO_PKG_VERSION");
 
         cargo_rustapi()
             .current_dir(dir.path())
@@ -347,46 +348,105 @@ mod generate_command {
             "SQLx CRUD handler must not contain TODO stubs"
         );
         assert!(handler.contains("sqlx::query_as"));
+        assert!(
+            handler.contains("crate::db::{SINGULAR, TABLE}"),
+            "generated handler must use db::TABLE and db::SINGULAR"
+        );
 
-        let cargo_toml_path = project_path.join("Cargo.toml");
-        let mut cargo_toml = fs::read_to_string(&cargo_toml_path).expect("read Cargo.toml");
         let rustapi_path = workspace_root
             .join("crates/rustapi-rs")
             .display()
             .to_string()
             .replace('\\', "/");
+        let testing_path = workspace_root
+            .join("crates/rustapi-testing")
+            .display()
+            .to_string()
+            .replace('\\', "/");
+
+        let cargo_toml_path = project_path.join("Cargo.toml");
+        let mut cargo_toml = fs::read_to_string(&cargo_toml_path).expect("read Cargo.toml");
+        assert!(
+            cargo_toml.contains(&format!("version = \"{workspace_version}\"")),
+            "template must pin rustapi-rs to workspace version {workspace_version}"
+        );
         cargo_toml = cargo_toml.replace(
-            "rustapi-rs = { version = \"0.1\"",
+            &format!("rustapi-rs = {{ version = \"{workspace_version}\""),
             &format!("rustapi-rs = {{ path = \"{rustapi_path}\""),
         );
+        if !cargo_toml.contains("[lib]") {
+            cargo_toml.push_str(&format!(
+                r#"
+[lib]
+path = "src/lib.rs"
+
+[dev-dependencies]
+rustapi-testing = {{ path = "{testing_path}" }}
+"#
+            ));
+        }
         fs::write(&cargo_toml_path, cargo_toml).expect("write Cargo.toml");
 
-        let main_rs = r#"mod db;
-mod handlers;
-mod models;
+        let lib_rs = r#"pub mod db;
+pub mod handlers;
+pub mod models;
+"#;
+        fs::write(project_path.join("src/lib.rs"), lib_rs).expect("write lib.rs");
 
+        let main_rs = r#"use test_crud_sqlx::{db, handlers, models};
 use rustapi_rs::prelude::*;
 
 #[rustapi_rs::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     tracing_subscriber::fmt::init();
-    let pool = db::init_pool("sqlite::memory:").await?;
+    let pool = db::init_pool("sqlite:items.db").await?;
     RustApi::auto()
         .state(pool)
-        .run("127.0.0.1:0")
+        .run("127.0.0.1:8080")
         .await
 }
 "#;
         fs::write(project_path.join("src/main.rs"), main_rs).expect("write main.rs");
 
-        std::process::Command::new("cargo")
+        fs::create_dir_all(project_path.join("tests")).expect("create tests dir");
+        let e2e_test = r#"use rustapi_rs::prelude::*;
+use rustapi_testing::{TestClient, TestRequest};
+use test_crud_sqlx::db;
+
+#[tokio::test]
+async fn generated_items_routes_create_and_list() {
+    let pool = db::init_pool("sqlite::memory:").await.expect("pool");
+    let app = RustApi::auto().state(pool);
+    let client = TestClient::new(app);
+
+    let create = client
+        .request(
+            TestRequest::post("/items")
+                .header("content-type", "application/json")
+                .body("{\"name\":\"widget\",\"description\":\"demo\"}"),
+        )
+        .await;
+    create.assert_status(StatusCode::CREATED);
+
+    let list = client.request(TestRequest::get("/items")).await;
+    list.assert_status(StatusCode::OK);
+    let body = list.text();
+    assert!(body.contains("widget"), "list response must include created item");
+}
+"#;
+        fs::write(project_path.join("tests/crud_e2e.rs"), e2e_test).expect("write e2e test");
+
+        let output = std::process::Command::new("cargo")
             .current_dir(&project_path)
-            .args(["check"])
-            .status()
-            .expect("cargo check status")
-            .success()
-            .then_some(())
-            .expect("generated SQLx CRUD project should compile");
+            .args(["test", "--test", "crud_e2e"])
+            .output()
+            .expect("cargo test status");
+        assert!(
+            output.status.success(),
+            "generated CRUD project must pass e2e route test:\n{}\n{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        );
     }
 
     #[test]

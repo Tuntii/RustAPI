@@ -28,7 +28,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-rustapi-rs = {{ version = "0.1"{features} }}
+rustapi-rs = {{ version = "{version}"{features} }}
 tokio = {{ version = "1", features = ["full"] }}
 serde = {{ version = "1", features = ["derive"] }}
 tracing = "0.1"
@@ -36,6 +36,7 @@ tracing-subscriber = {{ version = "0.3", features = ["env-filter"] }}
 uuid = {{ version = "1", features = ["v4"] }}
 "#,
         name = name,
+        version = common::rustapi_rs_version(),
         features = common::features_to_cargo(&all_features),
     );
     fs::write(format!("{name}/Cargo.toml"), cargo_toml).await?;

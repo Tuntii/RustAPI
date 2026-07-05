@@ -7,14 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.551] - 2026-07-05
-
-### Added
-
-- **`cargo rustapi generate crud`**: SQLx-sqlite-backed list/get/create/update/delete handlers with schema bootstrap (`src/db.rs`) instead of `TODO` stubs.
-- **`file_upload` example** (`crates/rustapi-rs/examples/file_upload.rs`) demonstrating multipart uploads with the public `rustapi_rs::prelude` API.
-- **Slim vs full dependency guidance** in [Getting Started](docs/GETTING_STARTED.md).
-
 ### Changed
 
 - Default `rustapi-rs` dependency tree slimmed from ~259 to ~158 transitive crates by removing always-on `tracing-subscriber` and gating `rust-i18n` behind the `i18n` feature (English fallbacks by default).
@@ -25,6 +17,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Security Audit** (`cargo audit`) passes on the current lockfile (no high-severity `quick-xml` advisories).
+
+## [0.1.551] - 2026-07-05
+
+### Added
+
+- **`cargo rustapi generate crud`**: SQLx-sqlite-backed list/get/create/update/delete handlers with schema bootstrap (`src/db.rs`) instead of `TODO` stubs.
+- **`file_upload` example** (`crates/rustapi-rs/examples/file_upload.rs`) demonstrating multipart uploads with the public `rustapi_rs::prelude` API.
+- **Slim vs full dependency guidance** in [Getting Started](docs/GETTING_STARTED.md).
 
 ### Documentation
 

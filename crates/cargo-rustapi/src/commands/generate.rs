@@ -269,29 +269,34 @@ async fn ensure_db_module(table: &str) -> Result<()> {
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::SqlitePool;
 
-const SCHEMA: &str = "CREATE TABLE IF NOT EXISTS {table} (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    description TEXT,
-    created_at TEXT NOT NULL,
-    updated_at TEXT NOT NULL
-)";
-
-/// Open a SQLite pool and ensure the `{table}` table exists.
-pub async fn init_pool(database_url: &str) -> Result<SqlitePool, sqlx::Error> {{
-    let pool = SqlitePoolOptions::new()
-        .max_connections(5)
-        .connect(database_url)
-        .await?;
-    sqlx::query(SCHEMA).execute(&pool).await?;
-    Ok(pool)
-}}
-
 /// Table name used by generated CRUD handlers.
 pub const TABLE: &str = "{table}";
 
 /// Singular resource label for error messages.
 pub const SINGULAR: &str = "{singular}";
+
+const COLUMNS_DDL: &str = "
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+";
+
+/// Open a SQLite pool and ensure the resource table exists.
+pub async fn init_pool(database_url: &str) -> Result<SqlitePool, sqlx::Error> {{
+    let pool = SqlitePoolOptions::new()
+        .max_connections(5)
+        .connect(database_url)
+        .await?;
+    let schema = format!(
+        "CREATE TABLE IF NOT EXISTS {{}} ({{}})",
+        TABLE,
+        COLUMNS_DDL.trim()
+    );
+    sqlx::query(&schema).execute(&pool).await?;
+    Ok(pool)
+}}
 "#,
         table = table,
         singular = singular,
@@ -353,7 +358,7 @@ pub struct Update{type_name} {{
     Ok(())
 }
 
-async fn generate_sqlx_handler(name: &str, type_name: &str, table: &str) -> Result<()> {
+async fn generate_sqlx_handler(name: &str, type_name: &str, _table: &str) -> Result<()> {
     let handlers_dir = Path::new("src/handlers");
     ensure_handlers_module(handlers_dir, name).await?;
 
@@ -361,6 +366,7 @@ async fn generate_sqlx_handler(name: &str, type_name: &str, table: &str) -> Resu
     let handler_content = format!(
         r#"//! {} handlers (SQLx SQLite)
 
+use crate::db::{{SINGULAR, TABLE}};
 use crate::models::{{Create{type_name}, Update{type_name}, {type_name}}};
 use rustapi_rs::prelude::*;
 use sqlx::SqlitePool;
@@ -378,9 +384,10 @@ fn db_error(err: sqlx::Error) -> ApiError {{
 #[rustapi_rs::tag("{type_name}")]
 #[rustapi_rs::summary("List all {name}")]
 pub async fn list(State(pool): State<SqlitePool>) -> Result<Json<Vec<{type_name}>>> {{
-    let rows = sqlx::query_as::<_, {type_name}>(
-        "SELECT id, name, description, created_at, updated_at FROM {table} ORDER BY id",
-    )
+    let rows = sqlx::query_as::<_, {type_name}>(&format!(
+        "SELECT id, name, description, created_at, updated_at FROM {{}} ORDER BY id",
+        TABLE
+    ))
     .fetch_all(&pool)
     .await
     .map_err(db_error)?;
@@ -392,14 +399,15 @@ pub async fn list(State(pool): State<SqlitePool>) -> Result<Json<Vec<{type_name}
 #[rustapi_rs::tag("{type_name}")]
 #[rustapi_rs::summary("Get {singular} by ID")]
 pub async fn get(Path(id): Path<i64>, State(pool): State<SqlitePool>) -> Result<Json<{type_name}>> {{
-    let row = sqlx::query_as::<_, {type_name}>(
-        "SELECT id, name, description, created_at, updated_at FROM {table} WHERE id = ?",
-    )
+    let row = sqlx::query_as::<_, {type_name}>(&format!(
+        "SELECT id, name, description, created_at, updated_at FROM {{}} WHERE id = ?",
+        TABLE
+    ))
     .bind(id)
     .fetch_optional(&pool)
     .await
     .map_err(db_error)?
-    .ok_or_else(|| ApiError::not_found(format!("{singular} {{id}} not found", id = id)))?;
+    .ok_or_else(|| ApiError::not_found(format!("{{}} {{id}} not found", SINGULAR, id = id)))?;
     Ok(Json(row))
 }}
 
@@ -412,9 +420,10 @@ pub async fn create(
     Json(body): Json<Create{type_name}>,
 ) -> Result<WithStatus<Json<{type_name}>, 201>> {{
     let now = now_ts();
-    let result = sqlx::query(
-        "INSERT INTO {table} (name, description, created_at, updated_at) VALUES (?, ?, ?, ?)",
-    )
+    let result = sqlx::query(&format!(
+        "INSERT INTO {{}} (name, description, created_at, updated_at) VALUES (?, ?, ?, ?)",
+        TABLE
+    ))
     .bind(&body.name)
     .bind(&body.description)
     .bind(&now)
@@ -424,9 +433,10 @@ pub async fn create(
     .map_err(db_error)?;
 
     let id = result.last_insert_rowid();
-    let row = sqlx::query_as::<_, {type_name}>(
-        "SELECT id, name, description, created_at, updated_at FROM {table} WHERE id = ?",
-    )
+    let row = sqlx::query_as::<_, {type_name}>(&format!(
+        "SELECT id, name, description, created_at, updated_at FROM {{}} WHERE id = ?",
+        TABLE
+    ))
     .bind(id)
     .fetch_one(&pool)
     .await
@@ -443,22 +453,24 @@ pub async fn update(
     State(pool): State<SqlitePool>,
     Json(body): Json<Update{type_name}>,
 ) -> Result<Json<{type_name}>> {{
-    let existing = sqlx::query_as::<_, {type_name}>(
-        "SELECT id, name, description, created_at, updated_at FROM {table} WHERE id = ?",
-    )
+    let existing = sqlx::query_as::<_, {type_name}>(&format!(
+        "SELECT id, name, description, created_at, updated_at FROM {{}} WHERE id = ?",
+        TABLE
+    ))
     .bind(id)
     .fetch_optional(&pool)
     .await
     .map_err(db_error)?
-    .ok_or_else(|| ApiError::not_found(format!("{singular} {{id}} not found", id = id)))?;
+    .ok_or_else(|| ApiError::not_found(format!("{{}} {{id}} not found", SINGULAR, id = id)))?;
 
     let name = body.name.unwrap_or(existing.name);
     let description = body.description.or(existing.description);
     let updated_at = now_ts();
 
-    sqlx::query(
-        "UPDATE {table} SET name = ?, description = ?, updated_at = ? WHERE id = ?",
-    )
+    sqlx::query(&format!(
+        "UPDATE {{}} SET name = ?, description = ?, updated_at = ? WHERE id = ?",
+        TABLE
+    ))
     .bind(&name)
     .bind(&description)
     .bind(&updated_at)
@@ -467,9 +479,10 @@ pub async fn update(
     .await
     .map_err(db_error)?;
 
-    let row = sqlx::query_as::<_, {type_name}>(
-        "SELECT id, name, description, created_at, updated_at FROM {table} WHERE id = ?",
-    )
+    let row = sqlx::query_as::<_, {type_name}>(&format!(
+        "SELECT id, name, description, created_at, updated_at FROM {{}} WHERE id = ?",
+        TABLE
+    ))
     .bind(id)
     .fetch_one(&pool)
     .await
@@ -482,13 +495,13 @@ pub async fn update(
 #[rustapi_rs::tag("{type_name}")]
 #[rustapi_rs::summary("Delete {singular}")]
 pub async fn delete(Path(id): Path<i64>, State(pool): State<SqlitePool>) -> Result<NoContent> {{
-    let result = sqlx::query("DELETE FROM {table} WHERE id = ?")
+    let result = sqlx::query(&format!("DELETE FROM {{}} WHERE id = ?", TABLE))
         .bind(id)
         .execute(&pool)
         .await
         .map_err(db_error)?;
     if result.rows_affected() == 0 {{
-        return Err(ApiError::not_found(format!("{singular} {{id}} not found", id = id)));
+        return Err(ApiError::not_found(format!("{{}} {{id}} not found", SINGULAR, id = id)));
     }}
     Ok(NoContent)
 }}
@@ -496,7 +509,6 @@ pub async fn delete(Path(id): Path<i64>, State(pool): State<SqlitePool>) -> Resu
         capitalize(name),
         name = name,
         type_name = type_name,
-        table = table,
         singular = singular,
     );
 

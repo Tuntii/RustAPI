@@ -13,12 +13,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-rustapi-rs = {{ version = "0.1"{features} }}
+rustapi-rs = {{ version = "{version}"{features} }}
 tokio = {{ version = "1", features = ["full"] }}
 serde = {{ version = "1", features = ["derive"] }}
 tracing-subscriber = "0.3"
 "#,
         name = name,
+        version = common::rustapi_rs_version(),
         features = common::features_to_cargo(features),
     );
     fs::create_dir_all(format!("{name}/src")).await?;

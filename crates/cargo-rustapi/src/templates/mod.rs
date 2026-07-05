@@ -137,6 +137,11 @@ RUST_LOG=info
         Ok(())
     }
 
+    /// Workspace-aligned `rustapi-rs` version for generated `Cargo.toml` pins.
+    pub fn rustapi_rs_version() -> &'static str {
+        env!("CARGO_PKG_VERSION")
+    }
+
     pub fn features_to_cargo(features: &[String]) -> String {
         if features.is_empty() {
             String::new()
