@@ -95,7 +95,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .body_limit(50 * 1024 * 1024)
         .layer(BodyLimitLayer::new(50 * 1024 * 1024))
         .route("/upload", post(upload_handler))
-        .docs("/docs")
         .run(&addr)
         .await
 }
