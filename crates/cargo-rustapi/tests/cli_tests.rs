@@ -10,6 +10,11 @@ fn cargo_rustapi() -> Command {
     assert_cmd::cargo::cargo_bin_cmd!("cargo-rustapi")
 }
 
+/// Tarpaulin sets `TARPAULIN` when instrumenting tests; nested `cargo` builds are unreliable there.
+fn running_under_tarpaulin() -> bool {
+    std::env::var_os("TARPAULIN").is_some()
+}
+
 mod new_command {
     use super::*;
 
@@ -320,6 +325,11 @@ mod generate_command {
 
     #[test]
     fn test_generate_crud_sqlx_compiles() {
+        if running_under_tarpaulin() {
+            eprintln!("skipping nested cargo e2e under tarpaulin");
+            return;
+        }
+
         let dir = tempdir().expect("Failed to create temp dir");
         let project_name = "test-crud-sqlx";
         let project_path = dir.path().join(project_name);

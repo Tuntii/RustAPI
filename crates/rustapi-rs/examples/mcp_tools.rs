@@ -28,12 +28,23 @@
 //!     -H 'content-type: application/json' \
 //!     -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"get_agent_weather_city","arguments":{"city":"Istanbul"}}}'
 
+#[cfg(not(any(feature = "protocol-mcp", feature = "mcp")))]
+fn main() {
+    eprintln!(
+        "Run this example with MCP support enabled:\n  cargo run -p rustapi-rs --example mcp_tools --features protocol-mcp"
+    );
+}
+
+#[cfg(any(feature = "protocol-mcp", feature = "mcp"))]
 use rustapi_rs::prelude::*;
+#[cfg(any(feature = "protocol-mcp", feature = "mcp"))]
 use rustapi_rs::protocol::mcp::{
     run_rustapi_and_mcp_with_shutdown, InvocationMode, McpConfig, McpServer,
 };
+#[cfg(any(feature = "protocol-mcp", feature = "mcp"))]
 use serde::{Deserialize, Serialize};
 
+#[cfg(any(feature = "protocol-mcp", feature = "mcp"))]
 #[derive(Serialize, Schema)]
 struct Weather {
     city: String,
@@ -41,18 +52,21 @@ struct Weather {
     unit: &'static str,
 }
 
+#[cfg(any(feature = "protocol-mcp", feature = "mcp"))]
 #[derive(Deserialize, Serialize, Schema)]
 struct SumRequest {
     a: i32,
     b: i32,
 }
 
+#[cfg(any(feature = "protocol-mcp", feature = "mcp"))]
 #[derive(Serialize, Schema)]
 struct SumResponse {
     sum: i32,
 }
 
 /// This route will be exposed as an MCP tool because of the "agent" tag.
+#[cfg(any(feature = "protocol-mcp", feature = "mcp"))]
 #[rustapi_rs::get("/agent/weather/{city}")]
 #[rustapi_rs::tag("agent")]
 #[rustapi_rs::summary("Get weather information for a city")]
@@ -65,6 +79,7 @@ async fn get_weather(Path(city): Path<String>) -> Json<Weather> {
 }
 
 /// Another exposed tool (POST with JSON body).
+#[cfg(any(feature = "protocol-mcp", feature = "mcp"))]
 #[rustapi_rs::post("/agent/sum")]
 #[rustapi_rs::tag("agent")]
 #[rustapi_rs::summary("Add two integers and return the result")]
@@ -73,11 +88,13 @@ async fn sum(Json(req): Json<SumRequest>) -> Json<SumResponse> {
 }
 
 /// This route is deliberately NOT tagged — it will NOT appear in MCP discovery.
+#[cfg(any(feature = "protocol-mcp", feature = "mcp"))]
 #[rustapi_rs::get("/admin/internal-config")]
 async fn internal_only() -> &'static str {
     "this-should-never-be-visible-to-agents"
 }
 
+#[cfg(any(feature = "protocol-mcp", feature = "mcp"))]
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     let app = RustApi::auto();

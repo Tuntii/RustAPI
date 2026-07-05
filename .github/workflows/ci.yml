@@ -211,7 +211,14 @@ jobs:
         uses: taiki-e/install-action@cargo-tarpaulin
 
       - name: Run coverage
-        run: cargo tarpaulin --workspace --out Html --output-dir coverage
+        run: |
+          # cargo-rustapi spawns nested `cargo` builds in integration tests;
+          # tarpaulin cannot instrument those subprocesses reliably.
+          cargo tarpaulin --workspace \
+            --exclude cargo-rustapi \
+            --timeout 900 \
+            --out Html \
+            --output-dir coverage
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
