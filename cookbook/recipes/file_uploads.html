@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-f8dd45a5.js";
+            window.path_to_searchindex_js = "../searchindex-80361347.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-33fbcb1f.js"></script>
@@ -183,37 +183,19 @@
                     <main>
                         <h1 id="file-uploads"><a class="header" href="#file-uploads">File Uploads</a></h1>
 <p>Handling file uploads is a common requirement. RustAPI provides a <code>Multipart</code> extractor to parse <code>multipart/form-data</code> requests.</p>
+<p>See the runnable example: <code>crates/rustapi-rs/examples/file_upload.rs</code></p>
+<pre><code class="language-bash">cargo run -p rustapi-rs --example file_upload
+curl -X POST http://127.0.0.1:8080/upload -F "file=@./README.md"
+</code></pre>
 <h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
-<p>Add <code>uuid</code> and <code>tokio</code> with <code>fs</code> features to your <code>Cargo.toml</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = "0.1.550"
-tokio = { version = "1", features = ["fs", "io-util"] }
-uuid = { version = "1", features = ["v4"] }
+rustapi-rs = "0.1.551"
+tokio = { version = "1", features = ["fs", "io-util", "macros", "rt-multi-thread"] }
 </code></pre>
 <h2 id="buffered-upload-example"><a class="header" href="#buffered-upload-example">Buffered Upload Example</a></h2>
-<p>RustAPI’s <code>Multipart</code> extractor currently buffers the entire request body into memory before parsing. This means it is suitable for small to medium file uploads (e.g., images, documents) but care must be taken with very large files to avoid running out of RAM.</p>
+<p>RustAPI’s <code>Multipart</code> extractor buffers the entire request body into memory before parsing. It suits small to medium uploads; set explicit body limits for larger files.</p>
 <pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
-use rustapi_rs::extract::{Multipart, DefaultBodyLimit};
-use std::path::Path;
-
-#[tokio::main]
-async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
-    // Ensure uploads directory exists
-    tokio::fs::create_dir_all("./uploads").await?;
-
-    println!("Starting Upload Server at http://127.0.0.1:8080");
-
-    RustApi::new()
-        // Increase body limit to 1GB (default is usually 1MB)
-        .body_limit(1024 * 1024 * 1024)
-        .route("/upload", post(upload_handler))
-        // Increase body limit to 50MB (default is usually 2MB)
-        // âš ï¸ IMPORTANT: Since Multipart buffers the whole body,
-        // setting this too high can exhaust server memory.
-        .layer(DefaultBodyLimit::max(50 * 1024 * 1024))
-        .run("127.0.0.1:8080")
-        .await
-}
+use std::path::PathBuf;
 
 #[derive(Serialize, Schema)]
 struct UploadResponse {
@@ -226,42 +208,42 @@ struct FileResult {
     original_name: String,
     stored_name: String,
     content_type: String,
+    size_bytes: usize,
 }
 
+#[rustapi_rs::post("/upload")]
 async fn upload_handler(mut multipart: Multipart) -&gt; Result&lt;Json&lt;UploadResponse&gt;&gt; {
+    tokio::fs::create_dir_all("./uploads").await
+        .map_err(|e| ApiError::internal(e.to_string()))?;
+
     let mut uploaded_files = Vec::new();
 
-    // Iterate over the fields in the multipart form
-    while let Some(field) = multipart.next_field().await.map_err(|_| ApiError::bad_request("Invalid multipart"))? {
-        
-        // Skip fields that are not files
+    while let Some(field) = multipart
+        .next_field()
+        .await
+        .map_err(|_| ApiError::bad_request("Invalid multipart"))?
+    {
         if !field.is_file() {
             continue;
         }
 
-        let file_name = field.file_name().unwrap_or("unknown.bin").to_string();
-        let content_type = field.content_type().unwrap_or("application/octet-stream").to_string();
-
-        // âš ï¸ Security: Never trust the user-provided filename directly!
-        // It could contain paths like "../../../etc/passwd".
-        // Always generate a safe filename or sanitize inputs.
-        let safe_filename = format!("{}-{}", uuid::Uuid::new_v4(), file_name);
-
-        // Option 1: Use the helper method (sanitizes filename automatically)
-        // field.save_to("./uploads", Some(&amp;safe_filename)).await.map_err(|e| ApiError::internal(e.to_string()))?;
-
-        // Option 2: Manual write (gives you full control)
+        let original_name = field.file_name().unwrap_or("unknown.bin").to_string();
+        let content_type = field
+            .content_type()
+            .unwrap_or("application/octet-stream")
+            .to_string();
+        let safe_filename = format!("upload-{}", original_name);
         let data = field.bytes().await.map_err(|e| ApiError::internal(e.to_string()))?;
-        let path = Path::new("./uploads").join(&amp;safe_filename);
+        let size_bytes = data.len();
 
+        let path = PathBuf::from("./uploads").join(&amp;safe_filename);
         tokio::fs::write(&amp;path, &amp;data).await.map_err(|e| ApiError::internal(e.to_string()))?;
 
-        println!("Saved file: {} -&gt; {:?}", file_name, path);
-
         uploaded_files.push(FileResult {
-            original_name: file_name,
+            original_name,
             stored_name: safe_filename,
             content_type,
+            size_bytes,
         });
     }
 
@@ -269,6 +251,17 @@ async fn upload_handler(mut multipart: Multipart) -&gt; Result&lt;Json&lt;Upload
         message: "Upload successful".into(),
         files: uploaded_files,
     }))
+}
+
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    RustApi::new()
+        .body_limit(50 * 1024 * 1024)
+        .layer(BodyLimitLayer::new(50 * 1024 * 1024))
+        .route("/upload", post(upload_handler))
+        .docs("/docs")
+        .run("127.0.0.1:8080")
+        .await
 }</code></pre>
 <h2 id="key-concepts"><a class="header" href="#key-concepts">Key Concepts</a></h2>
 <h3 id="1-buffering"><a class="header" href="#1-buffering">1. Buffering</a></h3>
@@ -276,18 +269,17 @@ async fn upload_handler(mut multipart: Multipart) -&gt; Result&lt;Json&lt;Upload
 <ul>
 <li><strong>Pros</strong>: Simple API, easy to work with.</li>
 <li><strong>Cons</strong>: High memory usage for concurrent large uploads.</li>
-<li><strong>Mitigation</strong>: Set a reasonable <code>DefaultBodyLimit</code> (e.g., 10MB - 100MB) to prevent DoS attacks.</li>
+<li><strong>Mitigation</strong>: Set a reasonable <code>BodyLimitLayer</code> (e.g., 10MB–100MB).</li>
 </ul>
 <h3 id="2-body-limits"><a class="header" href="#2-body-limits">2. Body Limits</a></h3>
-<p>The default request body limit is small (2MB) to prevent attacks. You <strong>must</strong> explicitly increase this limit for file upload routes using <code>.layer(DefaultBodyLimit::max(size_in_bytes))</code>.</p>
+<p>The default request body limit is 1MB. Increase it for upload routes via <code>.body_limit(...)</code> and/or <code>.layer(BodyLimitLayer::new(size))</code>.</p>
 <h3 id="3-security"><a class="header" href="#3-security">3. Security</a></h3>
 <ul>
-<li><strong>Path Traversal</strong>: Malicious users can send filenames like <code>../../system32/cmd.exe</code>. Always rename files or sanitize filenames strictly.</li>
-<li><strong>Content Type Validation</strong>: The <code>Content-Type</code> header is client-controlled and can be spoofed. Do not rely on it for security execution checks (e.g., preventing <code>.php</code> execution).</li>
-<li><strong>Executable Permissions</strong>: Store uploads in a directory where script execution is disabled.</li>
+<li><strong>Path Traversal</strong>: Never trust client-provided filenames. Generate safe names or sanitize strictly.</li>
+<li><strong>Content Type</strong>: Client-controlled; do not rely on it for execution checks.</li>
+<li><strong>Executable Permissions</strong>: Store uploads where script execution is disabled.</li>
 </ul>
 <h2 id="testing-with-curl"><a class="header" href="#testing-with-curl">Testing with cURL</a></h2>
-<p>You can test this endpoint using <code>curl</code>:</p>
 <pre><code class="language-bash">curl -X POST http://localhost:8080/upload \
   -F "file1=@./image.png" \
   -F "file2=@./document.pdf"
@@ -298,10 +290,10 @@ async fn upload_handler(mut multipart: Multipart) -&gt; Result&lt;Json&lt;Upload
   "files": [
     {
       "original_name": "image.png",
-      "stored_name": "550e8400-e29b-41d4-a716-446655440000-image.png",
-      "content_type": "image/png"
-    },
-    ...
+      "stored_name": "upload-image.png",
+      "content_type": "image/png",
+      "size_bytes": 12345
+    }
   ]
 }
 </code></pre>

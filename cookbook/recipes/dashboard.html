@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-f8dd45a5.js";
+            window.path_to_searchindex_js = "../searchindex-80361347.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-33fbcb1f.js"></script>
@@ -191,11 +191,11 @@ Keep the dashboard disabled by default in production-like environments unless it
 <h2 id="prerequisites"><a class="header" href="#prerequisites">Prerequisites</a></h2>
 <p>Enable the canonical dashboard feature on the public facade:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.550", features = ["core-dashboard"] }
+rustapi-rs = { version = "0.1.551", features = ["core-dashboard"] }
 </code></pre>
 <p>If you also want the replay browser panel to load recorded traffic, enable replay too:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.550", features = ["core-dashboard", "extras-replay"] }
+rustapi-rs = { version = "0.1.551", features = ["core-dashboard", "extras-replay"] }
 </code></pre>
 <h2 id="usage"><a class="header" href="#usage">Usage</a></h2>
 <pre><code class="language-rust ignore">use rustapi_rs::prelude::*;

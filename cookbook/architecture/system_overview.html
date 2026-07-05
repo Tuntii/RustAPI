@@ -36,7 +36,7 @@
             const path_to_root = "../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-f8dd45a5.js";
+            window.path_to_searchindex_js = "../searchindex-80361347.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-33fbcb1f.js"></script>
@@ -185,20 +185,20 @@
 <p>RustAPI follows a <strong>Facade Architecture</strong> — a stable public API that shields you from internal complexity and breaking changes.</p>
 <h2 id="system-overview"><a class="header" href="#system-overview">System Overview</a></h2>
 <pre><code class="language-mermaid">graph TB
-    subgraph Client["ğŸŒ Client Layer"]
+    subgraph Client["🌐 Client Layer"]
         HTTP[HTTP Request]
         LLM[LLM/AI Agent]
         MCP[MCP Client]
     end
 
-    subgraph Public["ğŸ“¦ rustapi-rs (Public Facade)"]
+    subgraph Public["📦 rustapi-rs (Public Facade)"]
         direction TB
         Prelude[prelude::*]
         Macros["#[rustapi_rs::get/post]&lt;br&gt;#[rustapi_rs::main]"]
         Types[Json, Query, Path, Form]
     end
 
-    subgraph Core["âš™ï¸ rustapi-core (Engine)"]
+    subgraph Core["⚙️ rustapi-core (Engine)"]
         direction TB
         Router[Radix Router&lt;br&gt;matchit]
         Extract[Extractors&lt;br&gt;FromRequest trait]
@@ -206,7 +206,7 @@
         Resp[Response Builder&lt;br&gt;IntoResponse trait]
     end
 
-    subgraph Extensions["ğŸ”Œ Extension Crates"]
+    subgraph Extensions["🔌 Extension Crates"]
         direction LR
         OpenAPI["rustapi-openapi&lt;br&gt;OpenAPI 3.1 + Docs"]
         Validate["rustapi-validate&lt;br&gt;Validation (v2 native)"]
@@ -214,7 +214,7 @@
         WsCrate["rustapi-ws&lt;br&gt;WebSocket Support"]
     end
 
-    subgraph Foundation["ğŸ—ï¸ Foundation Layer"]
+    subgraph Foundation["🏗️ Foundation Layer"]
         direction LR
         Tokio[tokio&lt;br&gt;Async Runtime]
         Hyper[hyper 1.0&lt;br&gt;HTTP Protocol]
