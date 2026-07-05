@@ -25,8 +25,8 @@ async-trait = { workspace = true }
 # Regex for pattern validation
 regex = "1.10"
 
-# Internationalization
-rust-i18n = "3.0"
+# Internationalization (optional — English fallbacks ship without this)
+rust-i18n = { version = "3.0", optional = true }
 
 # Re-export derive macro
 rustapi-macros = { workspace = true }
@@ -34,6 +34,14 @@ rustapi-macros = { workspace = true }
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 proptest = "1.4"
-rust-i18n = "3.0"
 rustapi-core = { workspace = true, default-features = false }
+
+[features]
+default = []
+i18n = ["dep:rust-i18n"]
+
+[[test]]
+name = "i18n"
+path = "tests/i18n.rs"
+required-features = ["i18n"]
 

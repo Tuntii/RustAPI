@@ -60,6 +60,7 @@ core-cookies = ["dep:rustapi-extras", "rustapi-extras/cookies", "rustapi-core/co
 core-http3 = ["rustapi-core/http3"]
 core-http3-dev = ["rustapi-core/http3-dev"]
 core-dashboard = ["rustapi-core/dashboard"]
+core-i18n = ["rustapi-validate/i18n"]
 
 # Canonical protocol features
 protocol-toon = ["dep:rustapi-toon"]
@@ -159,7 +160,8 @@ oauth2-client = ["extras-oauth2-client"]
 session = ["extras-session"]
 session-redis = ["extras-session-redis"]
 jobs = ["extras-jobs"]
+i18n = ["core-i18n"]
 extras = ["extras-jwt", "extras-cors", "extras-rate-limit"]
 
 # Canonical aggregate
-full = ["core", "protocol-all", "extras-all", "core-legacy-validator", "core-dashboard"]
+full = ["core", "protocol-all", "extras-all", "core-legacy-validator", "core-dashboard", "core-i18n"]

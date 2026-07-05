@@ -7,20 +7,13 @@ use crate::middleware::{LayerStack, MiddlewareLayer, DEFAULT_BODY_LIMIT};
 use crate::router::Router;
 use std::future::Future;
 use std::sync::Arc;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 impl RustApi {
-    /// Create a new RustAPI application
+    /// Create a new RustAPI application.
+    ///
+    /// Initialize `tracing-subscriber` in `main` when using the `tracing` feature;
+    /// `cargo-rustapi` templates already do this.
     pub fn new() -> Self {
-        // Initialize tracing if not already done
-        let _ = tracing_subscriber::registry()
-            .with(
-                EnvFilter::try_from_default_env()
-                    .unwrap_or_else(|_| EnvFilter::new("info,rustapi=debug")),
-            )
-            .with(tracing_subscriber::fmt::layer())
-            .try_init();
-
         Self {
             router: Router::new(),
             openapi_spec: rustapi_openapi::OpenApiSpec::new("RustAPI Application", "1.0.0")

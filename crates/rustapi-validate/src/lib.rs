@@ -71,7 +71,7 @@
 //! }
 //! ```
 
-// Load I18n locales
+#[cfg(feature = "i18n")]
 rust_i18n::i18n!("locales");
 
 pub mod custom;
