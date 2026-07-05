@@ -218,6 +218,11 @@ async fn ensure_crud_dependencies() -> Result<()> {
     }
 
     let mut content = fs::read_to_string(cargo_path).await?;
+    if !content.contains("[package]") {
+        anyhow::bail!(
+            "Cargo.toml has no [package] section — run `cargo rustapi generate crud` from an application project root, not the workspace root"
+        );
+    }
     let mut deps_to_add = Vec::new();
 
     if !content
