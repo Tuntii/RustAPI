@@ -188,8 +188,9 @@ async fn generate_crud(name: &str) -> Result<()> {
     );
     println!();
 
+    let singular = singularize(name);
     ensure_crud_dependencies().await?;
-    ensure_db_module(&table).await?;
+    upsert_db_resource(&table, &singular).await?;
     generate_sqlx_model(name, &type_name).await?;
     generate_sqlx_handler(name, &type_name, &table).await?;
 
@@ -204,7 +205,8 @@ async fn generate_crud(name: &str) -> Result<()> {
         "     let pool = db::init_pool(\"sqlite:{}.db\").await?;",
         table
     );
-    println!("     RustApi::auto().state(pool).run(\"127.0.0.1:8080\").await?;");
+    println!("  3. Mount generated handlers (or use RustApi::auto()):");
+    print_route_registration_hints(name);
 
     Ok(())
 }
@@ -256,56 +258,106 @@ async fn ensure_crud_dependencies() -> Result<()> {
     Ok(())
 }
 
-async fn ensure_db_module(table: &str) -> Result<()> {
-    let db_path = Path::new("src/db.rs");
-    if db_path.exists() {
-        return Ok(());
-    }
-
-    let singular = singularize(table);
-    let content = format!(
-        r#"//! Database bootstrap for generated CRUD resources.
+const DB_RS_HEADER: &str = r#"//! Database bootstrap for generated CRUD resources.
+//!
+//! Each `cargo rustapi generate crud <name>` call adds a table-specific module below.
+//! Default columns are the standard scaffold (`id`, `name`, `description`, timestamps).
 
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::SqlitePool;
 
-/// Table name used by generated CRUD handlers.
-pub const TABLE: &str = "{table}";
-
-/// Singular resource label for error messages.
-pub const SINGULAR: &str = "{singular}";
-
-const COLUMNS_DDL: &str = "
+/// Default CRUD column layout for generated resources (customize per model as needed).
+macro_rules! crud_columns {
+    () => {
+        "
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name TEXT NOT NULL,
     description TEXT,
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL
-";
+"
+    };
+}
 
-/// Open a SQLite pool and ensure the resource table exists.
+"#;
+
+async fn upsert_db_resource(table: &str, singular: &str) -> Result<()> {
+    let db_path = Path::new("src/db.rs");
+    let table_mod = table_module_name(table);
+    let module_block = format!(
+        r#"pub mod {table_mod} {{
+    pub const TABLE: &str = "{table}";
+    pub const SINGULAR: &str = "{singular}";
+    pub(crate) const COLUMNS_DDL: &str = crud_columns!();
+}}
+
+"#,
+        table_mod = table_mod,
+        table = table,
+        singular = singular,
+    );
+    let ensure_line = format!(
+        "    ensure_table(&pool, {table_mod}::TABLE, {table_mod}::COLUMNS_DDL).await?;\n",
+        table_mod = table_mod,
+    );
+
+    if !db_path.exists() {
+        let content = format!(
+            "{header}{module_block}\
+async fn ensure_table(pool: &SqlitePool, table: &str, columns: &str) -> Result<(), sqlx::Error> {{
+    let schema = format!(\"CREATE TABLE IF NOT EXISTS {{}} ({{}})\", table, columns.trim());
+    sqlx::query(&schema).execute(pool).await?;
+    Ok(())
+}}
+
+/// Open a SQLite pool and ensure all generated resource tables exist.
 pub async fn init_pool(database_url: &str) -> Result<SqlitePool, sqlx::Error> {{
     let pool = SqlitePoolOptions::new()
         .max_connections(5)
         .connect(database_url)
         .await?;
-    let schema = format!(
-        "CREATE TABLE IF NOT EXISTS {{}} ({{}})",
-        TABLE,
-        COLUMNS_DDL.trim()
-    );
-    sqlx::query(&schema).execute(&pool).await?;
-    Ok(pool)
+{ensure_lines}    Ok(pool)
 }}
-"#,
-        table = table,
-        singular = singular,
-    );
+",
+            header = DB_RS_HEADER,
+            module_block = module_block,
+            ensure_lines = ensure_line,
+        );
+        fs::write(db_path, content).await?;
+        println!(
+            "{} Generated database module: {}",
+            style("✓").green(),
+            db_path.display()
+        );
+        return Ok(());
+    }
+
+    let mut content = fs::read_to_string(db_path).await?;
+    let mod_marker = format!("pub mod {table_mod} ");
+    if content.contains(&mod_marker) {
+        println!(
+            "{} db.rs already tracks table '{}'",
+            style("•").yellow(),
+            table
+        );
+        return Ok(());
+    }
+
+    let insert_at = content
+        .find("async fn ensure_table")
+        .ok_or_else(|| anyhow::anyhow!("src/db.rs is missing ensure_table helper"))?;
+    content.insert_str(insert_at, &module_block);
+
+    let ok_pool = content
+        .rfind("    Ok(pool)")
+        .ok_or_else(|| anyhow::anyhow!("src/db.rs is missing init_pool tail"))?;
+    content.insert_str(ok_pool, &ensure_line);
 
     fs::write(db_path, content).await?;
     println!(
-        "{} Generated database module: {}",
+        "{} Updated database module for table '{}': {}",
         style("✓").green(),
+        table,
         db_path.display()
     );
     Ok(())
@@ -358,15 +410,16 @@ pub struct Update{type_name} {{
     Ok(())
 }
 
-async fn generate_sqlx_handler(name: &str, type_name: &str, _table: &str) -> Result<()> {
+async fn generate_sqlx_handler(name: &str, type_name: &str, table: &str) -> Result<()> {
     let handlers_dir = Path::new("src/handlers");
     ensure_handlers_module(handlers_dir, name).await?;
 
     let singular = singularize(name);
+    let table_mod = table_module_name(table);
     let handler_content = format!(
         r#"//! {} handlers (SQLx SQLite)
 
-use crate::db::{{SINGULAR, TABLE}};
+use crate::db::{table_mod}::{{SINGULAR, TABLE}};
 use crate::models::{{Create{type_name}, Update{type_name}, {type_name}}};
 use rustapi_rs::prelude::*;
 use sqlx::SqlitePool;
@@ -580,26 +633,20 @@ async fn ensure_models_module(models_dir: &Path, name: &str) -> Result<()> {
 
 fn print_route_registration_hints(name: &str) {
     println!();
-    println!("Don't forget to register the routes in main.rs:");
+    println!("Register the generated handlers in main.rs:");
     println!(
         "  {}",
-        style(format!(".mount(handlers::{}::list)", name)).cyan()
+        style(format!(
+            ".route(\"/{name}\", get(handlers::{name}::list).post(handlers::{name}::create))"
+        ))
+        .cyan()
     );
     println!(
         "  {}",
-        style(format!(".mount(handlers::{}::get)", name)).cyan()
-    );
-    println!(
-        "  {}",
-        style(format!(".mount(handlers::{}::create)", name)).cyan()
-    );
-    println!(
-        "  {}",
-        style(format!(".mount(handlers::{}::update)", name)).cyan()
-    );
-    println!(
-        "  {}",
-        style(format!(".mount(handlers::{}::delete)", name)).cyan()
+        style(format!(
+            ".route(\"/{name}/{{id}}\", get(handlers::{name}::get).put(handlers::{name}::update).delete(handlers::{name}::delete))"
+        ))
+        .cyan()
     );
 }
 
@@ -614,6 +661,10 @@ fn capitalize(s: &str) -> String {
 
 fn to_pascal_case(s: &str) -> String {
     s.split(&['-', '_'][..]).map(capitalize).collect()
+}
+
+fn table_module_name(table: &str) -> String {
+    table.replace('-', "_")
 }
 
 fn singularize(s: &str) -> String {

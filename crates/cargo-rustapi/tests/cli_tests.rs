@@ -349,8 +349,13 @@ mod generate_command {
         );
         assert!(handler.contains("sqlx::query_as"));
         assert!(
-            handler.contains("crate::db::{SINGULAR, TABLE}"),
-            "generated handler must use db::TABLE and db::SINGULAR"
+            handler.contains("crate::db::items::{SINGULAR, TABLE}"),
+            "generated handler must use per-table db module constants"
+        );
+        let db_rs = fs::read_to_string(project_path.join("src/db.rs")).expect("read db.rs");
+        assert!(
+            db_rs.contains("pub mod items"),
+            "db.rs must define a per-resource items module"
         );
 
         let rustapi_path = workspace_root
@@ -382,6 +387,7 @@ path = "src/lib.rs"
 
 [dev-dependencies]
 rustapi-testing = {{ path = "{testing_path}" }}
+reqwest = {{ version = "0.12", default-features = false, features = ["json", "rustls-tls"] }}
 "#
             ));
         }
@@ -410,42 +416,117 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
 
         fs::create_dir_all(project_path.join("tests")).expect("create tests dir");
         let e2e_test = r#"use rustapi_rs::prelude::*;
-use rustapi_testing::{TestClient, TestRequest};
 use test_crud_sqlx::db;
+use test_crud_sqlx::handlers::items::{create, delete, get as get_one, list, update};
+use std::time::Duration;
+use tokio::sync::oneshot;
 
 #[tokio::test]
-async fn generated_items_routes_create_and_list() {
+async fn generated_items_routes_create_and_list_via_server() {
     let pool = db::init_pool("sqlite::memory:").await.expect("pool");
-    let app = RustApi::auto().state(pool);
-    let client = TestClient::new(app);
+    let app = RustApi::new()
+        .state(pool)
+        .route("/items", get(list).post(create))
+        .route("/items/{id}", get(get_one).put(update).delete(delete));
 
-    let create = client
-        .request(
-            TestRequest::post("/items")
-                .header("content-type", "application/json")
-                .body("{\"name\":\"widget\",\"description\":\"demo\"}"),
-        )
-        .await;
-    create.assert_status(StatusCode::CREATED);
+    let listener = std::net::TcpListener::bind("127.0.0.1:0").expect("bind ephemeral port");
+    let port = listener.local_addr().expect("local addr").port();
+    drop(listener);
 
-    let list = client.request(TestRequest::get("/items")).await;
-    list.assert_status(StatusCode::OK);
-    let body = list.text();
+    let addr = format!("127.0.0.1:{port}");
+    let (shutdown_tx, shutdown_rx) = oneshot::channel();
+    let server = tokio::spawn(async move {
+        app.run_with_shutdown(&addr, async {
+            shutdown_rx.await.ok();
+        })
+        .await
+    });
+
+    tokio::time::sleep(Duration::from_millis(400)).await;
+
+    let client = reqwest::Client::new();
+    let base = format!("http://127.0.0.1:{port}");
+
+    let create_res = client
+        .post(format!("{base}/items"))
+        .header("content-type", "application/json")
+        .body("{\"name\":\"widget\",\"description\":\"demo\"}")
+        .send()
+        .await
+        .expect("create request");
+    assert_eq!(create_res.status(), 201, "POST /items should return 201");
+
+    let list_res = client
+        .get(format!("{base}/items"))
+        .send()
+        .await
+        .expect("list request");
+    assert_eq!(list_res.status(), 200, "GET /items should return 200");
+    let body = list_res.text().await.expect("list body");
     assert!(body.contains("widget"), "list response must include created item");
+
+    shutdown_tx.send(()).ok();
+    server.await.expect("server task").expect("server run");
 }
 "#;
         fs::write(project_path.join("tests/crud_e2e.rs"), e2e_test).expect("write e2e test");
 
         let output = std::process::Command::new("cargo")
             .current_dir(&project_path)
-            .args(["test", "--test", "crud_e2e"])
+            .args(["test", "--test", "crud_e2e", "--", "--nocapture"])
             .output()
             .expect("cargo test status");
         assert!(
             output.status.success(),
-            "generated CRUD project must pass e2e route test:\n{}\n{}",
+            "generated CRUD project must pass server e2e route test:\n{}\n{}",
             String::from_utf8_lossy(&output.stdout),
             String::from_utf8_lossy(&output.stderr)
+        );
+    }
+
+    #[test]
+    fn test_generate_crud_multiple_resources_share_db_module() {
+        let dir = tempdir().expect("Failed to create temp dir");
+        let project_name = "test-crud-multi";
+        let project_path = dir.path().join(project_name);
+
+        cargo_rustapi()
+            .current_dir(dir.path())
+            .args(["new", project_name, "--template", "minimal", "--yes"])
+            .assert()
+            .success();
+
+        cargo_rustapi()
+            .current_dir(&project_path)
+            .args(["generate", "crud", "items"])
+            .assert()
+            .success();
+
+        cargo_rustapi()
+            .current_dir(&project_path)
+            .args(["generate", "crud", "products"])
+            .assert()
+            .success();
+
+        let db_rs = fs::read_to_string(project_path.join("src/db.rs")).expect("read db.rs");
+        assert!(
+            db_rs.contains("pub mod items"),
+            "db.rs must track items table"
+        );
+        assert!(
+            db_rs.contains("pub mod products"),
+            "db.rs must track products table"
+        );
+        assert!(
+            db_rs.matches("ensure_table(&pool").count() >= 2,
+            "init_pool must ensure every generated table"
+        );
+
+        let products_handler = fs::read_to_string(project_path.join("src/handlers/products.rs"))
+            .expect("read handler");
+        assert!(
+            products_handler.contains("crate::db::products::{SINGULAR, TABLE}"),
+            "second resource must use its own db module"
         );
     }
 
