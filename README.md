@@ -193,7 +193,7 @@ Current benchmark methodology and canonical published performance claims live in
 
 ```toml
 [dependencies]
-api = { package = "rustapi-rs", version = "0.1.550" }
+api = { package = "rustapi-rs", version = "0.1.551" }
 ```
 
 ```rust
@@ -294,7 +294,7 @@ Full guide: [docs/cookbook/src/recipes/rustapi_cloud.md](docs/cookbook/src/recip
 
 ## Recent Changes
 
-See [CHANGELOG.md](CHANGELOG.md) for full history. Highlights in **v0.1.550**:
+See [CHANGELOG.md](CHANGELOG.md) for full history. Highlights in **v0.1.551**:
 
 - **RustAPI Cloud CLI:** `deploy cloud`, `deploy status`, device-code `login`, `RUSTAPI_CONFIG_PATH` for isolated credentials
 - **Repo split:** cloud backend moved to [RustAPI-Cloud](https://github.com/Tuntii/RustAPI-Cloud); this repo is framework + CLI only

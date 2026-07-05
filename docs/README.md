@@ -2,7 +2,7 @@
 
 Central index for user guides, architecture notes, and open-source contribution paths.
 
-**Current release:** [`rustapi-rs` 0.1.550](https://crates.io/crates/rustapi-rs) · [Changelog](../CHANGELOG.md) · [All releases](https://github.com/Tuntii/RustAPI/releases)
+**Current release:** [`rustapi-rs` 0.1.551](https://crates.io/crates/rustapi-rs) · [Changelog](../CHANGELOG.md) · [All releases](https://github.com/Tuntii/RustAPI/releases)
 
 ---
 
@@ -61,14 +61,14 @@ Central index for user guides, architecture notes, and open-source contribution 
 
 ```toml
 [dependencies]
-rustapi-rs = "0.1.550"
+rustapi-rs = "0.1.551"
 ```
 
 Alias for shorter macros (recommended):
 
 ```toml
 [dependencies]
-api = { package = "rustapi-rs", version = "0.1.550" }
+api = { package = "rustapi-rs", version = "0.1.551" }
 ```
 
 ```rust

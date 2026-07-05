@@ -39,6 +39,9 @@ rustapi-macros = { workspace = true }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "signal"] }
 doc-comment = "0.3"
 uuid = { workspace = true, features = ["serde", "v4"] }
+rustapi-testing = { workspace = true }
+tracing-subscriber = { workspace = true }
+bytes = { workspace = true }
 
 [features]
 default = ["core"]

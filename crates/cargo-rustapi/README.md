@@ -114,5 +114,5 @@ Cloud HTTP commands are enabled by default. Disable with:
 
 ```toml
 [dependencies]
-cargo-rustapi = { version = "0.1.550", default-features = false }
+cargo-rustapi = { version = "0.1.551", default-features = false }
 ```

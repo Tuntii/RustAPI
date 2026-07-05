@@ -48,7 +48,7 @@ Feature taxonomy on the facade:
 
 ```toml
 [dependencies]
-api = { package = "rustapi-rs", version = "0.1.478" }
+api = { package = "rustapi-rs", version = "0.1.551" }
 ```
 
 Sonra kodunda:
@@ -71,7 +71,7 @@ Eğer istersen direkt uzun isimle de kullanabilirsin:
 
 ```toml
 [dependencies]
-rustapi-rs = "0.1.478"
+rustapi-rs = "0.1.551"
 ```
 
 ```rust

@@ -319,6 +319,77 @@ mod generate_command {
     }
 
     #[test]
+    fn test_generate_crud_sqlx_compiles() {
+        let dir = tempdir().expect("Failed to create temp dir");
+        let project_name = "test-crud-sqlx";
+        let project_path = dir.path().join(project_name);
+        let workspace_root = std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .parent()
+            .and_then(|p| p.parent())
+            .expect("workspace root");
+
+        cargo_rustapi()
+            .current_dir(dir.path())
+            .args(["new", project_name, "--template", "minimal", "--yes"])
+            .assert()
+            .success();
+
+        cargo_rustapi()
+            .current_dir(&project_path)
+            .args(["generate", "crud", "items"])
+            .assert()
+            .success();
+
+        let handler_path = project_path.join("src/handlers/items.rs");
+        let handler = fs::read_to_string(&handler_path).expect("read handler");
+        assert!(
+            !handler.contains("TODO: Implement"),
+            "SQLx CRUD handler must not contain TODO stubs"
+        );
+        assert!(handler.contains("sqlx::query_as"));
+
+        let cargo_toml_path = project_path.join("Cargo.toml");
+        let mut cargo_toml = fs::read_to_string(&cargo_toml_path).expect("read Cargo.toml");
+        let rustapi_path = workspace_root
+            .join("crates/rustapi-rs")
+            .display()
+            .to_string()
+            .replace('\\', "/");
+        cargo_toml = cargo_toml.replace(
+            "rustapi-rs = { version = \"0.1\"",
+            &format!("rustapi-rs = {{ path = \"{rustapi_path}\""),
+        );
+        fs::write(&cargo_toml_path, cargo_toml).expect("write Cargo.toml");
+
+        let main_rs = r#"mod db;
+mod handlers;
+mod models;
+
+use rustapi_rs::prelude::*;
+
+#[rustapi_rs::main]
+async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    tracing_subscriber::fmt::init();
+    let pool = db::init_pool("sqlite::memory:").await?;
+    RustApi::auto()
+        .state(pool)
+        .run("127.0.0.1:0")
+        .await
+}
+"#;
+        fs::write(project_path.join("src/main.rs"), main_rs).expect("write main.rs");
+
+        std::process::Command::new("cargo")
+            .current_dir(&project_path)
+            .args(["check"])
+            .status()
+            .expect("cargo check status")
+            .success()
+            .then_some(())
+            .expect("generated SQLx CRUD project should compile");
+    }
+
+    #[test]
     fn test_generate_model() {
         let dir = tempdir().expect("Failed to create temp dir");
 

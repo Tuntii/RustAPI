@@ -8,7 +8,7 @@ Add `rustapi-testing` to your `Cargo.toml`. It is usually added as a dev-depende
 
 ```toml
 [dev-dependencies]
-rustapi-testing = "0.1.550"
+rustapi-testing = "0.1.551"
 tokio = { version = "1", features = ["full"] }
 ```
 

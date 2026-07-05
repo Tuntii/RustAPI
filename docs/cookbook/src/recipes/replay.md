@@ -20,7 +20,7 @@ Enable the canonical replay feature in your application:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.550", features = ["extras-replay"] }
+rustapi-rs = { version = "0.1.551", features = ["extras-replay"] }
 ```
 
 On the CLI side, `cargo-rustapi` is enough; replay commands are part of the default installation:

@@ -1,4 +1,4 @@
-﻿# Performance Benchmarks
+# Performance Benchmarks
 
 This document is the **authoritative source** for public RustAPI performance claims.
 
@@ -50,38 +50,38 @@ The following snapshot was generated in this session from a real local run.
 
 ### Environment
 
-- **Date**: 2026-03-08
+- **Date**: 2026-07-05
 - **CPU**: AMD Ryzen 7 4800H with Radeon Graphics
 - **OS**: Microsoft Windows 10 Home
-- **Rust**: `rustc 1.91.0 (f8297e351 2025-10-28)`
+- **Rust**: `rustc 1.91.0 (f8297e351 2025-10-28)` (workspace MSRV 1.85)
 - **Cargo**: `cargo 1.91.0 (ea2d97820 2025-10-10)`
 - **Command**: `cargo run -p rustapi-core --example perf_snapshot --release`
-- **Warmup iterations**: `1000`
-- **Measured iterations**: `10000`
+- **Warmup iterations**: `2000`
+- **Measured iterations**: `20000`
 - **Feature context**: `rustapi-core` default features (`swagger-ui`, `tracing`)
 - **Workload**: synthetic in-process request pipeline benchmark for a static `GET /hello` route
 
 ### Latency outputs and feature-cost matrix
 
-| Scenario | Execution path | Features | Req/s | Mean (Âµs) | p50 (Âµs) | p95 (Âµs) | p99 (Âµs) |
+| Scenario | Execution path | Features | Req/s | Mean (µs) | p50 (µs) | p95 (µs) | p99 (µs) |
 |---|---|---|---:|---:|---:|---:|---:|
-| `baseline` | ultra fast | no middleware, no interceptors | 1,317,349 | 0.64 | 0.60 | 0.90 | 1.90 |
-| `request_interceptor` | fast | 1 request interceptor | 1,174,508 | 0.73 | 0.70 | 1.00 | 2.00 |
-| `request_response_interceptors` | fast | 1 request + 1 response interceptor | 1,230,406 | 0.71 | 0.60 | 0.70 | 2.00 |
-| `middleware_only` | full | 1 middleware layer | 670,916 | 1.36 | 1.10 | 2.40 | 3.40 |
-| `full_stack_minimal` | full | 1 middleware + 1 request + 1 response interceptor | 632,003 | 1.45 | 1.30 | 2.50 | 2.90 |
-| `request_id_layer` | full | `RequestIdLayer` | 348,754 | 2.71 | 2.50 | 3.80 | 4.80 |
+| `baseline` | ultra fast | no middleware, no interceptors | 1,631,774 | 0.50 | 0.50 | 0.60 | 2.20 |
+| `request_interceptor` | fast | 1 request interceptor | 1,602,654 | 0.53 | 0.50 | 0.50 | 2.20 |
+| `request_response_interceptors` | fast | 1 request + 1 response interceptor | 1,238,206 | 0.69 | 0.70 | 0.90 | 2.50 |
+| `middleware_only` | full | 1 middleware layer | 631,309 | 1.45 | 1.30 | 2.60 | 3.20 |
+| `full_stack_minimal` | full | 1 middleware + 1 request + 1 response interceptor | 937,941 | 0.97 | 0.90 | 2.00 | 2.70 |
+| `request_id_layer` | full | `RequestIdLayer` | 426,398 | 2.21 | 2.00 | 3.80 | 3.90 |
 
 ### Relative overhead vs baseline
 
 | Scenario | Req/s delta | p99 delta |
 |---|---:|---:|
 | `baseline` | +0.00% | +0.00% |
-| `request_interceptor` | -10.84% | +5.26% |
-| `request_response_interceptors` | -6.60% | +5.26% |
-| `middleware_only` | -49.07% | +78.95% |
-| `full_stack_minimal` | -52.02% | +52.63% |
-| `request_id_layer` | -73.53% | +152.63% |
+| `request_interceptor` | -1.78% | +0.00% |
+| `request_response_interceptors` | -24.12% | +13.64% |
+| `middleware_only` | -61.31% | +45.45% |
+| `full_stack_minimal` | -42.52% | +22.73% |
+| `request_id_layer` | -73.87% | +77.27% |
 
 ## Execution path comparison
 
@@ -123,7 +123,7 @@ In particular, the `0.1.202` changelog entry records a Windows 11 / Ryzen 9 5900
 
 ## Still intentionally open
 
-The following performance work remains open in `tasks.md`:
+The following performance work remains open:
 
 - broader end-to-end benchmark scenarios beyond the synthetic in-process pipeline snapshot
 

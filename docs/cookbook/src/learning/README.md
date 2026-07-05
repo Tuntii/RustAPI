@@ -1,18 +1,18 @@
-﻿# Learning & Examples
+# Learning & Examples
 
 Welcome to the RustAPI learning resources! This section provides structured learning paths and links to comprehensive real-world examples to help you master the framework.
 
-## ğŸ“ Structured Curriculum
+## 🎓 Structured Curriculum
 
 New to RustAPI? Follow our step-by-step [Structured Learning Path](curriculum.md) to go from beginner to production-ready.
 
-## ğŸ“š Learning Resources
+## 📚 Learning Resources
 
 ### Official Examples Repository
 
 We maintain a comprehensive examples repository with **18 real-world projects** demonstrating RustAPI's full capabilities:
 
-ğŸ”— **[rustapi-rs-examples](https://github.com/Tuntii/rustapi-rs-examples)** - Complete examples from hello-world to production microservices
+🔗 **[rustapi-rs-examples](https://github.com/Tuntii/rustapi-rs-examples)** - Complete examples from hello-world to production microservices
 
 ### Cookbook Internal Path
 
@@ -29,18 +29,18 @@ If you prefer reading through documentation first, follow this path through the 
 
 | Benefit | Description |
 |---------|-------------|
-| **Structured Learning** | Progress from beginner â†’ intermediate â†’ advanced |
+| **Structured Learning** | Progress from beginner → intermediate → advanced |
 | **Real-world Patterns** | Production-ready implementations you can adapt |
 | **Feature Discovery** | Find examples by the features you want to learn |
 | **AI-Friendly** | Module-level docs help AI assistants understand your code |
 
 ---
 
-## ğŸ¯ Learning Paths
+## 🎯 Learning Paths
 
 Choose a learning path based on your goals:
 
-### ğŸš€ Path 1: REST API Developer
+### 🚀 Path 1: REST API Developer
 
 Build production-ready REST APIs with RustAPI.
 
@@ -59,7 +59,7 @@ Build production-ready REST APIs with RustAPI.
 
 ---
 
-### ğŸ—ï¸ Path 2: Microservices Architect
+### 🏗️ Path 2: Microservices Architect
 
 Design and build distributed systems with RustAPI.
 
@@ -82,7 +82,7 @@ Design and build distributed systems with RustAPI.
 
 ---
 
-### âš¡ Path 3: Real-time Applications
+### ⚡ Path 3: Real-time Applications
 
 Build interactive, real-time features with WebSockets.
 
@@ -99,7 +99,7 @@ Build interactive, real-time features with WebSockets.
 
 ---
 
-### ğŸ¤– Path 4: AI/LLM Integration
+### 🤖 Path 4: AI/LLM Integration
 
 Build AI-friendly APIs with TOON format and MCP support.
 
@@ -115,7 +115,7 @@ Build AI-friendly APIs with TOON format and MCP support.
 
 ---
 
-### ğŸ¢ Path 5: Enterprise Platform
+### 🏢 Path 5: Enterprise Platform
 
 Build robust, observable, and secure systems.
 
@@ -138,49 +138,49 @@ Build robust, observable, and secure systems.
 
 ---
 
-## ğŸ“¦ Examples by Category
+## 📦 Examples by Category
 
 ### Getting Started
 | Example | Description | Difficulty |
 |---------|-------------|------------|
-| `hello-world` | Minimal RustAPI server | â­ Beginner |
-| `crud-api` | Complete CRUD operations | â­ Beginner |
+| `hello-world` | Minimal RustAPI server | ⭐ Beginner |
+| `crud-api` | Complete CRUD operations | ⭐ Beginner |
 
 ### Authentication & Security
 | Example | Description | Difficulty |
 |---------|-------------|------------|
-| `auth-api` | JWT authentication flow | â­â­ Intermediate |
-| `middleware-chain` | Middleware composition | â­â­ Intermediate |
-| `rate-limit-demo` | API rate limiting | â­â­ Intermediate |
+| `auth-api` | JWT authentication flow | ⭐⭐ Intermediate |
+| `middleware-chain` | Middleware composition | ⭐⭐ Intermediate |
+| `rate-limit-demo` | API rate limiting | ⭐⭐ Intermediate |
 
 ### Database Integration
 | Example | Description | Difficulty |
 |---------|-------------|------------|
-| `sqlx-crud` | SQLx with PostgreSQL/SQLite | â­â­ Intermediate |
-| `event-sourcing` | Event sourcing patterns | â­â­â­ Advanced |
+| `sqlx-crud` | SQLx with PostgreSQL/SQLite | ⭐⭐ Intermediate |
+| `event-sourcing` | Event sourcing patterns | ⭐⭐⭐ Advanced |
 
 ### AI & LLM
 | Example | Description | Difficulty |
 |---------|-------------|------------|
-| `toon-api` | TOON format responses | â­â­ Intermediate |
-| `mcp-server` | Model Context Protocol | â­â­â­ Advanced |
+| `toon-api` | TOON format responses | ⭐⭐ Intermediate |
+| `mcp-server` | Model Context Protocol | ⭐⭐⭐ Advanced |
 
 ### Real-time & GraphQL
 | Example | Description | Difficulty |
 |---------|-------------|------------|
-| `websocket` | WebSocket chat example | â­â­ Intermediate |
-| `graphql-api` | GraphQL with async-graphql | â­â­â­ Advanced |
+| `websocket` | WebSocket chat example | ⭐⭐ Intermediate |
+| `graphql-api` | GraphQL with async-graphql | ⭐⭐⭐ Advanced |
 
 ### Production Patterns
 | Example | Description | Difficulty |
 |---------|-------------|------------|
-| `microservices` | Basic service communication | â­â­â­ Advanced |
-| `microservices-advanced` | Consul service discovery | â­â­â­ Advanced |
-| `serverless-lambda` | AWS Lambda deployment | â­â­â­ Advanced |
+| `microservices` | Basic service communication | ⭐⭐⭐ Advanced |
+| `microservices-advanced` | Consul service discovery | ⭐⭐⭐ Advanced |
+| `serverless-lambda` | AWS Lambda deployment | ⭐⭐⭐ Advanced |
 
 ---
 
-## ğŸ”§ Feature Matrix
+## 🔧 Feature Matrix
 
 Find examples by the RustAPI features they demonstrate:
 
@@ -203,7 +203,7 @@ Find examples by the RustAPI features they demonstrate:
 
 ---
 
-## ğŸš¦ Getting Started with Examples
+## 🚦 Getting Started with Examples
 
 ### Clone the Repository
 
@@ -241,7 +241,7 @@ Each example includes:
 
 ---
 
-## ğŸ“– Cross-Reference: Cookbook â†” Examples
+## 📖 Cross-Reference: Cookbook ↔ Examples
 
 | Cookbook Recipe | Related Examples |
 |-----------------|------------------|
@@ -259,7 +259,7 @@ Each example includes:
 
 ---
 
-## ğŸ’¡ Contributing Examples
+## 💡 Contributing Examples
 
 Have a great example to share? We welcome contributions!
 
@@ -277,7 +277,7 @@ Have a great example to share? We welcome contributions!
 
 ---
 
-## ğŸ”— Additional Resources
+## 🔗 Additional Resources
 
 - **[RustAPI GitHub](https://github.com/Tuntii/RustAPI)** - Framework source code
 - **[API Reference](https://docs.rs/rustapi-rs)** - Generated documentation
@@ -286,4 +286,4 @@ Have a great example to share? We welcome contributions!
 
 ---
 
-> ğŸ’¬ **Need help?** Open an issue in the examples repository or join our community discussions!
+> 💬 **Need help?** Open an issue in the examples repository or join our community discussions!

@@ -1,4 +1,4 @@
-﻿# RustAPI Architecture
+# RustAPI Architecture
 
 > Deep dive into RustAPI's internal structure and design decisions.
 
@@ -9,46 +9,46 @@
 RustAPI uses a **layered facade architecture** where complexity is hidden behind clean abstractions. Users interact only with `rustapi-rs`, while internal crates handle specific concerns.
 
 ```
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚                      Your Application                           â”‚
-â”‚                    use rustapi_rs::prelude::*                   â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                              â”‚
-                              â–¼
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚                    rustapi-rs (Public Facade)                   â”‚
-â”‚  â€¢ Exports prelude                                              â”‚
-â”‚  â€¢ Re-exports all public types                                  â”‚
-â”‚  â€¢ Feature flag management                                      â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                              â”‚
-          â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-          â–¼                   â–¼                   â–¼
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚  rustapi-core   â”‚ â”‚ rustapi-macros  â”‚ â”‚ rustapi-openapi â”‚
-â”‚  HTTP Engine    â”‚ â”‚ Proc Macros     â”‚ â”‚ Swagger/OpenAPI â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-          â”‚
-          â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-          â–¼                 â–¼                 â–¼
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â” â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚rustapi-validate â”‚ â”‚ rustapi-extras  â”‚ â”‚   rustapi-ws    â”‚
-â”‚  Validation     â”‚ â”‚ JWT/CORS/Rate   â”‚ â”‚   WebSocket     â”‚
-â”‚                 â”‚ â”‚ +toon/view/jobs â”‚ â”‚                 â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜ â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
-                              â”‚
-                              â–¼
-â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-â”‚                    Foundation Layer                             â”‚
-â”‚  tokio â”‚ hyper â”‚ serde â”‚ matchit â”‚ tower â”‚ tungstenite â”‚ tera  â”‚
-â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+┌─────────────────────────────────────────────────────────────────┐
+│                      Your Application                           │
+│                    use rustapi_rs::prelude::*                   │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    rustapi-rs (Public Facade)                   │
+│  • Exports prelude                                              │
+│  • Re-exports all public types                                  │
+│  • Feature flag management                                      │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+          ┌───────────────────┼───────────────────┐
+          ▼                   ▼                   ▼
+┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+│  rustapi-core   │ │ rustapi-macros  │ │ rustapi-openapi │
+│  HTTP Engine    │ │ Proc Macros     │ │ Swagger/OpenAPI │
+└─────────────────┘ └─────────────────┘ └─────────────────┘
+          │
+          ├─────────────────┬─────────────────┐
+          ▼                 ▼                 ▼
+┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐
+│rustapi-validate │ │ rustapi-extras  │ │   rustapi-ws    │
+│  Validation     │ │ JWT/CORS/Rate   │ │   WebSocket     │
+│                 │ │ +toon/view/jobs │ │                 │
+└─────────────────┘ └─────────────────┘ └─────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    Foundation Layer                             │
+│  tokio │ hyper │ serde │ matchit │ tower │ tungstenite │ tera  │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## Crate Responsibilities
 
-### `rustapi-rs` — Public Facade
+### `rustapi-rs` � Public Facade
 
 **The only crate users import.**
 
@@ -95,7 +95,7 @@ pub mod prelude {
 }
 ```
 
-### `rustapi-core` — HTTP Engine
+### `rustapi-core` � HTTP Engine
 
 **The heart of the framework.**
 
@@ -109,14 +109,14 @@ pub mod prelude {
 | `Server` | `hyper 1.x` | HTTP protocol handling |
 
 **Key files:**
-- [app.rs](../crates/rustapi-core/src/app.rs) — `RustApi` builder
-- [router.rs](../crates/rustapi-core/src/router.rs) — Radix tree routing
-- [handler.rs](../crates/rustapi-core/src/handler.rs) — Handler trait
-- [extract.rs](../crates/rustapi-core/src/extract.rs) — All extractors
-- [response.rs](../crates/rustapi-core/src/response.rs) — Response types
-- [server.rs](../crates/rustapi-core/src/server.rs) — Hyper server
+- [app.rs](../crates/rustapi-core/src/app.rs) � `RustApi` builder
+- [router.rs](../crates/rustapi-core/src/router.rs) � Radix tree routing
+- [handler.rs](../crates/rustapi-core/src/handler.rs) � Handler trait
+- [extract.rs](../crates/rustapi-core/src/extract.rs) � All extractors
+- [response.rs](../crates/rustapi-core/src/response.rs) � Response types
+- [server.rs](../crates/rustapi-core/src/server.rs) � Hyper server
 
-### `rustapi-macros` — Procedural Macros
+### `rustapi-macros` � Procedural Macros
 
 **Compile-time code generation.**
 
@@ -138,7 +138,7 @@ async fn get_user(Path(id): Path<u64>) -> Json<User> { ... }
 RustApi::auto().run("0.0.0.0:8080").await
 ```
 
-### `rustapi-openapi` — API Documentation
+### `rustapi-openapi` � API Documentation
 
 **Automatic OpenAPI/Swagger generation.**
 
@@ -159,7 +159,7 @@ struct User {
 }
 ```
 
-### `rustapi-validate` — Request Validation
+### `rustapi-validate` � Request Validation
 
 **Type-safe request validation.**
 
@@ -188,7 +188,7 @@ async fn create(ValidatedJson(user): ValidatedJson<CreateUser>) -> Json<User> {
 }
 ```
 
-### TOON — LLM Optimization (in `rustapi-extras`, feature `toon`)
+### TOON � LLM Optimization (in `rustapi-extras`, feature `toon`)
 
 **Token-Oriented Object Notation for AI.**
 
@@ -202,12 +202,12 @@ Formerly the `rustapi-toon` crate; now part of `rustapi-extras` behind the `toon
 | `ToonFormat` | TOON serialization |
 
 Headers provided by `LlmResponse`:
-- `X-Token-Count-JSON` — Tokens if JSON
-- `X-Token-Count-TOON` — Tokens if TOON  
-- `X-Token-Savings` — Percentage saved
-- `X-Format-Used` — Which format was used
+- `X-Token-Count-JSON` � Tokens if JSON
+- `X-Token-Count-TOON` � Tokens if TOON  
+- `X-Token-Savings` � Percentage saved
+- `X-Format-Used` � Which format was used
 
-### `rustapi-extras` — Production Middleware
+### `rustapi-extras` � Production Middleware
 
 **Battle-tested middleware components.**
 
@@ -254,7 +254,7 @@ Formerly the `rustapi-testing` crate; now part of `rustapi-core` behind the `tes
 | `Matcher` | Response body/header matching |
 | `Expectation` | Fluent assertion builder |
 
-### `rustapi-ws` — WebSocket Support
+### `rustapi-ws` � WebSocket Support
 
 **Real-time bidirectional communication.**
 
@@ -286,7 +286,7 @@ Formerly the `rustapi-view` crate; now part of `rustapi-extras` behind the `view
 ### 1. Incoming Request
 
 ```
-HTTP Request â†’ Hyper â†’ RustAPI Server
+HTTP Request → Hyper → RustAPI Server
 ```
 
 ### 2. Routing
@@ -305,7 +305,7 @@ let router = Router::new()
 ### 3. Middleware Stack
 
 ```
-Request â†’ [RequestId] â†’ [CORS] â†’ [RateLimit] â†’ [JWT] â†’ [BodyLimit] â†’ Handler
+Request → [RequestId] → [CORS] → [RateLimit] → [JWT] → [BodyLimit] → Handler
 ```
 
 Each middleware can:
@@ -651,11 +651,11 @@ impl<S> Layer<S> for TimingLayer {
 
 RustAPI's architecture enables:
 
-1. **Simplicity** — One import, minimal boilerplate
-2. **Safety** — Compile-time type checking, no runtime surprises
-3. **Flexibility** — Extend with custom extractors, responses, middleware
-4. **Performance** — Zero-cost abstractions where possible
-5. **Stability** — Internal changes don't break user code
+1. **Simplicity** � One import, minimal boilerplate
+2. **Safety** � Compile-time type checking, no runtime surprises
+3. **Flexibility** � Extend with custom extractors, responses, middleware
+4. **Performance** � Zero-cost abstractions where possible
+5. **Stability** � Internal changes don't break user code
 
 The facade pattern is the key: `rustapi-rs` provides a stable surface, while internal crates can evolve freely.
 

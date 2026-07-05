@@ -107,7 +107,7 @@ Enable the `redis` feature in `Cargo.toml`:
 
 ```toml
 [dependencies]
-rustapi-jobs = { version = "0.1.550", features = ["redis"] }
+rustapi-jobs = { version = "0.1.551", features = ["redis"] }
 ```
 
 ```rust
@@ -123,7 +123,7 @@ Enable the `postgres` feature in `Cargo.toml`. This uses `sqlx`.
 
 ```toml
 [dependencies]
-rustapi-jobs = { version = "0.1.550", features = ["postgres"] }
+rustapi-jobs = { version = "0.1.551", features = ["postgres"] }
 ```
 
 ```rust

@@ -163,7 +163,7 @@ Cloud HTTP commands are gated behind the `cloud` feature on `cargo-rustapi` (ena
 ```toml
 # Cargo.toml — disable cloud commands
 [dependencies]
-cargo-rustapi = { version = "0.1.550", default-features = false }
+cargo-rustapi = { version = "0.1.551", default-features = false }
 ```
 
 When disabled, `login`, `deploy cloud`, and `deploy status` are not compiled. Workspace builds with `--no-default-features` remain supported.

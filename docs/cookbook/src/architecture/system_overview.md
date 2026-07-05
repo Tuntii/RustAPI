@@ -1,4 +1,4 @@
-﻿# System Architecture
+# System Architecture
 
 RustAPI follows a **Facade Architecture** — a stable public API that shields you from internal complexity and breaking changes.
 
@@ -6,20 +6,20 @@ RustAPI follows a **Facade Architecture** — a stable public API that shields y
 
 ```mermaid
 graph TB
-    subgraph Client["ğŸŒ Client Layer"]
+    subgraph Client["🌐 Client Layer"]
         HTTP[HTTP Request]
         LLM[LLM/AI Agent]
         MCP[MCP Client]
     end
 
-    subgraph Public["ğŸ“¦ rustapi-rs (Public Facade)"]
+    subgraph Public["📦 rustapi-rs (Public Facade)"]
         direction TB
         Prelude[prelude::*]
         Macros["#[rustapi_rs::get/post]<br>#[rustapi_rs::main]"]
         Types[Json, Query, Path, Form]
     end
 
-    subgraph Core["âš™ï¸ rustapi-core (Engine)"]
+    subgraph Core["⚙️ rustapi-core (Engine)"]
         direction TB
         Router[Radix Router<br>matchit]
         Extract[Extractors<br>FromRequest trait]
@@ -27,7 +27,7 @@ graph TB
         Resp[Response Builder<br>IntoResponse trait]
     end
 
-    subgraph Extensions["ğŸ”Œ Extension Crates"]
+    subgraph Extensions["🔌 Extension Crates"]
         direction LR
         OpenAPI["rustapi-openapi<br>OpenAPI 3.1 + Docs"]
         Validate["rustapi-validate<br>Validation (v2 native)"]
@@ -35,7 +35,7 @@ graph TB
         WsCrate["rustapi-ws<br>WebSocket Support"]
     end
 
-    subgraph Foundation["ğŸ—ï¸ Foundation Layer"]
+    subgraph Foundation["🏗️ Foundation Layer"]
         direction LR
         Tokio[tokio<br>Async Runtime]
         Hyper[hyper 1.0<br>HTTP Protocol]

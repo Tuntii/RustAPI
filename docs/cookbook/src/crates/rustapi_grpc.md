@@ -16,7 +16,7 @@
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.550", features = ["grpc"] }
+rustapi-rs = { version = "0.1.551", features = ["grpc"] }
 ```
 
 ## Basic Usage

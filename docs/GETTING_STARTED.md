@@ -22,21 +22,21 @@ Add RustAPI to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rustapi-rs = "0.1.550"
+rustapi-rs = "0.1.551"
 ```
 
 You can also rename the crate if you prefer shorter macro paths:
 
 ```toml
 [dependencies]
-api = { package = "rustapi-rs", version = "0.1.550" }
+api = { package = "rustapi-rs", version = "0.1.551" }
 ```
 
 Or with specific features:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.550", features = ["extras-jwt", "extras-cors", "protocol-toon", "protocol-ws", "protocol-view"] }
+rustapi-rs = { version = "0.1.551", features = ["extras-jwt", "extras-cors", "protocol-toon", "protocol-ws", "protocol-view"] }
 ```
 
 ### Available Features
@@ -55,6 +55,35 @@ rustapi-rs = { version = "0.1.550", features = ["extras-jwt", "extras-cors", "pr
 | `extras-rate-limit` | IP-based rate limiting |
 | `extras-config` | Environment/config helpers |
 | `full` | `core + protocol-all + extras-all` |
+| `i18n` | Localized validation messages (`rust-i18n`); English fallbacks without it |
+
+### Slim vs Full: Which profile should I use?
+
+Most production APIs should start **slim** and opt into extras only when needed:
+
+```toml
+# Recommended default — fast compiles, ~158 transitive crates
+[dependencies]
+rustapi-rs = { version = "0.1.551", default-features = false, features = ["core"] }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+```
+
+Add features incrementally (`extras-jwt`, `extras-cors`, `protocol-ws`, …) instead of enabling everything at once.
+
+```toml
+# Kitchen-sink profile — tutorials and exploration only (~900+ transitive crates)
+[dependencies]
+rustapi-rs = { version = "0.1.551", features = ["full"] }
+```
+
+| Profile | Transitive crates (approx.) | Compile time | When to use |
+|---------|----------------------------|--------------|-------------|
+| `core` only (slim) | ~158 | Fastest | Production APIs, libraries, CI |
+| `core` + selected `extras-*` / `protocol-*` | ~200–400 | Moderate | Real services with JWT, CORS, SQLx, etc. |
+| `full` | ~900+ | Slowest | Demos, feature discovery, integration tests |
+
+Since **v0.1.551**, `tracing-subscriber` and `rust-i18n` are no longer pulled unconditionally — initialize tracing in `main`, and enable `features = ["i18n"]` when you need Turkish/other validation locales.
 
 ---
 
@@ -370,7 +399,7 @@ ApiError::internal("message")         // 500
 ### CORS
 
 ```toml
-rustapi-rs = { version = "0.1.550", features = ["extras-cors"] }
+rustapi-rs = { version = "0.1.551", features = ["extras-cors"] }
 ```
 
 ```rust
@@ -391,7 +420,7 @@ RustApi::new()
 ### JWT Authentication
 
 ```toml
-rustapi-rs = { version = "0.1.550", features = ["extras-jwt"] }
+rustapi-rs = { version = "0.1.551", features = ["extras-jwt"] }
 ```
 
 ```rust
@@ -420,7 +449,7 @@ async fn protected(user: AuthUser<Claims>) -> Json<Response> {
 ### Rate Limiting
 
 ```toml
-rustapi-rs = { version = "0.1.550", features = ["extras-rate-limit"] }
+rustapi-rs = { version = "0.1.551", features = ["extras-rate-limit"] }
 ```
 
 ```rust
@@ -438,7 +467,7 @@ RustApi::new()
 ## TOON Format (LLM Optimization)
 
 ```toml
-rustapi-rs = { version = "0.1.550", features = ["protocol-toon"] }
+rustapi-rs = { version = "0.1.551", features = ["protocol-toon"] }
 ```
 
 ```rust
@@ -469,7 +498,7 @@ Response includes token counting headers:
 Real-time bidirectional communication:
 
 ```toml
-rustapi-rs = { version = "0.1.550", features = ["protocol-ws"] }
+rustapi-rs = { version = "0.1.551", features = ["protocol-ws"] }
 ```
 
 ```rust
@@ -506,7 +535,7 @@ websocat ws://localhost:8080/ws
 Server-side HTML rendering with Tera:
 
 ```toml
-rustapi-rs = { version = "0.1.550", features = ["protocol-view"] }
+rustapi-rs = { version = "0.1.551", features = ["protocol-view"] }
 ```
 
 Create a template file `templates/index.html`:
@@ -763,7 +792,7 @@ struct AnyBody { ... }
 Check that `core-openapi` is enabled (it is included in the default `core` feature):
 
 ```toml
-rustapi-rs = { version = "0.1.550", features = ["core-openapi"] }
+rustapi-rs = { version = "0.1.551", features = ["core-openapi"] }
 ```
 
 ### CLI Commands Not Working

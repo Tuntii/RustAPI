@@ -4,6 +4,24 @@ This directory contains the in-repository examples for the `rustapi-rs` facade c
 
 ## Available examples
 
+### `file_upload`
+
+Multipart file upload with `Multipart`, body limits, and safe filename handling.
+
+Run it with:
+
+```sh
+cargo run -p rustapi-rs --example file_upload
+```
+
+Then try:
+
+```sh
+curl -X POST http://127.0.0.1:8080/upload -F "file=@./README.md"
+```
+
+See also the [file uploads cookbook recipe](../../../docs/cookbook/src/recipes/file_uploads.md).
+
 ### `auth_api`
 
 Shows cookie-backed login, session refresh, logout, and session inspection using the built-in session middleware.
@@ -121,4 +139,4 @@ For a more complete, standalone MCP example (with full project structure, ready-
 
 - Keep this file aligned with the actual `.rs` files in this directory.
 - User-facing examples should import from `rustapi_rs::prelude::*` unless the example is explicitly about internals.
-- Additional example ideas tracked in `tasks.md` are roadmap items until their files exist here.
+- New examples should be listed in this file when added under `examples/`.

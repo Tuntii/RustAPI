@@ -1,4 +1,4 @@
-﻿# rustapi-mcp: The Agent Bridge
+# rustapi-mcp: The Agent Bridge
 
 **Lens**: "Your API is now a tool provider for LLMs."  
 **Philosophy**: "Discover once, execute through the real stack, expose nothing by accident."

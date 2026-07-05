@@ -7,13 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Documentation
+## [0.1.551] - 2026-07-05
 
-- Comprehensive docs refresh: version sync to **0.1.550**, public [Production Baseline](docs/PRODUCTION_BASELINE.md) and [Production Checklist](docs/PRODUCTION_CHECKLIST.md), new [RustAPI Cloud cookbook recipe](docs/cookbook/src/recipes/rustapi_cloud.md), expanded `cargo-rustapi` reference, encoding fixes, and removal of personal deploy hostnames from release notes.
+### Added
+
+- **`cargo rustapi generate crud`**: SQLx-sqlite-backed list/get/create/update/delete handlers with schema bootstrap (`src/db.rs`) instead of `TODO` stubs.
+- **`file_upload` example** (`crates/rustapi-rs/examples/file_upload.rs`) demonstrating multipart uploads with the public `rustapi_rs::prelude` API.
+- **Slim vs full dependency guidance** in [Getting Started](docs/GETTING_STARTED.md).
 
 ### Changed
 
-- **RustAPI Cloud** moved to its own repository: [github.com/Tuntii/RustAPI-Cloud](https://github.com/Tuntii/RustAPI-Cloud). This repo is now framework + CLI only.
+- Default `rustapi-rs` dependency tree slimmed from ~259 to ~158 transitive crates by removing always-on `tracing-subscriber` and gating `rust-i18n` behind the `i18n` feature (English fallbacks by default).
+- `RustApi::new()` no longer auto-initializes `tracing-subscriber`; initialize tracing in `main` (CLI templates already do).
+- Removed unused `screenshots` / `image` / `base64` dev-dependencies that pulled vulnerable `quick-xml` transitives into `cargo audit`.
+- `rustapi-openapi` now uses workspace `rustapi-macros` version.
+
+### Fixed
+
+- **Security Audit** (`cargo audit`) passes on the current lockfile (no high-severity `quick-xml` advisories).
+
+### Documentation
+
+- Refreshed [Performance Benchmarks](docs/PERFORMANCE_BENCHMARKS.md) with a new `perf_snapshot` run.
+- Updated [file uploads cookbook](docs/cookbook/src/recipes/file_uploads.md) to use `BodyLimitLayer` and `rustapi_rs::prelude` imports.
+- Version strings aligned to **0.1.551** across user-facing READMEs and install docs.
 
 ## [0.1.550] - 2026-06-25
 
@@ -580,7 +597,8 @@ This release delivers a **12x performance improvement**, bringing RustAPI from ~
 - `extras` meta-feature for common optional features
 - `full` feature for all optional features
 
-[Unreleased]: https://github.com/Tuntii/RustAPI/compare/v0.1.550...HEAD
+[Unreleased]: https://github.com/Tuntii/RustAPI/compare/v0.1.551...HEAD
+[0.1.551]: https://github.com/Tuntii/RustAPI/compare/v0.1.550...v0.1.551
 [0.1.550]: https://github.com/Tuntii/RustAPI/compare/v0.1.537...v0.1.550
 [0.1.537]: https://github.com/Tuntii/RustAPI/compare/v0.1.528...v0.1.537
 [0.1.528]: https://github.com/Tuntii/RustAPI/compare/v0.1.508...v0.1.528
