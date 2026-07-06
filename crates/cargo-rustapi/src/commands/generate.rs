@@ -230,7 +230,7 @@ async fn ensure_crud_dependencies() -> Result<()> {
         .any(|line| line.trim_start().starts_with("sqlx "))
     {
         deps_to_add.push(
-            "sqlx = { version = \"0.8\", default-features = false, features = [\"runtime-tokio\", \"sqlite\", \"derive\"] }",
+            "sqlx = { version = \"0.9\", default-features = false, features = [\"runtime-tokio\", \"sqlite\", \"derive\"] }",
         );
     }
 
@@ -269,7 +269,7 @@ const DB_RS_HEADER: &str = r#"//! Database bootstrap for generated CRUD resource
 //! Default columns are the standard scaffold (`id`, `name`, `description`, timestamps).
 
 use sqlx::sqlite::SqlitePoolOptions;
-use sqlx::SqlitePool;
+use sqlx::{AssertSqlSafe, SqlitePool};
 
 /// Default CRUD column layout for generated resources (customize per model as needed).
 macro_rules! crud_columns {
@@ -311,7 +311,7 @@ async fn upsert_db_resource(table: &str, singular: &str) -> Result<()> {
             "{header}{module_block}\
 async fn ensure_table(pool: &SqlitePool, table: &str, columns: &str) -> Result<(), sqlx::Error> {{
     let schema = format!(\"CREATE TABLE IF NOT EXISTS {{}} ({{}})\", table, columns.trim());
-    sqlx::query(&schema).execute(pool).await?;
+    sqlx::query(AssertSqlSafe(schema.as_str())).execute(pool).await?;
     Ok(())
 }}
 
@@ -427,7 +427,7 @@ async fn generate_sqlx_handler(name: &str, type_name: &str, table: &str) -> Resu
 use crate::db::{table_mod}::{{SINGULAR, TABLE}};
 use crate::models::{{Create{type_name}, Update{type_name}, {type_name}}};
 use rustapi_rs::prelude::*;
-use sqlx::SqlitePool;
+use sqlx::{{AssertSqlSafe, SqlitePool}};
 
 fn now_ts() -> String {{
     chrono::Utc::now().to_rfc3339()
@@ -442,10 +442,10 @@ fn db_error(err: sqlx::Error) -> ApiError {{
 #[rustapi_rs::tag("{type_name}")]
 #[rustapi_rs::summary("List all {name}")]
 pub async fn list(State(pool): State<SqlitePool>) -> Result<Json<Vec<{type_name}>>> {{
-    let rows = sqlx::query_as::<_, {type_name}>(&format!(
+    let rows = sqlx::query_as::<_, {type_name}>(AssertSqlSafe(format!(
         "SELECT id, name, description, created_at, updated_at FROM {{}} ORDER BY id",
         TABLE
-    ))
+    )))
     .fetch_all(&pool)
     .await
     .map_err(db_error)?;
@@ -457,10 +457,10 @@ pub async fn list(State(pool): State<SqlitePool>) -> Result<Json<Vec<{type_name}
 #[rustapi_rs::tag("{type_name}")]
 #[rustapi_rs::summary("Get {singular} by ID")]
 pub async fn get(Path(id): Path<i64>, State(pool): State<SqlitePool>) -> Result<Json<{type_name}>> {{
-    let row = sqlx::query_as::<_, {type_name}>(&format!(
+    let row = sqlx::query_as::<_, {type_name}>(AssertSqlSafe(format!(
         "SELECT id, name, description, created_at, updated_at FROM {{}} WHERE id = ?",
         TABLE
-    ))
+    )))
     .bind(id)
     .fetch_optional(&pool)
     .await
@@ -478,10 +478,10 @@ pub async fn create(
     Json(body): Json<Create{type_name}>,
 ) -> Result<WithStatus<Json<{type_name}>, 201>> {{
     let now = now_ts();
-    let result = sqlx::query(&format!(
+    let result = sqlx::query(AssertSqlSafe(format!(
         "INSERT INTO {{}} (name, description, created_at, updated_at) VALUES (?, ?, ?, ?)",
         TABLE
-    ))
+    )))
     .bind(&body.name)
     .bind(&body.description)
     .bind(&now)
@@ -491,10 +491,10 @@ pub async fn create(
     .map_err(db_error)?;
 
     let id = result.last_insert_rowid();
-    let row = sqlx::query_as::<_, {type_name}>(&format!(
+    let row = sqlx::query_as::<_, {type_name}>(AssertSqlSafe(format!(
         "SELECT id, name, description, created_at, updated_at FROM {{}} WHERE id = ?",
         TABLE
-    ))
+    )))
     .bind(id)
     .fetch_one(&pool)
     .await
@@ -511,10 +511,10 @@ pub async fn update(
     State(pool): State<SqlitePool>,
     Json(body): Json<Update{type_name}>,
 ) -> Result<Json<{type_name}>> {{
-    let existing = sqlx::query_as::<_, {type_name}>(&format!(
+    let existing = sqlx::query_as::<_, {type_name}>(AssertSqlSafe(format!(
         "SELECT id, name, description, created_at, updated_at FROM {{}} WHERE id = ?",
         TABLE
-    ))
+    )))
     .bind(id)
     .fetch_optional(&pool)
     .await
@@ -525,10 +525,10 @@ pub async fn update(
     let description = body.description.or(existing.description);
     let updated_at = now_ts();
 
-    sqlx::query(&format!(
+    sqlx::query(AssertSqlSafe(format!(
         "UPDATE {{}} SET name = ?, description = ?, updated_at = ? WHERE id = ?",
         TABLE
-    ))
+    )))
     .bind(&name)
     .bind(&description)
     .bind(&updated_at)
@@ -537,10 +537,10 @@ pub async fn update(
     .await
     .map_err(db_error)?;
 
-    let row = sqlx::query_as::<_, {type_name}>(&format!(
+    let row = sqlx::query_as::<_, {type_name}>(AssertSqlSafe(format!(
         "SELECT id, name, description, created_at, updated_at FROM {{}} WHERE id = ?",
         TABLE
-    ))
+    )))
     .bind(id)
     .fetch_one(&pool)
     .await
@@ -553,7 +553,7 @@ pub async fn update(
 #[rustapi_rs::tag("{type_name}")]
 #[rustapi_rs::summary("Delete {singular}")]
 pub async fn delete(Path(id): Path<i64>, State(pool): State<SqlitePool>) -> Result<NoContent> {{
-    let result = sqlx::query(&format!("DELETE FROM {{}} WHERE id = ?", TABLE))
+    let result = sqlx::query(AssertSqlSafe(format!("DELETE FROM {{}} WHERE id = ?", TABLE)))
         .bind(id)
         .execute(&pool)
         .await

@@ -134,7 +134,7 @@ session-redis = ["session", "dep:redis"]
 # Background job processing
 jobs = ["dep:chrono", "dep:uuid"]
 jobs-redis = ["jobs", "dep:redis", "redis/script"]
-jobs-postgres = ["jobs", "dep:sqlx", "sqlx/postgres", "sqlx/runtime-tokio", "sqlx/tls-rustls", "sqlx/chrono", "sqlx/uuid"]
+jobs-postgres = ["jobs", "dep:sqlx", "sqlx/postgres", "sqlx/runtime-tokio", "sqlx/tls-rustls", "sqlx/chrono", "sqlx/uuid", "sqlx/json"]
 
 # Replay (time-travel debugging)
 replay = ["dep:reqwest", "dep:dashmap", "dep:uuid", "dep:serde_urlencoded", "rustapi-core/replay"]

@@ -1,6 +1,7 @@
 use super::super::error::{JobError, Result};
 use super::{JobBackend, JobRequest};
-use sqlx::{Pool, Postgres, Row};
+use sqlx::types::Json;
+use sqlx::{AssertSqlSafe, Pool, Postgres, Row};
 use std::future::Future;
 use std::pin::Pin;
 
@@ -39,7 +40,7 @@ impl PostgresBackend {
             self.table_name, self.table_name, self.table_name
         );
 
-        sqlx::query(&query)
+        sqlx::query(AssertSqlSafe(query.as_str()))
             .execute(&self.pool)
             .await
             .map_err(|e| JobError::BackendError(e.to_string()))?;
@@ -62,10 +63,10 @@ impl JobBackend for PostgresBackend {
                 self.table_name
             );
 
-            sqlx::query(&query)
+            sqlx::query(AssertSqlSafe(query.as_str()))
                 .bind(&job.id)
                 .bind(&job.name)
-                .bind(&job.payload)
+                .bind(Json(&job.payload))
                 .bind(job.created_at)
                 .bind(job.run_at)
                 .bind(job.attempts as i32)
@@ -98,7 +99,7 @@ impl JobBackend for PostgresBackend {
                 self.table_name, self.table_name
             );
 
-            let row = sqlx::query(&query)
+            let row = sqlx::query(AssertSqlSafe(query.as_str()))
                 .fetch_optional(&self.pool)
                 .await
                 .map_err(|e| JobError::BackendError(e.to_string()))?;
@@ -107,7 +108,7 @@ impl JobBackend for PostgresBackend {
                 Ok(Some(JobRequest {
                     id: row.get("id"),
                     name: row.get("name"),
-                    payload: row.get("payload"),
+                    payload: row.get::<Json<serde_json::Value>, _>("payload").0,
                     created_at: row.get("created_at"),
                     run_at: row.get("run_at"),
                     attempts: row.get::<i32, _>("attempts") as u32,
