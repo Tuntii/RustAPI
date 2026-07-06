@@ -1,8 +1,9 @@
 //! Template engine wrapper
 
 use crate::ViewError;
+use std::borrow::Cow;
 use std::sync::Arc;
-use tera::Tera;
+use tera::{Error, Kwargs, State, Tera, TeraResult, Value};
 use tokio::sync::RwLock;
 
 /// Configuration for the template engine
@@ -84,7 +85,8 @@ impl Templates {
 
     /// Create a new template engine with configuration
     pub fn with_config(config: TemplatesConfig) -> Result<Self, ViewError> {
-        let mut tera = Tera::new(&config.glob)?;
+        let mut tera = Tera::default();
+        tera.load_from_glob(&config.glob)?;
 
         // Register custom filters/functions
         register_builtin_filters(&mut tera);
@@ -193,36 +195,30 @@ impl Templates {
 
 /// Register built-in template filters
 fn register_builtin_filters(tera: &mut Tera) {
-    // JSON filter for debugging
     tera.register_filter(
         "json_pretty",
-        |value: &tera::Value, _: &std::collections::HashMap<String, tera::Value>| {
+        |value: &Value, _: Kwargs, _: &State| -> TeraResult<Value> {
             serde_json::to_string_pretty(value)
-                .map(tera::Value::String)
-                .map_err(|e| tera::Error::msg(e.to_string()))
+                .map(Value::from)
+                .map_err(|e| Error::message(e.to_string()))
         },
     );
 
-    // Truncate string
     tera.register_filter(
         "truncate_words",
-        |value: &tera::Value, args: &std::collections::HashMap<String, tera::Value>| {
-            let s = tera::try_get_value!("truncate_words", "value", String, value);
-            let length = match args.get("length") {
-                Some(val) => tera::try_get_value!("truncate_words", "length", usize, val),
-                None => 50,
-            };
-            let end = match args.get("end") {
-                Some(val) => tera::try_get_value!("truncate_words", "end", String, val),
-                None => "...".to_string(),
-            };
+        |value: Cow<'_, str>, kwargs: Kwargs, _: &State| -> String {
+            let length = kwargs.get::<usize>("length").ok().flatten().unwrap_or(50);
+            let end = kwargs
+                .get::<Cow<'_, str>>("end")
+                .ok()
+                .flatten()
+                .unwrap_or(Cow::Borrowed("..."));
 
-            let words: Vec<&str> = s.split_whitespace().collect();
+            let words: Vec<&str> = value.split_whitespace().collect();
             if words.len() <= length {
-                Ok(tera::Value::String(s))
+                value.into_owned()
             } else {
-                let truncated: String = words[..length].join(" ");
-                Ok(tera::Value::String(format!("{}{}", truncated, end)))
+                format!("{}{}", words[..length].join(" "), end)
             }
         },
     );

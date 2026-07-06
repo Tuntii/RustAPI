@@ -10,6 +10,7 @@
 
   <a href="https://rustapi.cloud"><strong>Website</strong></a> ·
   <a href="docs/cookbook/src/SUMMARY.md"><strong>Cookbook</strong></a> ·
+  <a href="docs/PRODUCTION_CHECKLIST.md"><strong>Production Checklist</strong></a> ·
   <a href="docs/cookbook/src/recipes/rustapi_cloud.md"><strong>Deploy to Cloud</strong></a> ·
   <a href="https://crates.io/crates/rustapi-rs"><strong>crates.io</strong></a>
 
@@ -315,7 +316,7 @@ See [CHANGELOG.md](CHANGELOG.md) for full history. Highlights in **v0.1.551**:
 | Community & contributing | [docs/COMMUNITY.md](docs/COMMUNITY.md) |
 | API reference | [docs.rs/rustapi-rs](https://docs.rs/rustapi-rs) |
 
-**Examples:** in-repo [`crates/rustapi-rs/examples/`](crates/rustapi-rs/examples/) and the separate **[rustapi-rs-examples](https://github.com/Tuntii/rustapi-rs-examples)** repository.
+**Examples:** start with [`golden_path`](crates/rustapi-rs/examples/golden_path.rs) (`cargo run -p rustapi-rs --example golden_path`), then browse [`crates/rustapi-rs/examples/`](crates/rustapi-rs/examples/) and **[rustapi-rs-examples](https://github.com/Tuntii/rustapi-rs-examples)**.
 
 ## Community & Contributing
 

@@ -218,13 +218,28 @@ jobs:
             --exclude cargo-rustapi \
             --timeout 900 \
             --out Html \
+            --out Xml \
             --output-dir coverage
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: coverage/tarpaulin-report.html
+          path: |
+            coverage/tarpaulin-report.html
+            coverage/cobertura.xml
+          retention-days: 30
+
+      - name: Coverage summary
+        run: |
+          if [ -f coverage/tarpaulin-report.html ]; then
+            pct=$(grep -oP '(?<=<h1>Tarpaulin coverage report</h1>.*?)[0-9.]+%' coverage/tarpaulin-report.html | head -1 || true)
+            echo "## Coverage" >> "$GITHUB_STEP_SUMMARY"
+            echo "Download the **coverage-report** artifact for the full HTML report." >> "$GITHUB_STEP_SUMMARY"
+            if [ -n "$pct" ]; then
+              echo "Line coverage: **${pct}**" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          fi
 
 
 
