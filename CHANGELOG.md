@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`rcgen` 0.14 HTTP/3 dev certs**: `generate_self_signed_cert` uses `CertifiedKey { cert, signing_key }` so `--all-features` / `http3-dev` builds pass CI again.
 - **Security Audit** (`cargo audit`) passes on the current lockfile (no high-severity `quick-xml` advisories).
 
 ## [0.1.551] - 2026-07-05

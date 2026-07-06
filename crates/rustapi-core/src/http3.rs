@@ -411,9 +411,10 @@ impl Http3Server {
         (CertificateDer<'static>, PrivateKeyDer<'static>),
         Box<dyn std::error::Error + Send + Sync>,
     > {
-        let cert = rcgen::generate_simple_self_signed(vec!["localhost".to_string()])?;
-        let key = PrivateKeyDer::Pkcs8(cert.key_pair.serialize_der().into());
-        let cert = CertificateDer::from(cert.cert.der().to_vec());
+        let rcgen::CertifiedKey { cert, signing_key } =
+            rcgen::generate_simple_self_signed(vec!["localhost".to_string()])?;
+        let key = PrivateKeyDer::Pkcs8(signing_key.serialize_der().into());
+        let cert = CertificateDer::from(cert.der().to_vec());
 
         Ok((cert, key))
     }
