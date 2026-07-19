@@ -1,10 +1,27 @@
 # RustAPI Examples
 
-This directory contains the in-repository examples for the `rustapi-rs` facade crate.
+In-repository examples for the `rustapi-rs` facade crate.
+
+## Start here: `golden_path`
+
+Minimal production-shaped service: macro route + `Schema`, OpenAPI/Swagger, `production_defaults` probes, graceful shutdown.
+
+```sh
+cargo run -p rustapi-rs --example golden_path
+```
+
+Then:
+
+- `GET http://127.0.0.1:8080/api/v1/ping` → `{"status":"ok"}`
+- `GET http://127.0.0.1:8080/live` (and `/ready`, `/health`)
+- Browser: `http://127.0.0.1:8080/docs` · spec: `/docs/openapi.json`
+
+Guide: [docs/GOLDEN_PATH.md](../../../docs/GOLDEN_PATH.md)
 
 ## Available examples
 
 ### `file_upload`
+
 
 Multipart file upload with `Multipart`, body limits, and safe filename handling.
 

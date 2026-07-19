@@ -584,10 +584,9 @@ fn trim_trailing_crlf(mut data: Vec<u8>) -> Vec<u8> {
 fn parse_multipart_part(part: &[u8]) -> Option<MultipartField> {
     let (header_end, body_start) = if let Some(pos) = find_subsequence(part, b"\r\n\r\n", 0) {
         (pos, pos + 4)
-    } else if let Some(pos) = find_subsequence(part, b"\n\n", 0) {
-        (pos, pos + 2)
     } else {
-        return None;
+        let pos = find_subsequence(part, b"\n\n", 0)?;
+        (pos, pos + 2)
     };
 
     let headers_section = String::from_utf8_lossy(&part[..header_end]);

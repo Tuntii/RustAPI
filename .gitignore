@@ -36,6 +36,7 @@ answer.md
 !docs/native_openapi.md
 !docs/PRODUCTION_BASELINE.md
 !docs/PRODUCTION_CHECKLIST.md
+!docs/GOLDEN_PATH.md
 !docs/cookbook/src/**/*.md
 tasks.md
 /mcps

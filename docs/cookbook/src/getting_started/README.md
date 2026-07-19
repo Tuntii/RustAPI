@@ -1,3 +1,3 @@
 # Getting Started
 
-Welcome to RustAPI. This section will guide you from installation to your first running API.
+Welcome to RustAPI. Start with the **[Golden Path](../../GOLDEN_PATH.md)** (handler → OpenAPI → probes), then install and expand with the pages below.

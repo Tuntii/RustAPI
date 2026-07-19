@@ -9,6 +9,7 @@
   <br />
 
   <a href="https://rustapi.cloud"><strong>Website</strong></a> ·
+  <a href="docs/GOLDEN_PATH.md"><strong>Golden Path</strong></a> ·
   <a href="docs/cookbook/src/SUMMARY.md"><strong>Cookbook</strong></a> ·
   <a href="docs/PRODUCTION_CHECKLIST.md"><strong>Production Checklist</strong></a> ·
   <a href="docs/cookbook/src/recipes/rustapi_cloud.md"><strong>Deploy to Cloud</strong></a> ·
@@ -35,6 +36,22 @@
   [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Tuntii/RustAPI)
 
 </div>
+
+---
+
+## Golden Path (start here)
+
+**Handler → OpenAPI (`/docs`) → production probes → (optional) MCP / deploy.**
+
+```bash
+cargo run -p rustapi-rs --example golden_path
+# curl http://127.0.0.1:8080/api/v1/ping
+# open http://127.0.0.1:8080/docs
+```
+
+Full walkthrough: **[docs/GOLDEN_PATH.md](docs/GOLDEN_PATH.md)** · example: [`golden_path.rs`](crates/rustapi-rs/examples/golden_path.rs)
+
+Everything else (JWT, jobs, WS, full extras) branches off this path.
 
 ---
 
@@ -190,11 +207,15 @@ Current benchmark methodology and canonical published performance claims live in
 
 ## Quick Start
 
-**Recommended usage** (short and clean macro paths):
+Prefer the **[Golden Path](docs/GOLDEN_PATH.md)** for the recommended service shape (`production_defaults` + probes + OpenAPI). Minimal hello:
+
+**Recommended usage** (short macro paths via crate alias):
 
 ```toml
 [dependencies]
 api = { package = "rustapi-rs", version = "0.1.551" }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 ```
 
 ```rust
@@ -208,13 +229,19 @@ async fn hello(Path(name): Path<String>) -> Json<Message> {
     Json(Message { text: format!("Hello, {}!", name) })
 }
 
-#[api::main]
+#[tokio::main]
 async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
-  RustApi::auto().run("127.0.0.1:8080").await
+    tracing_subscriber::fmt::init();
+    RustApi::auto()
+        .production_defaults("hello")
+        .run("127.0.0.1:8080")
+        .await
 }
 ```
 
-`RustApi::auto()` collects all macro-annotated handlers, generates OpenAPI documentation (served at `/docs`), and starts a multi-threaded tokio runtime.
+`RustApi::auto()` collects macro-annotated handlers, serves Swagger UI at `/docs`, OpenAPI at `/docs/openapi.json`, and starts a multi-threaded tokio runtime. Spec path is **`/docs/openapi.json`** (not `/openapi.json`).
+
+Use **route macros** (`#[api::get]`) so OpenAPI includes your paths. Plain `.route(...)` alone does not register operations in the spec.
 
 ### MCP in 3 lines
 
@@ -223,48 +250,11 @@ let mcp = McpServer::from_rustapi(&app, McpConfig::new().allowed_tags(["public"]
 run_rustapi_and_mcp_with_shutdown(app, "0.0.0.0:8080", mcp, "0.0.0.0:9090", tokio::signal::ctrl_c()).await?;
 ```
 
-Every tagged endpoint becomes an AI agent tool instantly.
+Tag handlers with `#[api::tag("public")]` (or `"agent"`) so only intentional routes become tools. Example: `mcp_tools`.
 
-> **Tip:** Alias the crate as `api` (or `myapi`, `server`, etc.) for clean `#[api::get]` / `#[api::main]` macros — similar to FastAPI's import style.
+> **Tip:** Alias the crate as `api` for clean `#[api::get]` macros.
 
-For production deployments, you can enable standard probe endpoints without writing handlers manually:
-
-```rust
-use api::prelude::*;
-
-#[api::main]
-async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    let health = HealthCheckBuilder::new(true)
-        .add_check("database", || async { HealthStatus::healthy() })
-        .build();
-
-    RustApi::auto()
-        .with_health_check(health)
-        .run("127.0.0.1:8080")
-        .await
-}
-```
-
-This registers:
-- `/health` — aggregate dependency health
-- `/ready` — readiness probe (`503` when dependencies are unhealthy)
-- `/live` — lightweight liveness probe
-
-Or use a single production baseline preset:
-
-```rust
-use api::prelude::*;
-
-#[api::main]
-async fn main() -> std::result::Result<(), Box<dyn std::error::Error + Send + Sync>> {
-  RustApi::auto()
-    .production_defaults("users-api")
-    .run("127.0.0.1:8080")
-    .await
-}
-```
-
-`production_defaults()` enables request IDs, tracing spans, and standard probe endpoints in one call.
+`production_defaults(name)` enables request IDs, tracing spans, and `/live` `/ready` `/health` in one call. Details: [Production Baseline](docs/PRODUCTION_BASELINE.md).
 
 ## Feature Flags
 
@@ -307,6 +297,7 @@ See [CHANGELOG.md](CHANGELOG.md) for full history. Highlights in **v0.1.551**:
 
 | Resource | Link |
 |----------|------|
+| **Golden Path** | [docs/GOLDEN_PATH.md](docs/GOLDEN_PATH.md) |
 | Docs hub | [docs/README.md](docs/README.md) |
 | Cookbook | [docs/cookbook/src/SUMMARY.md](docs/cookbook/src/SUMMARY.md) |
 | Getting started | [docs/GETTING_STARTED.md](docs/GETTING_STARTED.md) |
@@ -316,7 +307,7 @@ See [CHANGELOG.md](CHANGELOG.md) for full history. Highlights in **v0.1.551**:
 | Community & contributing | [docs/COMMUNITY.md](docs/COMMUNITY.md) |
 | API reference | [docs.rs/rustapi-rs](https://docs.rs/rustapi-rs) |
 
-**Examples:** start with [`golden_path`](crates/rustapi-rs/examples/golden_path.rs) (`cargo run -p rustapi-rs --example golden_path`), then browse [`crates/rustapi-rs/examples/`](crates/rustapi-rs/examples/) and **[rustapi-rs-examples](https://github.com/Tuntii/rustapi-rs-examples)**.
+**Examples:** [`golden_path`](crates/rustapi-rs/examples/golden_path.rs) first, then [`crates/rustapi-rs/examples/`](crates/rustapi-rs/examples/) and **[rustapi-rs-examples](https://github.com/Tuntii/rustapi-rs-examples)**.
 
 ## Community & Contributing
 

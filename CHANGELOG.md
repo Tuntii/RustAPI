@@ -9,11 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **`golden_path` example** (`crates/rustapi-rs/examples/golden_path.rs`) — minimal production-shaped service with `production_defaults`, health probes, and graceful shutdown.
+- **`docs/GOLDEN_PATH.md`** — canonical handler → OpenAPI → probes → MCP/deploy walkthrough; linked from README, docs hub, cookbook SUMMARY, Getting Started.
+- **`golden_path` example** uses route macros + tags so `/docs/openapi.json` includes `/api/v1/ping` (not only `.route()` wiring).
 
 ### Changed
 
 - **Production Readiness v0.2** ([#200](https://github.com/Tuntii/RustAPI/issues/200)): coverage CI publishes HTML + Cobertura artifacts with job summary; release-drafter publishes drafts on `v*` tags; README links [Production Checklist](docs/PRODUCTION_CHECKLIST.md) in the header.
+- README Quick Start: golden path first; document OpenAPI at `/docs/openapi.json`; prefer macros for OpenAPI registration; `tracing-subscriber` + `production_defaults` in the hello snippet.
 - Dependency updates: `actions/checkout@v7`, `actions/cache@v6`, `brotli` 8, `rcgen` 0.14, `tera` 2, `thiserror` 2, OpenTelemetry 0.32 stack, `sqlx` 0.9, `tracing-opentelemetry` 0.33.
 - Default `rustapi-rs` dependency tree slimmed from ~259 to ~158 transitive crates by removing always-on `tracing-subscriber` and gating `rust-i18n` behind the `i18n` feature (English fallbacks by default).
 - `RustApi::new()` no longer auto-initializes `tracing-subscriber`; initialize tracing in `main` (CLI templates already do).

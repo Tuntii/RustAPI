@@ -2,6 +2,15 @@
 
 > Build your first API in under 5 minutes.
 
+**Canonical story:** [Golden Path](GOLDEN_PATH.md) — handler → OpenAPI → `production_defaults` → optional MCP/deploy.
+
+In-repo demo:
+
+```bash
+cargo run -p rustapi-rs --example golden_path
+# http://127.0.0.1:8080/docs  ·  /docs/openapi.json  ·  GET /api/v1/ping
+```
+
 ---
 
 ## Prerequisites

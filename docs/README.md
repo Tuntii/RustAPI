@@ -10,7 +10,8 @@ Central index for user guides, architecture notes, and open-source contribution 
 
 | Document | Description |
 |----------|-------------|
-| [Getting Started](GETTING_STARTED.md) | First API in ~5 minutes |
+| **[Golden Path](GOLDEN_PATH.md)** | Handler → OpenAPI → probes → MCP/deploy (canonical story) |
+| [Getting Started](GETTING_STARTED.md) | First API tutorial + feature table |
 | [Cookbook](cookbook/src/SUMMARY.md) | Recipes, crate deep dives, learning paths |
 | [Features](FEATURES.md) | Feature reference |
 | [Community & Contributing](COMMUNITY.md) | How to get help, contribute, and report issues |
@@ -28,6 +29,7 @@ Central index for user guides, architecture notes, and open-source contribution 
 
 | Document | Description |
 |----------|-------------|
+| [Golden Path](GOLDEN_PATH.md) | Smallest recommended service shape |
 | [Production Baseline](PRODUCTION_BASELINE.md) | Recommended defaults (`production_defaults`, probes, middleware) |
 | [Production Checklist](PRODUCTION_CHECKLIST.md) | Pre-deploy and rollout checklist |
 | [Cookbook: Deployment](cookbook/src/recipes/deployment.md) | Docker, Fly.io, Railway, Shuttle, K8s |
@@ -54,6 +56,7 @@ Central index for user guides, architecture notes, and open-source contribution 
 
 ## Examples
 
+- **Start:** [`golden_path`](../crates/rustapi-rs/examples/golden_path.rs) + [GOLDEN_PATH.md](GOLDEN_PATH.md)
 - In-repo: [`crates/rustapi-rs/examples/`](../crates/rustapi-rs/examples/README.md)
 - Full projects: [rustapi-rs-examples](https://github.com/Tuntii/rustapi-rs-examples)
 

@@ -5,6 +5,7 @@
 - [Community & Open Source](../../COMMUNITY.md)
 
 - [Part I: Getting Started](getting_started/README.md)
+    - [Golden Path](../../GOLDEN_PATH.md)
     - [Installation](getting_started/installation.md)
     - [Quickstart](getting_started/quickstart.md)
     - [Project Structure](getting_started/structure.md)

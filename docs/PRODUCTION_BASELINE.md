@@ -2,6 +2,8 @@
 
 Recommended defaults for running RustAPI in production. This document describes what `.production_defaults()` enables and how to extend it for real workloads.
 
+**Start here first:** [Golden Path](GOLDEN_PATH.md) (example + walkthrough).
+
 **Related:** [Production Checklist](PRODUCTION_CHECKLIST.md) · [Deployment recipe](cookbook/src/recipes/deployment.md) · [Observability recipe](cookbook/src/recipes/observability.md)
 
 ---

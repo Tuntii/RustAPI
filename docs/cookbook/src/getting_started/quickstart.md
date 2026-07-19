@@ -1,11 +1,10 @@
 # Quickstart
 
-> [!TIP]
-> From zero to a production-ready API in 60 seconds.
+> Prefer the repo **[Golden Path](../../GOLDEN_PATH.md)** for the full story (OpenAPI path, probes, MCP/deploy forks).
+
+This page is the CLI-generated project path.
 
 ## Install the CLI
-
-First, install the RustAPI CLI tool:
 
 ```bash
 cargo install cargo-rustapi
@@ -13,20 +12,16 @@ cargo install cargo-rustapi
 
 ## Create a New Project
 
-Use the CLI to generate a new project. We'll call it `my-api`.
-
 ```bash
 cargo rustapi new my-api
 cd my-api
 ```
 
-> **Note**: If `cargo rustapi` doesn't work, you can also run `cargo-rustapi new my-api` directly.
-
-This command sets up a complete project structure with handling, models, and tests ready to go.
+> If `cargo rustapi` does not work, run `cargo-rustapi new my-api` directly.
 
 ## The Code
 
-Open `src/main.rs`. You'll see how simple it is:
+`src/main.rs` should look like:
 
 ```rust
 use rustapi_rs::prelude::*;
@@ -36,42 +31,38 @@ async fn hello() -> Json<String> {
     Json("Hello from RustAPI!".to_string())
 }
 
-#[rustapi_rs::main]
-async fn main() -> Result<()> {
-    // Auto-discovery magic ✨
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    tracing_subscriber::fmt::init();
     RustApi::auto()
+        .production_defaults("my-api")
         .run("127.0.0.1:8080")
         .await
 }
 ```
 
-## Run the Server
+For the minimal macro + probes example without the CLI, clone this monorepo and run:
 
-Start your API server:
+```bash
+cargo run -p rustapi-rs --example golden_path
+```
+
+## Run the Server
 
 ```bash
 cargo run
 ```
 
-You should see output similar to:
-
-```
-INFO rustapi: 🚀 Server running at http://127.0.0.1:8080
-INFO rustapi: 📚 API docs at http://127.0.0.1:8080/docs
-```
-
 ## Test It Out
 
-Open your browser to [http://127.0.0.1:8080/docs](http://127.0.0.1:8080/docs).
-
-You'll see the **Swagger UI** automatically generated from your code. Try out the endpoint directly from the browser!
+- App: `curl http://127.0.0.1:8080/hello` (or `/api/v1/ping` on golden_path)
+- Docs: [http://127.0.0.1:8080/docs](http://127.0.0.1:8080/docs)
+- Spec: `http://127.0.0.1:8080/docs/openapi.json`
 
 ## What Just Happened?
 
-You just launched a high-performance, async Rust web server with:
-- ✅ Automatic OpenAPI documentation
-- ✅ Type-safe request validation
-- ✅ Distributed tracing
-- ✅ Global error handling
+- Automatic OpenAPI from route macros + `Schema`
+- Swagger UI at `/docs`
+- With `production_defaults`: request IDs, tracing, `/live` `/ready` `/health`
 
-Welcome to RustAPI.
+Next: [Golden Path](../../GOLDEN_PATH.md) · [Installation](installation.md) · [Structure](structure.md)
