@@ -16,8 +16,8 @@
         <link rel="icon" href="favicon-de23e50b.svg">
         <link rel="shortcut icon" href="favicon-8114d1fc.png">
         <link rel="stylesheet" href="css/variables-8adf115d.css">
-        <link rel="stylesheet" href="css/general-0392ca55.css">
-        <link rel="stylesheet" href="css/chrome-fc474251.css">
+        <link rel="stylesheet" href="css/general-e96d0476.css">
+        <link rel="stylesheet" href="css/chrome-d279d366.css">
         <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
 
         <!-- Fonts -->
@@ -37,10 +37,10 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-42713673.js";
+            window.path_to_searchindex_js = "searchindex-ce17ccc2.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-33fbcb1f.js"></script>
+        <script src="toc-6b4aa95b.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -303,7 +303,164 @@
 <p>MIT OR Apache-2.0, at your option. See <a href="../../../LICENSE-MIT">LICENSE-MIT</a> and <a href="../../../LICENSE-APACHE">LICENSE-APACHE</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="getting-started"><a class="header" href="#getting-started">Getting Started</a></h1>
-<p>Welcome to RustAPI. This section will guide you from installation to your first running API.</p>
+<p>Welcome to RustAPI. Start with the <strong><a href="../GOLDEN_PATH.html">Golden Path</a></strong> (handler → OpenAPI → probes), then install and expand with the pages below.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="golden-path"><a class="header" href="#golden-path">Golden Path</a></h1>
+<p><strong>One story:</strong> define a handler → get OpenAPI → run probes → optional MCP / deploy.</p>
+<p>Everything else (JWT, jobs, WS, gRPC, full extras) is a branch off this path. Start here.</p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Step</th><th>What you get</th></tr>
+</thead>
+<tbody>
+<tr><td>1. Handler + <code>Schema</code></td><td>Typed JSON response</td></tr>
+<tr><td>2. <code>RustApi::auto()</code></td><td>Route discovery, Swagger UI <code>/docs</code>, spec <code>/docs/openapi.json</code></td></tr>
+<tr><td>3. <code>production_defaults</code></td><td>Request IDs, tracing spans, <code>/live</code> <code>/ready</code> <code>/health</code></td></tr>
+<tr><td>4. (optional) MCP</td><td>Same routes as agent tools</td></tr>
+<tr><td>5. (optional) Cloud / Docker</td><td>Ship the binary</td></tr>
+</tbody>
+</table>
+</div>
+<hr>
+<h2 id="60-seconds-in-this-repo"><a class="header" href="#60-seconds-in-this-repo">60 seconds (in this repo)</a></h2>
+<pre><code class="language-bash">git clone https://github.com/Tuntii/RustAPI.git
+cd RustAPI
+cargo run -p rustapi-rs --example golden_path
+</code></pre>
+<p>In another terminal:</p>
+<pre><code class="language-bash">curl -s http://127.0.0.1:8080/api/v1/ping
+# {"status":"ok"}
+
+curl -s http://127.0.0.1:8080/live
+# healthy probe JSON
+
+# OpenAPI paths include /api/v1/ping
+curl -s http://127.0.0.1:8080/docs/openapi.json | head -c 400
+
+# Browser
+# http://127.0.0.1:8080/docs
+</code></pre>
+<p>Source: <a href="../../../crates/rustapi-rs/examples/golden_path.rs"><code>crates/rustapi-rs/examples/golden_path.rs</code></a></p>
+<hr>
+<h2 id="new-project-cratesio"><a class="header" href="#new-project-cratesio">New project (crates.io)</a></h2>
+<pre><code class="language-bash">cargo new hello-rustapi &amp;&amp; cd hello-rustapi
+cargo add rustapi-rs
+cargo add tokio --features macros,rt-multi-thread
+cargo add tracing-subscriber --features env-filter
+</code></pre>
+<p><code>src/main.rs</code>:</p>
+<pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
+use tokio::signal;
+
+#[derive(Debug, Serialize, Schema)]
+struct PingResponse {
+    status: &amp;'static str,
+}
+
+#[rustapi_rs::get("/api/v1/ping")]
+#[rustapi_rs::tag("public")]
+#[rustapi_rs::summary("Ping")]
+async fn ping() -&gt; Json&lt;PingResponse&gt; {
+    Json(PingResponse { status: "ok" })
+}
+
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    tracing_subscriber::fmt::init();
+
+    RustApi::auto()
+        .production_defaults("hello-rustapi")
+        .run_with_shutdown("127.0.0.1:8080", async {
+            signal::ctrl_c().await.ok();
+        })
+        .await
+}</code></pre>
+<pre><code class="language-bash">cargo run
+curl -s http://127.0.0.1:8080/api/v1/ping
+# open http://127.0.0.1:8080/docs
+</code></pre>
+<p><strong>Crate alias (optional):</strong> shorter macros like FastAPI-style imports:</p>
+<pre><code class="language-toml">[dependencies]
+api = { package = "rustapi-rs", version = "0.1" }
+</code></pre>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use api::prelude::*;
+
+#[api::get("/api/v1/ping")]
+#[api::tag("public")]
+async fn ping() -&gt; Json&lt;PingResponse&gt; { /* ... */ }
+<span class="boring">}</span></code></pre>
+<p>Prefer <strong>slim</strong> features in real services (<code>default-features = false, features = ["core"]</code>) — see <a href="../../GETTING_STARTED.html">Getting Started</a>.</p>
+<hr>
+<h2 id="why-macros-not-only-route"><a class="header" href="#why-macros-not-only-route">Why macros, not only <code>.route()</code></a></h2>
+<p><code>#[rustapi_rs::get("/...")]</code> registers the handler at link time <strong>and</strong> feeds the OpenAPI operation (path, tags, response schemas).</p>
+<p><code>.route(path, get(handler))</code> is valid for dynamic wiring, but the golden path uses macros so <code>/docs</code> is not an empty shell.</p>
+<hr>
+<h2 id="what-production_defaults-turns-on"><a class="header" href="#what-production_defaults-turns-on">What <code>production_defaults</code> turns on</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Capability</th><th>Endpoints / behavior</th></tr>
+</thead>
+<tbody>
+<tr><td>Request IDs</td><td><code>x-request-id</code> on responses</td></tr>
+<tr><td>Tracing</td><td>Per-request spans (with your subscriber)</td></tr>
+<tr><td>Probes</td><td><code>GET /live</code>, <code>GET /ready</code>, <code>GET /health</code></td></tr>
+<tr><td>Service name</td><td>Attached to logs / health metadata</td></tr>
+</tbody>
+</table>
+</div>
+<p>Details: <a href="../../PRODUCTION_BASELINE.html">Production Baseline</a><br>Ship checklist: <a href="../../PRODUCTION_CHECKLIST.html">Production Checklist</a></p>
+<p>Set <code>RUSTAPI_ENV=production</code> to mask 5xx detail bodies while keeping <code>error_id</code> for log correlation.</p>
+<hr>
+<h2 id="next-fork-mcp-agent-tools"><a class="header" href="#next-fork-mcp-agent-tools">Next fork: MCP (agent tools)</a></h2>
+<p>Expose the same tagged routes as MCP tools (feature <code>protocol-mcp</code>):</p>
+<pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
+</span><span class="boring">fn main() {
+</span>use rustapi_rs::protocol::mcp::{McpConfig, McpServer, run_rustapi_and_mcp_with_shutdown};
+
+// after building the same auto() app pattern — see mcp_tools example
+let mcp = McpServer::from_rustapi(&amp;app, McpConfig::new().allowed_tags(["public"]));
+<span class="boring">}</span></code></pre>
+<p>In-repo: <code>cargo run -p rustapi-rs --example mcp_tools --features protocol-mcp</code><br>Cookbook: <a href="../../cookbook/src/recipes/mcp_integration.html">MCP Integration</a> (if present) · crate notes under cookbook <code>rustapi_mcp</code></p>
+<p>CLI (any OpenAPI → MCP):</p>
+<pre><code class="language-bash">cargo install cargo-rustapi
+cargo rustapi mcp generate --help
+</code></pre>
+<hr>
+<h2 id="next-fork-deploy"><a class="header" href="#next-fork-deploy">Next fork: deploy</a></h2>
+<p><strong>Local binary / container:</strong> <a href="../../cookbook/src/recipes/deployment.html">Deployment recipe</a></p>
+<p><strong>Managed:</strong></p>
+<pre><code class="language-bash">cargo install cargo-rustapi
+cargo rustapi login
+cargo rustapi deploy cloud
+</code></pre>
+<p>Guide: <a href="../../cookbook/src/recipes/rustapi_cloud.html">RustAPI Cloud</a></p>
+<hr>
+<h2 id="what-not-to-do-on-day-one"><a class="header" href="#what-not-to-do-on-day-one">What not to do on day one</a></h2>
+<ul>
+<li>Enable <code>full</code> feature for production compiles</li>
+<li>Skip probes and ship behind a load balancer</li>
+<li>Treat every recipe (JWT, jobs, WS) as required core</li>
+<li>Promise HTTP/2/3 edge behavior without reading <a href="../../PERFORMANCE_BENCHMARKS.html">Performance Benchmarks</a> methodology</li>
+</ul>
+<hr>
+<h2 id="related"><a class="header" href="#related">Related</a></h2>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Doc</th><th>Role</th></tr>
+</thead>
+<tbody>
+<tr><td><a href="../../GETTING_STARTED.html">Getting Started</a></td><td>Longer tutorial + feature table</td></tr>
+<tr><td><a href="../../cookbook/src/getting_started/quickstart.html">Cookbook Quickstart</a></td><td>CLI <code>cargo rustapi new</code> path</td></tr>
+<tr><td><a href="../../README.html">docs hub</a></td><td>Full index</td></tr>
+<tr><td><a href="https://github.com/Tuntii/rustapi-rs-examples">rustapi-rs-examples</a></td><td>Larger sample apps</td></tr>
+</tbody>
+</table>
+</div>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
 <blockquote class="blockquote-tag blockquote-tag-note">
@@ -338,25 +495,22 @@ rustapi-rs = "0.1.551"
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="quickstart"><a class="header" href="#quickstart">Quickstart</a></h1>
-<blockquote class="blockquote-tag blockquote-tag-tip">
-<p class="blockquote-tag-title"><svg viewbox="0 0 16 16" width="18" height="18"><path d="M8 1.5c-2.363 0-4 1.69-4 3.75 0 .984.424 1.625.984 2.304l.214.253c.223.264.47.556.673.848.284.411.537.896.621 1.49a.75.75 0 0 1-1.484.211c-.04-.282-.163-.547-.37-.847a8.456 8.456 0 0 0-.542-.68c-.084-.1-.173-.205-.268-.32C3.201 7.75 2.5 6.766 2.5 5.25 2.5 2.31 4.863 0 8 0s5.5 2.31 5.5 5.25c0 1.516-.701 2.5-1.328 3.259-.095.115-.184.22-.268.319-.207.245-.383.453-.541.681-.208.3-.33.565-.37.847a.751.751 0 0 1-1.485-.212c.084-.593.337-1.078.621-1.489.203-.292.45-.584.673-.848.075-.088.147-.173.213-.253.561-.679.985-1.32.985-2.304 0-2.06-1.637-3.75-4-3.75ZM5.75 12h4.5a.75.75 0 0 1 0 1.5h-4.5a.75.75 0 0 1 0-1.5ZM6 15.25a.75.75 0 0 1 .75-.75h2.5a.75.75 0 0 1 0 1.5h-2.5a.75.75 0 0 1-.75-.75Z"></path></svg>Tip</p>
-<p>From zero to a production-ready API in 60 seconds.</p>
+<blockquote>
+<p>Prefer the repo <strong><a href="../GOLDEN_PATH.html">Golden Path</a></strong> for the full story (OpenAPI path, probes, MCP/deploy forks).</p>
 </blockquote>
+<p>This page is the CLI-generated project path.</p>
 <h2 id="install-the-cli"><a class="header" href="#install-the-cli">Install the CLI</a></h2>
-<p>First, install the RustAPI CLI tool:</p>
 <pre><code class="language-bash">cargo install cargo-rustapi
 </code></pre>
 <h2 id="create-a-new-project"><a class="header" href="#create-a-new-project">Create a New Project</a></h2>
-<p>Use the CLI to generate a new project. We’ll call it <code>my-api</code>.</p>
 <pre><code class="language-bash">cargo rustapi new my-api
 cd my-api
 </code></pre>
 <blockquote>
-<p><strong>Note</strong>: If <code>cargo rustapi</code> doesn’t work, you can also run <code>cargo-rustapi new my-api</code> directly.</p>
+<p>If <code>cargo rustapi</code> does not work, run <code>cargo-rustapi new my-api</code> directly.</p>
 </blockquote>
-<p>This command sets up a complete project structure with handling, models, and tests ready to go.</p>
 <h2 id="the-code"><a class="header" href="#the-code">The Code</a></h2>
-<p>Open <code>src/main.rs</code>. You’ll see how simple it is:</p>
+<p><code>src/main.rs</code> should look like:</p>
 <pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
 
 #[rustapi_rs::get("/hello")]
@@ -364,33 +518,33 @@ async fn hello() -&gt; Json&lt;String&gt; {
     Json("Hello from RustAPI!".to_string())
 }
 
-#[rustapi_rs::main]
-async fn main() -&gt; Result&lt;()&gt; {
-    // Auto-discovery magic ✨
+#[tokio::main]
+async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&gt;&gt; {
+    tracing_subscriber::fmt::init();
     RustApi::auto()
+        .production_defaults("my-api")
         .run("127.0.0.1:8080")
         .await
 }</code></pre>
+<p>For the minimal macro + probes example without the CLI, clone this monorepo and run:</p>
+<pre><code class="language-bash">cargo run -p rustapi-rs --example golden_path
+</code></pre>
 <h2 id="run-the-server"><a class="header" href="#run-the-server">Run the Server</a></h2>
-<p>Start your API server:</p>
 <pre><code class="language-bash">cargo run
 </code></pre>
-<p>You should see output similar to:</p>
-<pre><code>INFO rustapi: 🚀 Server running at http://127.0.0.1:8080
-INFO rustapi: 📚 API docs at http://127.0.0.1:8080/docs
-</code></pre>
 <h2 id="test-it-out"><a class="header" href="#test-it-out">Test It Out</a></h2>
-<p>Open your browser to <a href="http://127.0.0.1:8080/docs">http://127.0.0.1:8080/docs</a>.</p>
-<p>You’ll see the <strong>Swagger UI</strong> automatically generated from your code. Try out the endpoint directly from the browser!</p>
-<h2 id="what-just-happened"><a class="header" href="#what-just-happened">What Just Happened?</a></h2>
-<p>You just launched a high-performance, async Rust web server with:</p>
 <ul>
-<li>✅ Automatic OpenAPI documentation</li>
-<li>✅ Type-safe request validation</li>
-<li>✅ Distributed tracing</li>
-<li>✅ Global error handling</li>
+<li>App: <code>curl http://127.0.0.1:8080/hello</code> (or <code>/api/v1/ping</code> on golden_path)</li>
+<li>Docs: <a href="http://127.0.0.1:8080/docs">http://127.0.0.1:8080/docs</a></li>
+<li>Spec: <code>http://127.0.0.1:8080/docs/openapi.json</code></li>
 </ul>
-<p>Welcome to RustAPI.</p>
+<h2 id="what-just-happened"><a class="header" href="#what-just-happened">What Just Happened?</a></h2>
+<ul>
+<li>Automatic OpenAPI from route macros + <code>Schema</code></li>
+<li>Swagger UI at <code>/docs</code></li>
+<li>With <code>production_defaults</code>: request IDs, tracing, <code>/live</code> <code>/ready</code> <code>/health</code></li>
+</ul>
+<p>Next: <a href="../GOLDEN_PATH.html">Golden Path</a> · <a href="#installation">Installation</a> · <a href="#project-structure">Structure</a></p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="project-structure"><a class="header" href="#project-structure">Project Structure</a></h1>
 <p>RustAPI projects follow a standard, modular structure designed for scalability.</p>
@@ -2132,7 +2286,7 @@ cargo-rustapi = { version = "0.1.551", default-features = false }
 </code></pre>
 <p>Disabling removes <code>login</code>, <code>deploy cloud</code>, and <code>deploy status</code> — useful for minimal CI builds.</p>
 <hr>
-<h2 id="related"><a class="header" href="#related">Related</a></h2>
+<h2 id="related-1"><a class="header" href="#related-1">Related</a></h2>
 <ul>
 <li><a href="#rustapi-cloud">RustAPI Cloud recipe</a></li>
 <li><a href="#deployment-1">Deployment recipe</a></li>
@@ -6047,7 +6201,7 @@ rustapi mcp generate --stdio
 </ul>
 <h2 id="security-note"><a class="header" href="#security-note">Security Note</a></h2>
 <p>The generated MCP server is only as secure as the filters you apply (<code>--tags</code>, <code>--allow-path-prefix</code>). Never expose internal/admin routes to agents unless you intend to.</p>
-<h2 id="related-1"><a class="header" href="#related-1">Related</a></h2>
+<h2 id="related-2"><a class="header" href="#related-2">Related</a></h2>
 <ul>
 <li>Native MCP: <a href="#mcp-integration-agent-tools">MCP Integration</a></li>
 <li>In-process: <a href="#mcp-in-process-invocation">MCP In-Process Invocation</a></li>
@@ -6463,7 +6617,7 @@ async fn main() -&gt; std::result::Result&lt;(), Box&lt;dyn std::error::Error + 
 <p><strong>Security notice</strong>
 Keep the dashboard disabled by default in production-like environments unless it is protected by an admin token and your normal ingress/auth policy.</p>
 </blockquote>
-<p><img src="assets/dashboard-preview.svg" alt="Embedded dashboard preview"></p>
+<p><label class="checkbox-label"><input class="checkbox-img" type="checkbox"><img src="assets/dashboard-preview.svg" alt="Embedded dashboard preview"><span class="img-wrapper"><img src="assets/dashboard-preview.svg" alt="Embedded dashboard preview"></span></label></p>
 <h2 id="prerequisites-7"><a class="header" href="#prerequisites-7">Prerequisites</a></h2>
 <p>Enable the canonical dashboard feature on the public facade:</p>
 <pre><code class="language-toml">[dependencies]
@@ -7557,7 +7711,7 @@ cargo rustapi deploy cloud
                                     └──────────────────────────┘
 </code></pre>
 <hr>
-<h2 id="related-2"><a class="header" href="#related-2">Related</a></h2>
+<h2 id="related-3"><a class="header" href="#related-3">Related</a></h2>
 <ul>
 <li><a href="#cargo-rustapi-the-architect">cargo-rustapi deep dive</a></li>
 <li><a href="#deployment-1">Deployment (self-hosted)</a></li>
@@ -8988,7 +9142,7 @@ cargo test
 
         <script src="clipboard-1626706a.min.js"></script>
         <script src="highlight-abc7f01d.js"></script>
-        <script src="book-c22b7243.js"></script>
+        <script src="book-609e4cb8.js"></script>
 
         <!-- Custom JS scripts -->
 
