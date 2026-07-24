@@ -141,16 +141,17 @@ pub async fn new_project(mut args: NewArgs) -> Result<()> {
             "protocol-ws",
             "protocol-view",
             "protocol-grpc",
+            "protocol-mcp",
         ];
         let preset_features = preset
             .map(ProjectPreset::recommended_features)
             .unwrap_or_default();
         let defaults = match template {
             ProjectTemplate::Full => vec![
-                true, true, true, true, false, false, false, false, false, false, false,
+                true, true, true, true, false, false, false, false, false, false, false, false,
             ],
             ProjectTemplate::Web => vec![
-                false, false, false, false, false, false, false, false, false, true, false,
+                false, false, false, false, false, false, false, false, false, true, false, false,
             ],
             _ => vec![false; available.len()],
         };
@@ -256,6 +257,17 @@ pub async fn new_project(mut args: NewArgs) -> Result<()> {
         "API docs available at {}",
         style("http://localhost:8080/docs").cyan()
     );
+
+    if features.iter().any(|f| f == "protocol-mcp") {
+        println!(
+            "MCP tools (if enabled in main) at {}",
+            style("http://localhost:9090").cyan()
+        );
+        println!(
+            "  Set {} to require a token on the MCP HTTP transport.",
+            style("RUSTAPI_MCP_TOKEN").yellow()
+        );
+    }
 
     Ok(())
 }

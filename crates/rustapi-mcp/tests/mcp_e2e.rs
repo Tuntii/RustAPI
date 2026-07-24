@@ -54,6 +54,29 @@ async fn compute(Json(req): Json<ComputeRequest>) -> Json<ComputeResponse> {
     Json(ComputeResponse { sum: req.a + req.b })
 }
 
+#[derive(Deserialize, Serialize, Schema)]
+struct SearchQuery {
+    q: String,
+    #[serde(default)]
+    limit: Option<u32>,
+}
+
+#[derive(Serialize, Schema)]
+struct SearchResult {
+    q: String,
+    limit: u32,
+}
+
+#[rustapi_rs::get("/search")]
+#[rustapi_rs::tag("agent")]
+#[rustapi_rs::summary("Search with query parameters")]
+async fn search(Query(params): Query<SearchQuery>) -> Json<SearchResult> {
+    Json(SearchResult {
+        q: params.q,
+        limit: params.limit.unwrap_or(10),
+    })
+}
+
 // ------------------ Untagged / internal (must NOT be exposed) ------------------
 
 #[rustapi_rs::get("/admin/secret")]
@@ -299,6 +322,203 @@ async fn test_mcp_tool_call_get_with_path_param_and_post_body() {
     );
 
     // Shutdown
+    let _ = shutdown_tx.send(());
+    let _ = tokio::time::timeout(Duration::from_secs(3), server_handle).await;
+}
+
+#[tokio::test]
+async fn test_mcp_admin_token_enforced_on_http_transport() {
+    let app = RustApi::auto();
+    let mcp = McpServer::from_rustapi(
+        &app,
+        McpConfig::new()
+            .name("auth-mcp")
+            .allowed_tags(["agent"])
+            .admin_token("test-admin-token")
+            .tool_policy(rustapi_mcp::ToolPolicy::All),
+    );
+
+    let http_listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let http_addr = http_listener.local_addr().unwrap();
+    drop(http_listener);
+    let mcp_listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let mcp_addr = mcp_listener.local_addr().unwrap();
+    drop(mcp_listener);
+
+    let http_addr_str = format!("127.0.0.1:{}", http_addr.port());
+    let mcp_addr_str = format!("127.0.0.1:{}", mcp_addr.port());
+    let (shutdown_tx, shutdown_rx) = oneshot::channel();
+
+    let server_handle = tokio::spawn(async move {
+        run_rustapi_and_mcp_with_shutdown(app, &http_addr_str, mcp, &mcp_addr_str, async move {
+            let _ = shutdown_rx.await;
+        })
+        .await
+    });
+
+    tokio::time::sleep(Duration::from_millis(250)).await;
+
+    let client = reqwest::Client::new();
+    let mcp_url = format!("http://127.0.0.1:{}/", mcp_addr.port());
+    let init_body = serde_json::json!({
+        "jsonrpc": "2.0",
+        "id": 1,
+        "method": "initialize",
+        "params": {}
+    });
+
+    // No token → 401
+    let res = client
+        .post(&mcp_url)
+        .json(&init_body)
+        .send()
+        .await
+        .expect("unauth request");
+    assert_eq!(res.status(), 401, "missing token must be 401");
+    let body: serde_json::Value = res.json().await.unwrap();
+    assert_eq!(body["error"]["code"], -32001);
+
+    // Wrong token → 401
+    let res = client
+        .post(&mcp_url)
+        .header("Authorization", "Bearer wrong")
+        .json(&init_body)
+        .send()
+        .await
+        .expect("bad token request");
+    assert_eq!(res.status(), 401);
+
+    // Correct Bearer token → 200
+    let res = client
+        .post(&mcp_url)
+        .header("Authorization", "Bearer test-admin-token")
+        .json(&init_body)
+        .send()
+        .await
+        .expect("auth request");
+    assert_eq!(res.status(), 200);
+    let body: serde_json::Value = res.json().await.unwrap();
+    assert!(body.get("result").is_some());
+
+    // X-MCP-Token also accepted
+    let list_body = serde_json::json!({
+        "jsonrpc": "2.0",
+        "id": 2,
+        "method": "tools/list"
+    });
+    let res = client
+        .post(&mcp_url)
+        .header("X-MCP-Token", "test-admin-token")
+        .json(&list_body)
+        .send()
+        .await
+        .expect("x-mcp-token list");
+    assert_eq!(res.status(), 200);
+    let body: serde_json::Value = res.json().await.unwrap();
+    assert!(body["result"]["tools"].is_array());
+
+    // Query param token=
+    let res = client
+        .post(format!("{}?token=test-admin-token", mcp_url))
+        .json(&list_body)
+        .send()
+        .await
+        .expect("query token list");
+    assert_eq!(res.status(), 200);
+
+    let _ = shutdown_tx.send(());
+    let _ = tokio::time::timeout(Duration::from_secs(3), server_handle).await;
+}
+
+#[tokio::test]
+async fn test_mcp_tool_call_get_with_query_params() {
+    let app = RustApi::auto();
+    let mcp = McpServer::from_rustapi(
+        &app,
+        McpConfig::new()
+            .name("query-mcp")
+            .allowed_tags(["agent"])
+            .tool_policy(rustapi_mcp::ToolPolicy::All),
+    );
+
+    let http_listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let http_addr = http_listener.local_addr().unwrap();
+    drop(http_listener);
+    let mcp_listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
+    let mcp_addr = mcp_listener.local_addr().unwrap();
+    drop(mcp_listener);
+
+    let http_addr_str = format!("127.0.0.1:{}", http_addr.port());
+    let mcp_addr_str = format!("127.0.0.1:{}", mcp_addr.port());
+    let (shutdown_tx, shutdown_rx) = oneshot::channel();
+
+    let server_handle = tokio::spawn(async move {
+        run_rustapi_and_mcp_with_shutdown(app, &http_addr_str, mcp, &mcp_addr_str, async move {
+            let _ = shutdown_rx.await;
+        })
+        .await
+    });
+
+    tokio::time::sleep(Duration::from_millis(250)).await;
+
+    let client = reqwest::Client::new();
+    let mcp_url = format!("http://127.0.0.1:{}/", mcp_addr.port());
+
+    let list_body = serde_json::json!({
+        "jsonrpc": "2.0",
+        "id": "list",
+        "method": "tools/list"
+    });
+    let list_res = client
+        .post(&mcp_url)
+        .json(&list_body)
+        .send()
+        .await
+        .expect("list");
+    let list_json: serde_json::Value = list_res.json().await.unwrap();
+    let tools = list_json["result"]["tools"].as_array().unwrap();
+    let search_tool = tools
+        .iter()
+        .find(|t| t["name"].as_str().unwrap_or("").contains("search"))
+        .expect("search tool")["name"]
+        .as_str()
+        .unwrap()
+        .to_string();
+
+    let call = serde_json::json!({
+        "jsonrpc": "2.0",
+        "id": "call-search",
+        "method": "tools/call",
+        "params": {
+            "name": search_tool,
+            "arguments": { "q": "rust api", "limit": 5 }
+        }
+    });
+    let res = client
+        .post(&mcp_url)
+        .json(&call)
+        .send()
+        .await
+        .expect("search call");
+    assert_eq!(res.status(), 200);
+    let body: serde_json::Value = res.json().await.unwrap();
+    assert_eq!(
+        body["result"]["isError"], false,
+        "search via query params should succeed: {:?}",
+        body
+    );
+    let text = body["result"]["content"][0]["text"].as_str().unwrap();
+    assert!(
+        text.contains("rust api") || text.contains("rust"),
+        "expected query echo in response: {}",
+        text
+    );
+    assert!(
+        text.contains('5') || text.contains("limit"),
+        "expected limit in response: {}",
+        text
+    );
+
     let _ = shutdown_tx.send(());
     let _ = tokio::time::timeout(Duration::from_secs(3), server_handle).await;
 }

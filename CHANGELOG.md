@@ -9,11 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **MCP HTTP admin token enforcement**: when `McpConfig::admin_token` is set, the sidecar rejects unauthenticated JSON-RPC with `401` (`Authorization: Bearer`, `X-MCP-Token`, or `?token=`).
+- **MCP query-parameter tool args**: remaining non-path arguments on safe methods are forwarded as a query string (proxy + in-process URI).
+- **`cargo rustapi mcp generate --admin-token`** (env: `RUSTAPI_MCP_TOKEN`).
+- **`cargo rustapi new`**: `protocol-mcp` feature option; `ai-api` preset includes it; minimal template wires `McpServer` + `RUSTAPI_MCP_TOKEN` when selected.
 - **`docs/GOLDEN_PATH.md`** — canonical handler → OpenAPI → probes → MCP/deploy walkthrough; linked from README, docs hub, cookbook SUMMARY, Getting Started.
 - **`golden_path` example** uses route macros + tags so `/docs/openapi.json` includes `/api/v1/ping` (not only `.route()` wiring).
 
 ### Changed
 
+- **Dependabot consolidation**: lockfile bumps for `open` 5.4.0, `toml` 1.1.3, `uuid` 1.23.5, `http-body-util` 0.1.4, `bytes` 1.12.1, `simd-json` 0.17.3, `regex` 1.13.0, `rustls` 0.23.42, `redis` 1.4.0 (supersedes open Dependabot PRs #228–#236; skips major `rand` 0.8→0.10).
 - **Production Readiness v0.2** ([#200](https://github.com/Tuntii/RustAPI/issues/200)): coverage CI publishes HTML + Cobertura artifacts with job summary; release-drafter publishes drafts on `v*` tags; README links [Production Checklist](docs/PRODUCTION_CHECKLIST.md) in the header.
 - README Quick Start: golden path first; document OpenAPI at `/docs/openapi.json`; prefer macros for OpenAPI registration; `tracing-subscriber` + `production_defaults` in the hello snippet.
 - Dependency updates: `actions/checkout@v7`, `actions/cache@v6`, `brotli` 8, `rcgen` 0.14, `tera` 2, `thiserror` 2, OpenTelemetry 0.32 stack, `sqlx` 0.9, `tracing-opentelemetry` 0.33.
@@ -24,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Security Audit**: upgrade transitive `crossbeam-epoch` 0.9.18 → 0.9.20 (`RUSTSEC-2026-0204`); un-yank `spin` 0.9.8 → 0.9.9.
+- **Clippy** (`-D warnings`): remove redundant borrow in `rustapi-core` validation message formatting (was failing Lint on Dependabot PRs).
 - **`rcgen` 0.14 HTTP/3 dev certs**: `generate_self_signed_cert` uses `CertifiedKey { cert, signing_key }` so `--all-features` / `http3-dev` builds pass CI again.
 - **SQLx 0.9 jobs + CRUD generator**: Postgres job backend uses `AssertSqlSafe` and `Json` payloads; `cargo rustapi generate crud` emits SQLx 0.9-compatible SQLite handlers.
 - **Security Audit** (`cargo audit`) passes on the current lockfile (no high-severity `quick-xml` advisories).

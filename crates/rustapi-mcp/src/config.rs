@@ -28,10 +28,16 @@ pub struct McpConfig {
     /// Example: `["/api/public", "/agent"]`
     pub allowed_path_prefixes: Vec<String>,
 
-    /// Admin / MCP client token.
+    /// Admin / MCP client token for the HTTP MCP sidecar.
     ///
-    /// When set, MCP clients must present this (via header or query param,
-    /// transport dependent) to use discovery or invocation.
+    /// When set, every JSON-RPC POST must present the token as one of:
+    /// - `Authorization: Bearer <token>`
+    /// - `X-MCP-Token: <token>` (or `X-Admin-Token`)
+    /// - `?token=<token>` on the request URI
+    ///
+    /// Missing or wrong tokens yield HTTP `401`. When unset, the transport
+    /// is open (local/dev convenience). Programmatic `list_tools` / `call_tool`
+    /// from the same process do not require the token.
     pub admin_token: Option<String>,
 
     /// Whether to include detailed error information in tool responses.

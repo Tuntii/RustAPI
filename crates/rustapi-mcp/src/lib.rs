@@ -25,10 +25,14 @@
 //! - Full respect for tags (`allowed_tags`) and path prefixes for safe exposure.
 //! - Framework-native permission scoping (`ToolPolicy::ReadOnly` default, `#[mcp(skip)]`, `#[mcp(write, require="confirm")]`).
 //! - Sidecar HTTP server speaking minimal MCP JSON-RPC (initialize, tools/list, tools/call).
-//! - Real `tools/call` execution: calls are proxied to your main RustAPI HTTP server → every layer, interceptor, extractor, validator, and error handler runs exactly as for normal traffic.
+//! - Optional `admin_token`: when set, HTTP clients must present `Authorization: Bearer`,
+//!   `X-MCP-Token`, or `?token=` (fail closed with HTTP 401).
+//! - Safe-method tool args not used in the path template become query parameters.
+//! - Real `tools/call` execution: proxy to the main HTTP API (default) or in-process
+//!   via `InvocationMode::InProcess` / `Auto` when created with `from_rustapi`.
 //! - `run_rustapi_and_mcp` (and with shutdown) helpers to run your API + MCP endpoint side-by-side (auto-configures proxying).
 //!
-//! See `memories/native_mcp_orchestration_plan.md` for the original roadmap. Invocation currently uses a localhost proxy (correct & simple). An in-process `RequestInvoker` can be added later for zero network overhead.
+//! See `memories/native_mcp_orchestration_plan.md` for the original roadmap.
 //!
 //! ## Quick Example
 //!

@@ -30,8 +30,75 @@ uuid = {{ version = "1", features = ["v4"] }}
     fs::create_dir_all(format!("{name}/src/handlers")).await?;
     fs::create_dir_all(format!("{name}/src/models")).await?;
 
+    let wants_mcp = features.iter().any(|f| f == "protocol-mcp");
+
     // main.rs
-    let main_rs = r#"mod handlers;
+    let main_rs = if wants_mcp {
+        r#"mod handlers;
+mod models;
+mod error;
+
+use rustapi_rs::prelude::*;
+use rustapi_rs::protocol::mcp::{
+    run_rustapi_and_mcp_with_shutdown, McpConfig, McpServer, ToolPolicy,
+};
+use std::sync::Arc;
+use tokio::signal;
+use tokio::sync::RwLock;
+
+pub type AppState = Arc<RwLock<models::Store>>;
+
+#[rustapi_rs::main]
+async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::from_default_env()
+                .add_directive("info".parse().unwrap()),
+        )
+        .init();
+
+    let state: AppState = Arc::new(RwLock::new(models::Store::new()));
+
+    let port = std::env::var("PORT").unwrap_or_else(|_| "8080".to_string());
+    let mcp_port = std::env::var("MCP_PORT").unwrap_or_else(|_| "9090".to_string());
+    let addr = format!("127.0.0.1:{}", port);
+    let mcp_addr = format!("127.0.0.1:{}", mcp_port);
+
+    let app = RustApi::new()
+        .state(state)
+        .route("/health", get(handlers::health))
+        .mount_route(handlers::items::list_route())
+        .mount_route(handlers::items::get_route())
+        .mount_route(handlers::items::create_route())
+        .mount_route(handlers::items::update_route())
+        .mount_route(handlers::items::delete_route())
+        .docs("/docs");
+
+    // Expose read-only Items routes as agent tools. Writes stay HTTP-only
+    // unless you switch ToolPolicy::All and expand tags carefully.
+    let mut mcp_cfg = McpConfig::new()
+        .name("items-mcp")
+        .allowed_tags(["Items"])
+        .tool_policy(ToolPolicy::ReadOnly);
+    if let Ok(token) = std::env::var("RUSTAPI_MCP_TOKEN") {
+        if !token.is_empty() {
+            mcp_cfg = mcp_cfg.admin_token(token);
+        }
+    }
+    let mcp = McpServer::from_rustapi(&app, mcp_cfg);
+
+    tracing::info!("🚀 Server running at http://{}", addr);
+    tracing::info!("📚 API docs at http://{}/docs", addr);
+    tracing::info!("🧠 MCP tools at http://{}", mcp_addr);
+
+    run_rustapi_and_mcp_with_shutdown(app, &addr, mcp, &mcp_addr, async {
+        signal::ctrl_c().await.ok();
+    })
+    .await
+}
+"#
+    } else {
+        r#"mod handlers;
 mod models;
 mod error;
 
@@ -75,7 +142,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         .run(&addr)
         .await
 }
-"#;
+"#
+    };
     fs::write(format!("{name}/src/main.rs"), main_rs).await?;
 
     // error.rs

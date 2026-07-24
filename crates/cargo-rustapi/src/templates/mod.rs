@@ -57,6 +57,7 @@ impl ProjectPreset {
                 "extras-structured-logging",
                 "extras-timeout",
                 "protocol-toon",
+                "protocol-mcp",
             ],
             ProjectPreset::Realtime => vec![
                 "extras-cors",
@@ -120,6 +121,9 @@ Thumbs.db
         let content = r#"# Server configuration
 HOST=127.0.0.1
 PORT=8080
+# MCP sidecar (when protocol-mcp is enabled)
+# MCP_PORT=9090
+# RUSTAPI_MCP_TOKEN=change-me
 
 # Environment (development, production)
 RUSTAPI_ENV=development

@@ -213,6 +213,24 @@ impl McpServer {
         }
     }
 
+    /// Verify a client-presented token against `McpConfig::admin_token`.
+    ///
+    /// When no admin token is configured, access is open (local/dev default).
+    /// When configured, `presented` must match exactly.
+    pub fn authorize_token(&self, presented: Option<&str>) -> Result<()> {
+        match self.config.admin_token.as_deref() {
+            None => Ok(()),
+            Some(expected) => match presented {
+                Some(got) if tokens_equal(expected, got) => Ok(()),
+                Some(_) => Err(McpError::unauthorized("invalid MCP admin token")),
+                None => Err(McpError::unauthorized(
+                    "missing MCP admin token (send Authorization: Bearer <token>, \
+                     X-MCP-Token, or ?token=)",
+                )),
+            },
+        }
+    }
+
     /// Execute a tool call by proxying it as a real HTTP request to the main
     /// RustAPI server (using the configured `http_base`).
     ///
@@ -227,6 +245,7 @@ impl McpServer {
         })?;
 
         let path = substitute_path_params(&info.path_template, &req.arguments);
+        let path = append_remaining_as_query(&info.path_template, &path, &req.arguments);
 
         // Decide execution strategy
         let use_inprocess = if let Some(inv) = &self.invoker {
@@ -258,15 +277,12 @@ impl McpServer {
 
         let mut request_builder = client.request(method.clone(), &url);
 
-        // If this looks like a mutating method, send the arguments as JSON body
+        // Mutating methods: JSON body. Safe methods: remaining args already on the query string.
         let is_body_method = matches!(info.method.as_str(), "POST" | "PUT" | "PATCH");
         if is_body_method && !req.arguments.is_empty() {
             request_builder = request_builder
                 .header("content-type", "application/json")
                 .json(&req.arguments);
-        } else if !is_body_method && !req.arguments.is_empty() {
-            // For GET/DELETE etc, we could turn remaining args into query params.
-            // For MVP we rely on path params; extra args are ignored for now.
         }
 
         let resp = request_builder.send().await.map_err(|e| {
@@ -479,6 +495,11 @@ async fn handle_mcp_http_request(
             .header("content-type", "application/json")
             .body(Full::new(body))
             .expect("static response must build"));
+    }
+
+    // Enforce admin token before reading body / running any method.
+    if let Some(resp) = unauthorized_if_admin_token_missing(&mcp, &req) {
+        return Ok(resp);
     }
 
     let body_bytes = match req.collect().await {
@@ -710,4 +731,238 @@ fn substitute_path_params(
         }
     }
     result
+}
+
+/// Append non-path arguments as a query string (GET/HEAD/DELETE-style calls).
+///
+/// Path placeholders already consumed by [`substitute_path_params`] are skipped.
+/// Existing `?…` on `path` is preserved (appends with `&`).
+fn append_remaining_as_query(
+    path_template: &str,
+    path: &str,
+    args: &std::collections::HashMap<String, serde_json::Value>,
+) -> String {
+    let mut pairs: Vec<String> = Vec::new();
+    for (key, value) in args {
+        let placeholder = format!("{{{}}}", key);
+        if path_template.contains(&placeholder) {
+            continue;
+        }
+        if matches!(value, serde_json::Value::Null) {
+            continue;
+        }
+        let val_str = match value {
+            serde_json::Value::String(s) => s.clone(),
+            serde_json::Value::Bool(b) => b.to_string(),
+            serde_json::Value::Number(n) => n.to_string(),
+            other => other.to_string(),
+        };
+        pairs.push(format!(
+            "{}={}",
+            encode_query_component(key),
+            encode_query_component(&val_str)
+        ));
+    }
+    if pairs.is_empty() {
+        return path.to_string();
+    }
+    // Stable order helps caching and tests
+    pairs.sort();
+    let sep = if path.contains('?') { '&' } else { '?' };
+    format!("{}{}{}", path, sep, pairs.join("&"))
+}
+
+/// Minimal percent-encoding for query components (RFC 3986 unreserved + safe subset).
+fn encode_query_component(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    for b in s.bytes() {
+        match b {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                out.push(b as char);
+            }
+            _ => {
+                out.push('%');
+                out.push(nibble_hex(b >> 4));
+                out.push(nibble_hex(b & 0x0f));
+            }
+        }
+    }
+    out
+}
+
+fn nibble_hex(n: u8) -> char {
+    match n {
+        0..=9 => (b'0' + n) as char,
+        10..=15 => (b'A' + (n - 10)) as char,
+        _ => '0',
+    }
+}
+
+/// Constant-time-ish equality for short secrets (length mismatch still leaks length).
+fn tokens_equal(a: &str, b: &str) -> bool {
+    if a.len() != b.len() {
+        return false;
+    }
+    let mut diff = 0u8;
+    for (x, y) in a.bytes().zip(b.bytes()) {
+        diff |= x ^ y;
+    }
+    diff == 0
+}
+
+/// Extract a client token from standard headers or `?token=`.
+fn extract_presented_token(req: &hyper::Request<Incoming>) -> Option<String> {
+    if let Some(auth) = req
+        .headers()
+        .get(http::header::AUTHORIZATION)
+        .and_then(|v| v.to_str().ok())
+    {
+        let auth = auth.trim();
+        if let Some(rest) = auth
+            .strip_prefix("Bearer ")
+            .or_else(|| auth.strip_prefix("bearer "))
+        {
+            let token = rest.trim();
+            if !token.is_empty() {
+                return Some(token.to_string());
+            }
+        }
+    }
+
+    for header_name in ["x-mcp-token", "x-admin-token"] {
+        if let Some(v) = req.headers().get(header_name).and_then(|v| v.to_str().ok()) {
+            let token = v.trim();
+            if !token.is_empty() {
+                return Some(token.to_string());
+            }
+        }
+    }
+
+    if let Some(query) = req.uri().query() {
+        for pair in query.split('&') {
+            let mut parts = pair.splitn(2, '=');
+            let key = parts.next().unwrap_or("");
+            let val = parts.next().unwrap_or("");
+            if key == "token" && !val.is_empty() {
+                return Some(decode_query_component(val));
+            }
+        }
+    }
+
+    None
+}
+
+fn decode_query_component(s: &str) -> String {
+    // Minimal decoder for %XX and +
+    let mut out = String::with_capacity(s.len());
+    let bytes = s.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        match bytes[i] {
+            b'+' => {
+                out.push(' ');
+                i += 1;
+            }
+            b'%' if i + 2 < bytes.len() => {
+                let h1 = from_hex(bytes[i + 1]);
+                let h2 = from_hex(bytes[i + 2]);
+                if let (Some(a), Some(b)) = (h1, h2) {
+                    out.push((a << 4 | b) as char);
+                    i += 3;
+                } else {
+                    out.push('%');
+                    i += 1;
+                }
+            }
+            c => {
+                out.push(c as char);
+                i += 1;
+            }
+        }
+    }
+    out
+}
+
+fn from_hex(b: u8) -> Option<u8> {
+    match b {
+        b'0'..=b'9' => Some(b - b'0'),
+        b'a'..=b'f' => Some(b - b'a' + 10),
+        b'A'..=b'F' => Some(b - b'A' + 10),
+        _ => None,
+    }
+}
+
+/// Fail closed when `admin_token` is set and the request does not present it.
+///
+/// Returns `Some(response)` when the request must be rejected (HTTP 401).
+fn unauthorized_if_admin_token_missing(
+    mcp: &McpServer,
+    req: &hyper::Request<Incoming>,
+) -> Option<Response<Full<Bytes>>> {
+    let presented = extract_presented_token(req);
+    match mcp.authorize_token(presented.as_deref()) {
+        Ok(()) => None,
+        Err(e) => Some(unauthorized_http_response(&e.to_string())),
+    }
+}
+
+fn unauthorized_http_response(message: &str) -> Response<Full<Bytes>> {
+    let body = serde_json::json!({
+        "jsonrpc": "2.0",
+        "id": null,
+        "error": {
+            "code": -32001,
+            "message": message
+        }
+    });
+    let bytes = serde_json::to_vec(&body).unwrap_or_else(|_| {
+        br#"{"jsonrpc":"2.0","id":null,"error":{"code":-32001,"message":"unauthorized"}}"#.to_vec()
+    });
+    Response::builder()
+        .status(401)
+        .header("content-type", "application/json")
+        .header("www-authenticate", "Bearer")
+        .body(Full::new(Bytes::from(bytes)))
+        .expect("unauthorized response must build")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::collections::HashMap;
+
+    #[test]
+    fn append_query_skips_path_params() {
+        let mut args = HashMap::new();
+        args.insert("id".into(), serde_json::json!("42"));
+        args.insert("page".into(), serde_json::json!(2));
+        args.insert("q".into(), serde_json::json!("hello world"));
+
+        let path = substitute_path_params("/items/{id}", &args);
+        assert_eq!(path, "/items/42");
+        let with_q = append_remaining_as_query("/items/{id}", &path, &args);
+        assert_eq!(with_q, "/items/42?page=2&q=hello%20world");
+    }
+
+    #[test]
+    fn authorize_token_open_when_unset() {
+        let mcp = McpServer::new(McpConfig::new());
+        assert!(mcp.authorize_token(None).is_ok());
+        assert!(mcp.authorize_token(Some("anything")).is_ok());
+    }
+
+    #[test]
+    fn authorize_token_required_when_set() {
+        let mcp = McpServer::new(McpConfig::new().admin_token("s3cret"));
+        assert!(mcp.authorize_token(None).is_err());
+        assert!(mcp.authorize_token(Some("wrong")).is_err());
+        assert!(mcp.authorize_token(Some("s3cret")).is_ok());
+    }
+
+    #[test]
+    fn tokens_equal_rejects_length_mismatch() {
+        assert!(!tokens_equal("ab", "a"));
+        assert!(tokens_equal("ab", "ab"));
+        assert!(!tokens_equal("ab", "ac"));
+    }
 }

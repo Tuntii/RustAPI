@@ -59,6 +59,14 @@ pub struct McpGenerateArgs {
     /// MCP over standard input/output.
     #[arg(long)]
     pub stdio: bool,
+
+    /// Require this token on the HTTP MCP transport
+    /// (`Authorization: Bearer`, `X-MCP-Token`, or `?token=`).
+    ///
+    /// Prefer setting this for any network-exposed MCP endpoint.
+    /// If omitted, falls back to the `RUSTAPI_MCP_TOKEN` environment variable.
+    #[arg(long)]
+    pub admin_token: Option<String>,
 }
 
 /// Execute `rustapi mcp generate`
@@ -115,6 +123,15 @@ pub async fn mcp_generate(args: McpGenerateArgs) -> Result<()> {
             config = config.allow_path_prefix(prefix.clone());
         }
 
+        let admin_token = args
+            .admin_token
+            .clone()
+            .or_else(|| std::env::var("RUSTAPI_MCP_TOKEN").ok())
+            .filter(|t| !t.is_empty());
+        if let Some(token) = &admin_token {
+            config = config.admin_token(token.clone());
+        }
+
         let mut mcp = McpServer::from_spec(config, &openapi);
         mcp = mcp.with_http_base(target.clone());
 
@@ -122,6 +139,9 @@ pub async fn mcp_generate(args: McpGenerateArgs) -> Result<()> {
 
         println!("    ✓ Spec loaded");
         println!("    → Proxying tool calls to: {}", target);
+        if admin_token.is_some() {
+            println!("    → Admin token required on HTTP transport");
+        }
 
         if args.stdio {
             println!("🧠 MCP stdio transport active. Waiting for JSON-RPC on stdin...");
@@ -132,15 +152,20 @@ pub async fn mcp_generate(args: McpGenerateArgs) -> Result<()> {
         println!("    → MCP server listening on: http://{}", addr);
         println!();
         println!("Useful test commands:");
+        let auth_header = if admin_token.is_some() {
+            " -H 'Authorization: Bearer $RUSTAPI_MCP_TOKEN'"
+        } else {
+            ""
+        };
         println!(
-            "  curl -X POST http://127.0.0.1:{} -H 'content-type: application/json' \\",
-            args.port
+            "  curl -X POST http://127.0.0.1:{} -H 'content-type: application/json'{} \\",
+            args.port, auth_header
         );
         println!("       -d '{{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\"}}'");
         println!();
         println!(
-            "  curl -X POST http://127.0.0.1:{} -H 'content-type: application/json' \\",
-            args.port
+            "  curl -X POST http://127.0.0.1:{} -H 'content-type: application/json'{} \\",
+            args.port, auth_header
         );
         println!("       -d '{{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"tools/list\"}}'");
         println!();
