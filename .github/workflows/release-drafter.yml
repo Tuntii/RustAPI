@@ -1,11 +1,12 @@
 name: Release Drafter
 
+# Draft notes + PR autolabels only.
+# Tags, GitHub Releases, and crates.io publish are owned by release-plz
+# (.github/workflows/release-plz.yml) from v0.2.0 onward.
 on:
   push:
     branches:
       - main
-    tags:
-      - 'v*'
   pull_request:
     types: [opened, reopened, synchronize]
 
@@ -15,26 +16,13 @@ permissions:
 jobs:
   update_release_draft:
     permissions:
-      contents: write  # write releases
+      contents: write  # write draft releases
       pull-requests: read
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref_type == 'branch'
     steps:
       - uses: release-drafter/release-drafter@v7
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-  publish_release:
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref_type == 'tag'
-    steps:
-      - uses: release-drafter/release-drafter@v7
-        with:
-          publish: true
-          tag: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
   update_pr_label:

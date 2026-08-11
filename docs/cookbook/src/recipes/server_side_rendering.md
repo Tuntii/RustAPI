@@ -8,7 +8,7 @@ Add the following to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.551", features = ["view"] }
+rustapi-rs = { version = "0.2.0", features = ["view"] }
 serde = { version = "1.0", features = ["derive"] }
 ```
 

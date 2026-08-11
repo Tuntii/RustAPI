@@ -34,7 +34,7 @@ This is handled automatically by the `LlmResponse<T>` type.
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.551", features = ["toon"] }
+rustapi-rs = { version = "0.2.0", features = ["toon"] }
 serde = { version = "1.0", features = ["derive"] }
 ```
 

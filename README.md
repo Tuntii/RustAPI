@@ -213,7 +213,7 @@ Prefer the **[Golden Path](docs/GOLDEN_PATH.md)** for the recommended service sh
 
 ```toml
 [dependencies]
-api = { package = "rustapi-rs", version = "0.1.551" }
+api = { package = "rustapi-rs", version = "0.2.0" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 ```
@@ -285,13 +285,13 @@ Full guide: [docs/cookbook/src/recipes/rustapi_cloud.md](docs/cookbook/src/recip
 
 ## Recent Changes
 
-See [CHANGELOG.md](CHANGELOG.md) for full history. Highlights in **v0.1.551**:
+See [CHANGELOG.md](CHANGELOG.md) for full history. Highlights in **v0.2.0** (first semantic release):
 
-- **RustAPI Cloud CLI:** `deploy cloud`, `deploy status`, device-code `login`, `RUSTAPI_CONFIG_PATH` for isolated credentials
-- **Repo split:** cloud backend moved to [RustAPI-Cloud](https://github.com/Tuntii/RustAPI-Cloud); this repo is framework + CLI only
-- **OpenAPI modifiers:** `Multipart` / `Headers` `OperationModifier` for deploy and upload routes
-- **v0.1.537 maintainability:** `builder.rs` module split (#201), consistent `on_shutdown` across all `run*` entrypoints
-- **Native MCP:** in-process tools, `cargo rustapi mcp generate`, stdio transport
+- **Semantic versioning:** drop commit-count `0.1.<n>`; conventional commits + [release-plz](https://release-plz.dev) drive minor/patch/major
+- **MCP hardening:** HTTP admin token enforcement, query-arg tools, `cargo rustapi new` + `protocol-mcp` / `ai-api` templates
+- **Golden path:** [docs/GOLDEN_PATH.md](docs/GOLDEN_PATH.md), OpenAPI-aware `golden_path` example, production checklist in the header
+- **CRUD + uploads:** `cargo rustapi generate crud` (SQLx), `file_upload` example
+- **Maintenance:** sqlx 0.9, tera 2, thiserror 2, OpenTelemetry 0.32, security lockfile bumps (`RUSTSEC-2026-0204`)
 
 ## Documentation
 

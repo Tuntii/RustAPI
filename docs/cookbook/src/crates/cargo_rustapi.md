@@ -143,7 +143,7 @@ Cloud commands require the `cloud` feature (default-on):
 
 ```toml
 [dependencies]
-cargo-rustapi = { version = "0.1.551", default-features = false }
+cargo-rustapi = { version = "0.2.0", default-features = false }
 ```
 
 Disabling removes `login`, `deploy cloud`, and `deploy status` — useful for minimal CI builds.

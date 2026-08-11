@@ -10,9 +10,9 @@ Add the `rustapi-extras` crate with the necessary features to your `Cargo.toml`.
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.551", features = ["full"] }
+rustapi-rs = { version = "0.2.0", features = ["full"] }
 # OR cherry-pick features
-# rustapi-extras = { version = "0.1.551", features = ["rate-limit", "dedup", "cache"] }
+# rustapi-extras = { version = "0.2.0", features = ["rate-limit", "dedup", "cache"] }
 ```
 
 ## Rate Limiting

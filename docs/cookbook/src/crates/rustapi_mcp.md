@@ -18,7 +18,7 @@
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.551", features = ["protocol-mcp"] }
+rustapi-rs = { version = "0.2.0", features = ["protocol-mcp"] }
 ```
 
 ## Basic Usage (Recommended)

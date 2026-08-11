@@ -10,7 +10,7 @@ Add `rustapi-extras` with the `audit` feature to your `Cargo.toml`.
 
 ```toml
 [dependencies]
-rustapi-extras = { version = "0.1.551", features = ["audit"] }
+rustapi-extras = { version = "0.2.0", features = ["audit"] }
 ```
 
 ## Core Concepts

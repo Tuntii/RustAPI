@@ -13,14 +13,14 @@ Enable the canonical dashboard feature on the public facade:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.551", features = ["core-dashboard"] }
+rustapi-rs = { version = "0.2.0", features = ["core-dashboard"] }
 ```
 
 If you also want the replay browser panel to load recorded traffic, enable replay too:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.551", features = ["core-dashboard", "extras-replay"] }
+rustapi-rs = { version = "0.2.0", features = ["core-dashboard", "extras-replay"] }
 ```
 
 ## Usage

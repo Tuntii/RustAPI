@@ -8,7 +8,7 @@ To use compression, you must enable the `compression` feature in `rustapi-core` 
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.551", features = ["compression", "compression-brotli"] }
+rustapi-rs = { version = "0.2.0", features = ["compression", "compression-brotli"] }
 ```
 
 ## Basic Usage
