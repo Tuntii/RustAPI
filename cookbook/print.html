@@ -37,7 +37,7 @@
             const path_to_root = "";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-ce17ccc2.js";
+            window.path_to_searchindex_js = "searchindex-23046c09.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-6b4aa95b.js"></script>
@@ -295,7 +295,7 @@
 <li><strong>Respectful collaboration</strong> — see the Code of Conduct</li>
 </ul>
 <h2 id="releases"><a class="header" href="#releases">Releases</a></h2>
-<p>Releases are tagged <code>v0.1.&lt;commit-count&gt;</code> and published to <a href="https://crates.io/crates/rustapi-rs">crates.io</a>. See <a href="../../../CHANGELOG.html">CHANGELOG.md</a> and <a href="../../../RELEASES.html">RELEASES.md</a> for notes.</p>
+<p>Releases follow <strong>SemVer</strong> from conventional commits (release-plz). Tags look like <code>v0.2.0</code> and publish to <a href="https://crates.io/crates/rustapi-rs">crates.io</a>. See <a href="../../../CHANGELOG.html">CHANGELOG.md</a> and <a href="../../../RELEASES.html">RELEASES.md</a> for notes.</p>
 <p><strong>Repository split:</strong> RustAPI Cloud backend development happens in <a href="https://github.com/Tuntii/RustAPI-Cloud">RustAPI-Cloud</a>. This repo ships the framework and CLI only.</p>
 <h2 id="security"><a class="header" href="#security">Security</a></h2>
 <p>Report vulnerabilities privately per <a href="../../../SECURITY.html">SECURITY.md</a>. Do not open public issues for undisclosed security problems.</p>
@@ -480,11 +480,11 @@ cargo rustapi deploy cloud
 </code></pre>
 <h2 id="adding-to-an-existing-project"><a class="header" href="#adding-to-an-existing-project">Adding to an Existing Project</a></h2>
 <p>If you prefer not to use the CLI, you can add RustAPI to your <code>Cargo.toml</code> manually:</p>
-<pre><code class="language-bash">cargo add rustapi-rs@0.1.551
+<pre><code class="language-bash">cargo add rustapi-rs@0.2.0
 </code></pre>
 <p>Or add this to your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = "0.1.551"
+rustapi-rs = "0.2.0"
 </code></pre>
 <h2 id="editor-setup"><a class="header" href="#editor-setup">Editor Setup</a></h2>
 <p>For the best experience, we recommend <strong>VS Code</strong> with the <strong>rust-analyzer</strong> extension. This provides:</p>
@@ -1563,7 +1563,7 @@ async fn show_form(token: CsrfToken) -&gt; Html&lt;String&gt; {
 <h2 id="traffic-insight"><a class="header" href="#traffic-insight">Traffic Insight</a></h2>
 <p>The <code>insight</code> feature provides powerful real-time traffic analysis and debugging capabilities without external dependencies. It is designed to be low-overhead and privacy-conscious.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-extras = { version = "0.1.551", features = ["insight"] }
+rustapi-extras = { version = "0.2.0", features = ["insight"] }
 </code></pre>
 <h3 id="setup-1"><a class="header" href="#setup-1">Setup</a></h3>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
@@ -1872,7 +1872,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error&gt;&gt; {
 <h3 id="redis-backend"><a class="header" href="#redis-backend">Redis Backend</a></h3>
 <p>Enable the <code>redis</code> feature in <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-jobs = { version = "0.1.551", features = ["redis"] }
+rustapi-jobs = { version = "0.2.0", features = ["redis"] }
 </code></pre>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -1884,7 +1884,7 @@ let queue = JobQueue::new(backend);
 <h3 id="postgres-backend"><a class="header" href="#postgres-backend">Postgres Backend</a></h3>
 <p>Enable the <code>postgres</code> feature in <code>Cargo.toml</code>. This uses <code>sqlx</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-jobs = { version = "0.1.551", features = ["postgres"] }
+rustapi-jobs = { version = "0.2.0", features = ["postgres"] }
 </code></pre>
 <pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span><span class="boring">fn main() {
@@ -2044,7 +2044,7 @@ server.expect(RequestMatcher::new(Method::POST, "/charge"))
 </ul>
 <h2 id="enable-it"><a class="header" href="#enable-it">Enable It</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.551", features = ["grpc"] }
+rustapi-rs = { version = "0.2.0", features = ["grpc"] }
 </code></pre>
 <h2 id="basic-usage-1"><a class="header" href="#basic-usage-1">Basic Usage</a></h2>
 <pre><code class="language-rust ignore">use rustapi_rs::grpc::{run_rustapi_and_grpc, tonic};
@@ -2093,7 +2093,7 @@ run_rustapi_and_grpc_with_shutdown(
 </ul>
 <h2 id="enable-it-1"><a class="header" href="#enable-it-1">Enable It</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.551", features = ["protocol-mcp"] }
+rustapi-rs = { version = "0.2.0", features = ["protocol-mcp"] }
 </code></pre>
 <h2 id="basic-usage-recommended"><a class="header" href="#basic-usage-recommended">Basic Usage (Recommended)</a></h2>
 <pre><code class="language-rust ignore">use rustapi_rs::prelude::*;
@@ -2282,7 +2282,7 @@ cargo rustapi deploy status &lt;deploy-id&gt;
 <h2 id="feature-flag-cloud"><a class="header" href="#feature-flag-cloud">Feature flag: <code>cloud</code></a></h2>
 <p>Cloud commands require the <code>cloud</code> feature (default-on):</p>
 <pre><code class="language-toml">[dependencies]
-cargo-rustapi = { version = "0.1.551", default-features = false }
+cargo-rustapi = { version = "0.2.0", default-features = false }
 </code></pre>
 <p>Disabling removes <code>login</code>, <code>deploy cloud</code>, and <code>deploy status</code> — useful for minimal CI builds.</p>
 <hr>
@@ -2854,7 +2854,7 @@ impl RustApiSchema for MyCustomType {
 <h2 id="dependencies"><a class="header" href="#dependencies">Dependencies</a></h2>
 <p>Enable the <code>extras-jwt</code> feature in your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.551", features = ["extras-jwt"] }
+rustapi-rs = { version = "0.2.0", features = ["extras-jwt"] }
 serde = { version = "1", features = ["derive"] }
 </code></pre>
 <h2 id="1-define-claims"><a class="header" href="#1-define-claims">1. Define Claims</a></h2>
@@ -3405,7 +3405,7 @@ let session_config = SessionConfig::new()
 </ol>
 <h2 id="quick-start-2"><a class="header" href="#quick-start-2">Quick Start</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.551", features = ["csrf"] }
+rustapi-rs = { version = "0.2.0", features = ["csrf"] }
 </code></pre>
 <pre class="playground"><code class="language-rust">use rustapi_rs::prelude::*;
 use rustapi_extras::csrf::{CsrfConfig, CsrfLayer, CsrfToken};
@@ -3636,7 +3636,7 @@ async fn test_csrf_protection() {
 <p>This recipe shows how to integrate PostgreSQL/MySQL/SQLite using a shared pool, how to choose between <strong>SQLx</strong>, <strong>Diesel</strong>, and <strong>SeaORM</strong>, how to think about migrations, and which pooling practices are safest in production.</p>
 <h2 id="dependencies-1"><a class="header" href="#dependencies-1">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.551", features = ["extras-sqlx"] } # Canonical facade feature for SQLx error conversion
+rustapi-rs = { version = "0.2.0", features = ["extras-sqlx"] } # Canonical facade feature for SQLx error conversion
 sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "uuid"] }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }
@@ -3895,7 +3895,7 @@ mod tests {
 <h2 id="dependencies-2"><a class="header" href="#dependencies-2">Dependencies</a></h2>
 <p>Add <code>rustapi-testing</code> to your <code>Cargo.toml</code>. It is usually added as a dev-dependency.</p>
 <pre><code class="language-toml">[dev-dependencies]
-rustapi-testing = "0.1.551"
+rustapi-testing = "0.2.0"
 tokio = { version = "1", features = ["full"] }
 </code></pre>
 <h2 id="integration-testing-with-testclient"><a class="header" href="#integration-testing-with-testclient">Integration Testing with TestClient</a></h2>
@@ -4026,7 +4026,7 @@ curl -X POST http://127.0.0.1:8080/upload -F "file=@./README.md"
 </code></pre>
 <h2 id="dependencies-3"><a class="header" href="#dependencies-3">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = "0.1.551"
+rustapi-rs = "0.2.0"
 tokio = { version = "1", features = ["fs", "io-util", "macros", "rt-multi-thread"] }
 </code></pre>
 <h2 id="buffered-upload-example"><a class="header" href="#buffered-upload-example">Buffered Upload Example</a></h2>
@@ -5437,9 +5437,9 @@ async fn test_hello() {
 <h2 id="prerequisites-4"><a class="header" href="#prerequisites-4">Prerequisites</a></h2>
 <p>Add the <code>rustapi-extras</code> crate with the necessary features to your <code>Cargo.toml</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.551", features = ["full"] }
+rustapi-rs = { version = "0.2.0", features = ["full"] }
 # OR cherry-pick features
-# rustapi-extras = { version = "0.1.551", features = ["rate-limit", "dedup", "cache"] }
+# rustapi-extras = { version = "0.2.0", features = ["rate-limit", "dedup", "cache"] }
 </code></pre>
 <h2 id="rate-limiting"><a class="header" href="#rate-limiting">Rate Limiting</a></h2>
 <p>Rate limiting protects your API from being overwhelmed by too many requests from a single client. It uses a “Token Bucket” or “Fixed Window” algorithm to enforce limits.</p>
@@ -5532,7 +5532,7 @@ fn main() {
 <p>WebSockets allow full-duplex communication between the client and server. RustAPI leverages the <code>rustapi-ws</code> crate (based on <code>tungstenite</code> and <code>tokio</code>) to make this easy.</p>
 <h2 id="dependencies-4"><a class="header" href="#dependencies-4">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-ws = "0.1.551"
+rustapi-ws = "0.2.0"
 tokio = { version = "1", features = ["sync", "macros"] }
 futures = "0.3"
 </code></pre>
@@ -5639,7 +5639,7 @@ ws.send("Hello from JS!");
 <h2 id="dependencies-5"><a class="header" href="#dependencies-5">Dependencies</a></h2>
 <p>Add the following to your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.551", features = ["view"] }
+rustapi-rs = { version = "0.2.0", features = ["view"] }
 serde = { version = "1.0", features = ["derive"] }
 </code></pre>
 <h2 id="creating-templates"><a class="header" href="#creating-templates">Creating Templates</a></h2>
@@ -5772,7 +5772,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&g
 <p>This is handled automatically by the <code>LlmResponse&lt;T&gt;</code> type.</p>
 <h2 id="dependencies-6"><a class="header" href="#dependencies-6">Dependencies</a></h2>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.551", features = ["toon"] }
+rustapi-rs = { version = "0.2.0", features = ["toon"] }
 serde = { version = "1.0", features = ["derive"] }
 </code></pre>
 <h2 id="implementation"><a class="header" href="#implementation">Implementation</a></h2>
@@ -6279,7 +6279,7 @@ async fn main() {
 <h2 id="dependencies-8"><a class="header" href="#dependencies-8">Dependencies</a></h2>
 <p>To use compression, you must enable the <code>compression</code> feature in <code>rustapi-core</code> (or <code>rustapi-rs</code>). For Brotli support, enable <code>compression-brotli</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.551", features = ["compression", "compression-brotli"] }
+rustapi-rs = { version = "0.2.0", features = ["compression", "compression-brotli"] }
 </code></pre>
 <h2 id="basic-usage-3"><a class="header" href="#basic-usage-3">Basic Usage</a></h2>
 <p>The simplest way to enable compression is to add the layer to your application:</p>
@@ -6349,9 +6349,9 @@ async fn main() -&gt; Result&lt;()&gt; {
 <h2 id="prerequisites-5"><a class="header" href="#prerequisites-5">Prerequisites</a></h2>
 <p>Add the resilience features to your <code>Cargo.toml</code>. For example:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.551", features = ["full"] }
+rustapi-rs = { version = "0.2.0", features = ["full"] }
 # OR cherry-pick features
-# rustapi-extras = { version = "0.1.551", features = ["circuit-breaker", "retry", "timeout"] }
+# rustapi-extras = { version = "0.2.0", features = ["circuit-breaker", "retry", "timeout"] }
 </code></pre>
 <h2 id="circuit-breaker-1"><a class="header" href="#circuit-breaker-1">Circuit Breaker</a></h2>
 <p>The Circuit Breaker pattern prevents your application from repeatedly trying to execute an operation that’s likely to fail. It gives the failing service time to recover.</p>
@@ -6461,7 +6461,7 @@ fn main() {
 <h2 id="prerequisites-6"><a class="header" href="#prerequisites-6">Prerequisites</a></h2>
 <p>Enable the relevant features:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.551", features = [
+rustapi-rs = { version = "0.2.0", features = [
   "core",
   "extras-otel",
   "extras-structured-logging",
@@ -6621,11 +6621,11 @@ Keep the dashboard disabled by default in production-like environments unless it
 <h2 id="prerequisites-7"><a class="header" href="#prerequisites-7">Prerequisites</a></h2>
 <p>Enable the canonical dashboard feature on the public facade:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.551", features = ["core-dashboard"] }
+rustapi-rs = { version = "0.2.0", features = ["core-dashboard"] }
 </code></pre>
 <p>If you also want the replay browser panel to load recorded traffic, enable replay too:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.551", features = ["core-dashboard", "extras-replay"] }
+rustapi-rs = { version = "0.2.0", features = ["core-dashboard", "extras-replay"] }
 </code></pre>
 <h2 id="usage-5"><a class="header" href="#usage-5">Usage</a></h2>
 <pre><code class="language-rust ignore">use rustapi_rs::prelude::*;
@@ -7022,7 +7022,7 @@ async fn hello() -&gt; &amp;'static str {
 <h2 id="prerequisites-8"><a class="header" href="#prerequisites-8">Prerequisites</a></h2>
 <p>Add <code>rustapi-extras</code> with the <code>audit</code> feature to your <code>Cargo.toml</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-extras = { version = "0.1.551", features = ["audit"] }
+rustapi-extras = { version = "0.2.0", features = ["audit"] }
 </code></pre>
 <h2 id="core-concepts-1"><a class="header" href="#core-concepts-1">Core Concepts</a></h2>
 <p>The audit system is built around three main components:</p>
@@ -7122,7 +7122,7 @@ Replay is intended for <strong>development, staging, canary, and incident-respon
 <h2 id="prerequisites-9"><a class="header" href="#prerequisites-9">Prerequisites</a></h2>
 <p>Enable the canonical replay feature in your application:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.551", features = ["extras-replay"] }
+rustapi-rs = { version = "0.2.0", features = ["extras-replay"] }
 </code></pre>
 <p>On the CLI side, <code>cargo-rustapi</code> is enough; replay commands are part of the default installation:</p>
 <pre><code class="language-bash">cargo install cargo-rustapi
@@ -7656,7 +7656,7 @@ cargo rustapi deploy cloud
 <p>Cloud HTTP commands are gated behind the <code>cloud</code> feature on <code>cargo-rustapi</code> (enabled by default):</p>
 <pre><code class="language-toml"># Cargo.toml — disable cloud commands
 [dependencies]
-cargo-rustapi = { version = "0.1.551", default-features = false }
+cargo-rustapi = { version = "0.2.0", default-features = false }
 </code></pre>
 <p>When disabled, <code>login</code>, <code>deploy cloud</code>, and <code>deploy status</code> are not compiled. Workspace builds with <code>--no-default-features</code> remain supported.</p>
 <hr>
@@ -7724,9 +7724,9 @@ cargo rustapi deploy cloud
 <h2 id="enabling-http3"><a class="header" href="#enabling-http3">Enabling HTTP/3</a></h2>
 <p>HTTP/3 support is optional and can be enabled via feature flags in <code>Cargo.toml</code>.</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.551", features = ["http3"] }
+rustapi-rs = { version = "0.2.0", features = ["http3"] }
 # For development with self-signed certificates
-rustapi-rs = { version = "0.1.551", features = ["http3", "http3-dev"] }
+rustapi-rs = { version = "0.2.0", features = ["http3", "http3-dev"] }
 </code></pre>
 <h2 id="running-an-http3-server"><a class="header" href="#running-an-http3-server">Running an HTTP/3 Server</a></h2>
 <p>Since HTTP/3 requires TLS (even for local development), RustAPI provides helpers to make this easy.</p>
@@ -7788,7 +7788,7 @@ async fn main() -&gt; Result&lt;(), Box&lt;dyn std::error::Error + Send + Sync&g
 <h2 id="dependencies-9"><a class="header" href="#dependencies-9">Dependencies</a></h2>
 <p>Add the following to your <code>Cargo.toml</code>:</p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.551", features = ["grpc"] }
+rustapi-rs = { version = "0.2.0", features = ["grpc"] }
 tonic = "0.10"
 prost = "0.12"
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
@@ -8055,7 +8055,7 @@ utoipa = "4.2"  # âŒ Don't add this
 </code></pre>
 <p><strong>Correct:</strong></p>
 <pre><code class="language-toml">[dependencies]
-rustapi-rs = { version = "0.1.551", features = ["full"] }
+rustapi-rs = { version = "0.2.0", features = ["full"] }
 # rustapi-openapi is re-exported through rustapi-rs
 </code></pre>
 <p><strong>Why?</strong></p>
