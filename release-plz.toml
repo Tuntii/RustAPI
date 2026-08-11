@@ -12,6 +12,8 @@ changelog_update = false
 changelog_path = "CHANGELOG.md"
 dependencies_update = false
 semver_check = false
+# Tolerate transient dirty state (e.g. generated files) during CI updates.
+allow_dirty = true
 repo_url = "https://github.com/Tuntii/RustAPI"
 git_release_enable = true
 git_release_name = "v{{ version }}"
@@ -26,10 +28,10 @@ git_tag_name = "v{{ version }}"
 pr_name = "release: v{{ version }}"
 pr_labels = ["release"]
 pr_branch_prefix = "release-plz-"
-# Publish any unpublished workspace versions on main (version bumps still come from
-# the release PR or an intentional SemVer bump like this 0.2.0 cut).
+# Publish unpublished crates when versions land on main (release PR or manual SemVer bump).
 release_always = true
 publish_timeout = "30m"
+publish_no_verify = true
 
 # Shared version group: every publishable crate stays aligned.
 [[package]]

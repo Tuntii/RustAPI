@@ -5,8 +5,12 @@
 .env
 .env.*
 !.env.example
-/scripts
-!scripts/run-verification-plan.ps1
+# Ignore local helper scripts, but allow the few that are intentionally tracked.
+# (Cannot re-include a file if the parent dir itself is ignored.)
+/scripts/*
+!/scripts/run-verification-plan.ps1
+!/scripts/smart_publish.sh
+!/scripts/smart_publish.ps1
 /terminals
 
 # /benches
@@ -25,7 +29,27 @@ answer.md
 /.github/instructions
 /.github/prompts
 /.github/skills
+
+# Markdown: ignore by default, but never dual-track (committed + ignored).
+# Dual-tracked files break release-plz ("working directory has uncommitted changes").
 *.md
+# Root project docs (tracked on purpose)
+!README.md
+!CHANGELOG.md
+!CONTRIBUTING.md
+!CODE_OF_CONDUCT.md
+!CONTRACT.md
+!RELEASES.md
+!SECURITY.md
+!LICENSE*
+# GitHub meta
+!.github/BRANCH_PROTECTION.md
+!.github/PULL_REQUEST_TEMPLATE.md
+!.github/**/*.md
+# Crate + example READMEs
+!crates/**/README.md
+!crates/**/examples/**/*.md
+# Published docs tree
 !docs/COMMUNITY.md
 !docs/README.md
 !docs/GETTING_STARTED.md
@@ -38,7 +62,10 @@ answer.md
 !docs/PRODUCTION_CHECKLIST.md
 !docs/GOLDEN_PATH.md
 !docs/cookbook/src/**/*.md
+# Keep agent-only notes ignored even if under docs/
+docs/UPDATE_SUMMARIES.md
 tasks.md
+
 /mcps
 /agent-tools
 /apps
