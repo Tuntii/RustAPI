@@ -32,7 +32,7 @@
   [![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](LICENSE)
   [![MSRV](https://img.shields.io/badge/MSRV-1.85-orange)](Cargo.toml)
   [![Security Audit](https://github.com/Tuntii/RustAPI/actions/workflows/audit.yml/badge.svg)](https://github.com/Tuntii/RustAPI/actions/workflows/audit.yml)
-  [![Coverage](https://img.shields.io/badge/coverage-tarpaulin-blue)](https://github.com/Tuntii/RustAPI/actions/workflows/ci.yml)
+  [![Coverage](https://img.shields.io/badge/coverage-llvm--cov-blue)](https://github.com/Tuntii/RustAPI/actions/workflows/ci.yml)
   [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/Tuntii/RustAPI)
 
 </div>
