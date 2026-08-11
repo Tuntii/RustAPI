@@ -62,7 +62,7 @@ proc-macro2 = "1.0"
 linkme = "0.3"
 
 # Validation
-validator = { version = "0.19", features = ["derive"] }
+validator = { version = "0.21", features = ["derive"] }
 
 # UUID
 uuid = { version = "1.6", features = ["v4"] }
