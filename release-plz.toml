@@ -1,0 +1,91 @@
+# release-plz: semantic releases for the RustAPI workspace
+# Docs: https://release-plz.dev/docs/config
+#
+# All public crates share one version (workspace.package.version).
+# Conventional commits on main → release PR → merge → tag + crates.io.
+
+[workspace]
+# Single version for the framework suite (matches [workspace.package].version).
+features_always_increment_minor = true
+# Keep our hand-written Keep a Changelog file; release-plz still bumps Cargo.toml.
+changelog_update = false
+changelog_path = "CHANGELOG.md"
+dependencies_update = false
+semver_check = false
+repo_url = "https://github.com/Tuntii/RustAPI"
+git_release_enable = true
+git_release_name = "v{{ version }}"
+git_release_body = """
+{{ changelog }}
+
+---
+**Install:** `cargo add rustapi-rs@{{ version }}`  
+**Full notes:** [CHANGELOG.md](https://github.com/Tuntii/RustAPI/blob/main/CHANGELOG.md) · [RELEASES.md](https://github.com/Tuntii/RustAPI/blob/main/RELEASES.md)
+"""
+git_tag_name = "v{{ version }}"
+pr_name = "release: v{{ version }}"
+pr_labels = ["release"]
+pr_branch_prefix = "release-plz-"
+# Publish any unpublished workspace versions on main (version bumps still come from
+# the release PR or an intentional SemVer bump like this 0.2.0 cut).
+release_always = true
+publish_timeout = "30m"
+
+# Shared version group: every publishable crate stays aligned.
+[[package]]
+name = "rustapi-macros"
+version_group = "rustapi"
+
+[[package]]
+name = "rustapi-validate"
+version_group = "rustapi"
+
+[[package]]
+name = "rustapi-openapi"
+version_group = "rustapi"
+
+[[package]]
+name = "rustapi-core"
+version_group = "rustapi"
+
+[[package]]
+name = "rustapi-testing"
+version_group = "rustapi"
+
+[[package]]
+name = "rustapi-extras"
+version_group = "rustapi"
+
+[[package]]
+name = "rustapi-toon"
+version_group = "rustapi"
+
+[[package]]
+name = "rustapi-ws"
+version_group = "rustapi"
+
+[[package]]
+name = "rustapi-view"
+version_group = "rustapi"
+
+[[package]]
+name = "rustapi-grpc"
+version_group = "rustapi"
+publish_no_verify = true
+
+[[package]]
+name = "rustapi-mcp"
+version_group = "rustapi"
+publish_no_verify = true
+
+[[package]]
+name = "rustapi-rs"
+version_group = "rustapi"
+# Facade crate drives the public GitHub release notes.
+git_release_enable = true
+
+[[package]]
+name = "cargo-rustapi"
+version_group = "rustapi"
+# Binary crate: still publish; release notes come from the version group.
+git_release_enable = false

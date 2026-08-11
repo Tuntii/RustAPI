@@ -47,7 +47,7 @@ utoipa = "4.2"  # âŒ Don't add this
 **Correct:**
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.551", features = ["full"] }
+rustapi-rs = { version = "0.2.0", features = ["full"] }
 # rustapi-openapi is re-exported through rustapi-rs
 ```
 

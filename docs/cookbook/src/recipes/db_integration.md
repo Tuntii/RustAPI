@@ -8,7 +8,7 @@ This recipe shows how to integrate PostgreSQL/MySQL/SQLite using a shared pool, 
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.551", features = ["extras-sqlx"] } # Canonical facade feature for SQLx error conversion
+rustapi-rs = { version = "0.2.0", features = ["extras-sqlx"] } # Canonical facade feature for SQLx error conversion
 sqlx = { version = "0.8", features = ["runtime-tokio", "tls-rustls", "postgres", "uuid"] }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["full"] }

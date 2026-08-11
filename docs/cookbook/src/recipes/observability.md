@@ -19,7 +19,7 @@ Enable the relevant features:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1.551", features = [
+rustapi-rs = { version = "0.2.0", features = [
   "core",
   "extras-otel",
   "extras-structured-logging",

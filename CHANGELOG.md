@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-11
+
+First **semantic release** after dropping commit-count versioning (`0.1.<n>`). Workspace crates stay on a single version group; future bumps come from conventional commits via [release-plz](https://release-plz.dev).
+
 ### Added
 
 - **MCP HTTP admin token enforcement**: when `McpConfig::admin_token` is set, the sidecar rejects unauthenticated JSON-RPC with `401` (`Authorization: Bearer`, `X-MCP-Token`, or `?token=`).
@@ -15,13 +19,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`cargo rustapi new`**: `protocol-mcp` feature option; `ai-api` preset includes it; minimal template wires `McpServer` + `RUSTAPI_MCP_TOKEN` when selected.
 - **`docs/GOLDEN_PATH.md`** — canonical handler → OpenAPI → probes → MCP/deploy walkthrough; linked from README, docs hub, cookbook SUMMARY, Getting Started.
 - **`golden_path` example** uses route macros + tags so `/docs/openapi.json` includes `/api/v1/ping` (not only `.route()` wiring).
+- **`cargo rustapi generate crud`**: SQLx-sqlite-backed list/get/create/update/delete handlers with schema bootstrap (`src/db.rs`) instead of `TODO` stubs.
+- **`file_upload` example** (`crates/rustapi-rs/examples/file_upload.rs`) demonstrating multipart uploads with the public `rustapi_rs::prelude` API.
+- **Slim vs full dependency guidance** in [Getting Started](docs/GETTING_STARTED.md).
+- **release-plz** CI: conventional-commit version bumps, release PRs, tags, GitHub releases, and crates.io publish for the workspace version group.
 
 ### Changed
 
-- **Dependabot consolidation**: lockfile bumps for `open` 5.4.0, `toml` 1.1.3, `uuid` 1.23.5, `http-body-util` 0.1.4, `bytes` 1.12.1, `simd-json` 0.17.3, `regex` 1.13.0, `rustls` 0.23.42, `redis` 1.4.0 (supersedes open Dependabot PRs #228–#236; skips major `rand` 0.8→0.10).
-- **Production Readiness v0.2** ([#200](https://github.com/Tuntii/RustAPI/issues/200)): coverage CI publishes HTML + Cobertura artifacts with job summary; release-drafter publishes drafts on `v*` tags; README links [Production Checklist](docs/PRODUCTION_CHECKLIST.md) in the header.
+- **Versioning policy**: stop using git commit count (`0.1.<commit>`); use SemVer (feat → minor, fix → patch, `BREAKING CHANGE` / `!` → major within `0.x` rules via release-plz).
+- **Dependabot consolidation**: lockfile bumps for `open`, `toml`, `uuid`, `http-body-util`, `bytes`, `simd-json`, `regex`, `rustls`, `redis` (and a full maintenance `cargo update` pass for 0.2.0).
+- **Production Readiness v0.2** ([#200](https://github.com/Tuntii/RustAPI/issues/200)): coverage CI publishes HTML + Cobertura artifacts with job summary; release-drafter on `v*` tags; README links [Production Checklist](docs/PRODUCTION_CHECKLIST.md) in the header.
 - README Quick Start: golden path first; document OpenAPI at `/docs/openapi.json`; prefer macros for OpenAPI registration; `tracing-subscriber` + `production_defaults` in the hello snippet.
-- Dependency updates: `actions/checkout@v7`, `actions/cache@v6`, `brotli` 8, `rcgen` 0.14, `tera` 2, `thiserror` 2, OpenTelemetry 0.32 stack, `sqlx` 0.9, `tracing-opentelemetry` 0.33.
+- Dependency updates: `actions/checkout@v7`, `actions/cache@v6`, `brotli` 8, `rcgen` 0.14, `tera` 2, `thiserror` 2, OpenTelemetry 0.32 stack, `sqlx` 0.9, `tracing-opentelemetry` 0.33, `tokio` 1.53.
 - Default `rustapi-rs` dependency tree slimmed from ~259 to ~158 transitive crates by removing always-on `tracing-subscriber` and gating `rust-i18n` behind the `i18n` feature (English fallbacks by default).
 - `RustApi::new()` no longer auto-initializes `tracing-subscriber`; initialize tracing in `main` (CLI templates already do).
 - Removed unused `screenshots` / `image` / `base64` dev-dependencies that pulled vulnerable `quick-xml` transitives into `cargo audit`.
@@ -35,19 +44,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **SQLx 0.9 jobs + CRUD generator**: Postgres job backend uses `AssertSqlSafe` and `Json` payloads; `cargo rustapi generate crud` emits SQLx 0.9-compatible SQLite handlers.
 - **Security Audit** (`cargo audit`) passes on the current lockfile (no high-severity `quick-xml` advisories).
 
-## [0.1.551] - 2026-07-05
-
-### Added
-
-- **`cargo rustapi generate crud`**: SQLx-sqlite-backed list/get/create/update/delete handlers with schema bootstrap (`src/db.rs`) instead of `TODO` stubs.
-- **`file_upload` example** (`crates/rustapi-rs/examples/file_upload.rs`) demonstrating multipart uploads with the public `rustapi_rs::prelude` API.
-- **Slim vs full dependency guidance** in [Getting Started](docs/GETTING_STARTED.md).
-
 ### Documentation
 
 - Refreshed [Performance Benchmarks](docs/PERFORMANCE_BENCHMARKS.md) with a new `perf_snapshot` run.
 - Updated [file uploads cookbook](docs/cookbook/src/recipes/file_uploads.md) to use `BodyLimitLayer` and `rustapi_rs::prelude` imports.
-- Version strings aligned to **0.1.551** across user-facing READMEs and install docs.
+- Version strings aligned to **0.2.0** across user-facing READMEs and install docs.
+
+## [0.1.551] - 2026-07-05
+
+Workspace/docs-only maturity sprint (CRUD generator, file upload example). Not published to crates.io; content is included in **0.2.0**.
 
 ## [0.1.550] - 2026-06-25
 
@@ -614,7 +619,8 @@ This release delivers a **12x performance improvement**, bringing RustAPI from ~
 - `extras` meta-feature for common optional features
 - `full` feature for all optional features
 
-[Unreleased]: https://github.com/Tuntii/RustAPI/compare/v0.1.551...HEAD
+[Unreleased]: https://github.com/Tuntii/RustAPI/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Tuntii/RustAPI/compare/v0.1.550...v0.2.0
 [0.1.551]: https://github.com/Tuntii/RustAPI/compare/v0.1.550...v0.1.551
 [0.1.550]: https://github.com/Tuntii/RustAPI/compare/v0.1.537...v0.1.550
 [0.1.537]: https://github.com/Tuntii/RustAPI/compare/v0.1.528...v0.1.537

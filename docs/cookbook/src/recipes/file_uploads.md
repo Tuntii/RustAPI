@@ -13,7 +13,7 @@ curl -X POST http://127.0.0.1:8080/upload -F "file=@./README.md"
 
 ```toml
 [dependencies]
-rustapi-rs = "0.1.551"
+rustapi-rs = "0.2.0"
 tokio = { version = "1", features = ["fs", "io-util", "macros", "rt-multi-thread"] }
 ```
 

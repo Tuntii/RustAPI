@@ -449,23 +449,32 @@ rustapi-rs (public API)
 
 ### Versioning
 
-RustAPI follows [Semantic Versioning](https://semver.org/):
+RustAPI follows [Semantic Versioning](https://semver.org/) driven by **conventional commits** (from **v0.2.0**). We do **not** use git commit count for versions.
 
-- **MAJOR** (0.x.0) - Breaking changes
-- **MINOR** (0.1.x) - New features, backwards compatible
-- **PATCH** (0.1.x) - Bug fixes, backwards compatible
+| Commit type | Bump |
+|-------------|------|
+| `feat:` | minor |
+| `fix:`, `chore:`, `docs:`, … | patch |
+| `BREAKING CHANGE` / `type!:` | major |
+
+Automation: **release-plz** (see `release-plz.toml` and `.github/workflows/release-plz.yml`). Prefer squash-merge titles that stay conventional (`feat: …`, `fix: …`).
 
 ### Release Checklist (Maintainers)
 
-1. Update version in `Cargo.toml` (workspace.package.version)
-2. Update all crate references to new version
-3. Update CHANGELOG.md with release notes
-4. Run full test suite: `cargo test --workspace --all-features`
-5. Build documentation: `cargo doc --workspace --all-features`
-6. Tag release: `git tag v0.1.x`
-7. Push tag: `git push origin v0.1.x`
-8. Publish crates: `./scripts/publish.ps1` or `./scripts/smart_publish.ps1`
-9. Create GitHub release with changelog
+**Preferred (automated):**
+
+1. Keep `CHANGELOG.md` **Unreleased** section accurate as PRs land.
+2. Merge work to `main` with conventional commit messages.
+3. Merge the release-plz PR when CI is green (it bumps workspace versions).
+4. release-plz tags `vX.Y.Z`, opens the GitHub release, and publishes to crates.io (`CARGO_REGISTRY_TOKEN` secret required).
+5. Optionally refresh `RELEASES.md` for major stories.
+
+**Manual fallback:**
+
+1. Bump `[workspace.package].version` and path-dep versions in root `Cargo.toml`
+2. Move **Unreleased** → dated section in `CHANGELOG.md`; update docs version pins if needed
+3. `cargo test --workspace` (and `--all-features` when DB libs are available)
+4. Tag `vX.Y.Z`, push tag, run Publish workflow or `scripts/smart_publish.ps1`
 
 ## Documentation Contributions
 

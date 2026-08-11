@@ -68,7 +68,7 @@ See [CONTRACT.md](../CONTRACT.md) for stability rules.
 
 ## Releases
 
-Releases are tagged `v0.1.<commit-count>` and published to [crates.io](https://crates.io/crates/rustapi-rs). See [CHANGELOG.md](../CHANGELOG.md) and [RELEASES.md](../RELEASES.md) for notes.
+Releases follow **SemVer** from conventional commits (release-plz). Tags look like `v0.2.0` and publish to [crates.io](https://crates.io/crates/rustapi-rs). See [CHANGELOG.md](../CHANGELOG.md) and [RELEASES.md](../RELEASES.md) for notes.
 
 **Repository split:** RustAPI Cloud backend development happens in [RustAPI-Cloud](https://github.com/Tuntii/RustAPI-Cloud). This repo ships the framework and CLI only.
 

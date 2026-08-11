@@ -1,3 +1,34 @@
+# RustAPI v0.2.0 Release Notes
+
+**Release Date**: August 11, 2026  
+**Full Changelog**: https://github.com/Tuntii/RustAPI/compare/v0.1.550...v0.2.0
+
+---
+
+## Highlights
+
+**v0.2.0 is the first semantic release.** We leave commit-count versioning (`0.1.<n>`) behind. From here, versions move with conventional commits and [release-plz](https://release-plz.dev) (release PR → merge → tag + crates.io).
+
+| Area | Change |
+|------|--------|
+| Versioning | SemVer workspace group; `feat` → minor, `fix`/`chore` → patch |
+| MCP | Admin token on HTTP sidecar; query tool args; CLI templates for `protocol-mcp` |
+| DX | Golden path doc + example; production checklist; CRUD generator; file upload example |
+| Deps / security | sqlx 0.9, tera 2, thiserror 2, OTEL 0.32, `RUSTSEC-2026-0204` lockfile fix |
+| CI | release-plz workflow; coverage artifacts; Dependabot-friendly clippy |
+
+**Install:**
+
+```bash
+cargo add rustapi-rs@0.2.0
+# or
+cargo install cargo-rustapi
+```
+
+**Note:** Workspace was at `0.1.551` in-tree without a crates.io publish; that work ships as part of **0.2.0**.
+
+---
+
 # RustAPI v0.1.550 + RustAPI Cloud v0.1.1 Release Notes
 
 **Release Date**: June 25, 2026
