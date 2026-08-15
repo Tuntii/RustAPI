@@ -44,49 +44,21 @@ Feature taxonomy on the facade:
 
 ## 📦 Quick Start
 
-**Önerilen kullanım** (en temiz ve kısa makro isimleri için):
-
-```toml
-[dependencies]
-api = { package = "rustapi-rs", version = "0.2.0" }
-```
-
-Sonra kodunda:
-
-```rust
-use api::prelude::*;
-
-#[api::get("/hello")]
-async fn hello() -> &'static str {
-    "Hello from RustAPI!"
-}
-
-#[api::main]
-async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-    api::RustApi::auto().run("127.0.0.1:8080").await
-}
-```
-
-Eğer istersen direkt uzun isimle de kullanabilirsin:
+Add `rustapi-rs` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
 rustapi-rs = "0.2.0"
 ```
 
-```rust
-use rustapi_rs::prelude::*;
-
-#[rustapi_rs::get("/hello")]
-...
-```
-
-Add `rustapi-rs` to your `Cargo.toml` (kısa isim için alias önerilir):
+You can also rename the crate if you prefer shorter macro paths:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.1", features = ["full"] }
+api = { package = "rustapi-rs", version = "0.2.0" }
 ```
+
+Route macros work through that alias (`#[api::get("/")]`, `use api::prelude::*`).
 
 ### The "Hello World"
 

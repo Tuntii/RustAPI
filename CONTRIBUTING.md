@@ -93,12 +93,14 @@ cargo build --workspace --release
 
 ### Running Examples
 
-```bash
-# Run a specific example
-cargo run -p hello-world
+In-repo examples live under `crates/rustapi-rs/examples/`. Start with the golden path (see [docs/GOLDEN_PATH.md](docs/GOLDEN_PATH.md)):
 
-# List all examples
-ls examples/
+```bash
+# First run — handler → OpenAPI → probes
+cargo run -p rustapi-rs --example golden_path
+
+# List in-repo examples
+ls crates/rustapi-rs/examples/
 ```
 
 ## Making Changes
@@ -398,6 +400,7 @@ Closes #456
 RustAPI/
 ├── crates/
 │   ├── rustapi-rs/       # 🎯 Public-facing crate (re-exports)
+│   │   └── examples/     # 📖 In-crate examples (start with golden_path)
 │   ├── rustapi-core/     # ⚙️  Core HTTP engine and routing
 │   ├── rustapi-macros/   # 🔧 Procedural macros (#[get], #[post], etc.)
 │   ├── rustapi-validate/ # ✅ Validation integration (validator crate)
@@ -406,18 +409,12 @@ RustAPI/
 │   ├── rustapi-toon/     # 🎨 TOON format support
 │   ├── rustapi-ws/       # 🔌 WebSocket support
 │   ├── rustapi-view/     # 🖼️  Template rendering (Tera)
+│   ├── rustapi-testing/  # 🧪 Test client and fluent assertions
+│   ├── rustapi-grpc/     # 📡 gRPC helpers (Tonic)
+│   ├── rustapi-mcp/      # 🤖 Native MCP (expose routes as LLM tools)
 │   └── cargo-rustapi/    # 📦 CLI tool
-├── examples/             # 📖 Example applications
-│   ├── hello-world/      # Basic example
-│   ├── crud-api/         # CRUD operations
-│   ├── auth-api/         # Authentication
-│   ├── sqlx-crud/        # Database integration
-│   ├── websocket/        # WebSocket example
-│   └── ...
-├── benches/              # 🏃 Performance benchmarks
 ├── docs/                 # 📝 Documentation
-├── scripts/              # 🛠️  Build and publish scripts
-└── memories/             # 🧠 Project memory/context
+└── scripts/              # 🛠️  Build and publish scripts
 ```
 
 ### Crate Dependencies
@@ -441,7 +438,7 @@ rustapi-rs (public API)
 - **Adding validation** → `rustapi-validate`
 - **Adding OpenAPI features** → `rustapi-openapi`
 - **Adding optional features** → `rustapi-extras`
-- **Adding examples** → `examples/`
+- **Adding examples** → `crates/rustapi-rs/examples/`
 - **Adding tests** → relevant crate's `tests/` directory
 - **Adding docs** → `docs/` or inline rustdoc
 
