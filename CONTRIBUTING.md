@@ -522,8 +522,8 @@ When reporting bugs, please include:
 Brief description of the issue
 
 ## Environment
-- Rust version: 1.75.0
-- RustAPI version: 0.1.7
+- Rust version: 1.85.0
+- RustAPI version: 0.2.0
 - OS: Windows 11
 
 ## Steps to Reproduce
