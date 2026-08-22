@@ -2,7 +2,7 @@
 name: Documentation Issue
 description: Report issues with documentation
 title: "[DOCS] "
-labels: ["documentation", "triage"]
+labels: ["documentation"]
 assignees: []
 body:
   - type: markdown
