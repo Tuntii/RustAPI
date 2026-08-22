@@ -22,7 +22,7 @@ cargo rustapi deploy docker
 
 Options:
 - `--output <path>`: Output path (default: `./Dockerfile`)
-- `--rust-version <ver>`: Rust version (default: 1.78)
+- `--rust-version <ver>`: Rust version (default: 1.85)
 - `--port <port>`: Port to expose (default: 8080)
 - `--binary <name>`: Binary name (default: package name)
 

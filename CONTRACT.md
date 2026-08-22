@@ -28,7 +28,7 @@ Do not depend on internal crate APIs for long-term compatibility.
 
 ## 3. MSRV Policy
 
-- Workspace MSRV is pinned to Rust `1.78`.
+- Workspace MSRV is pinned to Rust `1.85`.
 - MSRV increases are allowed only in minor or major releases.
 - MSRV changes must be called out in changelog/release notes.
 - Patch releases must not raise MSRV.
