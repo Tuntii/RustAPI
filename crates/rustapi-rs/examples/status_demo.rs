@@ -25,7 +25,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     }
 
     // An endpoint that sometimes fails
-    async fn flaky_handler() -> Result<&'static str, rustapi_rs::Response> {
+    async fn flaky_handler() -> rustapi_rs::Response {
         use std::sync::atomic::{AtomicBool, Ordering};
         static FAILURE: AtomicBool = AtomicBool::new(false);
 
@@ -33,9 +33,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let fail = FAILURE.fetch_xor(true, Ordering::Relaxed);
 
         if !fail {
-            Ok("Success!")
+            "Success!".into_response()
         } else {
-            Err(rustapi_rs::StatusCode::INTERNAL_SERVER_ERROR.into_response())
+            rustapi_rs::StatusCode::INTERNAL_SERVER_ERROR.into_response()
         }
     }
 
