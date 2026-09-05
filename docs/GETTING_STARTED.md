@@ -31,21 +31,21 @@ Add RustAPI to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rustapi-rs = "0.2.0"
+rustapi-rs = "0.2.1"
 ```
 
 You can also rename the crate if you prefer shorter macro paths:
 
 ```toml
 [dependencies]
-api = { package = "rustapi-rs", version = "0.2.0" }
+api = { package = "rustapi-rs", version = "0.2.1" }
 ```
 
 Or with specific features:
 
 ```toml
 [dependencies]
-rustapi-rs = { version = "0.2.0", features = ["extras-jwt", "extras-cors", "protocol-toon", "protocol-ws", "protocol-view"] }
+rustapi-rs = { version = "0.2.1", features = ["extras-jwt", "extras-cors", "protocol-toon", "protocol-ws", "protocol-view"] }
 ```
 
 ### Available Features
@@ -73,7 +73,7 @@ Most production APIs should start **slim** and opt into extras only when needed:
 ```toml
 # Recommended default — fast compiles, ~158 transitive crates
 [dependencies]
-rustapi-rs = { version = "0.2.0", default-features = false, features = ["core"] }
+rustapi-rs = { version = "0.2.1", default-features = false, features = ["core"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 ```
@@ -83,7 +83,7 @@ Add features incrementally (`extras-jwt`, `extras-cors`, `protocol-ws`, …) ins
 ```toml
 # Kitchen-sink profile — tutorials and exploration only (~900+ transitive crates)
 [dependencies]
-rustapi-rs = { version = "0.2.0", features = ["full"] }
+rustapi-rs = { version = "0.2.1", features = ["full"] }
 ```
 
 | Profile | Transitive crates (approx.) | Compile time | When to use |
@@ -408,7 +408,7 @@ ApiError::internal("message")         // 500
 ### CORS
 
 ```toml
-rustapi-rs = { version = "0.2.0", features = ["extras-cors"] }
+rustapi-rs = { version = "0.2.1", features = ["extras-cors"] }
 ```
 
 ```rust
@@ -429,7 +429,7 @@ RustApi::new()
 ### JWT Authentication
 
 ```toml
-rustapi-rs = { version = "0.2.0", features = ["extras-jwt"] }
+rustapi-rs = { version = "0.2.1", features = ["extras-jwt"] }
 ```
 
 ```rust
@@ -458,7 +458,7 @@ async fn protected(user: AuthUser<Claims>) -> Json<Response> {
 ### Rate Limiting
 
 ```toml
-rustapi-rs = { version = "0.2.0", features = ["extras-rate-limit"] }
+rustapi-rs = { version = "0.2.1", features = ["extras-rate-limit"] }
 ```
 
 ```rust
@@ -476,7 +476,7 @@ RustApi::new()
 ## TOON Format (LLM Optimization)
 
 ```toml
-rustapi-rs = { version = "0.2.0", features = ["protocol-toon"] }
+rustapi-rs = { version = "0.2.1", features = ["protocol-toon"] }
 ```
 
 ```rust
@@ -507,7 +507,7 @@ Response includes token counting headers:
 Real-time bidirectional communication:
 
 ```toml
-rustapi-rs = { version = "0.2.0", features = ["protocol-ws"] }
+rustapi-rs = { version = "0.2.1", features = ["protocol-ws"] }
 ```
 
 ```rust
@@ -544,7 +544,7 @@ websocat ws://localhost:8080/ws
 Server-side HTML rendering with Tera:
 
 ```toml
-rustapi-rs = { version = "0.2.0", features = ["protocol-view"] }
+rustapi-rs = { version = "0.2.1", features = ["protocol-view"] }
 ```
 
 Create a template file `templates/index.html`:
@@ -801,7 +801,7 @@ struct AnyBody { ... }
 Check that `core-openapi` is enabled (it is included in the default `core` feature):
 
 ```toml
-rustapi-rs = { version = "0.2.0", features = ["core-openapi"] }
+rustapi-rs = { version = "0.2.1", features = ["core-openapi"] }
 ```
 
 ### CLI Commands Not Working
