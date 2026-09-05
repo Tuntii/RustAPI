@@ -2,7 +2,7 @@
 name: Bug Report
 description: Report a bug or unexpected behavior
 title: "[BUG] "
-labels: ["bug", "triage"]
+labels: ["bug"]
 assignees: []
 body:
   - type: markdown
@@ -24,7 +24,7 @@ body:
     attributes:
       label: Rust Version
       description: What version of Rust are you using?
-      placeholder: e.g., 1.75.0
+      placeholder: e.g., 1.85.0
     validations:
       required: true
 

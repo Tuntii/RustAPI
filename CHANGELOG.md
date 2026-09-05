@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation
+
+- Align remaining MSRV copies with workspace `rust-version` 1.85: `CONTRACT.md`, CONTRIBUTING issue example, `cargo rustapi deploy docker --rust-version` default, and cookbook deploy docs.
+
 ## [0.2.0] - 2026-08-11
 
 First **semantic release** after dropping commit-count versioning (`0.1.<n>`). Workspace crates stay on a single version group; future bumps come from conventional commits via [release-plz](https://release-plz.dev).

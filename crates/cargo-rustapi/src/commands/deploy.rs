@@ -69,7 +69,7 @@ pub struct DockerArgs {
     pub output: PathBuf,
 
     /// Rust toolchain version
-    #[arg(long, default_value = "1.78")]
+    #[arg(long, default_value = "1.85")]
     pub rust_version: String,
 
     /// Binary name (defaults to package name)
