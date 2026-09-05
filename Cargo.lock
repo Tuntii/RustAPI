@@ -461,7 +461,7 @@ checksum = "fc652a48c352aef3ea3aed32080501cf3ef6ed5da78602a020c991775b0aff04"
 
 [[package]]
 name = "cargo-rustapi"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "anyhow",
  "assert_cmd",
@@ -3079,7 +3079,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-core"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "async-stream",
  "async-trait",
@@ -3124,7 +3124,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-extras"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "async-trait",
  "aws-lc-rs",
@@ -3168,7 +3168,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-grpc"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "prost",
  "rustapi-core",
@@ -3179,7 +3179,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-macros"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -3192,7 +3192,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-mcp"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "async-trait",
  "bytes",
@@ -3214,7 +3214,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-openapi"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "bytes",
  "http",
@@ -3226,7 +3226,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-rs"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "async-trait",
  "bytes",
@@ -3254,7 +3254,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-testing"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "bytes",
  "http",
@@ -3271,7 +3271,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-toon"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "bytes",
  "futures-util",
@@ -3288,7 +3288,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-validate"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "async-trait",
  "http",
@@ -3304,7 +3304,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-view"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "bytes",
  "http",
@@ -3320,7 +3320,7 @@ dependencies = [
 
 [[package]]
 name = "rustapi-ws"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "async-trait",
  "bytes",
