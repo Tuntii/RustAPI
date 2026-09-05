@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-09-05
+
+Patch after the idle stretch: security advisory, green CI, and the Dependabot majors that had piled up.
+
+### Fixed
+
+- **h2 0.4.16** — [RUSTSEC-2026-0258](https://rustsec.org/advisories/RUSTSEC-2026-0258) (unbounded empty DATA frames).
+- **CI Lint** — `status_demo` no longer hits `clippy::result_large_err` under `--all-features`.
+- **rustapi-mcp README** now ships in the crate package (release-plz was warning it was missing).
+- **release-plz** can open PRs again (repo Actions workflow permissions were read-only).
+
+### Changed
+
+- Major/minor dependency bumps: `syn` 3, `validator` 0.21, `jsonwebtoken` 11, `rust-i18n` 4, `toml_edit` 0.25, `base64` 0.23, `serial_test` 4 (dev), `redis` 1.6, `actions/stale` 11.
+- Workspace MSRV stays **1.85**. Optional `jwt` / `legacy-validator` extras declare 1.88 (jsonwebtoken 10.4 already did).
+
 ### Documentation
 
 - Align remaining MSRV copies with workspace `rust-version` 1.85: `CONTRACT.md`, CONTRIBUTING issue example, `cargo rustapi deploy docker --rust-version` default, and cookbook deploy docs.

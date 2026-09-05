@@ -213,7 +213,7 @@ Prefer the **[Golden Path](docs/GOLDEN_PATH.md)** for the recommended service sh
 
 ```toml
 [dependencies]
-api = { package = "rustapi-rs", version = "0.2.0" }
+api = { package = "rustapi-rs", version = "0.2.1" }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 ```
@@ -285,7 +285,7 @@ Full guide: [docs/cookbook/src/recipes/rustapi_cloud.md](docs/cookbook/src/recip
 
 ## Recent Changes
 
-See [CHANGELOG.md](CHANGELOG.md) for full history. Highlights in **v0.2.0** (first semantic release):
+See [CHANGELOG.md](CHANGELOG.md) for full history. Current release is **v0.2.1**. Highlights in **v0.2.0** (first semantic release):
 
 - **Semantic versioning:** drop commit-count `0.1.<n>`; conventional commits + [release-plz](https://release-plz.dev) drive minor/patch/major
 - **MCP hardening:** HTTP admin token enforcement, query-arg tools, `cargo rustapi new` + `protocol-mcp` / `ai-api` templates

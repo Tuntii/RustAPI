@@ -1,3 +1,33 @@
+# RustAPI v0.2.1 Release Notes
+
+**Release Date**: September 5, 2026  
+**Full Changelog**: https://github.com/Tuntii/RustAPI/compare/v0.2.0...v0.2.1
+
+---
+
+## Highlights
+
+Patch release: close the h2 advisory, unbreak CI, and take the Dependabot majors that stacked up while the repo sat idle.
+
+| Area | Change |
+|------|--------|
+| Security | `h2` 0.4.16 ([RUSTSEC-2026-0258](https://rustsec.org/advisories/RUSTSEC-2026-0258)) |
+| CI | clippy `status_demo` fix; Actions write so release-plz can open PRs |
+| Deps | syn 3, validator 0.21, jsonwebtoken 11, rust-i18n 4, toml_edit 0.25, base64 0.23, redis 1.6 |
+| MCP | crate README now packaged for crates.io |
+
+**Install:**
+
+```bash
+cargo add rustapi-rs@0.2.1
+# or
+cargo install cargo-rustapi
+```
+
+MSRV remains **1.85**. The optional `jwt` and `legacy-validator` features follow jsonwebtoken/validator (1.88).
+
+---
+
 # RustAPI v0.2.0 Release Notes
 
 **Release Date**: August 11, 2026  

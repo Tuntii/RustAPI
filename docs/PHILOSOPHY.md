@@ -114,10 +114,10 @@ validator = "0.16"
 rustapi-rs = "0.2.0"
 
 # Kitchen sink
-rustapi-rs = { version = "0.2.0", features = ["full"] }
+rustapi-rs = { version = "0.2.1", features = ["full"] }
 
 # Pick what you need
-rustapi-rs = { version = "0.2.0", features = ["extras-jwt", "extras-cors", "protocol-toon"] }
+rustapi-rs = { version = "0.2.1", features = ["extras-jwt", "extras-cors", "protocol-toon"] }
 ```
 
 | Feature | What You Get |
