@@ -1,3 +1,31 @@
+# RustAPI v0.2.2 Release Notes
+
+**Release Date**: September 25, 2026  
+**Full Changelog**: https://github.com/Tuntii/RustAPI/compare/v0.2.1...v0.2.2
+
+---
+
+## Highlights
+
+Patch release: close the rustls advisory, drop the yanked `chacha20`, and take the Dependabot updates that have been waiting since 16 September.
+
+| Area | Change |
+|------|--------|
+| Security | `rustls` 0.23.45 ([RUSTSEC-2026-0285](https://rustsec.org/advisories/RUSTSEC-2026-0285)); `chacha20` 0.10.2 |
+| Deps | uuid 1.26, hyper 1.11.1, syn 3.0.6, rcgen 0.14.10, simd-json 0.18, aws-lc-rs 1.18.1, rust-i18n 4.2.2, tera 2.4, toml 1.1.6, toml_edit 0.25.15 |
+
+**Install:**
+
+```bash
+cargo add rustapi-rs@0.2.2
+# or
+cargo install cargo-rustapi
+```
+
+MSRV remains **1.85**.
+
+---
+
 # RustAPI v0.2.1 Release Notes
 
 **Release Date**: September 5, 2026  

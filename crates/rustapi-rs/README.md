@@ -48,14 +48,14 @@ Add `rustapi-rs` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-rustapi-rs = "0.2.1"
+rustapi-rs = "0.2.2"
 ```
 
 You can also rename the crate if you prefer shorter macro paths:
 
 ```toml
 [dependencies]
-api = { package = "rustapi-rs", version = "0.2.1" }
+api = { package = "rustapi-rs", version = "0.2.2" }
 ```
 
 Route macros work through that alias (`#[api::get("/")]`, `use api::prelude::*`).
