@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-09-25
+
+Patch to turn the scheduled security audit green and take the Dependabot lockfile updates open since 16 September.
+
+### Fixed
+
+- **rustls 0.23.45** — [RUSTSEC-2026-0285](https://rustsec.org/advisories/RUSTSEC-2026-0285) (TLS 1.3 handshake messages accepted across encryption level boundaries).
+- **chacha20 0.10.2** (via `rand` 0.10.3) — 0.10.1 was yanked.
+
+### Changed
+
+- Lockfile bumps: `uuid` 1.26.1, `hyper` 1.11.1, `syn` 3.0.6, `rcgen` 0.14.10, `simd-json` 0.18.1 (`rustapi-core` requirement 0.17 → 0.18), `aws-lc-rs` 1.18.1, `rust-i18n` 4.2.2, `tera` 2.4.0, `toml` 1.1.6, `toml_edit` 0.25.15.
+- Transitive updates pulled by those bumps: `aws-lc-sys` 0.45, `pem` 4.
+
+### Documentation
+
+- Workspace MSRV stays **1.85**.
+
 ## [0.2.1] - 2026-09-05
 
 Patch after the idle stretch: security advisory, green CI, and the Dependabot majors that had piled up.
