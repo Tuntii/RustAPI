@@ -2152,9 +2152,9 @@ dependencies = [
 
 [[package]]
 name = "mysqlclient-sys"
-version = "0.5.2"
+version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b72511f8f6991fe4ac86421ea0625630fd94e360b906cc59720506499f9e8f3b"
+checksum = "48127dad9288a08350c34c6d9e17616420569cd24db43148bf223baac82fbb93"
 dependencies = [
  "pkg-config",
  "semver",
